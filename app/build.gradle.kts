@@ -14,9 +14,6 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0.0"
-
-        // Gemini API key
-        buildConfigField("String", "GEMINI_API_KEY", "\"AIzaSyACjfWqFy5KYvNCzy1drIStu7qovCEyOm4\"")
     }
 
     buildTypes {
@@ -67,10 +64,4 @@ dependencies {
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-
-    // OkHttp for Gemini API
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
-
-    // JSON parsing
-    implementation("org.json:json:20240303")
 }

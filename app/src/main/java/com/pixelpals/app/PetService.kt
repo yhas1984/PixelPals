@@ -20,11 +20,6 @@ import android.view.View
 import android.view.WindowManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import com.pixelpals.app.animation.AnimationStudio
-import com.pixelpals.app.animation.AssetAuditor
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 /**
  * PetService — Foreground Service que gestiona la mascota flotante.
@@ -59,11 +54,6 @@ class PetService : Service() {
     private var isViewAttached = false
     private var currentPetType: PetType = PetType.CORGI
 
-    // Animation Studio - On-Demand Frame Generation
-    private lateinit var animationStudio: AnimationStudio
-    private lateinit var assetAuditor: AssetAuditor
-    private val serviceScope = CoroutineScope(Dispatchers.IO)
-
     // ──────────────────────────────────────────────────────────
     // Lifecycle
     // ──────────────────────────────────────────────────────────
@@ -71,10 +61,6 @@ class PetService : Service() {
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
-
-        // Initialize Animation Studio
-        animationStudio = AnimationStudio(this)
-        assetAuditor = AssetAuditor(this)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -254,53 +240,8 @@ class PetService : Service() {
             petProgress?.let { petView?.setProgress(it) }
             petView?.resumeAnimation()
             setupKeyboardDetection(screenWidth, screenHeight)
-
-            // Start Animation Studio audit
-            startAssetAudit()
         } catch (e: Exception) {
             e.printStackTrace()
-        }
-    }
-
-    /**
-     * Audit assets and generate missing frames using Gemini
-     */
-    private fun startAssetAudit() {
-        serviceScope.launch {
-            try {
-                Log.d(TAG, "Starting asset audit for ${currentPetType.displayName}")
-
-                // Audit existing frames
-                val auditResult = assetAuditor.audit(currentPetType)
-                Log.d(TAG, "Audit: ${auditResult.existingFrames.size} existing, ${auditResult.missingFrames.size} missing")
-
-                if (!auditResult.isComplete) {
-                    // Show notification that generation is starting
-                    updateNotification(message = "Generando frames faltantes...")
-
-                    // Generate missing frames
-                    val generated = animationStudio.auditAndGenerate(
-                        currentPetType,
-                        auditResult.existingFrames
-                    )
-
-                    if (generated.isNotEmpty()) {
-                        Log.d(TAG, "Generated ${generated.size} frames")
-
-                        // Notify PetView about new frames
-                        for (frame in generated) {
-                            petView?.onGeneratedFrameReady(frame.index, frame.bitmap)
-                        }
-
-                        updateNotification(message = "Generación completada!")
-                    }
-                } else {
-                    Log.d(TAG, "All assets present, no generation needed")
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Asset audit failed: ${e.message}")
-                updateNotification(message = "Error en generación")
-            }
         }
     }
 

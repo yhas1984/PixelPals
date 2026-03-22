@@ -1046,7 +1046,19 @@ class PetView(
             // Load Corgi frames - 11 frames with logical transitions
             // 0: sit idle, 1: stand up, 2: walk left, 3: walk right,
             // 4: run, 5: jump, 6: bark, 7-10: petting animation
-            spriteFrames = loadPetFrames(petType, 11, "corgi")
+            spriteFrames = listOf(
+                ContextCompat.getDrawable(context, R.drawable.corgi_0)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.corgi_1)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.corgi_2)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.corgi_3)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.corgi_4)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.corgi_5)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.corgi_6)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.corgi_7)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.corgi_8)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.corgi_9)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.corgi_10)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888)
+            )
         } else if (petType == PetType.JELLY) {
             // Load custom storyboard frames for Jelly (4 frames - bouncy slime)
             spriteFrames = listOf(
@@ -1099,15 +1111,16 @@ class PetView(
             )
             currentFrame = 0 // Start with side view
         } else if (petType == PetType.DIABLILLO) {
-            // Load 6 frames for Diablillo (mischievous imp)
-            // 0-1: lurking idle, 2-3: running, 4: surprise/jump, 5: fire/mischief
+            // Load 7 frames for Diablillo (mischievous imp)
+            // 0-1: lurking idle, 2-3: running, 4: surprise/jump, 5: fire/mischief, 6: extra
             spriteFrames = listOf(
                 ContextCompat.getDrawable(context, R.drawable.diablillo_0)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
                 ContextCompat.getDrawable(context, R.drawable.diablillo_1)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
                 ContextCompat.getDrawable(context, R.drawable.diablillo_2)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
                 ContextCompat.getDrawable(context, R.drawable.diablillo_3)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
                 ContextCompat.getDrawable(context, R.drawable.diablillo_4)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
-                ContextCompat.getDrawable(context, R.drawable.diablillo_5)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888)
+                ContextCompat.getDrawable(context, R.drawable.diablillo_5)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.diablillo_6)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888)
             )
             currentFrame = 0 // Start lurking
         } else {
@@ -1121,46 +1134,6 @@ class PetView(
         setBackgroundColor(Color.TRANSPARENT)
         setLayerType(LAYER_TYPE_HARDWARE, null)
     }
-
-    /**
-     * Load pet frames - tries generated frames first, then drawable resources
-     */
-    private fun loadPetFrames(petType: PetType, count: Int, prefix: String): List<Bitmap> {
-        val frames = mutableListOf<Bitmap>()
-        val generatedDir = java.io.File(context.filesDir, "generated_frames/${petType.name.lowercase()}")
-
-        for (i in 0 until count) {
-            // Try generated frame first
-            val generatedFile = java.io.File(generatedDir, "frame_$i.png")
-            val bitmap = if (generatedFile.exists()) {
-                BitmapFactory.decodeFile(generatedFile.absolutePath)
-                    ?.let { Bitmap.createScaledBitmap(it, petSpriteSize, petSpriteSize, true) }
-            } else {
-                // Try drawable resource
-                val resId = context.resources.getIdentifier("${prefix}_$i", "drawable", context.packageName)
-                if (resId != 0) {
-                    try {
-                        ContextCompat.getDrawable(context, resId)
-                            ?.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888)
-                    } catch (e: Exception) { null }
-                } else null
-            }
-
-        // Fallback to base frame scaled
-        frames.add(bitmap ?: Bitmap.createBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888))
-
-        // Track source for logging
-        if (generatedFile.exists()) {
-            fromGenerated = true
-        }
-    }
-
-    val source = if (fromGenerated) "generated" else "drawable"
-    Log.d(TAG, "Loaded ${frames.count { it.width > 1 }} frames for ${petType.displayName} from $source")
-    return frames
-}
-
-private var fromGenerated = false
 
     /**
      * Generate 4 animation frames from a base sprite:
@@ -2991,19 +2964,6 @@ private var fromGenerated = false
 
     // ══════════════════════════════════════════════════════════
     // ▌ BUBBLE SYSTEM
-    // ══════════════════════════════════════════════════════════
-    // ▌ GENERATED FRAMES
-    // ══════════════════════════════════════════════════════════
-
-    private val generatedFrames = mutableMapOf<Int, Bitmap>()
-
-    /** Called when a generated frame is ready (e.g., from background processing) */
-    fun onGeneratedFrameReady(frameIndex: Int, bitmap: Bitmap) {
-        generatedFrames[frameIndex] = bitmap
-        // Could trigger a redraw if needed
-        invalidate()
-    }
-
     // ══════════════════════════════════════════════════════════
     // ▌ BUBBLE
     // ══════════════════════════════════════════════════════════
