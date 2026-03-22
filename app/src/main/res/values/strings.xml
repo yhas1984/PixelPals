@@ -26,6 +26,7 @@
     <string name="corgi_desc">The Explorer Corgi\nEnergetic &amp; loyal</string>
     <string name="ginger_desc">The Elegant Cat\nGraceful &amp; affectionate</string>
     <string name="patito_desc">The Curious Duck\nQuack quack!</string>
+    <string name="diablillo_desc">The Mischievous Imp\nHe-he!</string>
 
     <!-- Notification -->
     <string name="notif_channel_name">PixelPals Pet</string>

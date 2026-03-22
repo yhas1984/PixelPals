@@ -246,6 +246,135 @@ class PetView(
     private var duckFlyTimer = 0f
     private val waterZoneY: Int get() = (screenHeight * 0.7).toInt() // Bottom 30% is water
 
+    // ══════════════════════════════════════════════════════════
+    // ▌ CHAOS ENGINE - Diablillo Travieso
+    // ══════════════════════════════════════════════════════════
+    // Frames: 0-1=lurking idle, 2-3=running, 4=surprise/jump, 5=fire/mischief
+
+    enum class ImpState {
+        LURKING,        // Frames 0-1: Watching from shadows
+        RUNNING,        // Frames 2-3: Snappy sprint
+        SURPRISED,      // Frame 4: Caught/surprised
+        FIRE_JUMP,      // Frames 4→5: Chaotic jump with fire
+        TELEPORTING,    // Invisible, reappearing
+        BURNED_OUT      // After being dragged too long
+    }
+
+    private var impState = ImpState.LURKING
+    private var impDecisionTimer = 0f
+    private var impNextDecision = 1f + Random.nextFloat() * 2f // 1-3 seconds (chaotic)
+    private var impRunTimer = 0f
+    private var impLurkTimer = 0f
+    private var impDragTimer = 0f
+    private var impIsBurned = false
+    private var impTeleportCooldown = 0f
+
+    /** ChaosEngine decision - unpredictable behavior */
+    private fun impMakeDecision() {
+        val roll = Random.nextFloat()
+        when {
+            roll < 0.35f -> {
+                // 35%: Sprint to random position
+                impStartRunning()
+            }
+            roll < 0.55f -> {
+                // 20%: Teleport to edge
+                impTeleport()
+            }
+            roll < 0.75f -> {
+                // 20%: Stay lurking
+                impState = ImpState.LURKING
+                currentFrame = if (Random.nextBoolean()) 0 else 1
+            }
+            roll < 0.90f -> {
+                // 15%: Jump toward center (fire jump)
+                impFireJump()
+            }
+            else -> {
+                // 10%: Jump scare toward user
+                impJumpScare()
+            }
+        }
+        impNextDecision = 0.8f + Random.nextFloat() * 2f // 0.8-2.8 seconds
+    }
+
+    /** Start snappy running */
+    private fun impStartRunning() {
+        impState = ImpState.RUNNING
+        impRunTimer = 0f
+        val targetX = Random.nextInt(40, screenWidth - petSpriteSize - 40)
+        val params = getWindowParams() ?: return
+        velocityX = if (targetX > params.x) (4f + Random.nextFloat() * 3f) else -(4f + Random.nextFloat() * 3f)
+        // Snappy: stop abruptly after short distance
+    }
+
+    /** Teleport to random edge */
+    private fun impTeleport() {
+        if (impTeleportCooldown > 0f) return
+        impState = ImpState.TELEPORTING
+        animAlpha = 0f // Disappear
+
+        handler.postDelayed({
+            val params = getWindowParams() ?: return@postDelayed
+            // Reappear at random edge
+            params.x = if (Random.nextBoolean()) 20 else screenWidth - petSpriteSize - 20
+            params.y = Random.nextInt(100, groundY - 100)
+            updateWindowLayout(params)
+            animAlpha = 1f // Reappear
+            impState = ImpState.LURKING
+            currentFrame = 4 // Surprised face
+            showBubble("😈")
+            playHaptic(30)
+            impTeleportCooldown = 3f // Can't teleport again for 3s
+        }, 200)
+    }
+
+    /** Fire jump - chaotic jump with fire emoji */
+    private fun impFireJump() {
+        impState = ImpState.FIRE_JUMP
+        val params = getWindowParams() ?: return
+        velocityY = -15f - Random.nextFloat() * 8f
+        velocityX = (Random.nextFloat() - 0.5f) * 12f
+        currentFrame = 5 // Fire frame
+        showBubble("🔥")
+        playHaptic(60)
+    }
+
+    /** Jump scare toward user's last touch */
+    private fun impJumpScare() {
+        impState = ImpState.SURPRISED
+        currentFrame = 4 // Surprised frame
+        val params = getWindowParams() ?: return
+        // Jump toward last touch position
+        val targetX = lastTouchX.toInt().coerceIn(30, screenWidth - petSpriteSize - 30)
+        velocityX = (targetX - params.x) * 0.1f * petType.agility
+        velocityY = -12f
+        showBubble("👹")
+        playHaptic(50)
+    }
+
+    /** Staccato haptic - three ultra-fast pulses */
+    private fun playStaccatoHaptic() {
+        playHaptic(40)
+        handler.postDelayed({ playHaptic(30) }, 50)
+        handler.postDelayed({ playHaptic(40) }, 100)
+    }
+
+    /** Update when burned out from dragging */
+    private fun impUpdateBurned(dt: Float) {
+        // Red tint handled in onDraw
+        animOffsetY = sin(time * 20f) * 3f // Shaking
+        impRunTimer += dt
+        if (impRunTimer > 1.5f) {
+            impIsBurned = false
+            impState = ImpState.LURKING
+            currentFrame = 0
+            animColorFilter = null // Remove red tint
+        }
+    }
+
+    private var animColorFilter: android.graphics.ColorFilter? = null
+
     // ── Ginger Transition Functions ──
 
     /** Start transition: SITTING → STANDING */
@@ -891,6 +1020,18 @@ class PetView(
                 ContextCompat.getDrawable(context, R.drawable.patito_14)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888)
             )
             currentFrame = 0 // Start with side view
+        } else if (petType == PetType.DIABLILLO) {
+            // Load 6 frames for Diablillo (mischievous imp)
+            // 0-1: lurking idle, 2-3: running, 4: surprise/jump, 5: fire/mischief
+            spriteFrames = listOf(
+                ContextCompat.getDrawable(context, R.drawable.diablillo_0)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.diablillo_1)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.diablillo_2)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.diablillo_3)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.diablillo_4)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.diablillo_5)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888)
+            )
+            currentFrame = 0 // Start lurking
         } else {
             // Load standard sprite and generate 4 animation frames with strict 32-bit depth
             val drawable = ContextCompat.getDrawable(context, petType.spriteResId)!!
@@ -1473,6 +1614,67 @@ class PetView(
                 val breathe = sin(time * 1.8f) * 0.01f
                 animScaleY = 1f + breathe
             }
+            IdleStyle.LURK_IDLE -> {
+                // Diablillo: Chaotic lurking with unpredictable decisions
+                if (impIsBurned) {
+                    impUpdateBurned(dt)
+                    return
+                }
+
+                impDecisionTimer += dt
+                impTeleportCooldown -= dt
+
+                when (impState) {
+                    ImpState.LURKING -> {
+                        // Lurking: alternate frames 0 and 1 with long pauses
+                        impLurkTimer += dt
+                        currentFrame = if (impLurkTimer % 3f < 1.5f) 0 else 1
+
+                        // Subtle menacing sway
+                        animOffsetX = sin(time * 0.8f) * 2f
+                        animOffsetY = abs(sin(time * 1.2f)) * 1f
+
+                        // Make chaotic decision
+                        if (impDecisionTimer > impNextDecision) {
+                            impMakeDecision()
+                            impDecisionTimer = 0f
+                        }
+                    }
+                    ImpState.RUNNING -> {
+                        impRunTimer += dt
+                        // Snappy run cycle: frames 2-3 every 80ms
+                        currentFrame = if ((impRunTimer * 12f).toInt() % 2 == 0) 2 else 3
+                        animOffsetY = abs(sin(impRunTimer * 15f)) * 4f
+
+                        // Snappy stop: abruptly stop after short distance
+                        if (impRunTimer > 0.5f + Random.nextFloat() * 0.5f) {
+                            velocityX = 0f
+                            impState = ImpState.LURKING
+                            currentFrame = 4 // Surprised at stopping
+                            showBubble("😈")
+                        }
+                    }
+                    ImpState.FIRE_JUMP -> {
+                        // In air, will land via updateJumping
+                        currentFrame = 5
+                    }
+                    ImpState.SURPRISED -> {
+                        currentFrame = 4
+                        impRunTimer += dt
+                        if (impRunTimer > 1f) {
+                            impState = ImpState.LURKING
+                            currentFrame = 0
+                        }
+                    }
+                    ImpState.TELEPORTING -> {
+                        // Invisible during teleport
+                        animAlpha = 0f
+                    }
+                    ImpState.BURNED_OUT -> {
+                        impUpdateBurned(dt)
+                    }
+                }
+            }
         }
     }
 
@@ -1510,6 +1712,26 @@ class PetView(
             currentFrame = 0 // Side view while held
             animRotation = 0f
             duckState = DuckState.DRAGGING
+        } else if (petType == PetType.DIABLILLO) {
+            // Diablillo: Being held - surprised then burn if held too long
+            currentFrame = 4 // Surprised frame
+            impDragTimer += dt
+            impState = ImpState.SURPRISED
+
+            // After 3 seconds, burn and escape
+            if (impDragTimer > 3f && !impIsBurned) {
+                impIsBurned = true
+                impState = ImpState.BURNED_OUT
+                impRunTimer = 0f
+                // Red tint to simulate burning
+                animColorFilter = android.graphics.LightingColorFilter(0xFFFF4444.toInt(), 0x00000000)
+                showBubble("🔥😤")
+                playStaccatoHaptic()
+                // Force drop
+                state = PetState.FALLING
+                velocityY = 2f
+                impDragTimer = 0f
+            }
         } else {
             // General pataleo
             animRotation = sin(time * 15f) * 10f
@@ -1594,6 +1816,20 @@ class PetView(
             }
             // Slight horizontal drift
             params.x += (sin(time * 3f) * 3f).toInt()
+        }
+
+        // Diablillo special: Can "fly" a bit before falling (gravedad inversa)
+        if (petType == PetType.DIABLILLO) {
+            currentFrame = 5 // Fire/flying frame
+            // Random upward force to simulate "flying"
+            if (Random.nextFloat() < 0.1f && velocityY > 0) {
+                velocityY += -8f // Upward boost
+                animOffsetY = sin(time * 10f) * 5f
+            }
+            // Check if burned out
+            if (impIsBurned) {
+                animColorFilter = android.graphics.LightingColorFilter(0xFFFF4444.toInt(), 0x00000000)
+            }
         }
 
         // Limit to screen bounds collision
@@ -1924,6 +2160,24 @@ class PetView(
                     }
                 }
             }
+            MovementStyle.CHAOTIC_ZOOM -> {
+                // Diablillo: Chaotic movement with teleports and sprints
+                if (petType != PetType.DIABLILLO) return
+
+                val params = getWindowParams() ?: return
+
+                when (impState) {
+                    ImpState.RUNNING -> {
+                        // Snappy sprint
+                        params.x += velocityX.toInt()
+                        params.x = params.x.coerceIn(20, screenWidth - petSpriteSize - 20)
+                        updateWindowLayout(params)
+                    }
+                    else -> {
+                        // Decisions handled in updateIdleAnimation
+                    }
+                }
+            }
         }
     }
 
@@ -2012,6 +2266,7 @@ class PetView(
                         PetType.NUBE_MICHI -> "🌧️"
                         PetType.GINGER -> "😤" // Pouty face when ignored
                         PetType.PATITO -> "🤔" // Confused duck
+                        PetType.DIABLILLO -> "😈" // Plotting mischief
                     }
                     startSecretEvent(secretEmoji)
                     // Ginger shows pout frame when ignored
@@ -2123,6 +2378,11 @@ class PetView(
                 // Patito: Quack Supremo!
                 duckQuackSupremo()
                 duckIdleTime = 0f
+            }
+            PetType.DIABLILLO -> {
+                // Diablillo: Fire jump with staccato haptic
+                impFireJump()
+                playStaccatoHaptic()
             }
         }
     }
@@ -2369,6 +2629,36 @@ class PetView(
                     }
                 }
             }
+            PetType.DIABLILLO -> {
+                // Diablillo: Fire jump scare
+                when {
+                    interactTimer < 0.2f -> {
+                        // Initial scare
+                        currentFrame = 4 // Surprised
+                        animScaleY = 1.15f
+                        playStaccatoHaptic()
+                    }
+                    interactTimer < 0.6f -> {
+                        // Fire jump up
+                        currentFrame = 5 // Fire frame
+                        animOffsetY = -12f
+                        animScaleY = 0.9f
+                        animScaleX = 1.15f
+                    }
+                    interactTimer < 1.2f -> {
+                        // Chaotic wobble
+                        currentFrame = if ((interactTimer * 10f).toInt() % 2 == 0) 4 else 5
+                        animScaleY = 1f + sin(interactTimer * 15f) * 0.05f
+                    }
+                    else -> {
+                        // Return to lurking
+                        resetAnimTransforms()
+                        currentFrame = 0
+                        state = PetState.IDLE
+                        impState = ImpState.LURKING
+                    }
+                }
+            }
         }
     }
 
@@ -2420,6 +2710,11 @@ class PetView(
                 duckQuackSupremo()
                 velocityY = -12f
                 state = PetState.JUMPING
+            }
+            PetType.DIABLILLO -> {
+                // Chaotic fire jump
+                impFireJump()
+                playStaccatoHaptic()
             }
         }
     }

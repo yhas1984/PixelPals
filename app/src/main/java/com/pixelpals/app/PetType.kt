@@ -106,6 +106,21 @@ enum class PetType(
         movementStyle = MovementStyle.WADDLE_EXPLORE,
         idleStyle = IdleStyle.DUCK_IDLE,
         interactionStyle = InteractionStyle.QUACK_REACTION
+    ),
+
+    DIABLILLO(
+        displayName = "Diablillo",
+        description = "El Diablillo Travieso",
+        spriteResId = R.drawable.pet_diablillo,
+        gravity = 0.8f,           // Light gravity - can "fly" a bit
+        terminalVelocity = 12f,
+        bounceDamping = 0.7f,     // Bouncy
+        agility = 2.5f,           // FASTEST - snappy reactions
+        boredomRate = 2.0f,       // Never stays still
+        exploreInterval = 2000L,  // Decides every 2 seconds
+        movementStyle = MovementStyle.CHAOTIC_ZOOM,
+        idleStyle = IdleStyle.LURK_IDLE,
+        interactionStyle = InteractionStyle.CHAOTIC_JUMP
     );
 }
 
@@ -116,7 +131,8 @@ enum class MovementStyle {
     PARABOLIC_JUMP,   // Jelly: constant bouncing jumps along bottom
     WALK_RUN,         // Corgi: walks left/right, climbs edges
     ELEGANT_STRETCH,  // Ginger: graceful stretches and elegant movements
-    WADDLE_EXPLORE    // Patito: curious waddle exploration
+    WADDLE_EXPLORE,   // Patito: curious waddle exploration
+    CHAOTIC_ZOOM      // Diablillo: unpredictable teleports and sprints
 }
 
 /** How the pet animates when idle */
@@ -126,7 +142,8 @@ enum class IdleStyle {
     JELLY_WOBBLE,     // Jelly: wobbly jelly physics
     SIT_BARK,         // Corgi: sits, occasionally shows bark bubble
     GROOMING,         // Ginger: grooming sequence - clean face, lick paw, wink
-    DUCK_IDLE         // Patito: peek and look around
+    DUCK_IDLE,        // Patito: peek and look around
+    LURK_IDLE         // Diablillo: lurking and watching
 }
 
 /** How the pet responds to touch interaction */
@@ -135,5 +152,6 @@ enum class InteractionStyle {
     FEATHER_FALL,     // Nube-Michi: falls very slowly like a feather
     SQUISH_BOUNCE,    // Jelly: squash animation then elastic bounce
     BELLY_RUB,        // Corgi/Ginger: rolls onto back
-    QUACK_REACTION    // Patito: quack supremo with jump
+    QUACK_REACTION,   // Patito: quack supremo with jump
+    CHAOTIC_JUMP      // Diablillo: fire jump with staccato haptic
 }

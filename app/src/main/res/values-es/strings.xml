@@ -26,6 +26,7 @@
     <string name="corgi_desc">El Perrito Explorador\nEnérgico y leal</string>
     <string name="ginger_desc">La Gata Elegante\nGraciosa y cariñosa</string>
     <string name="patito_desc">El Patito Curioso\n¡Cuac cuac!</string>
+    <string name="diablillo_desc">El Diablillo Travieso\n¡Ji-ji!</string>
 
     <!-- Notificación -->
     <string name="notif_channel_name">PixelPals Mascota</string>

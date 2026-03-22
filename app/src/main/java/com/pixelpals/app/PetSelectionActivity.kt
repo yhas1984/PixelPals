@@ -29,6 +29,7 @@ class PetSelectionActivity : AppCompatActivity() {
     private lateinit var cardCorgi: LinearLayout
     private lateinit var cardGinger: LinearLayout
     private lateinit var cardPatito: LinearLayout
+    private lateinit var cardDiablillo: LinearLayout
 
     private var selectedType: PetType? = null
     private val allCards = mutableListOf<LinearLayout>()
@@ -49,7 +50,8 @@ class PetSelectionActivity : AppCompatActivity() {
         cardCorgi = findViewById(R.id.cardCorgi)
         cardGinger = findViewById(R.id.cardGinger)
         cardPatito = findViewById(R.id.cardPatito)
-        allCards.addAll(listOf(cardBloop, cardNubeMichi, cardJelly, cardCorgi, cardGinger, cardPatito))
+        cardDiablillo = findViewById(R.id.cardDiablillo)
+        allCards.addAll(listOf(cardBloop, cardNubeMichi, cardJelly, cardCorgi, cardGinger, cardPatito, cardDiablillo))
     }
 
     private fun setupCards() {
@@ -59,7 +61,8 @@ class PetSelectionActivity : AppCompatActivity() {
             cardJelly to PetType.JELLY,
             cardCorgi to PetType.CORGI,
             cardGinger to PetType.GINGER,
-            cardPatito to PetType.PATITO
+            cardPatito to PetType.PATITO,
+            cardDiablillo to PetType.DIABLILLO
         )
 
         petTypes.forEach { (card, type) ->
