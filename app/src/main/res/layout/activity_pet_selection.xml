@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_gradient"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:paddingHorizontal="24dp"
+        android:paddingTop="48dp"
+        android:paddingBottom="32dp">
+
+        <!-- Title -->
+        <TextView
+            android:id="@+id/titleSelect"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/choose_your_pet"
+            android:textSize="32sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF"
+            android:fontFamily="sans-serif-black" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/choose_subtitle"
+            android:textSize="14sp"
+            android:textColor="#90FFFFFF"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="28dp"
+            android:gravity="center" />
+
+        <!-- Pet Cards Grid (2x2) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="12dp">
+
+            <!-- Bloop -->
+            <LinearLayout
+                android:id="@+id/cardBloop"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:background="@drawable/bg_card_pet"
+                android:padding="14dp"
+                android:layout_marginEnd="6dp"
+                android:elevation="4dp"
+                android:clickable="true"
+                android:focusable="true">
+
+                <ImageView
+                    android:layout_width="96dp"
+                    android:layout_height="96dp"
+                    android:src="@drawable/pet_bloop"
+                    android:scaleType="fitCenter"
+                    android:contentDescription="Bloop" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Bloop"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="#1A1A2E"
+                    android:layout_marginTop="8dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/bloop_desc"
+                    android:textSize="11sp"
+                    android:textColor="#666680"
+                    android:gravity="center" />
+            </LinearLayout>
+
+            <!-- Nube-Michi -->
+            <LinearLayout
+                android:id="@+id/cardNubeMichi"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:background="@drawable/bg_card_pet"
+                android:padding="14dp"
+                android:layout_marginStart="6dp"
+                android:elevation="4dp"
+                android:clickable="true"
+                android:focusable="true">
+
+                <ImageView
+                    android:layout_width="96dp"
+                    android:layout_height="96dp"
+                    android:src="@drawable/pet_nube_michi"
+                    android:scaleType="fitCenter"
+                    android:contentDescription="Nube-Michi" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Nube-Michi"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="#1A1A2E"
+                    android:layout_marginTop="8dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/nube_michi_desc"
+                    android:textSize="11sp"
+                    android:textColor="#666680"
+                    android:gravity="center" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="24dp">
+
+            <!-- Jelly -->
+            <LinearLayout
+                android:id="@+id/cardJelly"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:background="@drawable/bg_card_pet"
+                android:padding="14dp"
+                android:layout_marginEnd="6dp"
+                android:elevation="4dp"
+                android:clickable="true"
+                android:focusable="true">
+
+                <ImageView
+                    android:layout_width="96dp"
+                    android:layout_height="96dp"
+                    android:src="@drawable/pet_jelly"
+                    android:scaleType="fitCenter"
+                    android:contentDescription="Jelly" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Jelly"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="#1A1A2E"
+                    android:layout_marginTop="8dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/jelly_desc"
+                    android:textSize="11sp"
+                    android:textColor="#666680"
+                    android:gravity="center" />
+            </LinearLayout>
+
+            <!-- Corgi -->
+            <LinearLayout
+                android:id="@+id/cardCorgi"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:background="@drawable/bg_card_pet"
+                android:padding="14dp"
+                android:layout_marginStart="6dp"
+                android:elevation="4dp"
+                android:clickable="true"
+                android:focusable="true">
+
+                <ImageView
+                    android:layout_width="96dp"
+                    android:layout_height="96dp"
+                    android:src="@drawable/pet_corgi"
+                    android:scaleType="fitCenter"
+                    android:contentDescription="Corgi" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Corgi"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="#1A1A2E"
+                    android:layout_marginTop="8dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/corgi_desc"
+                    android:textSize="11sp"
+                    android:textColor="#666680"
+                    android:gravity="center" />
+            </LinearLayout>
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

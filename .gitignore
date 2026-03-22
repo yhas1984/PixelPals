@@ -1,0 +1,14 @@
+# PixelPals - mascotas ignoradas
+*.iml
+.gradle/
+/local.properties
+/.idea/
+/build/
+/app/build/
+/captures
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.ap_
+*.dex

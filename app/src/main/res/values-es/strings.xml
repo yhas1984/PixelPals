@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PixelPals</string>
+    <string name="subtitle">Tu compañero mascota virtual ✨</string>
+
+    <!-- Permisos -->
+    <string name="overlay_title">Superposición en pantalla</string>
+    <string name="overlay_desc">Permite que tu mascota camine sobre otras apps</string>
+    <string name="notification_title">Notificaciones</string>
+    <string name="notification_desc">Mantén los controles de tu mascota accesibles</string>
+    <string name="permission_required">Requerido</string>
+    <string name="permission_granted">✓ Concedido</string>
+    <string name="grant_permission">Conceder Permiso</string>
+
+    <!-- Acciones -->
+    <string name="launch_pet">🐾  ¡Elige tu Mascota!</string>
+    <string name="pet_launched">¡Tu mascota está explorando! 🐕</string>
+    <string name="overlay_needed">Se necesita el permiso de superposición primero</string>
+
+    <!-- Selección de Mascota -->
+    <string name="choose_your_pet">Elige tu Mascota</string>
+    <string name="choose_subtitle">Cada una tiene su propia personalidad ✨</string>
+    <string name="bloop_desc">El Fantasmita Tímido\nFlota y se desvanece</string>
+    <string name="nube_michi_desc">El Gatito de Nube\nDormilón y esponjoso</string>
+    <string name="jelly_desc">El Slime de Gelatina\nRebotón y elástico</string>
+    <string name="corgi_desc">El Perrito Explorador\nEnérgico y leal</string>
+
+    <!-- Notificación -->
+    <string name="notif_channel_name">PixelPals Mascota</string>
+    <string name="notif_channel_desc">Mantiene a tu mascota virtual viva en la pantalla</string>
+
+    <!-- Accesibilidad -->
+    <string name="overlay_icon_desc">Icono de permiso de superposición</string>
+    <string name="notification_icon_desc">Icono de permiso de notificaciones</string>
+</resources>

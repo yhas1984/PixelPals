@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PixelPals</string>
+    <string name="subtitle">Your virtual pet companion ✨</string>
+
+    <!-- Permissions -->
+    <string name="overlay_title">Screen Overlay</string>
+    <string name="overlay_desc">Let your pet walk on top of other apps</string>
+    <string name="notification_title">Notifications</string>
+    <string name="notification_desc">Stay connected with your pet\'s controls</string>
+    <string name="permission_required">Required</string>
+    <string name="permission_granted">✓ Granted</string>
+    <string name="grant_permission">Grant Permission</string>
+
+    <!-- Actions -->
+    <string name="launch_pet">🐾  Choose Your Pet!</string>
+    <string name="pet_launched">Your pet is now exploring! 🐕</string>
+    <string name="overlay_needed">Overlay permission is needed first</string>
+
+    <!-- Pet Selection -->
+    <string name="choose_your_pet">Choose Your Pet</string>
+    <string name="choose_subtitle">Each one has its own personality ✨</string>
+    <string name="bloop_desc">The Shy Ghost\nFloats &amp; fades</string>
+    <string name="nube_michi_desc">The Cloud Kitty\nSleepy &amp; soft</string>
+    <string name="jelly_desc">The Jelly Slime\nBouncy &amp; wobbly</string>
+    <string name="corgi_desc">The Explorer Corgi\nEnergetic &amp; loyal</string>
+
+    <!-- Notification -->
+    <string name="notif_channel_name">PixelPals Pet</string>
+    <string name="notif_channel_desc">Keeps your virtual pet alive on screen</string>
+
+    <!-- Accessibility -->
+    <string name="overlay_icon_desc">Overlay permission icon</string>
+    <string name="notification_icon_desc">Notification permission icon</string>
+</resources>

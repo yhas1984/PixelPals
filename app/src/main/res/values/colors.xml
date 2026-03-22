@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary Palette -->
+    <color name="dark_bg">#1A1A2E</color>
+    <color name="dark_bg_mid">#16213E</color>
+    <color name="dark_bg_deep">#0F3460</color>
+
+    <!-- Accent Colors -->
+    <color name="coral_accent">#FF6B6B</color>
+    <color name="golden_accent">#FFD93D</color>
+    <color name="purple_soft">#A855F7</color>
+    <color name="teal_accent">#38BDF8</color>
+
+    <!-- Pet Colors -->
+    <color name="corgi_orange">#FF8C42</color>
+    <color name="corgi_belly">#FFDAB3</color>
+    <color name="corgi_ear">#D4692B</color>
+
+    <!-- Status -->
+    <color name="green_success">#22C55E</color>
+    <color name="red_error">#EF4444</color>
+
+    <!-- Neutrals -->
+    <color name="white">#FFFFFF</color>
+    <color name="text_dark">#1A1A2E</color>
+    <color name="text_muted">#666680</color>
+</resources>
