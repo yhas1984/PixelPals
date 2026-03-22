@@ -188,6 +188,24 @@ class PetView(
     private var gingerWalkTimer = 0f
     private var gingerWalkPauseTimer = 0f
 
+    // ══════════════════════════════════════════════════════════
+    // ▌ GINGER WHIMSY ENGINE
+    // ══════════════════════════════════════════════════════════
+    private var gingerBoredomTimer = 0f           // Accumulates when not interacted
+    private var gingerPoutActive = false           // Is Ginger pouting?
+    private var gingerLaserJumpActive = false      // Is Ginger chasing the "laser"?
+    private var gingerLaserTargetX = 0f
+    private var gingerLaserTargetY = 0f
+    private var gingerAffectionLevel = 0           // 0-100, earns belly rub at 80+
+    private var gingerDailyGiftGiven = false       // Once per session
+    private var gingerGroomingPauseTimer = 0f      // Pause between grooming actions
+    private var gingerGroomingPhase = 0            // 0=groom, 1=pause/look, 2=groom, 3=pause
+    private var gingerSequenceFrames = listOf<Int>()
+    private var gingerSequenceDurations = listOf<Float>()
+    private var gingerSequenceIndex = 0
+    private var gingerSequenceTimer = 0f
+    private var gingerIsPlayingSequence = false
+
     // ── Ginger Transition Functions ──
 
     /** Start transition: SITTING → STANDING */
@@ -275,6 +293,131 @@ class PetView(
         showBubble("🐱") // Confident landing
         state = PetState.IDLE
         resetAnimTransforms()
+    }
+
+    /** Play a micro-sequence of frames */
+    private fun playGingerSequence(frames: List<Int>, durations: List<Float>) {
+        if (frames.isEmpty() || frames.size != durations.size) return
+        gingerIsPlayingSequence = true
+        gingerSequenceFrames = frames
+        gingerSequenceDurations = durations
+        gingerSequenceIndex = 0
+        gingerSequenceTimer = 0f
+        currentFrame = frames[0]
+    }
+
+    /** Update micro-sequence playback */
+    private fun updateGingerSequence(dt: Float): Boolean {
+        if (!gingerIsPlayingSequence) return false
+        gingerSequenceTimer += dt
+        if (gingerSequenceIndex < gingerSequenceDurations.size &&
+            gingerSequenceTimer >= gingerSequenceDurations[gingerSequenceIndex]) {
+            gingerSequenceIndex++
+            gingerSequenceTimer = 0f
+            if (gingerSequenceIndex < gingerSequenceFrames.size) {
+                currentFrame = gingerSequenceFrames[gingerSequenceIndex]
+                // Haptic on stretch frames
+                if (currentFrame == 0 || currentFrame == 1) playHaptic(15)
+            }
+        }
+        if (gingerSequenceIndex >= gingerSequenceFrames.size) {
+            gingerIsPlayingSequence = false
+            return false
+        }
+        return true
+    }
+
+    /** Organic grooming with pauses: groom → look → groom → look */
+    private fun updateGingerGrooming(dt: Float) {
+        if (gingerPose != GingerPose.SITTING) return
+        if (gingerIsPlayingSequence) return
+
+        gingerGroomingPauseTimer += dt
+
+        when (gingerGroomingPhase) {
+            0 -> { // Grooming: clean face
+                currentFrame = 6
+                if (gingerGroomingPauseTimer > 2.5f) {
+                    gingerGroomingPhase = 1
+                    gingerGroomingPauseTimer = 0f
+                }
+            }
+            1 -> { // Pause: look at screen (sitting pose, alert)
+                currentFrame = 4
+                if (gingerGroomingPauseTimer > 2f) {
+                    gingerGroomingPhase = 2
+                    gingerGroomingPauseTimer = 0f
+                }
+            }
+            2 -> { // Grooming: lick paw
+                currentFrame = 5
+                if (gingerGroomingPauseTimer > 2.5f) {
+                    gingerGroomingPhase = 3
+                    gingerGroomingPauseTimer = 0f
+                }
+            }
+            3 -> { // Pause: look around (alert frame)
+                currentFrame = 2 // Briefly stand alert
+                if (gingerGroomingPauseTimer > 1.5f) {
+                    gingerGroomingPhase = 0
+                    gingerGroomingPauseTimer = 0f
+                    currentFrame = 4 // Back to sitting
+                }
+            }
+        }
+    }
+
+    /** Ginger shows pout when bored */
+    private fun updateGingerBoredom(dt: Float) {
+        if (petType != PetType.GINGER) return
+        if (state != PetState.IDLE) return
+
+        gingerBoredomTimer += dt
+        val boredomThreshold = 10f / petType.boredomRate
+
+        if (gingerBoredomTimer > boredomThreshold && !gingerPoutActive) {
+            gingerPoutActive = true
+            currentFrame = 7 // Pout frame
+            showBubble("😤")
+            // Stay pouting until interacted
+        }
+    }
+
+    /** Add affection and check for belly rub / gift */
+    private fun gingerAddAffection(amount: Int) {
+        gingerAffectionLevel = (gingerAffectionLevel + amount).coerceIn(0, 100)
+        gingerBoredomTimer = 0f
+        gingerPoutActive = false
+
+        // At 80+ affection, offer belly rub
+        if (gingerAffectionLevel >= 80 && gingerPose == GingerPose.STANDING) {
+            gingerStartBellyRub()
+            gingerAffectionLevel = 30 // Reset partially
+            showBubble("😻")
+
+            // Daily gift: ovillo de lana rosa
+            if (!gingerDailyGiftGiven) {
+                gingerDailyGiftGiven = true
+                handler.postDelayed({
+                    progress?.addTreasure("🧶")
+                    showBubble("🧶💕")
+                    playHaptic(50)
+                }, 5000) // Give gift after belly rub
+            }
+        }
+    }
+
+    /** Ronroneo háptico durante drag */
+    private var purrPhase = 0f
+    private fun updateGingerPurrHaptic(dt: Float) {
+        if (state != PetState.DRAGGING || petType != PetType.GINGER) return
+        purrPhase += dt
+        // Low frequency purr: ~50Hz simulation via alternating haptic
+        val purrCycle = 0.02f // 50ms = 50Hz
+        if (purrPhase >= purrCycle) {
+            purrPhase = 0f
+            playHaptic(8) // Very short, soft vibration
+        }
     }
 
     /** Set from PetService after creation */
@@ -938,33 +1081,39 @@ class PetView(
                 }
             }
             IdleStyle.GROOMING -> {
-                // Ginger: Complex pose system
-                // When IDLE state: manages sitting, standing, grooming transitions
+                // Ginger: Whimsical cat with organic grooming and capricious behavior
+                // Check if bored (pout)
+                updateGingerBoredom(dt)
 
-                // Update any ongoing transition first
-                if (updateGingerTransition(dt)) {
-                    // Still transitioning - breathing animation on current frame
+                // Update any ongoing micro-sequence
+                if (updateGingerSequence(dt)) {
                     val breathe = sin(time * 2f) * 0.01f
                     animScaleY = 1f + breathe
                     return
                 }
 
+                // Update any ongoing transition
+                if (updateGingerTransition(dt)) {
+                    val breathe = sin(time * 2f) * 0.01f
+                    animScaleY = 1f + breathe
+                    return
+                }
+
+                // If pouting, stay on pout frame
+                if (gingerPoutActive) {
+                    currentFrame = 7
+                    return
+                }
+
                 when (gingerPose) {
                     GingerPose.SITTING -> {
-                        // Sitting idle - breathe gently
+                        // Organic grooming: clean → pause → lick → pause → repeat
+                        updateGingerGrooming(dt)
+
+                        // Breathing animation
                         val breathe = sin(time * 1.5f) * 0.015f
                         animScaleY = 1f + breathe
                         animScaleX = 1f - breathe * 0.5f
-                        currentFrame = 4
-
-                        // Start grooming after sitting idle for a while
-                        gingerIdleSitTimer += dt
-                        gingerGroomingCooldown -= dt
-                        if (gingerIdleSitTimer > 5f && gingerGroomingCooldown <= 0f) {
-                            gingerStartGrooming()
-                            gingerIdleSitTimer = 0f
-                            gingerGroomingCooldown = 8f
-                        }
 
                         // Wink timer while sitting
                         gingerWinkTimer += dt
@@ -972,7 +1121,8 @@ class PetView(
                             gingerIsWinking = true
                             gingerDoubleXPActive = true
                             gingerWinkTimer = 0f
-                            currentFrame = 3
+                            // Play wink sequence
+                            playGingerSequence(listOf(3, 4), listOf(1.5f, 0.5f))
                             showBubble("😉")
                             handler.postDelayed({
                                 gingerDoubleXPActive = false
@@ -981,15 +1131,21 @@ class PetView(
                         }
                     }
                     GingerPose.STANDING -> {
-                        // Standing on all fours - subtle idle sway
+                        // Standing on all fours - alert, looking around
                         currentFrame = 2
                         animOffsetX = sin(time * 1.8f) * 1.5f
                         animOffsetY = abs(sin(time * 2.5f)) * 1f
 
-                        // After standing idle for a while, sit down
+                        // After standing idle, sit down or do a stretch
                         gingerIdleSitTimer += dt
-                        if (gingerIdleSitTimer > 8f) {
-                            gingerStartSit()
+                        if (gingerIdleSitTimer > 6f) {
+                            if (Random.nextBoolean()) {
+                                // Quick stretch before sitting
+                                playGingerSequence(listOf(2, 1, 0, 4), listOf(0.4f, 0.6f, 0.6f, 0.3f))
+                                gingerPose = GingerPose.SITTING
+                            } else {
+                                gingerStartSit()
+                            }
                             gingerIdleSitTimer = 0f
                         }
                     }
@@ -1013,21 +1169,23 @@ class PetView(
             showPluma = false // Cat is held, no pluma
             animAlpha = 1f // Ensure cat is visible
         } else if (petType == PetType.GINGER) {
-            // Ginger: held gently, shows appropriate pose, progressive purring
-            // Keep current pose (sitting or standing) while held
+            // Ginger: held gently with ronroneo háptico ~50Hz
             currentFrame = if (gingerPose == GingerPose.STANDING || gingerPose == GingerPose.WALKING) 2 else 4
             animRotation = 0f // Elegant - no wobble
+
+            // Ronroneo háptico: low frequency purr simulation
+            updateGingerPurrHaptic(dt)
+
+            // Progressive purring intensity for visual feedback
             purrTimer += dt
-            // Progressive purring: starts soft, increases over time
             gingerPurrIntensity = (purrTimer / 3f).coerceIn(0f, 1f)
-            if (purrTimer > 0.55f) {
-                val intensity = (20 + gingerPurrIntensity * 40).toLong()
-                playHaptic(intensity)
-                purrTimer = 0f
-            }
+
             // Subtle happy squish
             animScaleY = 1f - gingerPurrIntensity * 0.03f
             animScaleX = 1f + gingerPurrIntensity * 0.02f
+
+            // Add affection while holding
+            gingerAddAffection(1)
         } else {
             // General pataleo
             animRotation = sin(time * 15f) * 10f
@@ -1067,19 +1225,33 @@ class PetView(
             currentFrame = 0
         }
 
-        // Ginger special: Cat always lands on feet - does graceful tumble in air
+        // Ginger special: Cat always lands on feet - graceful rotation to upright
         if (petType == PetType.GINGER) {
             gingerPose = GingerPose.FALLING
-            // Animate through different poses while falling (tumbling gracefully)
-            val fallTime = time % 1.5f // Cycle every 1.5 seconds
-            currentFrame = when {
-                fallTime < 0.3f -> 1  // ginger_1: stretch back
-                fallTime < 0.6f -> 8  // ginger_8: rolling start
-                fallTime < 0.9f -> 9  // ginger_9: rolling
-                fallTime < 1.2f -> 0  // ginger_0: stretch forward
-                else -> 1             // back to stretch
+
+            // Calculate how far from ground (0 = ground, 1 = peak)
+            val fallProgress = if (groundY > 0) ((groundY - params.y).toFloat() / groundY).coerceIn(0f, 1f) else 0f
+
+            // Near ground: show landing pose (ginger_1 stretch back)
+            // Higher up: tumbling through poses
+            if (fallProgress < 0.3f) {
+                // Close to ground - prepare to land
+                currentFrame = 1 // ginger_1: stretch back (landing pose)
+                // Auto-rotate to upright
+                animRotation *= 0.7f // Dampen rotation quickly
+            } else {
+                // In air - graceful tumble
+                val fallTime = time % 1.2f
+                currentFrame = when {
+                    fallTime < 0.3f -> 1  // ginger_1: stretch back
+                    fallTime < 0.6f -> 8  // ginger_8: rolling start
+                    fallTime < 0.9f -> 9  // ginger_9: rolling
+                    else -> 0             // ginger_0: stretch forward
+                }
+                // Auto-rotate: spin to land on feet
+                animRotation += dt * 120f * petType.agility // Faster rotation with agility
             }
-            // Slight horizontal drift while tumbling
+            // Slight horizontal drift
             params.x += (sin(time * 3f) * 3f).toInt()
         }
 
@@ -1541,10 +1713,18 @@ class PetView(
                 animAlpha = 1f
             }
             PetType.GINGER -> {
-                // Double XP if wink is active
-                if (gingerDoubleXPActive) progress?.addXP(5) // Bonus XP
-                showBubble("💕")
+                // Ginger: Coquettish reaction with affection tracking
+                gingerAddAffection(10)
+                if (gingerDoubleXPActive) {
+                    progress?.addXP(5) // Bonus XP during wink
+                    showBubble("😉💕")
+                } else {
+                    val reaction = listOf("💕", "✨", "😻", "🐾").random()
+                    showBubble(reaction)
+                }
                 playHaptic(40) // Purr-like vibration
+                gingerBoredomTimer = 0f
+                gingerPoutActive = false
             }
         }
     }
@@ -2172,15 +2352,29 @@ class PetView(
         val params = getWindowParams() ?: return
 
         if (petType == PetType.GINGER) {
-            // Ginger: elegant parabolic jump toward last touch position
-            val targetX = lastTouchX.toInt().coerceIn(30, screenWidth - petSpriteSize - 30)
-            val jumpHeight = -18f // Upward velocity
-            velocityX = (targetX - params.x) * 0.05f // Horizontal component
-            velocityY = jumpHeight
-            currentFrame = 1 // ginger_1: stretch/jump frame
-            state = PetState.JUMPING
-            showBubble("🐾")
-            playHaptic(30)
+            // Ginger: LASER JUMP - Alert frame then elastic overshoot toward finger
+            gingerLaserJumpActive = true
+            gingerLaserTargetX = lastTouchX
+            gingerLaserTargetY = lastTouchY
+
+            // Show alert frame first (alert! something moved!)
+            currentFrame = 0 // ginger_0: stretch forward (alert pose)
+            playHaptic(20)
+
+            // After brief alert, jump toward target with elastic overshoot
+            handler.postDelayed({
+                val p = getWindowParams() ?: return@postDelayed
+                val targetX = gingerLaserTargetX.toInt().coerceIn(30, screenWidth - petSpriteSize - 30)
+                val jumpHeight = -22f * petType.agility // Higher jump with agility
+                velocityX = (targetX - p.x) * 0.08f * petType.agility
+                velocityY = jumpHeight
+                currentFrame = 1 // ginger_1: stretch/jump frame
+                state = PetState.JUMPING
+                showBubble("🐾✨")
+                playHaptic(30)
+                gingerLaserJumpActive = false
+                gingerAddAffection(5) // Cats love chasing things
+            }, 200) // 200ms alert delay
             return
         }
 

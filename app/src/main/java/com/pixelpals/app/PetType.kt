@@ -15,6 +15,8 @@ enum class PetType(
     val terminalVelocity: Float,
     val bounceDamping: Float,
     val jumpInterval: Long = 0L,
+    val agility: Float = 1.0f,        // How quickly they react and move (1.0 = normal)
+    val boredomRate: Float = 1.0f,    // How fast they get bored (1.0 = normal)
     val movementStyle: MovementStyle,
     val idleStyle: IdleStyle,
     val interactionStyle: InteractionStyle
@@ -26,6 +28,8 @@ enum class PetType(
         gravity = 0.0f,           // Floats! No gravity
         terminalVelocity = 0f,
         bounceDamping = 0f,
+        agility = 0.6f,           // Slow, dreamy reactions
+        boredomRate = 0.3f,       // Content floating for a long time
         movementStyle = MovementStyle.DRIFT_SLOW,
         idleStyle = IdleStyle.SINE_FLOAT,
         interactionStyle = InteractionStyle.FADE_SHRINK
@@ -38,6 +42,8 @@ enum class PetType(
         gravity = 0.2f,           // Falls like a feather
         terminalVelocity = 4f,
         bounceDamping = 0.1f,
+        agility = 0.8f,           // Gentle, slow reactions
+        boredomRate = 0.6f,       // Occasionally wants attention
         movementStyle = MovementStyle.STATIC_PERCH,
         idleStyle = IdleStyle.BREATHING,
         interactionStyle = InteractionStyle.FEATHER_FALL
@@ -51,6 +57,8 @@ enum class PetType(
         terminalVelocity = 30f,
         bounceDamping = 0.5f,     // Half elastic recovery
         jumpInterval = 4000L,     // Base charge interval
+        agility = 1.2f,           // Bouncy, quick reactions
+        boredomRate = 1.3f,       // Always wants to bounce
         movementStyle = MovementStyle.PARABOLIC_JUMP,
         idleStyle = IdleStyle.JELLY_WOBBLE,
         interactionStyle = InteractionStyle.SQUISH_BOUNCE
@@ -63,6 +71,8 @@ enum class PetType(
         gravity = 1.2f,           // heavy
         terminalVelocity = 15f,
         bounceDamping = 0.3f,     // dry bounce
+        agility = 1.5f,           // Very active and eager
+        boredomRate = 1.5f,       // Needs constant attention
         movementStyle = MovementStyle.WALK_RUN,
         idleStyle = IdleStyle.SIT_BARK,
         interactionStyle = InteractionStyle.BELLY_RUB
@@ -75,6 +85,8 @@ enum class PetType(
         gravity = 1.4f,           // Heavy like a real cat
         terminalVelocity = 18f,
         bounceDamping = 0.0f,     // Cats always land on their feet - no bounce
+        agility = 1.8f,           // Quick, graceful reactions
+        boredomRate = 0.5f,       // Content grooming, but unpredictable
         movementStyle = MovementStyle.ELEGANT_STRETCH,
         idleStyle = IdleStyle.GROOMING,
         interactionStyle = InteractionStyle.BELLY_RUB
