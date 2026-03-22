@@ -12,3 +12,4 @@
 *.aab
 *.ap_
 *.dex
+venv/
