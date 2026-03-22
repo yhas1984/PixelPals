@@ -830,6 +830,89 @@ class PetView(
     private var isMoving = false
     private var moveActionTimer = 0f
 
+    // ══════════════════════════════════════════════════════════
+    // ▌ CORGI STATE MACHINE
+    // ══════════════════════════════════════════════════════════
+    // Frames: 0=sit, 1=stand, 2=walk left, 3=walk right, 4=run, 5=jump, 6=bark/play
+
+    enum class CorgiPose {
+        SITTING,        // Frame 0: Sitting idle
+        STANDING,       // Frame 1: Standing on all fours
+        WALKING,        // Frames 2-3: Walking with moving paws
+        RUNNING,        // Frame 4: Running fast
+        JUMPING,        // Frame 5: Jumping up
+        BARKING,        // Frame 6: Barking/playing
+        STRETCH_UP,     // Transition: sit → stand
+        SIT_DOWN        // Transition: stand → sit
+    }
+
+    private var corgiPose = CorgiPose.SITTING
+    private var corgiPoseTimer = 0f
+    private var corgiIdleTimer = 0f
+    private var corgiWalkTimer = 0f
+    private var corgiIsTransitioning = false
+    private var corgiTransitionFrames = listOf<Int>()
+    private var corgiTransitionDurations = listOf<Float>()
+    private var corgiTransitionIndex = 0
+    private var corgiTransitionTimer = 0f
+
+    /** Corgi: Start standing up */
+    private fun corgiStartStand() {
+        if (corgiPose == CorgiPose.STANDING || corgiIsTransitioning) return
+        corgiIsTransitioning = true
+        corgiTransitionFrames = listOf(0, 1) // sit → stand
+        corgiTransitionDurations = listOf(0.4f, 0.3f)
+        corgiTransitionIndex = 0
+        corgiTransitionTimer = 0f
+        currentFrame = 0
+        playHaptic(15)
+    }
+
+    /** Corgi: Start sitting down */
+    private fun corgiStartSit() {
+        if (corgiPose == CorgiPose.SITTING || corgiIsTransitioning) return
+        corgiIsTransitioning = true
+        corgiTransitionFrames = listOf(1, 0) // stand → sit
+        corgiTransitionDurations = listOf(0.3f, 0.4f)
+        corgiTransitionIndex = 0
+        corgiTransitionTimer = 0f
+        currentFrame = 1
+    }
+
+    /** Update corgi transition */
+    private fun updateCorgiTransition(dt: Float): Boolean {
+        if (!corgiIsTransitioning) return false
+        corgiTransitionTimer += dt
+        if (corgiTransitionIndex < corgiTransitionDurations.size &&
+            corgiTransitionTimer >= corgiTransitionDurations[corgiTransitionIndex]) {
+            corgiTransitionIndex++
+            corgiTransitionTimer = 0f
+            if (corgiTransitionIndex < corgiTransitionFrames.size) {
+                currentFrame = corgiTransitionFrames[corgiTransitionIndex]
+            }
+        }
+        if (corgiTransitionIndex >= corgiTransitionFrames.size) {
+            corgiIsTransitioning = false
+            corgiPose = when (corgiTransitionFrames.last()) {
+                0 -> CorgiPose.SITTING
+                1 -> CorgiPose.STANDING
+                else -> CorgiPose.SITTING
+            }
+            currentFrame = corgiTransitionFrames.last()
+            return false
+        }
+        return true
+    }
+
+    /** Corgi bark/play animation */
+    private fun corgiBark() {
+        corgiPose = CorgiPose.BARKING
+        currentFrame = 6
+        showBubble(listOf("¡Guau!", "❤️", "🦴", "🐾", "Woof!").random())
+        playHaptic(40)
+        corgiPoseTimer = 0f
+    }
+
     private var reactionTimer = 0f
     private var reactionEmoji = ""
 
@@ -946,8 +1029,10 @@ class PetView(
             nubePlumaBitmap = ContextCompat.getDrawable(context, R.drawable.pluma_0)!!
                 .toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888)
         } else if (petType == PetType.CORGI) {
-            // Load Corgi frames - try generated first, then drawable
-            spriteFrames = loadPetFrames(petType, 12, "perro")
+            // Load Corgi frames - 7 frames with logical transitions
+            // 0: sit idle, 1: stand up, 2: walk left, 3: walk right,
+            // 4: run, 5: jump, 6: bark/play
+            spriteFrames = loadPetFrames(petType, 7, "corgi")
         } else if (petType == PetType.JELLY) {
             // Load custom storyboard frames for Jelly (4 frames - bouncy slime)
             spriteFrames = listOf(
@@ -1452,26 +1537,95 @@ class PetView(
                 showPluma = false
             }
             IdleStyle.SIT_BARK -> {
-                // Corgi: Playful idle with 12 frames
-                // Frames: 0-3 idle poses, 4-6 happy/playful, 7-9 walking, 10-11 special
-                animOffsetX = sin(time * 2.2f) * 3f
-                animOffsetY = abs(sin(time * 1.5f)) * 2f
+                // Corgi: Logical pose system - must stand before walking
+                if (petType != PetType.CORGI) return
 
-                // Cycle through idle frames for variety
-                val idleCycle = (time * 0.8f) % 6f
-                currentFrame = when {
-                    idleCycle < 1.5f -> 0  // Main idle
-                    idleCycle < 2.5f -> 1  // Slight turn
-                    idleCycle < 3.5f -> 2  // Alert
-                    idleCycle < 4.5f -> 3  // Happy
-                    idleCycle < 5.5f -> 4  // Playful pose
-                    else -> 5              // Tail wag frame
+                // Update any ongoing transition first
+                if (updateCorgiTransition(dt)) {
+                    return
                 }
 
-                // Randomly pop a dialog - more frequent and coquettish
-                if (Random.nextFloat() < 0.008f && reactionTimer > 8f) {
-                    val pop = listOf("Bark!", "❤️", "🦴", "🐶", "💕", "🎾", "🐾").random()
-                    triggerReaction(pop)
+                corgiIdleTimer += dt
+
+                when (corgiPose) {
+                    CorgiPose.SITTING -> {
+                        // Sitting idle - breathing animation
+                        currentFrame = 0
+                        animOffsetY = sin(time * 1.5f) * 2f
+
+                        // After sitting idle, stand up or bark
+                        if (corgiIdleTimer > 4f) {
+                            val roll = Random.nextFloat()
+                            if (roll < 0.6f) {
+                                corgiStartStand() // Stand up to walk
+                            } else if (roll < 0.8f) {
+                                corgiBark() // Bark/play
+                            }
+                            corgiIdleTimer = 0f
+                        }
+                    }
+                    CorgiPose.STANDING -> {
+                        // Standing - alert, ready to move
+                        currentFrame = 1
+                        animOffsetX = sin(time * 2f) * 2f
+
+                        // Decide next action
+                        if (corgiIdleTimer > 2f) {
+                            val roll = Random.nextFloat()
+                            if (roll < 0.5f) {
+                                // Start walking
+                                corgiPose = CorgiPose.WALKING
+                                corgiWalkTimer = 0f
+                                velocityX = if (Random.nextBoolean()) 2.5f else -2.5f
+                            } else if (roll < 0.75f) {
+                                // Jump
+                                corgiPose = CorgiPose.JUMPING
+                                currentFrame = 5
+                                velocityY = -12f
+                                playHaptic(25)
+                            } else {
+                                // Sit down
+                                corgiStartSit()
+                            }
+                            corgiIdleTimer = 0f
+                        }
+                    }
+                    CorgiPose.WALKING -> {
+                        // Walking with moving paws - alternate frames 2-3
+                        corgiWalkTimer += dt
+                        currentFrame = if ((corgiWalkTimer * 5f).toInt() % 2 == 0) 2 else 3
+                        animOffsetY = abs(sin(corgiWalkTimer * 10f)) * 3f // Paw movement
+
+                        // Stop after walking a bit
+                        if (corgiWalkTimer > 2f + Random.nextFloat() * 2f) {
+                            velocityX = 0f
+                            corgiPose = CorgiPose.STANDING
+                            currentFrame = 1
+                            corgiIdleTimer = 0f
+                        }
+                    }
+                    CorgiPose.BARKING -> {
+                        // Barking animation
+                        corgiPoseTimer += dt
+                        currentFrame = if ((corgiPoseTimer * 4f).toInt() % 2 == 0) 6 else 1
+                        if (corgiPoseTimer > 1.5f) {
+                            corgiPose = CorgiPose.SITTING
+                            currentFrame = 0
+                            corgiIdleTimer = 0f
+                        }
+                    }
+                    CorgiPose.JUMPING -> {
+                        // Jumping - will land in updateJumping
+                        currentFrame = 5
+                    }
+                    else -> {
+                        currentFrame = 0
+                    }
+                }
+
+                // Random barks while idle
+                if (Random.nextFloat() < 0.003f && reactionTimer > 10f && corgiPose == CorgiPose.SITTING) {
+                    corgiBark()
                 }
             }
             IdleStyle.JELLY_WOBBLE -> {
@@ -1986,41 +2140,69 @@ class PetView(
             }
 
             MovementStyle.WALK_RUN -> {
-                // Corgi: walks left/right, climbs edges
+                // Corgi: Must stand before walking, logical transitions
+                if (petType != PetType.CORGI) return
+
+                // Don't interrupt transitions
+                if (corgiIsTransitioning) return
+
                 moveTimer += dt
-                if (moveTimer > nextMoveTime && !isMoving) {
-                    val speedMult = if (petType == PetType.CORGI) 2.5f else 1.0f  // Super speed for Corgi
-                    val maxSpeed = (2f + Random.nextFloat() * 1.5f) * speedMult
-                    velocityX = if (Random.nextBoolean()) maxSpeed else -maxSpeed
-                    isMoving = true
-                    moveActionTimer = 0f
-                    nextMoveTime = Random.nextFloat() * 4f + 2f
-                    moveTimer = 0f
-                }
 
-                if (isMoving) {
-                    moveActionTimer += dt
-                    params.x += velocityX.toInt()
-                    params.x = params.x.coerceIn(0, screenWidth - petSpriteSize)
-
-                    // Subtle walking bob
-                    animOffsetY = abs(sin(moveActionTimer * 8f)) * 3f
-
-                    // Digging for treasures (Corgi special - 1/500 per frame ~0.002f)
-                    if (petType == PetType.CORGI && Random.nextFloat() < 0.002f) {
-                        isMoving = false
-                        velocityX = 0f
-                        progress?.addTreasure("🦴")
-                        playHaptic(100)
-                        triggerReaction("🦴")
-                        return
+                when (corgiPose) {
+                    CorgiPose.SITTING -> {
+                        // Sitting - stand up to move
+                        if (moveTimer > nextMoveTime) {
+                            corgiStartStand()
+                            moveTimer = 0f
+                        }
                     }
-
-                    if (moveActionTimer > 2.5f || params.x <= 0 || params.x >= screenWidth - petSpriteSize) {
-                        velocityX = 0f
-                        isMoving = false
+                    CorgiPose.STANDING -> {
+                        // Standing - can start walking
+                        if (moveTimer > 1f && !isMoving) {
+                            val maxSpeed = 2.5f + Random.nextFloat() * 1.5f
+                            velocityX = if (Random.nextBoolean()) maxSpeed else -maxSpeed
+                            isMoving = true
+                            corgiPose = CorgiPose.WALKING
+                            corgiWalkTimer = 0f
+                            moveActionTimer = 0f
+                            nextMoveTime = Random.nextFloat() * 4f + 2f
+                            moveTimer = 0f
+                        }
                     }
-                    updateWindowLayout(params)
+                    CorgiPose.WALKING -> {
+                        // Walking with paw animation
+                        corgiWalkTimer += dt
+                        params.x += velocityX.toInt()
+                        params.x = params.x.coerceIn(20, screenWidth - petSpriteSize - 20)
+
+                        // Alternate walk frames (moving paws)
+                        currentFrame = if ((corgiWalkTimer * 5f).toInt() % 2 == 0) 2 else 3
+                        animOffsetY = abs(sin(corgiWalkTimer * 10f)) * 3f
+
+                        // Digging for treasures (Corgi special)
+                        if (Random.nextFloat() < 0.002f) {
+                            isMoving = false
+                            velocityX = 0f
+                            corgiPose = CorgiPose.BARKING
+                            currentFrame = 6
+                            progress?.addTreasure("🦴")
+                            playHaptic(100)
+                            triggerReaction("🦴")
+                            return
+                        }
+
+                        // Stop and sit after walking
+                        if (corgiWalkTimer > 2f + Random.nextFloat() * 2f ||
+                            params.x <= 25 || params.x >= screenWidth - petSpriteSize - 25) {
+                            velocityX = 0f
+                            isMoving = false
+                            corgiStartSit()
+                        }
+                        updateWindowLayout(params)
+                    }
+                    else -> {
+                        // Other poses handled in updateIdleAnimation
+                    }
                 }
             }
 

@@ -29,8 +29,8 @@ class AnimationStudio(private val context: Context) {
 
     companion object {
         private const val TAG = "AnimationStudio"
-        private const val GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent"
-        private const val IMAGE_MODEL = "gemini-2.0-flash-exp"
+        private const val GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent"
+        private const val IMAGE_MODEL = "gemini-3.1-flash-image-preview"
     }
 
     private val client = OkHttpClient.Builder()
@@ -107,7 +107,13 @@ class AnimationStudio(private val context: Context) {
                 FrameDefinition(2, "walk right", "corgi walking right with wagging tail"),
                 FrameDefinition(3, "happy jump", "corgi jumping excitedly"),
                 FrameDefinition(4, "bark", "corgi barking with open mouth"),
-                FrameDefinition(5, "lick", "corgi licking screen")
+                FrameDefinition(5, "lick", "corgi licking screen"),
+                FrameDefinition(6, "run", "corgi running fast"),
+                FrameDefinition(7, "play bow", "corgi in play bow position"),
+                FrameDefinition(8, "spin", "corgi spinning in circles"),
+                FrameDefinition(9, "shake", "corgi shaking water off"),
+                FrameDefinition(10, "sleep", "corgi sleeping curled up"),
+                FrameDefinition(11, "alert", "corgi alert with ears up")
             )
             PetType.GINGER -> listOf(
                 FrameDefinition(0, "stretch forward", "elegant cat stretching forward"),
@@ -260,10 +266,13 @@ class AnimationStudio(private val context: Context) {
             .build()
 
         client.newCall(request).execute().use { response ->
+            val responseBody = response.body?.string() ?: ""
             if (!response.isSuccessful) {
+                Log.e(TAG, "Gemini API error: ${response.code} - ${response.message}")
+                Log.e(TAG, "Response body: $responseBody")
                 throw Exception("Gemini API error: ${response.code} - ${response.message}")
             }
-            return response.body?.string() ?: throw Exception("Empty response")
+            return responseBody
         }
     }
 
