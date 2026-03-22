@@ -2748,8 +2748,23 @@ class PetView(
     // ══════════════════════════════════════════════════════════
     // ▌ BUBBLE SYSTEM
     // ══════════════════════════════════════════════════════════
+    // ▌ GENERATED FRAMES
+    // ══════════════════════════════════════════════════════════
 
-    private fun showBubble(text: String) {
+    private val generatedFrames = mutableMapOf<Int, Bitmap>()
+
+    /** Called when a generated frame is ready (e.g., from background processing) */
+    fun onGeneratedFrameReady(frameIndex: Int, bitmap: Bitmap) {
+        generatedFrames[frameIndex] = bitmap
+        // Could trigger a redraw if needed
+        invalidate()
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // ▌ BUBBLE
+    // ══════════════════════════════════════════════════════════
+
+    fun showBubble(text: String) {
         showBubble = true
         bubbleText = text
         bubbleTimer = 0f
