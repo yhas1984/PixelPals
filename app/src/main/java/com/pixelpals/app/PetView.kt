@@ -223,7 +223,10 @@ class PetView(
         QUACK_SUPREMO,  // Frames 3→13→14: Big quack reaction
         CONFUSED,       // Frames 3-4: At screen edge
         DRAGGING,       // Frame 0: Being held
-        FALLING         // Frame 0: Falling
+        FALLING,        // Frames 1-2 rapid: Flying attempt
+        SWIMMING,       // Frames 1-2 slow: Swimming in water
+        WATER_EXIT,     // Frames 13→14: Jumping out of water
+        FLYING          // Frames 1-2 rapid: Flying/falling attempt
     }
 
     private var duckState = DuckState.IDLE_SIDE
@@ -239,6 +242,9 @@ class PetView(
     private var duckIsPlayingSequence = false
     private var duckWalkDirection = 1f // 1 = right, -1 = left
     private var duckConfusedTimer = 0f
+    private var duckSwimTimer = 0f
+    private var duckFlyTimer = 0f
+    private val waterZoneY: Int get() = (screenHeight * 0.7).toInt() // Bottom 30% is water
 
     // ── Ginger Transition Functions ──
 
@@ -598,6 +604,76 @@ class PetView(
         showBubble("Quack!")
         playHaptic(80) // Sharp peck-like vibration
         duckActivityTimer = 0f
+    }
+
+    /** Duck swimming in water - slow waddle frames with wave motion */
+    private fun updateDuckSwimming(dt: Float, params: WindowManager.LayoutParams) {
+        duckSwimTimer += dt
+
+        // Slow waddle animation (200ms per frame instead of 100ms)
+        currentFrame = if ((duckSwimTimer * 5f).toInt() % 2 == 0) 1 else 2
+
+        // Wave motion: horizontal + vertical sinusoidal
+        animOffsetY = sin(duckSwimTimer * 3f) * 5f // Bobbing up and down
+        animOffsetX = cos(duckSwimTimer * 2f) * 3f // Slight horizontal drift
+
+        // Move slowly while swimming
+        params.x += (velocityX * dt * 30f).toInt() // Slower than walking
+        params.x = params.x.coerceIn(20, screenWidth - petSpriteSize - 20)
+
+        // Keep duck at water level
+        params.y = waterZoneY - petSpriteSize / 2
+
+        // Random chance to jump out of water
+        if (Random.nextFloat() < 0.01f && duckSwimTimer > 3f) {
+            duckJumpOutOfWater()
+        }
+
+        updateWindowLayout(params)
+    }
+
+    /** Duck jumps out of water */
+    private fun duckJumpOutOfWater() {
+        duckState = DuckState.WATER_EXIT
+        playDuckSequence(listOf(2, 13, 14, 13, 3), listOf(0.15f, 0.2f, 0.6f, 0.2f, 0.3f))
+        velocityY = -18f // Jump up
+        velocityX = (Random.nextFloat() - 0.5f) * 8f // Slight horizontal
+        showBubble("💦🦆")
+        playHaptic(40)
+        duckActivityTimer = 0f
+    }
+
+    /** Duck flying/falling - rapid wing flapping */
+    private fun updateDuckFlying(dt: Float) {
+        duckFlyTimer += dt
+
+        // Rapid frame cycling to simulate wing flapping (50ms per frame)
+        currentFrame = if ((duckFlyTimer * 20f).toInt() % 2 == 0) 1 else 2
+
+        // Flapping motion
+        animScaleY = 0.95f + sin(duckFlyTimer * 25f) * 0.08f
+        animOffsetY = sin(duckFlyTimer * 15f) * 4f
+
+        // Slight horizontal drift
+        val params = getWindowParams() ?: return
+        params.x += (sin(duckFlyTimer * 2f) * 3f).toInt()
+        params.x = params.x.coerceIn(20, screenWidth - petSpriteSize - 20)
+        updateWindowLayout(params)
+    }
+
+    /** Check if duck is in water zone */
+    private fun duckIsInWater(): Boolean {
+        val params = getWindowParams() ?: return false
+        return params.y >= waterZoneY - petSpriteSize
+    }
+
+    /** Start swimming when duck enters water */
+    private fun duckStartSwimming() {
+        if (duckState != DuckState.SWIMMING) {
+            duckState = DuckState.SWIMMING
+            duckSwimTimer = 0f
+            velocityX = (Random.nextFloat() - 0.5f) * 4f // Slow drift while swimming
+        }
     }
 
     // ══════════════════════════════════════════════════════════
@@ -1473,6 +1549,23 @@ class PetView(
             currentFrame = 0
         }
 
+        // Patito special: Tries to fly when falling
+        if (petType == PetType.PATITO) {
+            duckState = DuckState.FLYING
+            updateDuckFlying(dt)
+            // Check if about to land in water
+            if (params.y >= waterZoneY - petSpriteSize) {
+                // Land in water - start swimming!
+                params.y = waterZoneY - petSpriteSize
+                velocityY = 0f
+                duckStartSwimming()
+                state = PetState.IDLE
+                showBubble("💦")
+                updateWindowLayout(params)
+                return
+            }
+        }
+
         // Ginger special: Cat always lands on feet - graceful rotation to upright
         if (petType == PetType.GINGER) {
             gingerPose = GingerPose.FALLING
@@ -1505,6 +1598,19 @@ class PetView(
 
         // Limit to screen bounds collision
         if (params.y >= groundY) {
+            // Patito: Check if landing in water zone
+            if (petType == PetType.PATITO && params.y >= waterZoneY - petSpriteSize) {
+                // Land in water - splash and swim!
+                params.y = waterZoneY - petSpriteSize
+                velocityY = 0f
+                velocityX = 0f
+                duckStartSwimming()
+                state = PetState.IDLE
+                showBubble("💦")
+                updateWindowLayout(params)
+                return
+            }
+
             params.y = groundY
             landVelocity = velocityY
             velocityY = 0f
@@ -1791,9 +1897,24 @@ class PetView(
                     return
                 }
 
+                // Check if duck is in water zone - start swimming
+                if (duckIsInWater() && duckState != DuckState.SWIMMING && duckState != DuckState.WATER_EXIT) {
+                    duckStartSwimming()
+                }
+
                 when (duckState) {
                     DuckState.WALKING -> {
                         updateDuckWalk(dt, params)
+                    }
+                    DuckState.SWIMMING -> {
+                        updateDuckSwimming(dt, params)
+                    }
+                    DuckState.WATER_EXIT -> {
+                        duckActivityTimer += dt
+                        if (duckActivityTimer > 1.5f || !duckIsPlayingSequence) {
+                            duckState = DuckState.IDLE_SIDE
+                            currentFrame = 0
+                        }
                     }
                     DuckState.CONFUSED -> {
                         updateDuckConfused(dt)
