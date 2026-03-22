@@ -102,18 +102,13 @@ class AnimationStudio(private val context: Context) {
                 FrameDefinition(3, "happy glow", "jelly glowing happily")
             )
             PetType.CORGI -> listOf(
-                FrameDefinition(0, "sit idle", "corgi sitting attentively"),
-                FrameDefinition(1, "walk left", "corgi walking left with wagging tail"),
-                FrameDefinition(2, "walk right", "corgi walking right with wagging tail"),
-                FrameDefinition(3, "happy jump", "corgi jumping excitedly"),
-                FrameDefinition(4, "bark", "corgi barking with open mouth"),
-                FrameDefinition(5, "lick", "corgi licking screen"),
-                FrameDefinition(6, "run", "corgi running fast"),
-                FrameDefinition(7, "play bow", "corgi in play bow position"),
-                FrameDefinition(8, "spin", "corgi spinning in circles"),
-                FrameDefinition(9, "shake", "corgi shaking water off"),
-                FrameDefinition(10, "sleep", "corgi sleeping curled up"),
-                FrameDefinition(11, "alert", "corgi alert with ears up")
+                FrameDefinition(0, "sit idle", "corgi sitting attentively, looking forward"),
+                FrameDefinition(1, "stand alert", "corgi standing on all fours, alert pose"),
+                FrameDefinition(2, "walk left", "corgi walking left with paws moving"),
+                FrameDefinition(3, "walk right", "corgi walking right with paws moving"),
+                FrameDefinition(4, "run", "corgi running fast"),
+                FrameDefinition(5, "jump", "corgi jumping up excitedly"),
+                FrameDefinition(6, "bark", "corgi barking with mouth open")
             )
             PetType.GINGER -> listOf(
                 FrameDefinition(0, "stretch forward", "elegant cat stretching forward"),
@@ -166,34 +161,49 @@ class AnimationStudio(private val context: Context) {
     }
 
     /**
-     * Build the generation prompt
+     * Build the generation prompt - CRITICAL: must specify transparent background
      */
     private fun buildPrompt(petType: PetType, frameDef: FrameDefinition): String {
         val style = when (petType) {
             PetType.BLOOP -> "cute ghost character, translucent, ethereal, purple glow"
             PetType.NUBE_MICHI -> "fluffy cloud cat, soft, dreamy, white/cream colors"
             PetType.JELLY -> "bouncy slime creature, neon green, translucent, wobbly"
-            PetType.CORGI -> "cute corgi puppy, orange/white, round face, short legs"
+            PetType.CORGI -> "cute corgi puppy, orange/white fur, round face, short legs, brown patches on back"
             PetType.GINGER -> "elegant orange cat with pink bow, graceful, sophisticated"
             PetType.PATITO -> "cute yellow duck, rubber duck style, round, curious"
             PetType.DIABLILLO -> "mischievous imp, small horns, devil tail, red/purple, chaotic"
         }
 
+        val contextHint = when (petType) {
+            PetType.CORGI -> when (frameDef.index) {
+                0 -> "sitting attentively, looking forward, tail down"
+                1 -> "standing on all fours, alert pose, ready to move"
+                2 -> "walking left, left paw forward, right paw back"
+                3 -> "walking right, right paw forward, left paw back"
+                4 -> "running fast, all four paws in motion, ears back"
+                5 -> "jumping up with excitement, paws off ground"
+                6 -> "barking with mouth open, playful expression"
+                else -> frameDef.action
+            }
+            else -> frameDef.action
+        }
+
         return """
-            Generate a pixel art animation frame for a $style
+            Generate a single sprite frame: $style
             
-            Frame description: ${frameDef.description}
-            Action: ${frameDef.action}
+            ACTION: $contextHint
             
-            Style requirements:
-            - 128x128 pixels
-            - Transparent background (PNG)
-            - Pixel art style with clear outlines
-            - Cute and expressive
-            - Consistent with the character design
-            - No text or watermarks
+            STYLE: 128x128 pixel art, cute, chibi style, clear dark outlines, vibrant colors
             
-            Return ONLY the image, no text.
+            CRITICAL - NO BACKGROUND:
+            - The image MUST have a completely transparent background
+            - PNG format with alpha channel
+            - Only the character should be visible
+            - No background color, no floor, no shadows on ground
+            - No white, gray, or colored background
+            - Character should appear to float in transparent space
+            
+            Generate ONLY the character on transparent background.
         """.trimIndent()
     }
 
@@ -277,7 +287,7 @@ class AnimationStudio(private val context: Context) {
     }
 
     /**
-     * Extract image from Gemini response
+     * Extract image from Gemini response and remove background
      */
     private fun extractImageFromResponse(response: String): Bitmap? {
         return try {
@@ -296,7 +306,9 @@ class AnimationStudio(private val context: Context) {
                     if (mimeType.startsWith("image/")) {
                         val base64Data = inlineData.getString("data")
                         val imageBytes = Base64.decode(base64Data, Base64.DEFAULT)
-                        return BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+                        val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+                        // Remove background from generated image
+                        return removeBackground(bitmap)
                     }
                 }
             }
@@ -305,6 +317,192 @@ class AnimationStudio(private val context: Context) {
             Log.e(TAG, "Failed to extract image: ${e.message}")
             null
         }
+    }
+
+    /**
+     * Remove background from image and make it transparent
+     * Aggressive removal of any solid color background
+     */
+    private fun removeBackground(bitmap: Bitmap): Bitmap {
+        val width = bitmap.width
+        val height = bitmap.height
+        Log.d(TAG, "Removing background from ${width}x${height} image")
+
+        val result = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+
+        // Sample background color from ALL edges (not just corners)
+        val edgeColors = mutableListOf<Int>()
+
+        // Top and bottom edges
+        for (x in 0 until width step 2) {
+            edgeColors.add(bitmap.getPixel(x, 0))
+            edgeColors.add(bitmap.getPixel(x, height - 1))
+        }
+        // Left and right edges
+        for (y in 0 until height step 2) {
+            edgeColors.add(bitmap.getPixel(0, y))
+            edgeColors.add(bitmap.getPixel(width - 1, y))
+        }
+
+        // Most common edge color is the background
+        val bgColor = edgeColors.groupBy { it }
+            .maxByOrNull { it.value.size }
+            ?.key ?: 0xFFFFFFFF.toInt()
+
+        val bgR = (bgColor shr 16) and 0xFF
+        val bgG = (bgColor shr 8) and 0xFF
+        val bgB = bgColor and 0xFF
+
+        Log.d(TAG, "Detected background color: R=$bgR G=$bgG B=$bgB from ${edgeColors.size} edge samples")
+
+        // Threshold - more aggressive
+        val threshold = 60
+
+        // Process each pixel
+        val pixels = IntArray(width * height)
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height)
+
+        var transparentCount = 0
+        for (i in pixels.indices) {
+            val pixel = pixels[i]
+            val r = (pixel shr 16) and 0xFF
+            val g = (pixel shr 8) and 0xFF
+            val b = pixel and 0xFF
+
+            // Check if pixel is similar to background
+            val rDiff = Math.abs(r - bgR)
+            val gDiff = Math.abs(g - bgG)
+            val bDiff = Math.abs(b - bgB)
+            val avgDiff = (rDiff + gDiff + bDiff) / 3
+
+            // Remove if: similar to background OR pure white/light gray
+            if (avgDiff < threshold ||
+                (r > 230 && g > 230 && b > 230) ||  // White
+                (r > 200 && g > 200 && b > 200 && Math.abs(r - g) < 20 && Math.abs(g - b) < 20) // Light gray
+            ) {
+                pixels[i] = 0x00000000
+                transparentCount++
+            }
+        }
+
+        result.setPixels(pixels, 0, width, 0, 0, width, height)
+        Log.d(TAG, "First pass: made $transparentCount/${pixels.size} pixels transparent")
+
+        // Flood fill from edges to remove any remaining connected background
+        floodFillBackground(result)
+
+        // Count final transparent pixels
+        result.getPixels(pixels, 0, width, 0, 0, width, height)
+        val finalTransparent = pixels.count { (it shr 24) == 0 }
+        Log.d(TAG, "Final: $finalTransparent/${pixels.size} pixels transparent")
+
+        // Feather edges for smoother transparency
+        featherEdges(result)
+
+        Log.d(TAG, "Background removed successfully")
+        return result
+    }
+
+    /**
+     * Flood fill from edges to remove connected background pixels
+     */
+    private fun floodFillBackground(bitmap: Bitmap) {
+        val width = bitmap.width
+        val height = bitmap.height
+        val pixels = IntArray(width * height)
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height)
+
+        // Queue for flood fill
+        val queue = ArrayDeque<Int>()
+
+        // Add all edge pixels to queue
+        for (x in 0 until width) {
+            queue.add(x) // Top edge
+            queue.add((height - 1) * width + x) // Bottom edge
+        }
+        for (y in 0 until height) {
+            queue.add(y * width) // Left edge
+            queue.add(y * width + width - 1) // Right edge
+        }
+
+        // Track visited pixels
+        val visited = BooleanArray(width * height)
+
+        // Get background color from edge
+        val bgColor = pixels[0]
+        val bgR = (bgColor shr 16) and 0xFF
+        val bgG = (bgColor shr 8) and 0xFF
+        val bgB = bgColor and 0xFF
+
+        while (queue.isNotEmpty()) {
+            val idx = queue.removeFirst()
+            if (idx < 0 || idx >= pixels.size || visited[idx]) continue
+
+            val pixel = pixels[idx]
+            val r = (pixel shr 16) and 0xFF
+            val g = (pixel shr 8) and 0xFF
+            val b = pixel and 0xFF
+            val alpha = (pixel shr 24) and 0xFF
+
+            // Check if this pixel is background-like
+            val isBgLike = alpha < 128 ||
+                    (Math.abs(r - bgR) < 50 && Math.abs(g - bgG) < 50 && Math.abs(b - bgB) < 50) ||
+                    (r > 220 && g > 220 && b > 220)
+
+            if (isBgLike) {
+                visited[idx] = true
+                pixels[idx] = 0x00000000 // Make transparent
+
+                // Add neighbors
+                val x = idx % width
+                val y = idx / width
+
+                if (x > 0) queue.add(idx - 1)
+                if (x < width - 1) queue.add(idx + 1)
+                if (y > 0) queue.add(idx - width)
+                if (y < height - 1) queue.add(idx + width)
+            }
+        }
+
+        bitmap.setPixels(pixels, 0, width, 0, 0, width, height)
+    }
+
+    /**
+     * Feather edges for smoother transparency
+     */
+    private fun featherEdges(bitmap: Bitmap) {
+        val width = bitmap.width
+        val height = bitmap.height
+        val pixels = IntArray(width * height)
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height)
+
+        // Find boundary between transparent and opaque pixels
+        for (y in 1 until height - 1) {
+            for (x in 1 until width - 1) {
+                val idx = y * width + x
+                val alpha = (pixels[idx] shr 24) and 0xFF
+
+                // If pixel is opaque but neighbors are transparent, feather it
+                if (alpha > 200) {
+                    val neighbors = listOf(
+                        pixels[(y - 1) * width + x], // up
+                        pixels[(y + 1) * width + x], // down
+                        pixels[y * width + (x - 1)], // left
+                        pixels[y * width + (x + 1)]  // right
+                    )
+
+                    val transparentNeighbors = neighbors.count { ((it shr 24) and 0xFF) < 128 }
+
+                    if (transparentNeighbors > 0) {
+                        // Reduce alpha at boundary
+                        val newAlpha = (alpha * (4 - transparentNeighbors) / 4)
+                        pixels[idx] = (pixels[idx] and 0x00FFFFFF) or (newAlpha shl 24)
+                    }
+                }
+            }
+        }
+
+        bitmap.setPixels(pixels, 0, width, 0, 0, width, height)
     }
 
     /**

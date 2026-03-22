@@ -843,7 +843,8 @@ class PetView(
         JUMPING,        // Frame 5: Jumping up
         BARKING,        // Frame 6: Barking/playing
         STRETCH_UP,     // Transition: sit → stand
-        SIT_DOWN        // Transition: stand → sit
+        SIT_DOWN,       // Transition: stand → sit
+        PETTING         // Frames 7-10: Petting animation
     }
 
     private var corgiPose = CorgiPose.SITTING
@@ -911,6 +912,19 @@ class PetView(
         showBubble(listOf("¡Guau!", "❤️", "🦴", "🐾", "Woof!").random())
         playHaptic(40)
         corgiPoseTimer = 0f
+    }
+
+    /** Corgi petting animation sequence */
+    private fun corgiStartPetting() {
+        corgiPose = CorgiPose.PETTING
+        corgiIsTransitioning = true
+        corgiTransitionFrames = listOf(7, 8, 9, 10, 9, 8, 7, 0) // Happy wiggle → back to sit
+        corgiTransitionDurations = listOf(0.3f, 0.3f, 0.4f, 0.5f, 0.4f, 0.3f, 0.3f, 0.2f)
+        corgiTransitionIndex = 0
+        corgiTransitionTimer = 0f
+        currentFrame = 7
+        showBubble("❤️")
+        playHaptic(30)
     }
 
     private var reactionTimer = 0f
@@ -1029,10 +1043,10 @@ class PetView(
             nubePlumaBitmap = ContextCompat.getDrawable(context, R.drawable.pluma_0)!!
                 .toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888)
         } else if (petType == PetType.CORGI) {
-            // Load Corgi frames - 7 frames with logical transitions
+            // Load Corgi frames - 11 frames with logical transitions
             // 0: sit idle, 1: stand up, 2: walk left, 3: walk right,
-            // 4: run, 5: jump, 6: bark/play
-            spriteFrames = loadPetFrames(petType, 7, "corgi")
+            // 4: run, 5: jump, 6: bark, 7-10: petting animation
+            spriteFrames = loadPetFrames(petType, 11, "corgi")
         } else if (petType == PetType.JELLY) {
             // Load custom storyboard frames for Jelly (4 frames - bouncy slime)
             spriteFrames = listOf(
@@ -1132,13 +1146,21 @@ class PetView(
                 } else null
             }
 
-            // Fallback to base frame scaled
-            frames.add(bitmap ?: Bitmap.createBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888))
-        }
+        // Fallback to base frame scaled
+        frames.add(bitmap ?: Bitmap.createBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888))
 
-        Log.d(TAG, "Loaded ${frames.count { it.width > 1 }} frames for ${petType.displayName} from ${if (generatedDir.exists()) "generated" else "drawable"}")
-        return frames
+        // Track source for logging
+        if (generatedFile.exists()) {
+            fromGenerated = true
+        }
     }
+
+    val source = if (fromGenerated) "generated" else "drawable"
+    Log.d(TAG, "Loaded ${frames.count { it.width > 1 }} frames for ${petType.displayName} from $source")
+    return frames
+}
+
+private var fromGenerated = false
 
     /**
      * Generate 4 animation frames from a base sprite:
@@ -2585,37 +2607,53 @@ class PetView(
         
         when (petType) {
             PetType.CORGI -> {
-                // Corgi: Playful interaction with 12 frames
+                // Corgi: Petting animation with frames 7-10 (happy wiggle)
                 when {
                     interactTimer < 0.3f -> {
-                        // Excited reaction
-                        currentFrame = 6 // Happy/excited frame
-                        animScaleY = 0.9f
-                        animScaleX = 1.1f
-                        playHaptic(40)
+                        // Initial happy reaction
+                        currentFrame = 7 // Happy wiggle start
+                        animScaleY = 0.95f
+                        animScaleX = 1.05f
+                        playHaptic(30)
                     }
-                    interactTimer < 0.8f -> {
-                        // Jump of joy
-                        currentFrame = 7 // Jump frame
-                        animOffsetY = -8f
+                    interactTimer < 0.6f -> {
+                        // Wiggle up
+                        currentFrame = 8
+                        animOffsetY = -5f
+                    }
+                    interactTimer < 0.9f -> {
+                        // Peak happiness
+                        currentFrame = 9
                         animScaleY = 1.1f
-                        animScaleX = 0.95f
+                        animScaleX = 1.1f
+                        if (interactTimer < 0.5f) playHaptic(40)
+                    }
+                    interactTimer < 1.2f -> {
+                        // Belly up / rolling
+                        currentFrame = 10
+                        animScaleY = 0.9f
+                        animScaleX = 1.15f
                     }
                     interactTimer < 1.5f -> {
-                        // Tail wag / happy dance
-                        currentFrame = if ((interactTimer * 6f).toInt() % 2 == 0) 3 else 4
-                        animScaleY = 1f + sin(interactTimer * 10f) * 0.02f
-                        if ((interactTimer * 5f).toInt() % 2 == 0) playHaptic(20)
+                        // Back to happy
+                        currentFrame = 9
+                        animScaleY = 1.05f
                     }
-                    interactTimer < 2.5f -> {
-                        // Lick / affectionate
-                        currentFrame = 5 // Lick frame
+                    interactTimer < 1.8f -> {
+                        // Wiggle down
+                        currentFrame = 8
+                    }
+                    interactTimer < 2.0f -> {
+                        // Return to happy
+                        currentFrame = 7
                         animScaleY = 1f
                         animScaleX = 1f
                     }
                     else -> {
-                        // Return to idle
+                        // Return to sit
                         resetAnimTransforms()
+                        currentFrame = 0
+                        corgiPose = CorgiPose.SITTING
                         state = PetState.IDLE
                     }
                 }
