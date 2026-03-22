@@ -23,12 +23,37 @@ class TreasureAlbumActivity : AppCompatActivity() {
         val recyclerView = findViewById<RecyclerView>(R.id.recyclerViewTreasures)
         val tvEmptyState = findViewById<TextView>(R.id.tvEmptyState)
 
-        adapter = TreasureAdapter()
+        val dao = AppDatabase.getDatabase(this).treasureDao()
+        
+        // Purgado de Base de Datos para limpiar los errores del Corgi
+        scope.launch(Dispatchers.IO) {
+            val rogueItem = dao.getTreasure("Hueso Prehistórico")
+            if (rogueItem != null) {
+                dao.deleteTreasure(rogueItem)
+            }
+        }
+
+        adapter = TreasureAdapter { treasure ->
+            scope.launch {
+                if (treasure.count <= 1) {
+                    dao.deleteTreasure(treasure)
+                } else {
+                    dao.updateTreasure(treasure.copy(count = treasure.count - 1))
+                }
+                
+                // Alert Pet!
+                val consumeIntent = android.content.Intent(this@TreasureAlbumActivity, PetService::class.java).apply {
+                    action = PetService.ACTION_CONSUME_TREASURE
+                    putExtra("TREASURE_EMOJI", treasure.emoji)
+                }
+                androidx.core.content.ContextCompat.startForegroundService(this@TreasureAlbumActivity, consumeIntent)
+                android.widget.Toast.makeText(this@TreasureAlbumActivity, "¡Le diste un ${treasure.emoji} a tu mascota!", android.widget.Toast.LENGTH_SHORT).show()
+            }
+        }
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = adapter
 
         // Fetch using coroutine
-        val dao = AppDatabase.getDatabase(this).treasureDao()
         scope.launch {
             dao.getAllTreasures().collect { treasures ->
                 if (treasures.isEmpty()) {

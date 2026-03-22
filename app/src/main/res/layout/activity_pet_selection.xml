@@ -210,5 +210,52 @@
             </LinearLayout>
         </LinearLayout>
 
+        <!-- Row 3: Ginger -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="24dp">
+
+            <!-- Ginger -->
+            <LinearLayout
+                android:id="@+id/cardGinger"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:background="@drawable/bg_card_pet"
+                android:padding="14dp"
+                android:elevation="4dp"
+                android:clickable="true"
+                android:focusable="true">
+
+                <ImageView
+                    android:layout_width="96dp"
+                    android:layout_height="96dp"
+                    android:src="@drawable/pet_ginger"
+                    android:scaleType="fitCenter"
+                    android:contentDescription="Ginger" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Ginger"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="#1A1A2E"
+                    android:layout_marginTop="8dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/ginger_desc"
+                    android:textSize="11sp"
+                    android:textColor="#666680"
+                    android:gravity="center" />
+            </LinearLayout>
+        </LinearLayout>
+
     </LinearLayout>
 </ScrollView>

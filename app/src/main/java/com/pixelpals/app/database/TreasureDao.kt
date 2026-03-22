@@ -21,4 +21,7 @@ interface TreasureDao {
 
     @Update
     suspend fun updateTreasure(treasure: TreasureItem)
+
+    @androidx.room.Delete
+    suspend fun deleteTreasure(treasure: TreasureItem)
 }

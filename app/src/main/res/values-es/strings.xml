@@ -24,6 +24,7 @@
     <string name="nube_michi_desc">El Gatito de Nube\nDormilón y esponjoso</string>
     <string name="jelly_desc">El Slime de Gelatina\nRebotón y elástico</string>
     <string name="corgi_desc">El Perrito Explorador\nEnérgico y leal</string>
+    <string name="ginger_desc">La Gata Elegante\nGraciosa y cariñosa</string>
 
     <!-- Notificación -->
     <string name="notif_channel_name">PixelPals Mascota</string>

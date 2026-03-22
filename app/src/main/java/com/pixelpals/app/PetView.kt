@@ -15,6 +15,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
 import kotlin.math.*
 import kotlin.random.Random
+import android.util.Log
 
 /**
  * PetView — El alma de PixelPals.
@@ -62,6 +63,7 @@ class PetView(
     // ══════════════════════════════════════════════════════════
 
     companion object {
+        private const val TAG = "PetView"
         private const val FRAME_DELAY_MS = 28L     // ~35 FPS (smooth + battery friendly)
         private const val GROUND_MARGIN = 120
         private const val BLINK_MIN_INTERVAL = 3f  // seconds
@@ -71,18 +73,24 @@ class PetView(
         private const val SECRET_IDLE_WAIT = 25f   // seconds before secret events
         private const val DOUBLE_TAP_THRESHOLD = 300L // ms
         private const val SYSTEM_REACTION_DURATION = 3f
+        private const val GINGER_WINK_INTERVAL = 120f // seconds between winks
+        private const val JUMP_VELOCITY_THRESHOLD = 5f // velocity to trigger landing squash
     }
 
     // ══════════════════════════════════════════════════════════
-    // ▌ SPRITE FRAMES (4-frame animation system)
+    // ▌ SPRITE FRAMES (Multi-frame animation system: 4-6 frames per pet)
     // ══════════════════════════════════════════════════════════
 
-    private val spriteFrames: List<Bitmap>      // 4 frames: idle1, idle2, action1, action2
+    private val spriteFrames: List<Bitmap>      // Bloop: 4, Nube-Michi: 4, Corgi: 12, Jelly: 12, Ginger: 11
     private var currentFrame = 0
     private var frameTimer = 0f
     private val frameInterval = 0.15f           // 150ms per frame
     private val spritePaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
     private val spriteRect = RectF()
+
+    // Nube-Michi pluma (feather) for falling
+    private var nubePlumaBitmap: Bitmap? = null
+    private var showPluma = false
 
     // ══════════════════════════════════════════════════════════
     // ▌ PARTICLES
@@ -139,6 +147,135 @@ class PetView(
     private var nextTreasureTime = 180f + Random.nextFloat() * 120f  // 3-5 minutes
     private var isAirplaneMode = false
     private var corgiLickTimer = -1f        // -1 = not licking
+
+    // ══════════════════════════════════════════════════════════
+    // ▌ GINGER STATE MACHINE
+    // ══════════════════════════════════════════════════════════
+    // Frames: 0=stretchFwd, 1=stretchBack, 2=standing, 3=wink,
+    //         4=sitting, 5=lickPaw, 6=cleanFace, 7=pout,
+    //         8=bellyStart, 9=rolling, 10=bellyUp
+
+    enum class GingerPose {
+        SITTING,        // ginger_4 - base idle
+        STANDING,       // ginger_2 - on all fours, ready to move
+        STRETCH_UP,     // ginger_4 → ginger_0 → ginger_1 → ginger_2 (sitting to standing)
+        STRETCH_DOWN,   // ginger_2 → ginger_1 → ginger_0 → ginger_4 (standing to sitting)
+        WALKING,        // ginger_2 with walking animation
+        STRETCH_FWD,    // ginger_0 - mid-stretch while walking pause
+        GROOMING_FACE,  // ginger_6 - cleaning face
+        GROOMING_PAW,   // ginger_5 - licking paw
+        WINK,           // ginger_3 - wink
+        POUT,           // ginger_7 - ignored pout
+        BELLY_RUB,      // ginger_8 → ginger_9 → ginger_10
+        FALLING         // ginger_1 - stretch in air, land on feet
+    }
+
+    private var gingerPose = GingerPose.SITTING
+    private var gingerPoseTimer = 0f
+    private var gingerTransitionFrames = listOf<Int>()
+    private var gingerTransitionDurations = listOf<Float>()
+    private var gingerTransitionIndex = 0
+    private var gingerIsTransitioning = false
+
+    // Ginger timers
+    private var gingerGroomingTimer = 0f
+    private var gingerGroomingCooldown = 0f
+    private var gingerWinkTimer = 0f
+    private var gingerIsWinking = false
+    private var gingerDoubleXPActive = false
+    private var gingerPurrIntensity = 0f
+    private var gingerIdleSitTimer = 0f  // Time sitting idle before grooming
+    private var gingerWalkTimer = 0f
+    private var gingerWalkPauseTimer = 0f
+
+    // ── Ginger Transition Functions ──
+
+    /** Start transition: SITTING → STANDING */
+    private fun gingerStartStand() {
+        if (gingerPose == GingerPose.STANDING || gingerIsTransitioning) return
+        gingerIsTransitioning = true
+        gingerTransitionFrames = listOf(4, 0, 1, 2) // sit → stretchFwd → stretchBack → stand
+        gingerTransitionDurations = listOf(0.5f, 0.8f, 0.8f, 0.5f) // Slower, more elegant
+        gingerTransitionIndex = 0
+        gingerPoseTimer = 0f
+        currentFrame = gingerTransitionFrames[0]
+    }
+
+    /** Start transition: STANDING → SITTING */
+    private fun gingerStartSit() {
+        if (gingerPose == GingerPose.SITTING || gingerIsTransitioning) return
+        gingerIsTransitioning = true
+        gingerTransitionFrames = listOf(2, 1, 0, 4) // stand → stretchBack → stretchFwd → sit
+        gingerTransitionDurations = listOf(0.5f, 0.8f, 0.8f, 0.5f) // Slower, more elegant
+        gingerTransitionIndex = 0
+        gingerPoseTimer = 0f
+        currentFrame = gingerTransitionFrames[0]
+    }
+
+    /** Start grooming sequence (only when sitting) */
+    private fun gingerStartGrooming() {
+        if (gingerPose != GingerPose.SITTING) return
+        gingerIsTransitioning = true
+        gingerTransitionFrames = listOf(4, 6, 5, 3, 4) // sit → cleanFace → lickPaw → wink → sit
+        gingerTransitionDurations = listOf(2.0f, 2.5f, 2.5f, 1.5f, 1.0f) // Much slower grooming
+        gingerTransitionIndex = 0
+        gingerPoseTimer = 0f
+        currentFrame = gingerTransitionFrames[0]
+    }
+
+    /** Start belly rub / petting sequence - rolls and tumbles */
+    private fun gingerStartBellyRub() {
+        gingerIsTransitioning = true
+        // ginger_7 (lay down) → ginger_8 (start roll) → ginger_9 (rolling) → ginger_10 (belly up)
+        gingerTransitionFrames = listOf(7, 8, 9, 10)
+        gingerTransitionDurations = listOf(1.0f, 1.2f, 1.5f, 4.0f) // Slow, playful rolling
+        gingerTransitionIndex = 0
+        gingerPoseTimer = 0f
+        gingerPose = GingerPose.BELLY_RUB
+        currentFrame = gingerTransitionFrames[0]
+    }
+
+    /** Update transition animation */
+    private fun updateGingerTransition(dt: Float): Boolean {
+        if (!gingerIsTransitioning) return false
+        gingerPoseTimer += dt
+        if (gingerTransitionIndex < gingerTransitionDurations.size &&
+            gingerPoseTimer >= gingerTransitionDurations[gingerTransitionIndex]) {
+            gingerTransitionIndex++
+            gingerPoseTimer = 0f
+            if (gingerTransitionIndex < gingerTransitionFrames.size) {
+                currentFrame = gingerTransitionFrames[gingerTransitionIndex]
+                // Haptic feedback on stretch frames
+                if (currentFrame == 0 || currentFrame == 1) {
+                    playHaptic(15)
+                }
+            }
+        }
+        if (gingerTransitionIndex >= gingerTransitionFrames.size) {
+            gingerIsTransitioning = false
+            // Set final pose
+            val finalFrame = gingerTransitionFrames.last()
+            when (finalFrame) {
+                2 -> gingerPose = GingerPose.STANDING
+                4 -> gingerPose = GingerPose.SITTING
+                10 -> gingerPose = GingerPose.BELLY_RUB
+            }
+            currentFrame = finalFrame
+            return false
+        }
+        return true
+    }
+
+    /** Ginger always lands on feet elegantly */
+    private fun gingerLandOnFeet() {
+        currentFrame = 2 // ginger_2: standing pose (on all fours)
+        gingerPose = GingerPose.STANDING
+        gingerIdleSitTimer = 0f
+        playHaptic(25) // Landing haptic
+        showBubble("🐱") // Confident landing
+        state = PetState.IDLE
+        resetAnimTransforms()
+    }
 
     /** Set from PetService after creation */
     fun setProgress(p: PetProgress) { progress = p }
@@ -244,6 +381,7 @@ class PetView(
     // ══════════════════════════════════════════════════════════
 
     private var isAnimating = false
+    private var purrTimer = 0f
     private val handler = Handler(Looper.getMainLooper())
     private val animationRunnable = object : Runnable {
         override fun run() {
@@ -259,11 +397,95 @@ class PetView(
     // ══════════════════════════════════════════════════════════
 
     init {
-        // Load sprite and generate 4 animation frames
-        val drawable = ContextCompat.getDrawable(context, petType.spriteResId)!!
-        val rawBitmap = drawable.toBitmap(petSpriteSize, petSpriteSize)
-        val baseBitmap = removeBackground(rawBitmap)
-        spriteFrames = generateFrames(baseBitmap)
+        if (petType == PetType.BLOOP) {
+            // Load 12 frames for Bloop (ghost)
+            spriteFrames = listOf(
+                ContextCompat.getDrawable(context, R.drawable.fantasma_0)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.fantasma_1)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.fantasma_2)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.fantasma_3)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.fantasma_4)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.fantasma_5)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.fantasma_6)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.fantasma_7)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.fantasma_8)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.fantasma_9)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.fantasma_10)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.fantasma_11)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888)
+            )
+            // Ghostly transparency baseline
+            animAlpha = 0.8f
+        } else if (petType == PetType.NUBE_MICHI) {
+            // Load custom storyboard frames for Nube-Michi (4 frames - cloud cat)
+            spriteFrames = listOf(
+                ContextCompat.getDrawable(context, R.drawable.gato_0)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.gato_1)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.gato_2)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.gato_3)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888)
+            )
+            // Load pluma (feather) - shown ONLY when falling
+            nubePlumaBitmap = ContextCompat.getDrawable(context, R.drawable.pluma_0)!!
+                .toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888)
+        } else if (petType == PetType.CORGI) {
+            // Load custom storyboard frames for Corgi (12 frames - playful dog)
+            spriteFrames = listOf(
+                ContextCompat.getDrawable(context, R.drawable.perro_0)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.perro_1)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.perro_2)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.perro_3)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.perro_4)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.perro_5)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.perro_6)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.perro_7)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.perro_8)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.perro_9)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.perro_10)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.perro_11)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888)
+            )
+        } else if (petType == PetType.JELLY) {
+            // Load custom storyboard frames for Jelly (12 frames - bouncy slime)
+            spriteFrames = listOf(
+                ContextCompat.getDrawable(context, R.drawable.jelly_0)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.jelly_1)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.jelly_2)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.jelly_3)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.jelly_4)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.jelly_5)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.jelly_6)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.jelly_7)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.jelly_8)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.jelly_9)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.jelly_10)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.jelly_11)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888)
+            )
+            // Neon translucency baseline
+            animAlpha = 0.95f
+        } else if (petType == PetType.GINGER) {
+            // Load 11 frames for Ginger's feline elegance system
+            // Frame mapping: 0=stretch1, 1=stretch2, 2=stretch3/edge_lean, 3=wink,
+            //                4=sit, 5=lick_paw, 6=clean_face, 7=pout_pose,
+            //                8=belly_start, 9=roll, 10=belly_up
+            spriteFrames = listOf(
+                ContextCompat.getDrawable(context, R.drawable.ginger_0)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.ginger_1)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.ginger_2)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.ginger_3)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.ginger_4)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.ginger_5)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.ginger_6)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.ginger_7)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.ginger_8)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.ginger_9)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.ginger_10)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888)
+            )
+            currentFrame = 4 // Start with sitting pose
+        } else {
+            // Load standard sprite and generate 4 animation frames with strict 32-bit depth
+            val drawable = ContextCompat.getDrawable(context, petType.spriteResId)!!
+            val rawBitmap = drawable.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888)
+            val baseBitmap = removeBackground(rawBitmap)
+            spriteFrames = generateFrames(baseBitmap)
+        }
 
         setBackgroundColor(Color.TRANSPARENT)
         setLayerType(LAYER_TYPE_HARDWARE, null)
@@ -290,6 +512,7 @@ class PetView(
         val h = base.height
         val result = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(result)
+        canvas.drawColor(Color.argb(0, 255, 255, 255), PorterDuff.Mode.CLEAR)
         val matrix = Matrix()
         matrix.setScale(sx, sy, w / 2f, h / 2f)
         canvas.drawBitmap(base, matrix, Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG))
@@ -360,7 +583,7 @@ class PetView(
 
             // Tolerance: 60 for solid removal, up to 100 for antialiasing
             if (dist < 60f) {
-                pixels[i] = Color.TRANSPARENT
+                pixels[i] = Color.argb(0, bgR, bgG, bgB) // Transparent with bleeding color
                 
                 // Add neighbors
                 val neighbors = intArrayOf(
@@ -461,16 +684,57 @@ class PetView(
         frameTimer += dt
         if (frameTimer >= frameInterval) {
             frameTimer = 0f
-            val isAction = state == PetState.INTERACTING || state == PetState.LANDING || state == PetState.JUMPING
-            if (isAction) {
-                currentFrame = 2 + ((currentFrame - 1) % 2)  // Cycle frames 2-3 (action)
+            if (petType == PetType.BLOOP) {
+                currentFrame = when(state) {
+                    PetState.DRAGGING, PetState.FALLING -> 2
+                    PetState.SECRET_IDLE -> 3
+                    else -> if (isBlinking) 1 else 0 // Only blink randomly every 3-7s!
+                }
+            } else if (petType == PetType.NUBE_MICHI) {
+                currentFrame = when(state) {
+                    PetState.DRAGGING, PetState.INTERACTING -> 4           // Awake/happy
+                    PetState.FALLING -> if (sin(time * 4.0f) > 0) 2 else 3 // Curving left/right
+                    else -> ((time * 1.0f).toInt() % 2)                    // Slow breathing every 1s
+                }
+            } else if (petType == PetType.CORGI) {
+                currentFrame = when(state) {
+                    PetState.DRAGGING, PetState.FALLING -> 1
+                    PetState.WALKING -> ((time * 6.6f).toInt() % 3) // Alternates 0, 1, 2 every 150ms
+                    PetState.INTERACTING -> {
+                        if (isSecretActive) 5 else 3 + ((time * 3f).toInt() % 2)
+                    }
+                    else -> 0
+                }
+            } else if (petType == PetType.JELLY) {
+                currentFrame = when(state) {
+                    PetState.JUMPING -> 3 // Extensión vertical
+                    PetState.FALLING -> 3
+                    PetState.LANDING, PetState.INTERACTING, PetState.DRAGGING -> 2 // Flattened/Squash
+                    else -> ((time * 0.83f).toInt() % 2) // Breathing 1200ms
+                }
             } else {
-                currentFrame = (currentFrame + 1) % 2        // Cycle frames 0-1 (breathing)
+                val isAction = state == PetState.INTERACTING || state == PetState.LANDING || state == PetState.JUMPING
+                if (isAction) {
+                    currentFrame = 2 + ((currentFrame - 1) % 2)  // Cycle frames 2-3 (action)
+                } else {
+                    currentFrame = (currentFrame + 1) % 2        // Cycle frames 0-1 (breathing)
+                }
             }
         }
 
         // ── Particle system ──
         updateParticles(dt)
+
+        // ── Nube-Michi purring (Long hold) ──
+        if (petType == PetType.NUBE_MICHI && isDragging) {
+            purrTimer += dt
+            if (purrTimer > 0.55f && System.currentTimeMillis() - dragStartTime > 300) {
+                purrTimer = 0f
+                playHaptic(50) // Micro-vibration purr
+            }
+        } else {
+            purrTimer = 0f
+        }
 
         // Bloop: emit trail bubbles while moving
         if (petType == PetType.BLOOP && (state == PetState.FALLING || state == PetState.DRAGGING)) {
@@ -573,40 +837,165 @@ class PetView(
     private fun updateIdleAnimation(dt: Float) {
         when (petType.idleStyle) {
             IdleStyle.SINE_FLOAT -> {
-                // Bloop: ethereal floating
-                animOffsetY = sin(time * 1.2f) * 10f
-                animOffsetX = sin(time * 0.6f) * 5f
-                animAlpha = 0.82f + sin(time * 1.8f) * 0.12f
+                // Bloop: Ethereal ghost floating with 12 frames
+                // Frames: 0-3 base floating, 4-7 playful poses, 8-11 special effects
+                animOffsetY = sin(time * 2.0f) * 20f
+                animOffsetX = cos(time * 1.5f) * 10f
+                animAlpha = 0.75f + sin(time * 3f) * 0.15f // Ghost transparency pulsating
 
-                // Slow drift via window position
-                applyWindowOffset(
-                    dx = (sin(time * 0.3f) * 0.5f).toInt(),
-                    dy = (sin(time * 0.8f) * 0.3f).toInt()
-                )
+                // Cycle through floating frames
+                val floatCycle = (time * 0.6f) % 8f
+                currentFrame = when {
+                    floatCycle < 1.5f -> 0  // Base floating
+                    floatCycle < 2.5f -> 1  // Float variant 1
+                    floatCycle < 3.5f -> 2  // Float variant 2
+                    floatCycle < 4.5f -> 3  // Float variant 3
+                    floatCycle < 5.5f -> 4  // Playful peek
+                    floatCycle < 6.5f -> 5  // Shy hide
+                    floatCycle < 7.5f -> 6  // Curious look
+                    else -> 7               // Return to base
+                }
+
+                // Random cute ghost reactions
+                if (Random.nextFloat() < 0.004f && reactionTimer > 8f) {
+                    val pop = listOf("👻", "🫧", "✨", "💫", "🌙", "⭐").random()
+                    triggerReaction(pop)
+                }
             }
             IdleStyle.BREATHING -> {
-                // Nube-Michi: cloud breathing (expand/contract)
-                val t = sin(time * 1.6f)
-                animScaleX = 1f + t * 0.05f
-                animScaleY = 1f - t * 0.03f
-                animOffsetY = t * 2f
-            }
-            IdleStyle.JELLY_WOBBLE -> {
-                // Jelly: constant gelatinous wobble
-                animScaleX = 1f + sin(time * 3.5f) * 0.07f
-                animScaleY = 1f - sin(time * 3.5f) * 0.05f + cos(time * 2.8f) * 0.03f
-                animOffsetY = abs(sin(time * 2f)) * 3f
+                // Nube-Michi: Cloud-like floating - gentle up/down, breathing animation
+                // Frame 0-1: breathing variants, 2: perch, 3: playful
+                val floatY = sin(time * 1.2f) * 15f  // Gentle float up/down
+                val floatX = cos(time * 0.8f) * 8f   // Slight horizontal drift
+                animOffsetY = floatY
+                animOffsetX = floatX
+
+                // Breathing scale animation
+                val breathe = sin(time * 1.5f) * 0.04f
+                animScaleY = 1f + breathe
+                animScaleX = 1f - breathe * 0.3f
+
+                // Cycle through frames slowly for variety
+                val frameCycle = (time * 0.5f) % 4f
+                currentFrame = when {
+                    frameCycle < 1.5f -> 0  // Main cloud pose
+                    frameCycle < 2.5f -> 1  // Breathing variant
+                    frameCycle < 3.5f -> 2  // Perch/alert
+                    else -> 3               // Playful pose
+                }
+
+                // Hide pluma when not falling
+                showPluma = false
             }
             IdleStyle.SIT_BARK -> {
-                // Corgi: gentle sway + occasional bark
-                animOffsetX = sin(time * 2.2f) * 2.5f
-                animOffsetY = abs(sin(time * 1.5f)) * 1.5f
+                // Corgi: Playful idle with 12 frames
+                // Frames: 0-3 idle poses, 4-6 happy/playful, 7-9 walking, 10-11 special
+                animOffsetX = sin(time * 2.2f) * 3f
+                animOffsetY = abs(sin(time * 1.5f)) * 2f
 
-                moveTimer += dt
-                if (moveTimer > nextMoveTime && !showBubble) {
-                    showBubble("🦴❤️🐾".chunked(2).random())
-                    nextMoveTime = Random.nextFloat() * 5f + 4f
-                    moveTimer = 0f
+                // Cycle through idle frames for variety
+                val idleCycle = (time * 0.8f) % 6f
+                currentFrame = when {
+                    idleCycle < 1.5f -> 0  // Main idle
+                    idleCycle < 2.5f -> 1  // Slight turn
+                    idleCycle < 3.5f -> 2  // Alert
+                    idleCycle < 4.5f -> 3  // Happy
+                    idleCycle < 5.5f -> 4  // Playful pose
+                    else -> 5              // Tail wag frame
+                }
+
+                // Randomly pop a dialog - more frequent and coquettish
+                if (Random.nextFloat() < 0.008f && reactionTimer > 8f) {
+                    val pop = listOf("Bark!", "❤️", "🦴", "🐶", "💕", "🎾", "🐾").random()
+                    triggerReaction(pop)
+                }
+            }
+            IdleStyle.JELLY_WOBBLE -> {
+                // Jelly: Bouncy slime with 12 frames - wobbly and coquettish
+                // Frames: 0-3 base idle, 4-6 wobble variants, 7-9 stretch, 10-11 special
+                val sine = sin(time * Math.PI / 0.6f).toFloat()
+                animScaleY = 1.0f + sine * 0.06f
+                animScaleX = 1.0f - sine * 0.04f
+                animOffsetY = (petSpriteSize / 2f) * (1f - animScaleY)
+
+                // Cycle through frames for variety
+                val wobbleCycle = (time * 1.2f) % 8f
+                currentFrame = when {
+                    wobbleCycle < 1.0f -> 0  // Base idle
+                    wobbleCycle < 2.0f -> 1  // Wobble left
+                    wobbleCycle < 3.0f -> 2  // Wobble right
+                    wobbleCycle < 4.0f -> 3  // Happy squish
+                    wobbleCycle < 5.0f -> 4  // Stretch up
+                    wobbleCycle < 6.0f -> 5  // Bounce
+                    wobbleCycle < 7.0f -> 6  // Tilt
+                    else -> 7                // Return
+                }
+
+                // Random cute bubble pop
+                if (Random.nextFloat() < 0.006f && reactionTimer > 6f) {
+                    val pop = listOf("✨", "💖", "🫧", "🍬", "🌈", "💫").random()
+                    triggerReaction(pop)
+                }
+            }
+            IdleStyle.GROOMING -> {
+                // Ginger: Complex pose system
+                // When IDLE state: manages sitting, standing, grooming transitions
+
+                // Update any ongoing transition first
+                if (updateGingerTransition(dt)) {
+                    // Still transitioning - breathing animation on current frame
+                    val breathe = sin(time * 2f) * 0.01f
+                    animScaleY = 1f + breathe
+                    return
+                }
+
+                when (gingerPose) {
+                    GingerPose.SITTING -> {
+                        // Sitting idle - breathe gently
+                        val breathe = sin(time * 1.5f) * 0.015f
+                        animScaleY = 1f + breathe
+                        animScaleX = 1f - breathe * 0.5f
+                        currentFrame = 4
+
+                        // Start grooming after sitting idle for a while
+                        gingerIdleSitTimer += dt
+                        gingerGroomingCooldown -= dt
+                        if (gingerIdleSitTimer > 5f && gingerGroomingCooldown <= 0f) {
+                            gingerStartGrooming()
+                            gingerIdleSitTimer = 0f
+                            gingerGroomingCooldown = 8f
+                        }
+
+                        // Wink timer while sitting
+                        gingerWinkTimer += dt
+                        if (gingerWinkTimer >= GINGER_WINK_INTERVAL && !gingerIsWinking) {
+                            gingerIsWinking = true
+                            gingerDoubleXPActive = true
+                            gingerWinkTimer = 0f
+                            currentFrame = 3
+                            showBubble("😉")
+                            handler.postDelayed({
+                                gingerDoubleXPActive = false
+                                gingerIsWinking = false
+                            }, 3000)
+                        }
+                    }
+                    GingerPose.STANDING -> {
+                        // Standing on all fours - subtle idle sway
+                        currentFrame = 2
+                        animOffsetX = sin(time * 1.8f) * 1.5f
+                        animOffsetY = abs(sin(time * 2.5f)) * 1f
+
+                        // After standing idle for a while, sit down
+                        gingerIdleSitTimer += dt
+                        if (gingerIdleSitTimer > 8f) {
+                            gingerStartSit()
+                            gingerIdleSitTimer = 0f
+                        }
+                    }
+                    else -> {
+                        // Other poses keep their frame
+                    }
                 }
             }
         }
@@ -621,6 +1010,24 @@ class PetView(
         if (petType == PetType.NUBE_MICHI) {
             // High air friction for Cloud Cat (like a feather)
             animRotation = sin(time * 3f) * 15f
+            showPluma = false // Cat is held, no pluma
+            animAlpha = 1f // Ensure cat is visible
+        } else if (petType == PetType.GINGER) {
+            // Ginger: held gently, shows appropriate pose, progressive purring
+            // Keep current pose (sitting or standing) while held
+            currentFrame = if (gingerPose == GingerPose.STANDING || gingerPose == GingerPose.WALKING) 2 else 4
+            animRotation = 0f // Elegant - no wobble
+            purrTimer += dt
+            // Progressive purring: starts soft, increases over time
+            gingerPurrIntensity = (purrTimer / 3f).coerceIn(0f, 1f)
+            if (purrTimer > 0.55f) {
+                val intensity = (20 + gingerPurrIntensity * 40).toLong()
+                playHaptic(intensity)
+                purrTimer = 0f
+            }
+            // Subtle happy squish
+            animScaleY = 1f - gingerPurrIntensity * 0.03f
+            animScaleX = 1f + gingerPurrIntensity * 0.02f
         } else {
             // General pataleo
             animRotation = sin(time * 15f) * 10f
@@ -637,23 +1044,46 @@ class PetView(
         // Reset rotation from drag
         animRotation *= 0.85f
         animScaleX = 1f
-        animScaleY = 1f + (velocityY / petType.terminalVelocity) * 0.15f // Stretch vertically while falling fast
+        animScaleY = 1f + (velocityY / petType.terminalVelocity.coerceAtLeast(1f)) * 0.15f
 
-        // Special case: Bloop doesn't fall, just floats down slowly
-        val gravity = if (petType == PetType.BLOOP) 0.3f else petType.gravity
-        val terminalV = if (petType == PetType.BLOOP) 4f else petType.terminalVelocity
+        if (petType == PetType.BLOOP) {
+            state = PetState.IDLE
+            return
+        }
+
+        val gravity = petType.gravity
+        val terminalV = petType.terminalVelocity
 
         velocityY += gravity
         velocityY = velocityY.coerceAtMost(terminalV)
         params.y += velocityY.toInt()
 
-        // Nube-Michi special: sway while falling (feather)
+        // Nube-Michi special: TRANSFORM TO PLUMA when falling
+        // The cat disappears and only the feather is visible
         if (petType == PetType.NUBE_MICHI) {
-            params.x += (sin(time * 4f) * 2f).toInt()
-            animRotation = sin(time * 3f) * 12f
+            params.x += (sin(time * 3.0f) * 8.0f).toInt() // Feather drifts more
+            showPluma = true
+            animAlpha = 0f // Cat is invisible - only pluma shows
+            currentFrame = 0
         }
 
-        // Ground collision
+        // Ginger special: Cat always lands on feet - does graceful tumble in air
+        if (petType == PetType.GINGER) {
+            gingerPose = GingerPose.FALLING
+            // Animate through different poses while falling (tumbling gracefully)
+            val fallTime = time % 1.5f // Cycle every 1.5 seconds
+            currentFrame = when {
+                fallTime < 0.3f -> 1  // ginger_1: stretch back
+                fallTime < 0.6f -> 8  // ginger_8: rolling start
+                fallTime < 0.9f -> 9  // ginger_9: rolling
+                fallTime < 1.2f -> 0  // ginger_0: stretch forward
+                else -> 1             // back to stretch
+            }
+            // Slight horizontal drift while tumbling
+            params.x += (sin(time * 3f) * 3f).toInt()
+        }
+
+        // Limit to screen bounds collision
         if (params.y >= groundY) {
             params.y = groundY
             landVelocity = velocityY
@@ -661,13 +1091,25 @@ class PetView(
             velocityX = 0f
             animRotation = 0f
 
+            // Ginger: Always lands on feet elegantly - lands standing, no squash
+            if (petType == PetType.GINGER) {
+                gingerLandOnFeet()
+                return
+            }
+
             // Juicy landing: start squash if impact was significant
-            if (landVelocity > 5f) {
+            if (landVelocity > JUMP_VELOCITY_THRESHOLD) {
                 state = PetState.LANDING
                 landTimer = 0f
             } else {
                 state = PetState.IDLE
                 resetAnimTransforms()
+            }
+            // Hide pluma on landing - cat reappears
+            if (petType == PetType.NUBE_MICHI) {
+                showPluma = false
+                animAlpha = 1f // Cat is visible again
+                currentFrame = 2 // Perch frame after landing
             }
         }
 
@@ -683,6 +1125,14 @@ class PetView(
      *   3. SETTLE (0.18-0.35s): ease to rest
      */
     private fun updateLandingSquash(dt: Float) {
+        // Ginger always lands on feet - skip squash entirely
+        if (petType == PetType.GINGER) {
+            currentFrame = 4 // sitting pose
+            resetAnimTransforms()
+            state = PetState.IDLE
+            return
+        }
+
         landTimer += dt
         val progress = (landTimer / LAND_SQUASH_DURATION).coerceIn(0f, 1f)
 
@@ -709,6 +1159,10 @@ class PetView(
             resetAnimTransforms()
             // Done — bounce for Jelly, idle for others
             if (petType == PetType.JELLY && landVelocity > 12f) {
+                // Spring-like double haptic feedback for strong landing
+                playHaptic(30)
+                handler.postDelayed({ playHaptic(15) }, 80)
+                
                 velocityY = -landVelocity * petType.bounceDamping
                 state = PetState.FALLING
             } else {
@@ -734,26 +1188,37 @@ class PetView(
             }
 
             MovementStyle.PARABOLIC_JUMP -> {
-                // Jelly: periodic jumps
+                // Jelly: rhythmic charging and explosive jumping
                 moveTimer += dt
-                if (moveTimer > nextMoveTime && params.y >= groundY - 5) {
-                    velocityY = -(Random.nextFloat() * 12f + 8f)
-                    velocityX = (Random.nextFloat() - 0.5f) * 6f
-                    state = PetState.JUMPING
-                    nextMoveTime = Random.nextFloat() * 2f + 1f
-                    moveTimer = 0f
+                if (params.y >= groundY - 5 && state == PetState.IDLE) {
+                    val chargeDuration = 0.4f
+                    val jumpTime = (petType.jumpInterval / 1000f) + (nextMoveTime % 2f)
+                    
+                    if (moveTimer > jumpTime - chargeDuration && moveTimer <= jumpTime) {
+                        // PRE-JUMP (SQUASH)
+                        val progress = (moveTimer - (jumpTime - chargeDuration)) / chargeDuration
+                        animScaleY = 1f - (0.1f * progress) // Compress 10%
+                        animScaleX = 1f + (0.1f * progress) 
+                        animOffsetY = (petSpriteSize / 2f) * (1f - animScaleY)
+                    } else if (moveTimer > jumpTime) {
+                        // EXPLOSIVE JUMP
+                        velocityY = -22f
+                        velocityX = (Random.nextFloat() - 0.5f) * 10f
+                        state = PetState.JUMPING
+                        animAlpha = 0.7f // Neon mode engaged
+                        nextMoveTime = Random.nextFloat() * 2f
+                        moveTimer = 0f
+                    }
                 }
             }
 
             MovementStyle.WALK_RUN -> {
-                // Corgi: walks left/right
+                // Corgi: walks left/right, climbs edges
                 moveTimer += dt
                 if (moveTimer > nextMoveTime && !isMoving) {
-                    velocityX = if (Random.nextBoolean()) {
-                        Random.nextFloat() * 2.5f + 1f
-                    } else {
-                        -(Random.nextFloat() * 2.5f + 1f)
-                    }
+                    val speedMult = if (petType == PetType.CORGI) 2.5f else 1.0f  // Super speed for Corgi
+                    val maxSpeed = (2f + Random.nextFloat() * 1.5f) * speedMult
+                    velocityX = if (Random.nextBoolean()) maxSpeed else -maxSpeed
                     isMoving = true
                     moveActionTimer = 0f
                     nextMoveTime = Random.nextFloat() * 4f + 2f
@@ -768,11 +1233,131 @@ class PetView(
                     // Subtle walking bob
                     animOffsetY = abs(sin(moveActionTimer * 8f)) * 3f
 
+                    // Digging for treasures (Corgi special - 1/500 per frame ~0.002f)
+                    if (petType == PetType.CORGI && Random.nextFloat() < 0.002f) {
+                        isMoving = false
+                        velocityX = 0f
+                        progress?.addTreasure("🦴")
+                        playHaptic(100)
+                        triggerReaction("🦴")
+                        return
+                    }
+
                     if (moveActionTimer > 2.5f || params.x <= 0 || params.x >= screenWidth - petSpriteSize) {
                         velocityX = 0f
                         isMoving = false
                     }
                     updateWindowLayout(params)
+                }
+            }
+
+            MovementStyle.ELEGANT_STRETCH -> {
+                // Ginger: Playful cat - walks everywhere, jumps occasionally, plays
+                moveTimer += dt
+
+                // Don't start moving if still transitioning
+                if (gingerIsTransitioning) return
+
+                when (gingerPose) {
+                    GingerPose.SITTING -> {
+                        // Sitting - stand up to move
+                        if (moveTimer > nextMoveTime) {
+                            gingerStartStand()
+                            moveTimer = 0f
+                        }
+                    }
+                    GingerPose.STANDING -> {
+                        // Standing - choose next action: walk, jump, or play
+                        if (!isMoving && moveTimer > 0.8f) {
+                            val action = Random.nextInt(100)
+                            when {
+                                action < 60 -> {
+                                    // Walk to random position (not just corners)
+                                    val targetX = Random.nextInt(60, screenWidth - petSpriteSize - 60)
+                                    val speed = 2f + Random.nextFloat() * 1.5f
+                                    velocityX = if (targetX > params.x) speed else -speed
+                                    isMoving = true
+                                    gingerWalkTimer = 0f
+                                    gingerPose = GingerPose.WALKING
+                                }
+                                action < 85 -> {
+                                    // Walk to edge/corner
+                                    val cornerX = if (Random.nextBoolean()) 40 else screenWidth - petSpriteSize - 40
+                                    val speed = 2.5f + Random.nextFloat() * 1f
+                                    velocityX = if (cornerX > params.x) speed else -speed
+                                    isMoving = true
+                                    gingerWalkTimer = 0f
+                                    gingerPose = GingerPose.WALKING
+                                }
+                                else -> {
+                                    // Playful jump!
+                                    if (params.y >= groundY - 5) {
+                                        velocityY = -15f - Random.nextFloat() * 8f
+                                        velocityX = (Random.nextFloat() - 0.5f) * 12f
+                                        state = PetState.JUMPING
+                                        currentFrame = 1 // stretch/jump frame
+                                        playHaptic(25)
+                                    }
+                                }
+                            }
+                            nextMoveTime = Random.nextFloat() * 3f + 2f // Move frequently
+                            moveTimer = 0f
+                        }
+                    }
+                    GingerPose.WALKING -> {
+                        // Walking animation
+                        gingerWalkTimer += dt
+                        params.x += velocityX.toInt()
+                        params.x = params.x.coerceIn(20, screenWidth - petSpriteSize - 20)
+
+                        // Alternate stretch frames while walking (slower animation)
+                        currentFrame = if ((gingerWalkTimer * 2.5f).toInt() % 2 == 0) 0 else 1
+                        // Walking bob
+                        animOffsetY = abs(sin(gingerWalkTimer * 5f)) * 3f
+
+                        // Random chance to stop and stretch mid-walk
+                        if (gingerWalkTimer > 1.5f && Random.nextFloat() < 0.01f) {
+                            velocityX = 0f
+                            isMoving = false
+                            gingerPose = GingerPose.STRETCH_FWD
+                            currentFrame = 0 // stretch forward
+                            gingerWalkPauseTimer = 0f
+                        }
+
+                        // Reached destination or time to stop
+                        val atLeftEdge = params.x <= 40
+                        val atRightEdge = params.x >= screenWidth - petSpriteSize - 40
+                        if (gingerWalkTimer > 4f || atLeftEdge || atRightEdge) {
+                            velocityX = 0f
+                            isMoving = false
+                            gingerPose = GingerPose.STANDING
+                            currentFrame = 2
+                            // Flip sprite based on direction
+                            animScaleX = if (velocityX > 0 || atRightEdge) -1f else 1f
+                            nextMoveTime = Random.nextFloat() * 2f + 1f // Quick next action
+                            moveTimer = 0f
+                        }
+                        updateWindowLayout(params)
+                    }
+                    GingerPose.STRETCH_FWD -> {
+                        // Mid-walk stretch pause
+                        gingerWalkPauseTimer += dt
+                        currentFrame = 0
+                        // After stretching, continue or sit
+                        if (gingerWalkPauseTimer > 1.5f) {
+                            if (Random.nextBoolean()) {
+                                gingerStartSit()
+                            } else {
+                                gingerPose = GingerPose.STANDING
+                                currentFrame = 2
+                                moveTimer = 0f
+                            }
+                        }
+                    }
+                    else -> {
+                        // Other poses: reset move timer
+                        moveTimer = 0f
+                    }
                 }
             }
         }
@@ -787,6 +1372,17 @@ class PetView(
         params.x += velocityX.toInt()
         params.x = params.x.coerceIn(0, screenWidth - petSpriteSize)
 
+        // Ginger: tumble gracefully while jumping
+        if (petType == PetType.GINGER) {
+            val jumpTime = time % 0.8f
+            currentFrame = when {
+                jumpTime < 0.2f -> 1  // stretch back
+                jumpTime < 0.4f -> 8  // rolling start
+                jumpTime < 0.6f -> 9  // rolling
+                else -> 0             // stretch forward
+            }
+        }
+
         // Bounce off walls
         if (params.x <= 0 || params.x >= screenWidth - petSpriteSize) {
             velocityX = -velocityX * 0.8f
@@ -796,8 +1392,18 @@ class PetView(
             params.y = groundY
             landVelocity = velocityY
             velocityY = 0f
+            
+            if (petType == PetType.JELLY) {
+                animAlpha = 0.95f // Reset Neon Trail
+            }
 
-            if (landVelocity > 5f) {
+            // Ginger: Always lands on feet
+            if (petType == PetType.GINGER) {
+                gingerLandOnFeet()
+                return
+            }
+
+            if (landVelocity > JUMP_VELOCITY_THRESHOLD) {
                 state = PetState.LANDING
                 landTimer = 0f
             } else {
@@ -840,12 +1446,17 @@ class PetView(
                         PetType.BLOOP -> "👀"
                         PetType.JELLY -> "🫠"
                         PetType.NUBE_MICHI -> "🌧️"
+                        PetType.GINGER -> "😤" // Pouty face when ignored
                     }
                     startSecretEvent(secretEmoji)
+                    // Ginger shows pout frame when ignored
+                    if (petType == PetType.GINGER) {
+                        currentFrame = 7 // ginger_7: pout pose
+                    }
                 }
                 roll == 999 -> {
                     // ULTRA RARE: costume! (0.1%)
-                    secretEmoji = listOf("🚀", "👑", "🎩", "🏴\u200d☠️", "🦸", "🧙", "🎅", "🤖").random()
+                    secretEmoji = listOf("🚀", "👑", "🎩", "🏴‍☠️", "🦸", "🧙", "🎅", "🤖").random()
                     startSecretEvent(secretEmoji)
                     progress?.trackRareEvent()
                 }
@@ -922,8 +1533,18 @@ class PetView(
                 playHaptic(100) // Bouncy/longer vibration
             }
             PetType.NUBE_MICHI -> {
-                showBubble("💤")
-                playHaptic(30) // Purr start
+                // Coqueta cloud cat - shows different reactions
+                val reaction = listOf("☁️", "💕", "✨", "😻").random()
+                showBubble(reaction)
+                playHaptic(25) // Soft purr vibration
+                showPluma = false
+                animAlpha = 1f
+            }
+            PetType.GINGER -> {
+                // Double XP if wink is active
+                if (gingerDoubleXPActive) progress?.addXP(5) // Bonus XP
+                showBubble("💕")
+                playHaptic(40) // Purr-like vibration
             }
         }
     }
@@ -933,19 +1554,39 @@ class PetView(
         
         when (petType) {
             PetType.CORGI -> {
-                // Tummy rub! Flips over and rolls back
-                animRotation = 180f
-                animScaleY = 1.05f
-                animOffsetY = 15f // lower to ground when flipped
-                
-                // Roll back after 3 seconds
-                if (interactTimer > 2.5f) {
-                    animRotation = (180f * (3f - interactTimer) / 0.5f).coerceIn(0f, 180f)
-                }
-                
-                if (interactTimer > 3f) {
-                    resetAnimTransforms()
-                    state = PetState.IDLE
+                // Corgi: Playful interaction with 12 frames
+                when {
+                    interactTimer < 0.3f -> {
+                        // Excited reaction
+                        currentFrame = 6 // Happy/excited frame
+                        animScaleY = 0.9f
+                        animScaleX = 1.1f
+                        playHaptic(40)
+                    }
+                    interactTimer < 0.8f -> {
+                        // Jump of joy
+                        currentFrame = 7 // Jump frame
+                        animOffsetY = -8f
+                        animScaleY = 1.1f
+                        animScaleX = 0.95f
+                    }
+                    interactTimer < 1.5f -> {
+                        // Tail wag / happy dance
+                        currentFrame = if ((interactTimer * 6f).toInt() % 2 == 0) 3 else 4
+                        animScaleY = 1f + sin(interactTimer * 10f) * 0.02f
+                        if ((interactTimer * 5f).toInt() % 2 == 0) playHaptic(20)
+                    }
+                    interactTimer < 2.5f -> {
+                        // Lick / affectionate
+                        currentFrame = 5 // Lick frame
+                        animScaleY = 1f
+                        animScaleX = 1f
+                    }
+                    else -> {
+                        // Return to idle
+                        resetAnimTransforms()
+                        state = PetState.IDLE
+                    }
                 }
             }
             PetType.BLOOP -> {
@@ -960,25 +1601,158 @@ class PetView(
                 }
             }
             PetType.JELLY -> {
-                // Massive continuous squish
-                animScaleX = 1.4f + sin(interactTimer * 20f) * 0.2f
-                animScaleY = 0.7f - sin(interactTimer * 20f) * 0.1f
-                animOffsetY = 10f
-                
-                if (interactTimer > 1.5f) {
-                    resetAnimTransforms()
-                    state = PetState.IDLE
+                // Jelly: Bouncy slime interaction with 12 frames
+                when {
+                    interactTimer < 0.15f -> {
+                        // Initial squish
+                        currentFrame = 8 // Squish frame
+                        animScaleX = 1.6f
+                        animScaleY = 0.4f
+                        animOffsetY = (petSpriteSize / 2f) * 0.6f
+                        playHaptic(80)
+                    }
+                    interactTimer < 0.4f -> {
+                        // Bounce up
+                        currentFrame = 9 // Stretch frame
+                        animScaleX = 0.8f
+                        animScaleY = 1.3f
+                        animOffsetY = -(petSpriteSize * 0.15f)
+                    }
+                    interactTimer < 0.8f -> {
+                        // Wobble recovery with overshoot
+                        val t = (interactTimer - 0.4f) / 0.4f
+                        val overshoot = android.view.animation.OvershootInterpolator(2.5f).getInterpolation(t)
+                        currentFrame = 4 + (t * 3f).toInt().coerceIn(0, 2) // Cycle frames 4-6
+                        animScaleX = 0.8f + (1f - 0.8f) * overshoot
+                        animScaleY = 1.3f + (1f - 1.3f) * overshoot
+                        if ((interactTimer * 8f).toInt() % 2 == 0) playHaptic(25)
+                    }
+                    interactTimer < 2.0f -> {
+                        // Happy wobble dance
+                        currentFrame = if ((interactTimer * 4f).toInt() % 2 == 0) 5 else 6
+                        animScaleY = 1f + sin(interactTimer * 6f) * 0.04f
+                        animScaleX = 1f - sin(interactTimer * 6f) * 0.03f
+                    }
+                    else -> {
+                        // Return to wobble idle
+                        resetAnimTransforms()
+                        state = PetState.IDLE
+                    }
                 }
             }
             PetType.NUBE_MICHI -> {
-                // Curls up tighter and glows
-                animScaleX = 1.1f
-                animScaleY = 0.9f
-                animAlpha = 0.9f
-                
-                if (interactTimer > 2.5f) {
-                    resetAnimTransforms()
-                    state = PetState.IDLE
+                // Coqueta cloud cat interaction
+                when {
+                    interactTimer < 0.5f -> {
+                        // Initial reaction - stretch and puff up
+                        currentFrame = 3 // Playful pose
+                        animScaleX = 1.08f
+                        animScaleY = 1.12f
+                        playHaptic(15)
+                    }
+                    interactTimer < 1.5f -> {
+                        // Happy cloud wobble
+                        currentFrame = if ((interactTimer * 3f).toInt() % 2 == 0) 0 else 1
+                        animScaleY = 1f + sin(interactTimer * 8f) * 0.03f
+                        animScaleX = 1f - sin(interactTimer * 8f) * 0.02f
+                        // Occasional purr haptic
+                        if ((interactTimer * 4f).toInt() % 3 == 0) playHaptic(10)
+                    }
+                    interactTimer < 2.5f -> {
+                        // Content breathing
+                        currentFrame = 2 // Perch pose
+                        val breathe = sin(interactTimer * 3f) * 0.02f
+                        animScaleY = 1f + breathe
+                    }
+                    else -> {
+                        // Return to floating
+                        state = PetState.IDLE
+                        resetAnimTransforms()
+                    }
+                }
+            }
+            PetType.GINGER -> {
+                if (isSecretActive) {
+                    // Belly rub / tumbling sequence: ginger_7 → 8 → 9 → 10
+                    // Slow, playful rolling and tumbling
+                    when {
+                        interactTimer < 1.5f -> {
+                            // Lay down gingerly
+                            currentFrame = 7 // ginger_7: lay down
+                            animScaleY = 0.95f
+                            // Soft haptic as she lays down
+                            if (interactTimer < 0.3f) playHaptic(15)
+                        }
+                        interactTimer < 3.0f -> {
+                            // Start rolling onto back
+                            currentFrame = 8 // ginger_8: start roll
+                            animScaleY = 0.88f
+                            animScaleX = 1.08f
+                            // Rolling haptic
+                            if ((interactTimer * 3f).toInt() % 2 == 0) playHaptic(20)
+                        }
+                        interactTimer < 5.0f -> {
+                            // Rolling / tumbling
+                            currentFrame = 9 // ginger_9: rolling
+                            animScaleY = 0.85f + sin(interactTimer * 4f) * 0.05f
+                            animScaleX = 1.1f - sin(interactTimer * 4f) * 0.05f
+                            // More intense rolling haptic
+                            if ((interactTimer * 5f).toInt() % 2 == 0) playHaptic(25)
+                        }
+                        interactTimer < 9.0f -> {
+                            // Belly up - purring happily!
+                            currentFrame = 10 // ginger_10: belly up
+                            // Progressive purring haptic
+                            gingerPurrIntensity = ((interactTimer - 5.0f) / 4.0f).coerceIn(0f, 1f)
+                            if ((interactTimer * 4f).toInt() % 3 == 0) {
+                                playHaptic((20 + gingerPurrIntensity * 50).toLong())
+                            }
+                            // Purring wobble
+                            animScaleY = 1f + sin(interactTimer * 8f) * 0.03f
+                            animScaleX = 1f - sin(interactTimer * 8f) * 0.02f
+                        }
+                        else -> {
+                            // Finished - get up and stretch
+                            gingerPurrIntensity = 0f
+                            resetAnimTransforms()
+                            gingerPose = GingerPose.STANDING
+                            gingerIdleSitTimer = 0f
+                            currentFrame = 2 // standing
+                            state = PetState.IDLE
+                            isSecretActive = false
+                            showBubble("😻")
+                            playHaptic(30)
+                        }
+                    }
+                } else {
+                    // Regular tap/petting - Ginger reacts happily then may lay down
+                    when {
+                        interactTimer < 0.5f -> {
+                            // Initial flinch of pleasure
+                            currentFrame = if (gingerPose == GingerPose.SITTING) 5 else 2
+                            animScaleY = 0.92f
+                            animScaleX = 1.04f
+                            playHaptic(20)
+                        }
+                        interactTimer < 2.0f -> {
+                            // Happy reaction - show lick paw or stretch
+                            currentFrame = 5 // ginger_5: lick paw (pleased)
+                            animScaleY = 1f + sin(interactTimer * 5f) * 0.02f
+                            // Occasional happy haptic
+                            if ((interactTimer * 4f).toInt() % 3 == 0) playHaptic(15)
+                        }
+                        interactTimer < 3.5f -> {
+                            // Stretch contentedly
+                            currentFrame = 0 // ginger_0: stretch forward
+                            animScaleY = 1f
+                        }
+                        else -> {
+                            // Return to previous pose
+                            resetAnimTransforms()
+                            currentFrame = if (gingerPose == GingerPose.SITTING) 4 else 2
+                            state = PetState.IDLE
+                        }
+                    }
                 }
             }
         }
@@ -987,6 +1761,48 @@ class PetView(
     // ══════════════════════════════════════════════════════════
     // ▌ SYSTEM REACTIONS
     // ══════════════════════════════════════════════════════════
+
+    fun consumeTreasure(emoji: String) {
+        // Only react if pet is in a safe state (not dragging, mid-interaction, etc.)
+        if (state == PetState.DRAGGING || state == PetState.INTERACTING || state == PetState.SECRET_IDLE) {
+            showBubble(emoji)
+            playHaptic(100)
+            return
+        }
+
+        // Play an enthusiastic reaction globally
+        triggerReaction(emoji)
+        playHaptic(100)
+        
+        // Characteristic unique animation for receiving a gift
+        when (petType) {
+            PetType.JELLY -> {
+                animScaleY = 0.5f
+                animScaleX = 1.5f
+                velocityY = -30f // Huge jump of happiness!
+                state = PetState.JUMPING
+            }
+            PetType.CORGI -> {
+                velocityY = -15f
+                state = PetState.JUMPING
+            }
+            PetType.NUBE_MICHI -> {
+                animScaleX = 1.25f
+                animScaleY = 1.35f
+            }
+            PetType.BLOOP -> {
+                animRotation = 360f // Spooky spin!
+                animScaleX = 1.3f
+                animScaleY = 1.3f
+            }
+            PetType.GINGER -> {
+                // Elegant happy stretch
+                currentFrame = 0 // stretch pose
+                animScaleX = 1.15f
+                animScaleY = 1.1f
+            }
+        }
+    }
 
     private fun triggerReaction(emoji: String) {
         reactionEmoji = emoji
@@ -1006,6 +1822,18 @@ class PetView(
         if (reactionEmoji == "😴") {
             animScaleY = 0.92f
             animOffsetY = 3f
+        }
+        // Rapid digging for bones
+        if (reactionEmoji == "🦴") {
+            animScaleX = 1f + sin(reactionTimer * 40f) * 0.1f // rapid scaleX
+            animScaleY = 0.95f // squished
+        }
+        // Jump high for notification / Corgi jumping
+        if (reactionEmoji == "Bark!!" || reactionEmoji == "Bark!") {
+            animOffsetY = 0f
+            if (reactionTimer < 0.1f && state == PetState.SYSTEM_REACTION) {
+                velocityY = -15f // Big jump
+            }
         }
 
         if (reactionTimer > SYSTEM_REACTION_DURATION) {
@@ -1091,6 +1919,26 @@ class PetView(
 
         val frame = spriteFrames[currentFrame.coerceIn(0, spriteFrames.lastIndex)]
         canvas.drawBitmap(frame, null, spriteRect, spritePaint)
+
+        // ── NUBE-MICHI PLUMA (feather) while falling ──
+        if (showPluma && nubePlumaBitmap != null) {
+            val plumaPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+            plumaPaint.alpha = 200
+            val plumaSize = petSpriteSize * 0.4f
+            val plumaX = cx + sin(time * 5f) * 30f
+            val plumaY = cy - petSpriteSize * 0.3f + cos(time * 3f) * 15f
+            val plumaRect = RectF(
+                plumaX - plumaSize / 2f,
+                plumaY - plumaSize / 2f,
+                plumaX + plumaSize / 2f,
+                plumaY + plumaSize / 2f
+            )
+            canvas.save()
+            canvas.rotate(time * 60f, plumaX, plumaY) // Spin gently
+            canvas.drawBitmap(nubePlumaBitmap!!, null, plumaRect, plumaPaint)
+            canvas.restore()
+        }
+
         canvas.restore()
 
         // ── 3. PARTICLES ──
@@ -1194,11 +2042,36 @@ class PetView(
     }
 
     // ══════════════════════════════════════════════════════════
+    // ▌ GESTURE DETECTION (Swipe)
+    // ══════════════════════════════════════════════════════════
+    private val gestureDetector = android.view.GestureDetector(context, object : android.view.GestureDetector.SimpleOnGestureListener() {
+        override fun onFling(e1: MotionEvent?, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
+            if (petType == PetType.CORGI) {
+                isSecretActive = true // Swipe triggers panza arriba
+                triggerInteraction()
+                return true
+            }
+            if (petType == PetType.GINGER) {
+                isSecretActive = true // Swipe triggers belly rub sequence
+                triggerInteraction()
+                showBubble("😻")
+                return true
+            }
+            return false
+        }
+    })
+
+    // ══════════════════════════════════════════════════════════
     // ▌ TOUCH HANDLING
     // ══════════════════════════════════════════════════════════
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         val params = getWindowParams() ?: return false
+        
+        // Pass to gesture detector to detect fling/swipes
+        if (gestureDetector.onTouchEvent(event)) {
+            return true
+        }
 
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
@@ -1227,6 +2100,8 @@ class PetView(
 
                 touchOffsetX = event.rawX - params.x
                 touchOffsetY = event.rawY - params.y
+                lastTouchX = event.rawX
+                lastTouchY = event.rawY
                 return true
             }
 
@@ -1258,11 +2133,25 @@ class PetView(
                         return true
                     }
 
-                    // Otherwise regular drop/fall
-                    state = PetState.FALLING
-                    velocityY = 2f  // Initial fall velocity
-                    animRotation = 0f
-                    resetAnimTransforms()
+                    // Otherwise regular drop/fall or anti-gravity float
+                    if (petType == PetType.BLOOP) {
+                        state = PetState.IDLE
+                        velocityY = 0f
+                        animRotation = 0f
+                        // Inertia smoothly blends using the sine offset in IdleStyle instead of a jump
+                    } else if (petType == PetType.GINGER) {
+                        // Ginger falls elegantly, will land standing
+                        state = PetState.FALLING
+                        velocityY = 2f
+                        animRotation = 0f
+                        gingerPose = GingerPose.FALLING
+                        resetAnimTransforms()
+                    } else {
+                        state = PetState.FALLING
+                        velocityY = 2f  // Initial fall velocity
+                        animRotation = 0f
+                        resetAnimTransforms()
+                    }
                     return true
                 }
             }
@@ -1273,9 +2162,27 @@ class PetView(
     /**
      * Double-tap Dodge — Pet jumps away to clear the area.
      * Smart UX: doesn't block what's underneath.
+     * 
+     * Ginger: Does an elegant parabolic jump toward the tap position.
      */
+    private var lastTouchX = 0f
+    private var lastTouchY = 0f
+
     private fun doubleTapDodge() {
         val params = getWindowParams() ?: return
+
+        if (petType == PetType.GINGER) {
+            // Ginger: elegant parabolic jump toward last touch position
+            val targetX = lastTouchX.toInt().coerceIn(30, screenWidth - petSpriteSize - 30)
+            val jumpHeight = -18f // Upward velocity
+            velocityX = (targetX - params.x) * 0.05f // Horizontal component
+            velocityY = jumpHeight
+            currentFrame = 1 // ginger_1: stretch/jump frame
+            state = PetState.JUMPING
+            showBubble("🐾")
+            playHaptic(30)
+            return
+        }
 
         // Jump to opposite side of screen
         val targetX = if (params.x < screenWidth / 2) {
@@ -1300,8 +2207,23 @@ class PetView(
 
     private fun moveAboveKeyboard(keyboardHeight: Int) {
         val params = getWindowParams() ?: return
-        val safeY = screenHeight - keyboardHeight - petSpriteSize - 30
 
+        if (petType == PetType.NUBE_MICHI && params.y > screenHeight - keyboardHeight - petSpriteSize - 30) {
+            // Smooth evasion to top edge
+            val targetY = 60
+            val animator = android.animation.ValueAnimator.ofInt(params.y, targetY)
+            animator.duration = 1200
+            animator.interpolator = android.view.animation.OvershootInterpolator(0.6f)
+            animator.addUpdateListener {
+                params.y = it.animatedValue as Int
+                updateWindowLayout(params)
+            }
+            animator.start()
+            showBubble("☁️")
+            return
+        }
+
+        val safeY = screenHeight - keyboardHeight - petSpriteSize - 30
         if (params.y > safeY) {
             params.y = safeY.coerceAtLeast(50)
             updateWindowLayout(params)
@@ -1316,7 +2238,11 @@ class PetView(
     private fun resetAnimTransforms() {
         animScaleX = 1f
         animScaleY = 1f
-        animAlpha = 1f
+        animAlpha = when (petType) {
+            PetType.BLOOP -> 0.8f    // Ghost transparency baseline
+            PetType.JELLY -> 0.95f   // Neon translucency baseline
+            else -> 1f
+        }
         animOffsetX = 0f
         animOffsetY = 0f
         animRotation = 0f
@@ -1327,7 +2253,6 @@ class PetView(
     // ══════════════════════════════════════════════════════════
 
     private fun emitBubble() {
-        val params = getWindowParams() ?: return
         val cx = width / 2f
         val cy = height / 2f
         val offset = (Random.nextFloat() - 0.5f) * petSpriteSize * 0.5f
@@ -1403,7 +2328,9 @@ class PetView(
                 @Suppress("DEPRECATION")
                 vibrator.vibrate(durationMs)
             }
-        } catch (_: Exception) {}
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to play haptic", e)
+        }
     }
 
     private fun getWindowParams(): WindowManager.LayoutParams? {
@@ -1414,7 +2341,9 @@ class PetView(
         try {
             val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
             wm.updateViewLayout(this, params)
-        } catch (_: Exception) {}
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to update window layout", e)
+        }
     }
 
     private fun applyWindowOffset(dx: Int, dy: Int) {
@@ -1426,6 +2355,13 @@ class PetView(
 
     override fun onDetachedFromWindow() {
         pauseAnimation()
+        // Recycle bitmaps to free memory
+        for (bitmap in spriteFrames) {
+            if (!bitmap.isRecycled) {
+                bitmap.recycle()
+            }
+        }
+        particles.clear()
         super.onDetachedFromWindow()
     }
 }

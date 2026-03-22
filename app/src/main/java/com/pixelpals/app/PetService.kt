@@ -18,6 +18,7 @@ import android.util.DisplayMetrics
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
+import android.util.Log
 import androidx.core.app.NotificationCompat
 
 /**
@@ -33,11 +34,13 @@ import androidx.core.app.NotificationCompat
 class PetService : Service() {
 
     companion object {
+        private const val TAG = "PetService"
         const val CHANNEL_ID = "pixelpals_channel"
         const val NOTIFICATION_ID = 1001
         const val ACTION_HIDE = "com.pixelpals.app.ACTION_HIDE"
         const val ACTION_SHOW = "com.pixelpals.app.ACTION_SHOW"
         const val ACTION_STOP = "com.pixelpals.app.ACTION_STOP"
+        const val ACTION_CONSUME_TREASURE = "com.pixelpals.app.ACTION_CONSUME_TREASURE"
         private const val PET_SIZE_DP = 80  // Spec: 64-80dp max
     }
 
@@ -76,12 +79,20 @@ class PetService : Service() {
                 stopSelf()
                 return START_NOT_STICKY
             }
+            ACTION_CONSUME_TREASURE -> {
+                val emoji = intent?.getStringExtra("TREASURE_EMOJI") ?: "✨"
+                petView?.consumeTreasure(emoji)
+                return START_STICKY
+            }
         }
 
         // ── Read pet type from intent ──
         val petTypeName = intent?.getStringExtra(PetSelectionActivity.EXTRA_PET_TYPE)
         if (petTypeName != null) {
-            val newType = try { PetType.valueOf(petTypeName) } catch (_: Exception) { PetType.CORGI }
+            val newType = try { PetType.valueOf(petTypeName) } catch (e: Exception) {
+                Log.w(TAG, "Unknown pet type: $petTypeName, defaulting to CORGI", e)
+                PetType.CORGI
+            }
 
             if (isViewAttached && newType != currentPetType) {
                 removePetOverlay()
@@ -155,6 +166,7 @@ class PetService : Service() {
             PetType.NUBE_MICHI -> "☁️"
             PetType.JELLY -> "🟢"
             PetType.CORGI -> "🐕"
+            PetType.GINGER -> "🐱"
         }
         val lvl = petProgress?.let { "Lv${it.petLevel}" } ?: ""
         val xp = petProgress?.happinessPoints ?: 0
@@ -211,8 +223,9 @@ class PetService : Service() {
             viewSize,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
-            PixelFormat.TRANSLUCENT
+                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
+                    WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+            PixelFormat.TRANSPARENT
         ).apply {
             gravity = Gravity.TOP or Gravity.START
             x = screenWidth / 2 - viewSize / 2
@@ -234,7 +247,9 @@ class PetService : Service() {
         petView?.let { view ->
             view.pauseAnimation()
             if (isViewAttached) {
-                try { windowManager?.removeView(view) } catch (_: Exception) {}
+                try { windowManager?.removeView(view) } catch (e: Exception) {
+                    Log.w(TAG, "Failed to remove pet overlay", e)
+                }
                 isViewAttached = false
             }
         }
@@ -285,7 +300,9 @@ class PetService : Service() {
 
     private fun unregisterBatteryReceiver() {
         batteryReceiver?.let {
-            try { unregisterReceiver(it) } catch (_: Exception) {}
+            try { unregisterReceiver(it) } catch (e: Exception) {
+                Log.w(TAG, "Failed to unregister battery receiver", e)
+            }
         }
         batteryReceiver = null
     }
@@ -318,7 +335,10 @@ class PetService : Service() {
 
         try {
             wm.addView(keyboardProbe, probeParams)
-        } catch (_: Exception) { return }
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to add keyboard probe", e)
+            return
+        }
 
         var lastHeight = 0
 
@@ -349,7 +369,9 @@ class PetService : Service() {
 
     private fun removeKeyboardProbe() {
         keyboardProbe?.let {
-            try { windowManager?.removeView(it) } catch (_: Exception) {}
+            try { windowManager?.removeView(it) } catch (e: Exception) {
+                Log.w(TAG, "Failed to remove keyboard probe", e)
+            }
         }
         keyboardProbe = null
     }
@@ -372,7 +394,9 @@ class PetService : Service() {
 
     private fun unregisterAirplaneReceiver() {
         airplaneReceiver?.let {
-            try { unregisterReceiver(it) } catch (_: Exception) {}
+            try { unregisterReceiver(it) } catch (e: Exception) {
+                Log.w(TAG, "Failed to unregister airplane receiver", e)
+            }
         }
         airplaneReceiver = null
     }
@@ -396,7 +420,9 @@ class PetService : Service() {
 
     private fun unregisterScreenReceiver() {
         screenReceiver?.let {
-            try { unregisterReceiver(it) } catch (_: Exception) {}
+            try { unregisterReceiver(it) } catch (e: Exception) {
+                Log.w(TAG, "Failed to unregister screen receiver", e)
+            }
         }
         screenReceiver = null
     }

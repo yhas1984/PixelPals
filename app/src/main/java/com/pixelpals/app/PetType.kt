@@ -14,6 +14,7 @@ enum class PetType(
     val gravity: Float,
     val terminalVelocity: Float,
     val bounceDamping: Float,
+    val jumpInterval: Long = 0L,
     val movementStyle: MovementStyle,
     val idleStyle: IdleStyle,
     val interactionStyle: InteractionStyle
@@ -34,8 +35,8 @@ enum class PetType(
         displayName = "Nube-Michi",
         description = "El Gatito de Nube",
         spriteResId = R.drawable.pet_nube_michi,
-        gravity = 0.3f,           // Falls like a feather
-        terminalVelocity = 5f,
+        gravity = 0.2f,           // Falls like a feather
+        terminalVelocity = 4f,
         bounceDamping = 0.1f,
         movementStyle = MovementStyle.STATIC_PERCH,
         idleStyle = IdleStyle.BREATHING,
@@ -46,9 +47,10 @@ enum class PetType(
         displayName = "Jelly",
         description = "El Slime de Gelatina",
         spriteResId = R.drawable.pet_jelly,
-        gravity = 2.5f,           // Normal gravity
+        gravity = 2.2f,           // High dynamic gravity for quick snappy falls
         terminalVelocity = 30f,
-        bounceDamping = 0.6f,     // Very bouncy!
+        bounceDamping = 0.5f,     // Half elastic recovery
+        jumpInterval = 4000L,     // Base charge interval
         movementStyle = MovementStyle.PARABOLIC_JUMP,
         idleStyle = IdleStyle.JELLY_WOBBLE,
         interactionStyle = InteractionStyle.SQUISH_BOUNCE
@@ -58,11 +60,23 @@ enum class PetType(
         displayName = "Corgi",
         description = "El Perrito Explorador",
         spriteResId = R.drawable.pet_corgi,
-        gravity = 1.8f,           // Normal gravity
-        terminalVelocity = 25f,
-        bounceDamping = 0.3f,
+        gravity = 1.2f,           // heavy
+        terminalVelocity = 15f,
+        bounceDamping = 0.3f,     // dry bounce
         movementStyle = MovementStyle.WALK_RUN,
         idleStyle = IdleStyle.SIT_BARK,
+        interactionStyle = InteractionStyle.BELLY_RUB
+    ),
+
+    GINGER(
+        displayName = "Ginger",
+        description = "La Gata Elegante",
+        spriteResId = R.drawable.pet_ginger,
+        gravity = 1.4f,           // Heavy like a real cat
+        terminalVelocity = 18f,
+        bounceDamping = 0.0f,     // Cats always land on their feet - no bounce
+        movementStyle = MovementStyle.ELEGANT_STRETCH,
+        idleStyle = IdleStyle.GROOMING,
         interactionStyle = InteractionStyle.BELLY_RUB
     );
 }
@@ -72,7 +86,8 @@ enum class MovementStyle {
     DRIFT_SLOW,       // Bloop: slow erratic drift
     STATIC_PERCH,     // Nube-Michi: sits on edges, rarely moves
     PARABOLIC_JUMP,   // Jelly: constant bouncing jumps along bottom
-    WALK_RUN          // Corgi: walks left/right, climbs edges
+    WALK_RUN,         // Corgi: walks left/right, climbs edges
+    ELEGANT_STRETCH   // Ginger: graceful stretches and elegant movements
 }
 
 /** How the pet animates when idle */
@@ -80,7 +95,8 @@ enum class IdleStyle {
     SINE_FLOAT,       // Bloop: smooth sine wave floating
     BREATHING,        // Nube-Michi: expand/contract breathing
     JELLY_WOBBLE,     // Jelly: wobbly jelly physics
-    SIT_BARK          // Corgi: sits, occasionally shows bark bubble
+    SIT_BARK,         // Corgi: sits, occasionally shows bark bubble
+    GROOMING          // Ginger: grooming sequence - clean face, lick paw, wink
 }
 
 /** How the pet responds to touch interaction */
@@ -88,5 +104,5 @@ enum class InteractionStyle {
     FADE_SHRINK,      // Bloop: becomes semi-transparent and shrinks
     FEATHER_FALL,     // Nube-Michi: falls very slowly like a feather
     SQUISH_BOUNCE,    // Jelly: squash animation then elastic bounce
-    BELLY_RUB         // Corgi: rolls onto back
+    BELLY_RUB         // Corgi/Ginger: rolls onto back
 }

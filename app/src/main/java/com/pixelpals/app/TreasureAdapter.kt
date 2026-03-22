@@ -9,8 +9,10 @@ import com.pixelpals.app.database.TreasureItem
 import java.text.SimpleDateFormat
 import java.util.*
 
-class TreasureAdapter(private var items: List<TreasureItem> = emptyList()) :
-    RecyclerView.Adapter<TreasureAdapter.TreasureViewHolder>() {
+class TreasureAdapter(
+    private var items: List<TreasureItem> = emptyList(),
+    private val onTreasureClicked: (TreasureItem) -> Unit
+) : RecyclerView.Adapter<TreasureAdapter.TreasureViewHolder>() {
 
     private val dateFormat = SimpleDateFormat("dd/MM/yy HH:mm", Locale.getDefault())
 
@@ -42,6 +44,11 @@ class TreasureAdapter(private var items: List<TreasureItem> = emptyList()) :
             tvCount.text = "Coleccionado: x${item.count}"
             val dateStr = dateFormat.format(Date(item.lastFoundAt))
             tvDate.text = "Última vez: $dateStr"
+            
+            // Allow consuming / using the item
+            itemView.setOnClickListener {
+                onTreasureClicked(item)
+            }
         }
     }
 }
