@@ -2,11 +2,16 @@ package com.pixelpals.app
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.pixelpals.app.database.AppDatabase
+import com.pixelpals.app.database.TreasureItem
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 /**
  * PetProgress — El Tamagotchi interior.
  *
- * Gestiona la evolución, felicidad y tesoros de la mascota via SharedPreferences.
+ * Gestiona la evolución, felicidad y tesoros de la mascota via SharedPreferences y Room DB.
  *
  * Niveles de evolución:
  *   Lv1 "Bebé"  (0-99 XP)    → 65% tamaño, pocas animaciones
@@ -24,6 +29,9 @@ class PetProgress(context: Context) {
 
     private val prefs: SharedPreferences =
         context.getSharedPreferences("pixelpals_progress", Context.MODE_PRIVATE)
+
+    private val db = AppDatabase.getDatabase(context)
+    private val scope = CoroutineScope(Dispatchers.IO)
 
     // ── Happiness / XP ─────────────────────────────────────────
 
@@ -88,14 +96,27 @@ class PetProgress(context: Context) {
 
     private val allTreasures = listOf(
         "🪙", "🌸", "🦴", "⭐", "💎", "🍀", "🐚", "🎀",
-        "🍄", "🔑", "🧩", "🎵", "🪶", "🍬", "🌙"
+        "🍄", "🔑", "🧩", "🎵", "🪶", "🍬", "🌙", "💍", "👑", "🔮", "🍕"
     )
 
     fun addTreasure(emoji: String) {
+        // 1. Legado: mantener map para XP rápido en PetService
         val map = getTreasureMap().toMutableMap()
         map[emoji] = (map[emoji] ?: 0) + 1
         saveTreasureMap(map)
         addXP(10)
+
+        // 2. Room Database: Persistir detalles de colección
+        scope.launch {
+            val dao = db.treasureDao()
+            val existing = dao.getTreasure(emoji)
+            val now = System.currentTimeMillis()
+            if (existing != null) {
+                dao.updateTreasure(existing.copy(count = existing.count + 1, lastFoundAt = now))
+            } else {
+                dao.insertTreasure(TreasureItem(emoji, 1, now, now))
+            }
+        }
     }
 
     /** Get a random treasure for finding */

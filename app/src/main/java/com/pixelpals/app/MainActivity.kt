@@ -46,6 +46,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnOverlay: Button
     private lateinit var btnNotification: Button
     private lateinit var btnLaunch: Button
+    private lateinit var btnAlbum: Button
     private lateinit var iconOverlay: ImageView
     private lateinit var iconNotification: ImageView
     private lateinit var statusOverlay: TextView
@@ -80,6 +81,7 @@ class MainActivity : AppCompatActivity() {
         btnOverlay = findViewById(R.id.btnOverlay)
         btnNotification = findViewById(R.id.btnNotification)
         btnLaunch = findViewById(R.id.btnLaunch)
+        btnAlbum = findViewById(R.id.btnAlbum)
         iconOverlay = findViewById(R.id.iconOverlay)
         iconNotification = findViewById(R.id.iconNotification)
         statusOverlay = findViewById(R.id.statusOverlay)
@@ -98,6 +100,11 @@ class MainActivity : AppCompatActivity() {
 
         btnLaunch.setOnClickListener {
             launchPet()
+        }
+
+        btnAlbum.setOnClickListener {
+            val intent = Intent(this, TreasureAlbumActivity::class.java)
+            startActivity(intent)
         }
     }
 

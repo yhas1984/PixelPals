@@ -47,6 +47,13 @@
                 android:value="floating_pet_overlay" />
         </service>
 
+        <!-- Treasure Album UI -->
+        <activity
+            android:name=".TreasureAlbumActivity"
+            android:exported="true"
+            android:theme="@style/Theme.PixelPals"
+            android:label="Álbum de Tesoros" />
+
     </application>
 
 </manifest>

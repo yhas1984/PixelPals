@@ -2,8 +2,12 @@ package com.pixelpals.app
 
 import android.content.Context
 import android.graphics.*
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
@@ -70,12 +74,41 @@ class PetView(
     }
 
     // ══════════════════════════════════════════════════════════
-    // ▌ SPRITE
+    // ▌ SPRITE FRAMES (4-frame animation system)
     // ══════════════════════════════════════════════════════════
 
-    private val spriteBitmap: Bitmap
+    private val spriteFrames: List<Bitmap>      // 4 frames: idle1, idle2, action1, action2
+    private var currentFrame = 0
+    private var frameTimer = 0f
+    private val frameInterval = 0.15f           // 150ms per frame
     private val spritePaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
     private val spriteRect = RectF()
+
+    // ══════════════════════════════════════════════════════════
+    // ▌ PARTICLES
+    // ══════════════════════════════════════════════════════════
+
+    private data class Particle(
+        var x: Float, var y: Float,
+        var vx: Float, var vy: Float,
+        var alpha: Float, var size: Float,
+        var life: Float, val maxLife: Float,
+        val color: Int = Color.WHITE
+    )
+
+    private val particles = mutableListOf<Particle>()
+    private val particlePaint = Paint(Paint.ANTI_ALIAS_FLAG)
+
+    // ══════════════════════════════════════════════════════════
+    // ▌ HAPTICS
+    // ══════════════════════════════════════════════════════════
+
+    @Suppress("DEPRECATION")
+    private val vibrator: Vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        (context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
+    } else {
+        context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+    }
 
     // ══════════════════════════════════════════════════════════
     // ▌ ANIMATION TRANSFORMS
@@ -226,14 +259,41 @@ class PetView(
     // ══════════════════════════════════════════════════════════
 
     init {
-        // Load sprite and ensure transparency
+        // Load sprite and generate 4 animation frames
         val drawable = ContextCompat.getDrawable(context, petType.spriteResId)!!
         val rawBitmap = drawable.toBitmap(petSpriteSize, petSpriteSize)
-        spriteBitmap = removeBackground(rawBitmap)
+        val baseBitmap = removeBackground(rawBitmap)
+        spriteFrames = generateFrames(baseBitmap)
 
-        // Ensure view draws with full transparency
         setBackgroundColor(Color.TRANSPARENT)
         setLayerType(LAYER_TYPE_HARDWARE, null)
+    }
+
+    /**
+     * Generate 4 animation frames from a base sprite:
+     *   Frame 0: Base (idle breath-in)
+     *   Frame 1: Slight vertical squish (idle breath-out)
+     *   Frame 2: Stretch up (action start — jump/excited)
+     *   Frame 3: Wide squish (action peak — land/interact)
+     */
+    private fun generateFrames(base: Bitmap): List<Bitmap> {
+        return listOf(
+            base,                                          // Frame 0: base
+            createScaledFrame(base, 1.03f, 0.97f),         // Frame 1: breath out
+            createScaledFrame(base, 0.93f, 1.08f),         // Frame 2: stretch
+            createScaledFrame(base, 1.10f, 0.90f)          // Frame 3: squish
+        )
+    }
+
+    private fun createScaledFrame(base: Bitmap, sx: Float, sy: Float): Bitmap {
+        val w = base.width
+        val h = base.height
+        val result = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(result)
+        val matrix = Matrix()
+        matrix.setScale(sx, sy, w / 2f, h / 2f)
+        canvas.drawBitmap(base, matrix, Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG))
+        return result
     }
 
     /**
@@ -397,6 +457,30 @@ class PetView(
             if (corgiLickTimer > 2.5f) corgiLickTimer = -1f
         }
 
+        // ── Frame animation cycling ──
+        frameTimer += dt
+        if (frameTimer >= frameInterval) {
+            frameTimer = 0f
+            val isAction = state == PetState.INTERACTING || state == PetState.LANDING || state == PetState.JUMPING
+            if (isAction) {
+                currentFrame = 2 + ((currentFrame - 1) % 2)  // Cycle frames 2-3 (action)
+            } else {
+                currentFrame = (currentFrame + 1) % 2        // Cycle frames 0-1 (breathing)
+            }
+        }
+
+        // ── Particle system ──
+        updateParticles(dt)
+
+        // Bloop: emit trail bubbles while moving
+        if (petType == PetType.BLOOP && (state == PetState.FALLING || state == PetState.DRAGGING)) {
+            if (Random.nextFloat() < 0.3f) emitBubble()
+        }
+        // Jelly: emit sparkles while jumping
+        if (petType == PetType.JELLY && (state == PetState.JUMPING || state == PetState.INTERACTING)) {
+            if (Random.nextFloat() < 0.4f) emitSparkle()
+        }
+
         // Always update blink (universal for all pets)
         updateBlink(dt)
 
@@ -533,11 +617,14 @@ class PetView(
     // ══════════════════════════════════════════════════════════
 
     private fun updateDragAnimation(dt: Float) {
-        // Oscillating rotation simulates "kicking legs"
-        animRotation = sin(time * 12f) * 8f
-        // Slight stretch while held
-        animScaleX = 1.05f
-        animScaleY = 0.95f
+        // Drag physics per pet
+        if (petType == PetType.NUBE_MICHI) {
+            // High air friction for Cloud Cat (like a feather)
+            animRotation = sin(time * 3f) * 15f
+        } else {
+            // General pataleo
+            animRotation = sin(time * 15f) * 10f
+        }
     }
 
     // ══════════════════════════════════════════════════════════
@@ -597,36 +684,35 @@ class PetView(
      */
     private fun updateLandingSquash(dt: Float) {
         landTimer += dt
-        val intensity = (landVelocity / petType.terminalVelocity).coerceIn(0.3f, 1f)
+        val progress = (landTimer / LAND_SQUASH_DURATION).coerceIn(0f, 1f)
 
-        when {
-            landTimer < 0.08f -> {
-                // Phase 1: SQUASH
-                val t = landTimer / 0.08f
-                animScaleX = 1f + t * 0.3f * intensity
-                animScaleY = 1f - t * 0.28f * intensity
-            }
-            landTimer < 0.18f -> {
-                // Phase 2: OVERSHOOT
-                val t = (landTimer - 0.08f) / 0.10f
-                animScaleX = (1f + 0.3f * intensity) - t * (0.3f * intensity + 0.08f)
-                animScaleY = (1f - 0.28f * intensity) + t * (0.28f * intensity + 0.12f)
-            }
-            landTimer < LAND_SQUASH_DURATION -> {
-                // Phase 3: SETTLE (ease out)
-                val t = (landTimer - 0.18f) / 0.17f
-                animScaleX = (1f - 0.08f) + t * 0.08f
-                animScaleY = (1f + 0.12f) - t * 0.12f
-            }
-            else -> {
-                // Done — bounce for Jelly, idle for others
-                if (petType == PetType.JELLY && landVelocity > 12f) {
-                    velocityY = -landVelocity * petType.bounceDamping
-                    state = PetState.FALLING
-                } else {
-                    state = PetState.IDLE
-                }
-                resetAnimTransforms()
+        // Overshoot / springy squash
+        // Peak squash at 20% of duration, then overshoot back to 1.0
+        val spring = if (progress < 0.2f) {
+            val t = progress / 0.2f
+            1f + t * 0.4f
+        } else {
+            val t = (progress - 0.2f) / 0.8f
+            1f + 0.4f * (1f - t) * cos(t * Math.PI * 3f).toFloat() // Dampened spring
+        }
+
+        val impact = (landVelocity / 1500f).coerceIn(0.5f, 1.5f)
+        val materialMultiplier = if (petType == PetType.JELLY) 1.5f else 1.0f
+
+        animScaleX = 1f + (spring - 1f) * impact * materialMultiplier
+        animScaleY = 1f - (spring - 1f) * impact * materialMultiplier * 0.5f
+
+        val scaleDiffY = 1f - animScaleY
+        animOffsetY = (petSpriteSize / 2f) * scaleDiffY
+
+        if (progress >= 1f) {
+            resetAnimTransforms()
+            // Done — bounce for Jelly, idle for others
+            if (petType == PetType.JELLY && landVelocity > 12f) {
+                velocityY = -landVelocity * petType.bounceDamping
+                state = PetState.FALLING
+            } else {
+                state = PetState.IDLE
             }
         }
     }
@@ -823,10 +909,22 @@ class PetView(
         progress?.trackInteraction()  // +5 XP!
 
         when (petType) {
-            PetType.CORGI -> showBubble("💕")
-            PetType.BLOOP -> showBubble("🫧")
-            PetType.JELLY -> showBubble("✨")
-            PetType.NUBE_MICHI -> showBubble("💤")
+            PetType.CORGI -> {
+                showBubble("💕")
+                playHaptic(50) // Bark / sharp vibration
+            }
+            PetType.BLOOP -> {
+                showBubble("🫧")
+                playHaptic(20) // Soft ghost vibration
+            }
+            PetType.JELLY -> {
+                showBubble("✨")
+                playHaptic(100) // Bouncy/longer vibration
+            }
+            PetType.NUBE_MICHI -> {
+                showBubble("💤")
+                playHaptic(30) // Purr start
+            }
         }
     }
 
@@ -991,15 +1089,19 @@ class PetView(
             canvas.scale(-1f, 1f, cx, cy)
         }
 
-        canvas.drawBitmap(spriteBitmap, null, spriteRect, spritePaint)
+        val frame = spriteFrames[currentFrame.coerceIn(0, spriteFrames.lastIndex)]
+        canvas.drawBitmap(frame, null, spriteRect, spritePaint)
         canvas.restore()
 
-        // ── 3. CORGI LICK SCREEN ──
+        // ── 3. PARTICLES ──
+        drawParticles(canvas)
+
+        // ── 4. CORGI LICK SCREEN ──
         if (corgiLickTimer in 0f..2.5f) {
             drawCorgiLick(canvas, cx, cy + halfH)
         }
 
-        // ── 4. SPEECH BUBBLE ──
+        // ── 5. SPEECH BUBBLE ──
         if (showBubble && bubbleAlpha > 0.01f) {
             drawBubble(canvas, cx, cy - halfH + animOffsetY)
         }
@@ -1218,6 +1320,90 @@ class PetView(
         animOffsetX = 0f
         animOffsetY = 0f
         animRotation = 0f
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // ▌ PARTICLES LOGIC
+    // ══════════════════════════════════════════════════════════
+
+    private fun emitBubble() {
+        val params = getWindowParams() ?: return
+        val cx = width / 2f
+        val cy = height / 2f
+        val offset = (Random.nextFloat() - 0.5f) * petSpriteSize * 0.5f
+        particles.add(
+            Particle(
+                x = cx + offset,
+                y = cy + petSpriteSize * 0.3f,
+                vx = (Random.nextFloat() - 0.5f) * 50f,
+                vy = -Random.nextFloat() * 100f - 50f,
+                alpha = 0.6f,
+                size = Random.nextFloat() * 8f + 4f,
+                life = 0f,
+                maxLife = Random.nextFloat() * 1f + 0.5f,
+                color = Color.parseColor("#B0E0E6") // Powder blue
+            )
+        )
+    }
+
+    private fun emitSparkle() {
+        val cx = width / 2f
+        val cy = height / 2f
+        val offsetDX = (Random.nextFloat() - 0.5f) * petSpriteSize * 0.8f
+        val offsetDY = (Random.nextFloat() - 0.5f) * petSpriteSize * 0.8f
+        particles.add(
+            Particle(
+                x = cx + offsetDX,
+                y = cy + offsetDY,
+                vx = (Random.nextFloat() - 0.5f) * 30f,
+                vy = -Random.nextFloat() * 60f - 20f,
+                alpha = 1f,
+                size = Random.nextFloat() * 6f + 3f,
+                life = 0f,
+                maxLife = Random.nextFloat() * 0.6f + 0.2f,
+                color = Color.parseColor("#FFFF66") // Yellow sparkle
+            )
+        )
+    }
+
+    private fun updateParticles(dt: Float) {
+        val iterator = particles.iterator()
+        while (iterator.hasNext()) {
+            val p = iterator.next()
+            p.x += p.vx * dt
+            p.y += p.vy * dt
+            p.life += dt
+            if (p.life >= p.maxLife) {
+                iterator.remove()
+            }
+        }
+    }
+
+    private fun drawParticles(canvas: Canvas) {
+        for (p in particles) {
+            val lifeRatio = p.life / p.maxLife
+            val currentAlpha = (p.alpha * (1f - lifeRatio) * 255).toInt().coerceIn(0, 255)
+            particlePaint.color = p.color
+            particlePaint.alpha = currentAlpha
+            
+            // Draw circle for bubble/sparkle
+            canvas.drawCircle(p.x, p.y, p.size, particlePaint)
+        }
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // ▌ SYSTEM HAPTICS
+    // ══════════════════════════════════════════════════════════
+
+    private fun playHaptic(durationMs: Long) {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator.vibrate(VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator.vibrate(durationMs)
+            }
+        } catch (_: Exception) {}
     }
 
     private fun getWindowParams(): WindowManager.LayoutParams? {
