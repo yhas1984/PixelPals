@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.PixelPals" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="colorPrimary">@color/coral_accent</item>
+        <item name="colorPrimary">@color/golden_accent</item>
         <item name="colorPrimaryContainer">@color/dark_bg</item>
-        <item name="colorSecondary">@color/golden_accent</item>
+        <item name="colorSecondary">@color/coral_accent</item>
         <item name="colorSecondaryContainer">@color/dark_bg_mid</item>
         <item name="colorTertiary">@color/purple_soft</item>
         <item name="android:statusBarColor">@color/dark_bg</item>

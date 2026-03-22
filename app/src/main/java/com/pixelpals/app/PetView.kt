@@ -946,36 +946,23 @@ class PetView(
             nubePlumaBitmap = ContextCompat.getDrawable(context, R.drawable.pluma_0)!!
                 .toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888)
         } else if (petType == PetType.CORGI) {
-            // Load custom storyboard frames for Corgi (12 frames - playful dog)
+            // Load custom storyboard frames for Corgi (7 frames)
             spriteFrames = listOf(
-                ContextCompat.getDrawable(context, R.drawable.perro_0)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
-                ContextCompat.getDrawable(context, R.drawable.perro_1)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
-                ContextCompat.getDrawable(context, R.drawable.perro_2)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
-                ContextCompat.getDrawable(context, R.drawable.perro_3)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
-                ContextCompat.getDrawable(context, R.drawable.perro_4)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
-                ContextCompat.getDrawable(context, R.drawable.perro_5)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
-                ContextCompat.getDrawable(context, R.drawable.perro_6)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
-                ContextCompat.getDrawable(context, R.drawable.perro_7)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
-                ContextCompat.getDrawable(context, R.drawable.perro_8)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
-                ContextCompat.getDrawable(context, R.drawable.perro_9)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
-                ContextCompat.getDrawable(context, R.drawable.perro_10)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
-                ContextCompat.getDrawable(context, R.drawable.perro_11)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888)
+                ContextCompat.getDrawable(context, R.drawable.corgi_0)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.corgi_1)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.corgi_2)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.corgi_3)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.corgi_4)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.corgi_5)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.corgi_6)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888)
             )
         } else if (petType == PetType.JELLY) {
-            // Load custom storyboard frames for Jelly (12 frames - bouncy slime)
+            // Load custom storyboard frames for Jelly (4 frames - bouncy slime)
             spriteFrames = listOf(
-                ContextCompat.getDrawable(context, R.drawable.jelly_0)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
-                ContextCompat.getDrawable(context, R.drawable.jelly_1)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
-                ContextCompat.getDrawable(context, R.drawable.jelly_2)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
-                ContextCompat.getDrawable(context, R.drawable.jelly_3)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
-                ContextCompat.getDrawable(context, R.drawable.jelly_4)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
-                ContextCompat.getDrawable(context, R.drawable.jelly_5)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
-                ContextCompat.getDrawable(context, R.drawable.jelly_6)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
-                ContextCompat.getDrawable(context, R.drawable.jelly_7)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
-                ContextCompat.getDrawable(context, R.drawable.jelly_8)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
-                ContextCompat.getDrawable(context, R.drawable.jelly_9)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
-                ContextCompat.getDrawable(context, R.drawable.jelly_10)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
-                ContextCompat.getDrawable(context, R.drawable.jelly_11)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888)
+                ContextCompat.getDrawable(context, R.drawable.slide_0)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.slide_1)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.slide_2)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.slide_3)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888)
             )
             // Neon translucency baseline
             animAlpha = 0.95f
@@ -1252,9 +1239,9 @@ class PetView(
             } else if (petType == PetType.CORGI) {
                 currentFrame = when(state) {
                     PetState.DRAGGING, PetState.FALLING -> 1
-                    PetState.WALKING -> ((time * 6.6f).toInt() % 3) // Alternates 0, 1, 2 every 150ms
+                    PetState.WALKING -> 1 + ((time * 6.6f).toInt() % 3) // Alternates 1, 2, 3
                     PetState.INTERACTING -> {
-                        if (isSecretActive) 5 else 3 + ((time * 3f).toInt() % 2)
+                        if (isSecretActive) 6 else 4 + ((time * 3f).toInt() % 2) // 6 is panza arriba, 4-5 is acariciar
                     }
                     else -> 0
                 }

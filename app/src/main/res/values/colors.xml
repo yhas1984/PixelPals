@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Primary Palette -->
-    <color name="dark_bg">#1A1A2E</color>
-    <color name="dark_bg_mid">#16213E</color>
-    <color name="dark_bg_deep">#0F3460</color>
+    <color name="dark_bg">#1A1A1A</color>
+    <color name="dark_bg_mid">#121212</color>
+    <color name="dark_bg_deep">#0A0A0A</color>
 
     <!-- Accent Colors -->
     <color name="coral_accent">#FF6B6B</color>
-    <color name="golden_accent">#FFD93D</color>
+    <color name="golden_accent">#FFD900</color>
     <color name="purple_soft">#A855F7</color>
     <color name="teal_accent">#38BDF8</color>
 
@@ -22,6 +22,6 @@
 
     <!-- Neutrals -->
     <color name="white">#FFFFFF</color>
-    <color name="text_dark">#1A1A2E</color>
-    <color name="text_muted">#666680</color>
+    <color name="text_dark">#FFFFFF</color>
+    <color name="text_muted">#A0A0A0</color>
 </resources>
