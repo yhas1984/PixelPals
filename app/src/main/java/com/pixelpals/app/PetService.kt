@@ -167,6 +167,7 @@ class PetService : Service() {
             PetType.JELLY -> "🟢"
             PetType.CORGI -> "🐕"
             PetType.GINGER -> "🐱"
+            PetType.PATITO -> "🦆"
         }
         val lvl = petProgress?.let { "Lv${it.petLevel}" } ?: ""
         val xp = petProgress?.happinessPoints ?: 0

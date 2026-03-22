@@ -206,6 +206,40 @@ class PetView(
     private var gingerSequenceTimer = 0f
     private var gingerIsPlayingSequence = false
 
+    // ══════════════════════════════════════════════════════════
+    // ▌ DUCK BRAIN - Patito Curioso
+    // ══════════════════════════════════════════════════════════
+    // Frames: 0=idle side, 1=waddle left, 2=waddle right, 3=peek front,
+    //         4=curious close, 5=neutral, 6-8=cleaning, 9-11=pecking,
+    //         12=focus, 13=quack start, 14=quack big
+
+    enum class DuckState {
+        IDLE_SIDE,      // Frame 0: Looking sideways
+        IDLE_PEEK,      // Frame 3: Peeking at user
+        WALKING,        // Frames 1-2: Waddle cycle
+        CURIOSITY,      // Frames 3→4→12: Looking at user
+        CLEANING,       // Frames 6→7→8: Preening feathers
+        PECKING,        // Frames 9→10→11: Pecking ground
+        QUACK_SUPREMO,  // Frames 3→13→14: Big quack reaction
+        CONFUSED,       // Frames 3-4: At screen edge
+        DRAGGING,       // Frame 0: Being held
+        FALLING         // Frame 0: Falling
+    }
+
+    private var duckState = DuckState.IDLE_SIDE
+    private var duckDecisionTimer = 0f
+    private var duckNextDecision = 3f + Random.nextFloat() * 3f // 3-6 seconds
+    private var duckWaddleTimer = 0f
+    private var duckActivityTimer = 0f
+    private var duckIdleTime = 0f
+    private var duckSequenceFrames = listOf<Int>()
+    private var duckSequenceDurations = listOf<Float>()
+    private var duckSequenceIndex = 0
+    private var duckSequenceTimer = 0f
+    private var duckIsPlayingSequence = false
+    private var duckWalkDirection = 1f // 1 = right, -1 = left
+    private var duckConfusedTimer = 0f
+
     // ── Ginger Transition Functions ──
 
     /** Start transition: SITTING → STANDING */
@@ -430,6 +464,143 @@ class PetView(
     }
 
     // ══════════════════════════════════════════════════════════
+    // ▌ DUCK BRAIN FUNCTIONS
+    // ══════════════════════════════════════════════════════════
+
+    /** Play a duck sequence animation */
+    private fun playDuckSequence(frames: List<Int>, durations: List<Float>) {
+        if (frames.isEmpty() || frames.size != durations.size) return
+        duckIsPlayingSequence = true
+        duckSequenceFrames = frames
+        duckSequenceDurations = durations
+        duckSequenceIndex = 0
+        duckSequenceTimer = 0f
+        currentFrame = frames[0]
+    }
+
+    /** Update duck sequence playback */
+    private fun updateDuckSequence(dt: Float): Boolean {
+        if (!duckIsPlayingSequence) return false
+        duckSequenceTimer += dt
+        if (duckSequenceIndex < duckSequenceDurations.size &&
+            duckSequenceTimer >= duckSequenceDurations[duckSequenceIndex]) {
+            duckSequenceIndex++
+            duckSequenceTimer = 0f
+            if (duckSequenceIndex < duckSequenceFrames.size) {
+                currentFrame = duckSequenceFrames[duckSequenceIndex]
+            }
+        }
+        if (duckSequenceIndex >= duckSequenceFrames.size) {
+            duckIsPlayingSequence = false
+            return false
+        }
+        return true
+    }
+
+    /** Duck decision engine - decides what to do next */
+    private fun duckMakeDecision() {
+        val roll = Random.nextInt(100)
+        when {
+            roll < 30 -> {
+                // 30%: Walk somewhere
+                duckState = DuckState.WALKING
+                duckWalkDirection = if (Random.nextBoolean()) 1f else -1f
+                velocityX = duckWalkDirection * (2f + Random.nextFloat() * 2f)
+                duckActivityTimer = 0f
+            }
+            roll < 50 -> {
+                // 20%: Clean/preen feathers
+                duckState = DuckState.CLEANING
+                playDuckSequence(listOf(6, 7, 8, 7, 6), listOf(0.8f, 0.8f, 1.0f, 0.8f, 0.6f))
+                duckActivityTimer = 0f
+            }
+            roll < 70 -> {
+                // 20%: Peck the ground
+                duckState = DuckState.PECKING
+                playDuckSequence(listOf(9, 10, 11, 10, 9), listOf(0.3f, 0.4f, 0.3f, 0.4f, 0.3f))
+                duckActivityTimer = 0f
+            }
+            roll < 90 -> {
+                // 20%: Look at user curiously
+                duckState = DuckState.CURIOSITY
+                playDuckSequence(listOf(3, 4, 12, 4, 3), listOf(0.5f, 0.8f, 1.5f, 0.8f, 0.5f))
+                duckActivityTimer = 0f
+            }
+            else -> {
+                // 10%: Just idle
+                duckState = DuckState.IDLE_SIDE
+                currentFrame = 0
+                duckActivityTimer = 0f
+            }
+        }
+    }
+
+    /** Update duck idle - alternating between side and peek */
+    private fun updateDuckIdle(dt: Float) {
+        duckIdleTime += dt
+        // Alternate between side view (0) and peek (3) every 1.5s
+        val cycle = (duckIdleTime % 3f)
+        currentFrame = if (cycle < 1.5f) 0 else 3
+    }
+
+    /** Update duck waddle walking with sinusoidal Y movement */
+    private fun updateDuckWalk(dt: Float, params: WindowManager.LayoutParams) {
+        duckWaddleTimer += dt
+        duckActivityTimer += dt
+
+        // Waddle frame cycle: alternate 1 and 2 every 100ms
+        currentFrame = if ((duckWaddleTimer * 10f).toInt() % 2 == 0) 1 else 2
+
+        // Sinusoidal Y movement for waddle effect
+        val waddleAmplitude = 3f
+        animOffsetY = sin(duckWaddleTimer * 12f) * waddleAmplitude
+
+        // Move horizontally
+        params.x += (velocityX * dt * 60f).toInt()
+        params.x = params.x.coerceIn(20, screenWidth - petSpriteSize - 20)
+
+        // Check if hit screen edge - get confused
+        if (params.x <= 25 || params.x >= screenWidth - petSpriteSize - 25) {
+            velocityX = 0f
+            duckState = DuckState.CONFUSED
+            duckConfusedTimer = 0f
+            playDuckSequence(listOf(3, 4, 3, 4), listOf(0.5f, 1.0f, 0.5f, 0.5f))
+            showBubble("🤔")
+        }
+
+        // Stop after walking a bit
+        if (duckActivityTimer > 2f + Random.nextFloat() * 2f) {
+            velocityX = 0f
+            duckState = DuckState.IDLE_SIDE
+            currentFrame = 0
+        }
+
+        updateWindowLayout(params)
+    }
+
+    /** Update duck confused state at screen edge */
+    private fun updateDuckConfused(dt: Float) {
+        duckConfusedTimer += dt
+        // After being confused, turn around and walk opposite direction
+        if (duckConfusedTimer > 2f) {
+            duckWalkDirection *= -1f
+            duckState = DuckState.WALKING
+            velocityX = duckWalkDirection * (2f + Random.nextFloat() * 2f)
+            duckActivityTimer = 0f
+            duckWaddleTimer = 0f
+        }
+    }
+
+    /** Duck quack supremo reaction */
+    private fun duckQuackSupremo() {
+        duckState = DuckState.QUACK_SUPREMO
+        playDuckSequence(listOf(3, 13, 14, 13, 3), listOf(0.2f, 0.3f, 0.8f, 0.3f, 0.2f))
+        showBubble("Quack!")
+        playHaptic(80) // Sharp peck-like vibration
+        duckActivityTimer = 0f
+    }
+
+    // ══════════════════════════════════════════════════════════
     // ▌ TIMERS
     // ══════════════════════════════════════════════════════════
 
@@ -622,6 +793,28 @@ class PetView(
                 ContextCompat.getDrawable(context, R.drawable.ginger_10)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888)
             )
             currentFrame = 4 // Start with sitting pose
+        } else if (petType == PetType.PATITO) {
+            // Load 15 frames for Patito (curious duck)
+            // 0=idle side, 1-2=waddle, 3=peek front, 4=curious close,
+            // 5=neutral, 6-8=cleaning, 9-11=pecking, 12=focus, 13-14=quack supreme
+            spriteFrames = listOf(
+                ContextCompat.getDrawable(context, R.drawable.patito_0)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.patito_1)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.patito_2)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.patito_3)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.patito_4)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.patito_5)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.patito_6)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.patito_7)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.patito_8)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.patito_9)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.patito_10)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.patito_11)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.patito_12)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.patito_13)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.patito_14)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888)
+            )
+            currentFrame = 0 // Start with side view
         } else {
             // Load standard sprite and generate 4 animation frames with strict 32-bit depth
             val drawable = ContextCompat.getDrawable(context, petType.spriteResId)!!
@@ -1154,6 +1347,56 @@ class PetView(
                     }
                 }
             }
+            IdleStyle.DUCK_IDLE -> {
+                // Patito: Curious duck idle with decision engine
+                if (duckIsPlayingSequence) {
+                    updateDuckSequence(dt)
+                    return
+                }
+
+                duckDecisionTimer += dt
+
+                when (duckState) {
+                    DuckState.IDLE_SIDE, DuckState.IDLE_PEEK -> {
+                        updateDuckIdle(dt)
+
+                        // Make a decision after timer expires
+                        if (duckDecisionTimer > duckNextDecision) {
+                            duckMakeDecision()
+                            duckDecisionTimer = 0f
+                            duckNextDecision = 3f + Random.nextFloat() * 3f
+                        }
+                    }
+                    DuckState.CURIOSITY -> {
+                        duckActivityTimer += dt
+                        if (duckActivityTimer > 3f) {
+                            duckState = DuckState.IDLE_SIDE
+                            currentFrame = 0
+                        }
+                    }
+                    DuckState.CLEANING, DuckState.PECKING -> {
+                        duckActivityTimer += dt
+                        if (duckActivityTimer > 4f || !duckIsPlayingSequence) {
+                            duckState = DuckState.IDLE_SIDE
+                            currentFrame = 0
+                        }
+                    }
+                    DuckState.QUACK_SUPREMO -> {
+                        duckActivityTimer += dt
+                        if (duckActivityTimer > 2f || !duckIsPlayingSequence) {
+                            duckState = DuckState.IDLE_SIDE
+                            currentFrame = 0
+                        }
+                    }
+                    else -> {
+                        currentFrame = 0
+                    }
+                }
+
+                // Gentle breathing animation
+                val breathe = sin(time * 1.8f) * 0.01f
+                animScaleY = 1f + breathe
+            }
         }
     }
 
@@ -1186,6 +1429,11 @@ class PetView(
 
             // Add affection while holding
             gingerAddAffection(1)
+        } else if (petType == PetType.PATITO) {
+            // Patito: Being held - look surprised
+            currentFrame = 0 // Side view while held
+            animRotation = 0f
+            duckState = DuckState.DRAGGING
         } else {
             // General pataleo
             animRotation = sin(time * 15f) * 10f
@@ -1532,6 +1780,29 @@ class PetView(
                     }
                 }
             }
+            MovementStyle.WADDLE_EXPLORE -> {
+                // Patito: Waddle exploration with duck brain decisions
+                if (petType != PetType.PATITO) return
+
+                val params = getWindowParams() ?: return
+
+                // Don't interrupt quack or curiosity sequences
+                if (duckIsPlayingSequence || duckState == DuckState.QUACK_SUPREMO || duckState == DuckState.CURIOSITY) {
+                    return
+                }
+
+                when (duckState) {
+                    DuckState.WALKING -> {
+                        updateDuckWalk(dt, params)
+                    }
+                    DuckState.CONFUSED -> {
+                        updateDuckConfused(dt)
+                    }
+                    else -> {
+                        // Idle - let DuckBrain handle decisions in updateIdleAnimation
+                    }
+                }
+            }
         }
     }
 
@@ -1619,6 +1890,7 @@ class PetView(
                         PetType.JELLY -> "🫠"
                         PetType.NUBE_MICHI -> "🌧️"
                         PetType.GINGER -> "😤" // Pouty face when ignored
+                        PetType.PATITO -> "🤔" // Confused duck
                     }
                     startSecretEvent(secretEmoji)
                     // Ginger shows pout frame when ignored
@@ -1725,6 +1997,11 @@ class PetView(
                 playHaptic(40) // Purr-like vibration
                 gingerBoredomTimer = 0f
                 gingerPoutActive = false
+            }
+            PetType.PATITO -> {
+                // Patito: Quack Supremo!
+                duckQuackSupremo()
+                duckIdleTime = 0f
             }
         }
     }
@@ -1935,6 +2212,42 @@ class PetView(
                     }
                 }
             }
+            PetType.PATITO -> {
+                // Patito: Quack reaction when tapped
+                when {
+                    interactTimer < 0.2f -> {
+                        // Initial surprise - peek at user
+                        currentFrame = 3
+                        animScaleY = 1.05f
+                        playHaptic(60) // Sharp peck vibration
+                    }
+                    interactTimer < 0.5f -> {
+                        // Quack start
+                        currentFrame = 13
+                        animScaleY = 0.95f
+                    }
+                    interactTimer < 1.2f -> {
+                        // QUACK SUPREMO!
+                        currentFrame = 14
+                        animScaleY = 1.1f
+                        animScaleX = 1.1f
+                        animOffsetY = -5f
+                        if (interactTimer < 0.6f) playHaptic(80)
+                    }
+                    interactTimer < 1.8f -> {
+                        // Recover
+                        currentFrame = 13
+                        animScaleY = 1f
+                    }
+                    else -> {
+                        // Return to idle
+                        resetAnimTransforms()
+                        currentFrame = 0
+                        state = PetState.IDLE
+                        duckState = DuckState.IDLE_SIDE
+                    }
+                }
+            }
         }
     }
 
@@ -1980,6 +2293,12 @@ class PetView(
                 currentFrame = 0 // stretch pose
                 animScaleX = 1.15f
                 animScaleY = 1.1f
+            }
+            PetType.PATITO -> {
+                // Happy quack jump
+                duckQuackSupremo()
+                velocityY = -12f
+                state = PetState.JUMPING
             }
         }
     }

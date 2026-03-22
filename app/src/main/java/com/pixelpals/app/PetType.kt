@@ -17,6 +17,7 @@ enum class PetType(
     val jumpInterval: Long = 0L,
     val agility: Float = 1.0f,        // How quickly they react and move (1.0 = normal)
     val boredomRate: Float = 1.0f,    // How fast they get bored (1.0 = normal)
+    val exploreInterval: Long = 5000L, // Time between autonomous explorations (ms)
     val movementStyle: MovementStyle,
     val idleStyle: IdleStyle,
     val interactionStyle: InteractionStyle
@@ -90,6 +91,21 @@ enum class PetType(
         movementStyle = MovementStyle.ELEGANT_STRETCH,
         idleStyle = IdleStyle.GROOMING,
         interactionStyle = InteractionStyle.BELLY_RUB
+    ),
+
+    PATITO(
+        displayName = "Patito",
+        description = "El Patito Curioso",
+        spriteResId = R.drawable.pet_patito,
+        gravity = 1.2f,           // Rubber duck physics
+        terminalVelocity = 16f,
+        bounceDamping = 0.6f,     // Elastic bouncy landing
+        agility = 1.0f,           // Normal reaction speed
+        boredomRate = 1.2f,       // Gets curious quickly
+        exploreInterval = 4000L,  // Explores every 4 seconds
+        movementStyle = MovementStyle.WADDLE_EXPLORE,
+        idleStyle = IdleStyle.DUCK_IDLE,
+        interactionStyle = InteractionStyle.QUACK_REACTION
     );
 }
 
@@ -99,7 +115,8 @@ enum class MovementStyle {
     STATIC_PERCH,     // Nube-Michi: sits on edges, rarely moves
     PARABOLIC_JUMP,   // Jelly: constant bouncing jumps along bottom
     WALK_RUN,         // Corgi: walks left/right, climbs edges
-    ELEGANT_STRETCH   // Ginger: graceful stretches and elegant movements
+    ELEGANT_STRETCH,  // Ginger: graceful stretches and elegant movements
+    WADDLE_EXPLORE    // Patito: curious waddle exploration
 }
 
 /** How the pet animates when idle */
@@ -108,7 +125,8 @@ enum class IdleStyle {
     BREATHING,        // Nube-Michi: expand/contract breathing
     JELLY_WOBBLE,     // Jelly: wobbly jelly physics
     SIT_BARK,         // Corgi: sits, occasionally shows bark bubble
-    GROOMING          // Ginger: grooming sequence - clean face, lick paw, wink
+    GROOMING,         // Ginger: grooming sequence - clean face, lick paw, wink
+    DUCK_IDLE         // Patito: peek and look around
 }
 
 /** How the pet responds to touch interaction */
@@ -116,5 +134,6 @@ enum class InteractionStyle {
     FADE_SHRINK,      // Bloop: becomes semi-transparent and shrinks
     FEATHER_FALL,     // Nube-Michi: falls very slowly like a feather
     SQUISH_BOUNCE,    // Jelly: squash animation then elastic bounce
-    BELLY_RUB         // Corgi/Ginger: rolls onto back
+    BELLY_RUB,        // Corgi/Ginger: rolls onto back
+    QUACK_REACTION    // Patito: quack supremo with jump
 }

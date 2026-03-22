@@ -14,7 +14,7 @@ import androidx.core.content.ContextCompat
 /**
  * PetSelectionActivity — Pantalla de selección de mascota.
  *
- * Presenta las 5 mascotas en una grilla con sus sprites.
+ * Presenta las 6 mascotas en una grilla con sus sprites.
  * Al tocar una, se selecciona y se lanza el servicio con esa mascota.
  */
 class PetSelectionActivity : AppCompatActivity() {
@@ -28,6 +28,7 @@ class PetSelectionActivity : AppCompatActivity() {
     private lateinit var cardJelly: LinearLayout
     private lateinit var cardCorgi: LinearLayout
     private lateinit var cardGinger: LinearLayout
+    private lateinit var cardPatito: LinearLayout
 
     private var selectedType: PetType? = null
     private val allCards = mutableListOf<LinearLayout>()
@@ -47,7 +48,8 @@ class PetSelectionActivity : AppCompatActivity() {
         cardJelly = findViewById(R.id.cardJelly)
         cardCorgi = findViewById(R.id.cardCorgi)
         cardGinger = findViewById(R.id.cardGinger)
-        allCards.addAll(listOf(cardBloop, cardNubeMichi, cardJelly, cardCorgi, cardGinger))
+        cardPatito = findViewById(R.id.cardPatito)
+        allCards.addAll(listOf(cardBloop, cardNubeMichi, cardJelly, cardCorgi, cardGinger, cardPatito))
     }
 
     private fun setupCards() {
@@ -56,7 +58,8 @@ class PetSelectionActivity : AppCompatActivity() {
             cardNubeMichi to PetType.NUBE_MICHI,
             cardJelly to PetType.JELLY,
             cardCorgi to PetType.CORGI,
-            cardGinger to PetType.GINGER
+            cardGinger to PetType.GINGER,
+            cardPatito to PetType.PATITO
         )
 
         petTypes.forEach { (card, type) ->
