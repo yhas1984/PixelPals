@@ -946,16 +946,8 @@ class PetView(
             nubePlumaBitmap = ContextCompat.getDrawable(context, R.drawable.pluma_0)!!
                 .toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888)
         } else if (petType == PetType.CORGI) {
-            // Load custom storyboard frames for Corgi (7 frames)
-            spriteFrames = listOf(
-                ContextCompat.getDrawable(context, R.drawable.corgi_0)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
-                ContextCompat.getDrawable(context, R.drawable.corgi_1)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
-                ContextCompat.getDrawable(context, R.drawable.corgi_2)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
-                ContextCompat.getDrawable(context, R.drawable.corgi_3)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
-                ContextCompat.getDrawable(context, R.drawable.corgi_4)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
-                ContextCompat.getDrawable(context, R.drawable.corgi_5)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
-                ContextCompat.getDrawable(context, R.drawable.corgi_6)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888)
-            )
+            // Load Corgi frames - try generated first, then drawable
+            spriteFrames = loadPetFrames(petType, 12, "perro")
         } else if (petType == PetType.JELLY) {
             // Load custom storyboard frames for Jelly (4 frames - bouncy slime)
             spriteFrames = listOf(
@@ -1029,6 +1021,38 @@ class PetView(
 
         setBackgroundColor(Color.TRANSPARENT)
         setLayerType(LAYER_TYPE_HARDWARE, null)
+    }
+
+    /**
+     * Load pet frames - tries generated frames first, then drawable resources
+     */
+    private fun loadPetFrames(petType: PetType, count: Int, prefix: String): List<Bitmap> {
+        val frames = mutableListOf<Bitmap>()
+        val generatedDir = java.io.File(context.filesDir, "generated_frames/${petType.name.lowercase()}")
+
+        for (i in 0 until count) {
+            // Try generated frame first
+            val generatedFile = java.io.File(generatedDir, "frame_$i.png")
+            val bitmap = if (generatedFile.exists()) {
+                BitmapFactory.decodeFile(generatedFile.absolutePath)
+                    ?.let { Bitmap.createScaledBitmap(it, petSpriteSize, petSpriteSize, true) }
+            } else {
+                // Try drawable resource
+                val resId = context.resources.getIdentifier("${prefix}_$i", "drawable", context.packageName)
+                if (resId != 0) {
+                    try {
+                        ContextCompat.getDrawable(context, resId)
+                            ?.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888)
+                    } catch (e: Exception) { null }
+                } else null
+            }
+
+            // Fallback to base frame scaled
+            frames.add(bitmap ?: Bitmap.createBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888))
+        }
+
+        Log.d(TAG, "Loaded ${frames.count { it.width > 1 }} frames for ${petType.displayName} from ${if (generatedDir.exists()) "generated" else "drawable"}")
+        return frames
     }
 
     /**
