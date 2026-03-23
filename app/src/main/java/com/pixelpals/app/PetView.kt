@@ -39,13 +39,21 @@ class PetView(
     private val screenHeight: Int,
     private val petSpriteSize: Int,
     private val petType: PetType
-) : View(context) {
+) : View(context), com.pixelpals.app.behavior.PetViewBridge {
 
     // ══════════════════════════════════════════════════════════
     // ▌ STATE MACHINE
     // ══════════════════════════════════════════════════════════
 
-    private var state = PetState.IDLE
+    override var state = PetState.IDLE
+
+    // ══════════════════════════════════════════════════════════
+    // ▌ BEHAVIOR (Strategy Pattern)
+    // ══════════════════════════════════════════════════════════
+
+    private val behavior: com.pixelpals.app.behavior.PetBehavior? by lazy {
+        com.pixelpals.app.behavior.PetBehaviorFactory.create(petType, this)
+    }
 
     // ══════════════════════════════════════════════════════════
     // ▌ CONSTANTS
@@ -71,7 +79,7 @@ class PetView(
     // ══════════════════════════════════════════════════════════
 
     private val spriteFrames: List<Bitmap>      // Bloop: 4, Nube-Michi: 4, Corgi: 12, Jelly: 12, Ginger: 11
-    private var currentFrame = 0
+    override var currentFrame = 0
     private var frameTimer = 0f
     private val frameInterval = 0.15f           // 150ms per frame
     private val spritePaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
@@ -111,19 +119,19 @@ class PetView(
     // ▌ ANIMATION TRANSFORMS
     // ══════════════════════════════════════════════════════════
 
-    private var animScaleX = 1f
-    private var animScaleY = 1f
-    private var animAlpha = 1f
-    private var animOffsetX = 0f
-    private var animOffsetY = 0f
-    private var animRotation = 0f   // For drag "pataleo"
+    override var animScaleX = 1f
+    override var animScaleY = 1f
+    override var animAlpha = 1f
+    override var animOffsetX = 0f
+    override var animOffsetY = 0f
+    override var animRotation = 0f   // For drag "pataleo"
 
     // ══════════════════════════════════════════════════════════
     // ▌ PHYSICS
     // ══════════════════════════════════════════════════════════
 
-    private var velocityX = 0f
-    private var velocityY = 0f
+    override var velocityX = 0f
+    override var velocityY = 0f
     private val groundY get() = screenHeight - petSpriteSize - GROUND_MARGIN
 
     // ══════════════════════════════════════════════════════════
@@ -1386,6 +1394,13 @@ class PetView(
     // ══════════════════════════════════════════════════════════
 
     private fun updateIdleAnimation(dt: Float) {
+        // Delegate to behavior if available
+        behavior?.let {
+            it.updateIdle(dt)
+            return
+        }
+
+        // Legacy inline behavior (fallback)
         when (petType.idleStyle) {
             IdleStyle.SINE_FLOAT -> {
                 // Bloop: Ethereal ghost floating with 12 frames
@@ -1749,6 +1764,13 @@ class PetView(
     // ══════════════════════════════════════════════════════════
 
     private fun updateDragAnimation(dt: Float) {
+        // Delegate to behavior if available
+        behavior?.let {
+            it.updateDrag(dt)
+            return
+        }
+
+        // Legacy inline behavior (fallback)
         // Drag physics per pet
         if (petType == PetType.NUBE_MICHI) {
             // High air friction for Cloud Cat (like a feather)
@@ -1810,6 +1832,12 @@ class PetView(
 
     private fun updateFalling(dt: Float) {
         val params = getWindowParams() ?: return
+
+        // Delegate to behavior if available
+        behavior?.let {
+            it.updateFalling(dt)
+            // Continue with physics even when delegating
+        }
 
         // Reset rotation from drag
         animRotation *= 0.85f
@@ -2430,6 +2458,13 @@ class PetView(
         velocityY = 0f
         progress?.trackInteraction()  // +5 XP!
 
+        // Delegate to behavior if available
+        behavior?.let {
+            it.onInteract()
+            return
+        }
+
+        // Legacy inline behavior (fallback)
         when (petType) {
             PetType.CORGI -> {
                 showBubble("💕")
@@ -2481,6 +2516,13 @@ class PetView(
     private fun updateInteracting(dt: Float) {
         interactTimer += dt
         
+        // Delegate to behavior if available
+        behavior?.let {
+            it.updateInteracting(dt)
+            return
+        }
+
+        // Legacy inline behavior (fallback)
         when (petType) {
             PetType.CORGI -> {
                 // Corgi: Petting animation with frames 7-10 (happy wiggle)
@@ -2871,7 +2913,7 @@ class PetView(
     // ▌ BUBBLE
     // ══════════════════════════════════════════════════════════
 
-    fun showBubble(text: String) {
+    override fun showBubble(text: String) {
         showBubble = true
         bubbleText = text
         bubbleTimer = 0f
@@ -3358,7 +3400,7 @@ class PetView(
     // ▌ SYSTEM HAPTICS
     // ══════════════════════════════════════════════════════════
 
-    private fun playHaptic(durationMs: Long) {
+    override fun playHaptic(durationMs: Long) {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 vibrator.vibrate(VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE))
