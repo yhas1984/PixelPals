@@ -3169,6 +3169,11 @@ class PetView(
                 isSecretActive = false
                 dragStartTime = now
 
+                // Notify behavior for DIABLILLO
+                if (petType == PetType.DIABLILLO) {
+                    (behavior as? com.pixelpals.app.behavior.ImpBehavior)?.onDragStarted()
+                }
+
                 touchOffsetX = event.rawX - params.x
                 touchOffsetY = event.rawY - params.y
                 lastTouchX = event.rawX
@@ -3194,6 +3199,11 @@ class PetView(
                 if (isDragging) {
                     isDragging = false
                     
+                    // Notify behavior for DIABLILLO
+                    if (petType == PetType.DIABLILLO) {
+                        (behavior as? com.pixelpals.app.behavior.ImpBehavior)?.onDragEnded()
+                    }
+
                     val now = System.currentTimeMillis()
                     val dx = event.rawX - (params.x + touchOffsetX)
                     val dy = event.rawY - (params.y + touchOffsetY)
@@ -3241,6 +3251,13 @@ class PetView(
 
     private fun doubleTapDodge() {
         val params = getWindowParams() ?: return
+
+        // Delegate to behavior for DIABLILLO
+        if (petType == PetType.DIABLILLO) {
+            val impBehavior = behavior as? com.pixelpals.app.behavior.ImpBehavior
+            impBehavior?.onUserTouch(lastTouchX, lastTouchY)
+            return
+        }
 
         if (petType == PetType.GINGER) {
             // Ginger: LASER JUMP - Alert frame then elastic overshoot toward finger
