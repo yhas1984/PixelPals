@@ -8,6 +8,7 @@ import android.os.Looper
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.view.Choreographer
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
@@ -997,15 +998,25 @@ class PetView(
 
     private var isAnimating = false
     private var purrTimer = 0f
-    private val handler = Handler(Looper.getMainLooper())
-    private val animationRunnable = object : Runnable {
-        override fun run() {
+    // ══════════════════════════════════════════════════════════
+    // ▌ ANIMATION LOOP (Choreographer - V-Sync)
+    // ══════════════════════════════════════════════════════════
+
+    private var lastFrameTimeNanos = 0L
+    private val frameCallback = object : Choreographer.FrameCallback {
+        override fun doFrame(frameTimeNanos: Long) {
             if (!isAnimating) return
+            if (lastFrameTimeNanos == 0L) lastFrameTimeNanos = frameTimeNanos
+            choreographerDt = ((frameTimeNanos - lastFrameTimeNanos) / 1_000_000f) / 1000f
+            lastFrameTimeNanos = frameTimeNanos
             updateFrame()
             invalidate()
-            handler.postDelayed(this, FRAME_DELAY_MS)
+            Choreographer.getInstance().postFrameCallback(this)
         }
     }
+
+    // Handler for delayed actions only (not animation loop)
+    private val handler = Handler(Looper.getMainLooper())
 
     // ══════════════════════════════════════════════════════════
     // ▌ INIT
@@ -1123,10 +1134,9 @@ class PetView(
             )
             currentFrame = 0 // Start lurking
         } else {
-            // Load standard sprite and generate 4 animation frames with strict 32-bit depth
+            // Load standard sprite - use drawable directly (PNGs should already be transparent)
             val drawable = ContextCompat.getDrawable(context, petType.spriteResId)!!
-            val rawBitmap = drawable.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888)
-            val baseBitmap = removeBackground(rawBitmap)
+            val baseBitmap = drawable.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888)
             spriteFrames = generateFrames(baseBitmap)
         }
 
@@ -1162,111 +1172,19 @@ class PetView(
         return result
     }
 
-    /**
-     * Remove solid backgrounds of any color. Uses flood-fill (BFS) starting from the corners
-     * to identify the background color, completely removing flat backgrounds without
-     * eating the sprite's interior (unless the boundary line has gaps).
-     * Smooths edges with a distance-based anti-aliasing gradient.
-     */
-    private fun removeBackground(source: Bitmap): Bitmap {
-        val result = source.copy(Bitmap.Config.ARGB_8888, true)
-        val w = result.width
-        val h = result.height
-        val pixels = IntArray(w * h)
-        result.getPixels(pixels, 0, w, 0, 0, w, h)
-
-        // Find the most common background color from the edges
-        val edgeColors = mutableMapOf<Int, Int>()
-        for (x in 0 until w) {
-            edgeColors[pixels[x]] = (edgeColors[pixels[x]] ?: 0) + 1
-            edgeColors[pixels[(h - 1) * w + x]] = (edgeColors[pixels[(h - 1) * w + x]] ?: 0) + 1
-        }
-        for (y in 0 until h) {
-            edgeColors[pixels[y * w]] = (edgeColors[pixels[y * w]] ?: 0) + 1
-            edgeColors[pixels[y * w + w - 1]] = (edgeColors[pixels[y * w + w - 1]] ?: 0) + 1
-        }
-        // Exclude completely transparent pixels from being considered "background"
-        val solidEdgeColors = edgeColors.filterKeys { Color.alpha(it) > 128 }
-        val bgColor = if (solidEdgeColors.isNotEmpty()) {
-            solidEdgeColors.maxByOrNull { it.value }?.key ?: Color.WHITE
-        } else {
-            return result // Already transparent!
-        }
-        
-        val bgR = Color.red(bgColor)
-        val bgG = Color.green(bgColor)
-        val bgB = Color.blue(bgColor)
-
-        // Flood fill from corners
-        val queue = ArrayDeque<Int>()
-        val visited = BooleanArray(w * h)
-
-        val corners = listOf(0, w - 1, (h - 1) * w, (h - 1) * w + w - 1)
-        for (c in corners) {
-            queue.addLast(c)
-            visited[c] = true
-        }
-
-        while (queue.isNotEmpty()) {
-            val i = queue.removeFirst()
-            val x = i % w
-            val y = i / w
-
-            val p = pixels[i]
-            val alpha = Color.alpha(p)
-
-            if (alpha < 5) continue
-
-            val r = Color.red(p)
-            val g = Color.green(p)
-            val b = Color.blue(p)
-
-            // Euclidean distance to background color
-            val dist = sqrt((r - bgR) * (r - bgR).toFloat() + (g - bgG) * (g - bgG).toFloat() + (b - bgB) * (b - bgB).toFloat())
-
-            // Tolerance: 60 for solid removal, up to 100 for antialiasing
-            if (dist < 60f) {
-                pixels[i] = Color.argb(0, bgR, bgG, bgB) // Transparent with bleeding color
-                
-                // Add neighbors
-                val neighbors = intArrayOf(
-                    if (x > 0) i - 1 else -1,
-                    if (x < w - 1) i + 1 else -1,
-                    if (y > 0) i - w else -1,
-                    if (y < h - 1) i + w else -1
-                )
-                
-                for (n in neighbors) {
-                    if (n != -1 && !visited[n]) {
-                        visited[n] = true
-                        queue.addLast(n)
-                    }
-                }
-            } else if (dist < 100f) {
-                // Outer antialiased edge: keep color but make semi-transparent
-                // Do not add to queue to stop propagation
-                val smoothAlpha = ((dist - 60f) / 40f * alpha).toInt().coerceIn(0, 255)
-                pixels[i] = Color.argb(smoothAlpha, r, g, b)
-            }
-        }
-
-        result.setPixels(pixels, 0, w, 0, 0, w, h)
-        return result
-    }
-
-    // ══════════════════════════════════════════════════════════
     // ▌ PUBLIC API
     // ══════════════════════════════════════════════════════════
 
     fun resumeAnimation() {
         if (isAnimating) return
         isAnimating = true
-        handler.post(animationRunnable)
+        lastFrameTimeNanos = 0L
+        Choreographer.getInstance().postFrameCallback(frameCallback)
     }
 
     fun pauseAnimation() {
         isAnimating = false
-        handler.removeCallbacks(animationRunnable)
+        Choreographer.getInstance().removeFrameCallback(frameCallback)
     }
 
     /** Called from PetService when battery state changes */
@@ -1296,8 +1214,10 @@ class PetView(
     // ▌ FRAME UPDATE (Main Loop)
     // ══════════════════════════════════════════════════════════
 
+    private var choreographerDt = 0.016f // Default 60fps
+
     private fun updateFrame() {
-        val dt = FRAME_DELAY_MS / 1000f
+        val dt = choreographerDt.coerceIn(0.001f, 0.05f) // Clamp to reasonable range
         time += dt
 
         // ── XP minute tracker ──
