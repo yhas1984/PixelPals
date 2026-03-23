@@ -1,4 +1,5 @@
 package com.pixelpals.app.behavior
+import com.pixelpals.app.PetState
 
 import android.graphics.Canvas
 import android.view.MotionEvent
