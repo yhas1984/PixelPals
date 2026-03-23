@@ -7,16 +7,12 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
-import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
-import android.widget.Button
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import com.pixelpals.app.databinding.ActivityMainBinding
 
 /**
  * MainActivity — Pantalla de Onboarding y Permisos
@@ -28,6 +24,9 @@ import androidx.core.content.ContextCompat
  * 4. Lanza el PetService cuando todo está listo
  */
 class MainActivity : AppCompatActivity() {
+
+    // ── View Binding ──────────────────────────────────────────
+    private lateinit var binding: ActivityMainBinding
 
     // ── Launchers ──────────────────────────────────────────────
     private val overlayPermissionLauncher = registerForActivityResult(
@@ -42,26 +41,12 @@ class MainActivity : AppCompatActivity() {
         updatePermissionUI()
     }
 
-    // ── Views ──────────────────────────────────────────────────
-    private lateinit var btnOverlay: Button
-    private lateinit var btnNotification: Button
-    private lateinit var btnLaunch: Button
-    private lateinit var btnAlbum: Button
-    private lateinit var iconOverlay: ImageView
-    private lateinit var iconNotification: ImageView
-    private lateinit var statusOverlay: TextView
-    private lateinit var statusNotification: TextView
-    private lateinit var titleText: TextView
-    private lateinit var subtitleText: TextView
-    private lateinit var cardOverlay: LinearLayout
-    private lateinit var cardNotification: LinearLayout
-
     // ──────────────────────────────────────────────────────────
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        bindViews()
         setupClickListeners()
         animateEntrance()
         updatePermissionUI()
@@ -72,37 +57,21 @@ class MainActivity : AppCompatActivity() {
         updatePermissionUI()
     }
 
-    // ── View Binding (manual) ─────────────────────────────────
-    private fun bindViews() {
-        titleText = findViewById(R.id.titleText)
-        subtitleText = findViewById(R.id.subtitleText)
-        cardOverlay = findViewById(R.id.cardOverlay)
-        cardNotification = findViewById(R.id.cardNotification)
-        btnOverlay = findViewById(R.id.btnOverlay)
-        btnNotification = findViewById(R.id.btnNotification)
-        btnLaunch = findViewById(R.id.btnLaunch)
-        btnAlbum = findViewById(R.id.btnAlbum)
-        iconOverlay = findViewById(R.id.iconOverlay)
-        iconNotification = findViewById(R.id.iconNotification)
-        statusOverlay = findViewById(R.id.statusOverlay)
-        statusNotification = findViewById(R.id.statusNotification)
-    }
-
     // ── Click Listeners ───────────────────────────────────────
     private fun setupClickListeners() {
-        btnOverlay.setOnClickListener {
+        binding.btnOverlay.setOnClickListener {
             requestOverlayPermission()
         }
 
-        btnNotification.setOnClickListener {
+        binding.btnNotification.setOnClickListener {
             requestNotificationPermission()
         }
 
-        btnLaunch.setOnClickListener {
+        binding.btnLaunch.setOnClickListener {
             launchPet()
         }
 
-        btnAlbum.setOnClickListener {
+        binding.btnAlbum.setOnClickListener {
             val intent = Intent(this, TreasureAlbumActivity::class.java)
             startActivity(intent)
         }
@@ -149,42 +118,42 @@ class MainActivity : AppCompatActivity() {
 
         // Overlay card
         if (overlayGranted) {
-            statusOverlay.text = getString(R.string.permission_granted)
-            statusOverlay.setTextColor(ContextCompat.getColor(this, R.color.green_success))
-            iconOverlay.setColorFilter(ContextCompat.getColor(this, R.color.green_success))
-            btnOverlay.isEnabled = false
-            btnOverlay.alpha = 0.5f
-            btnOverlay.text = getString(R.string.permission_granted)
+            binding.statusOverlay.text = getString(R.string.permission_granted)
+            binding.statusOverlay.setTextColor(ContextCompat.getColor(this, R.color.green_success))
+            binding.iconOverlay.setColorFilter(ContextCompat.getColor(this, R.color.green_success))
+            binding.btnOverlay.isEnabled = false
+            binding.btnOverlay.alpha = 0.5f
+            binding.btnOverlay.text = getString(R.string.permission_granted)
         } else {
-            statusOverlay.text = getString(R.string.permission_required)
-            statusOverlay.setTextColor(ContextCompat.getColor(this, R.color.coral_accent))
-            iconOverlay.setColorFilter(ContextCompat.getColor(this, R.color.coral_accent))
-            btnOverlay.isEnabled = true
-            btnOverlay.alpha = 1f
-            btnOverlay.text = getString(R.string.grant_permission)
+            binding.statusOverlay.text = getString(R.string.permission_required)
+            binding.statusOverlay.setTextColor(ContextCompat.getColor(this, R.color.coral_accent))
+            binding.iconOverlay.setColorFilter(ContextCompat.getColor(this, R.color.coral_accent))
+            binding.btnOverlay.isEnabled = true
+            binding.btnOverlay.alpha = 1f
+            binding.btnOverlay.text = getString(R.string.grant_permission)
         }
 
         // Notification card
         if (notifGranted) {
-            statusNotification.text = getString(R.string.permission_granted)
-            statusNotification.setTextColor(ContextCompat.getColor(this, R.color.green_success))
-            iconNotification.setColorFilter(ContextCompat.getColor(this, R.color.green_success))
-            btnNotification.isEnabled = false
-            btnNotification.alpha = 0.5f
-            btnNotification.text = getString(R.string.permission_granted)
+            binding.statusNotification.text = getString(R.string.permission_granted)
+            binding.statusNotification.setTextColor(ContextCompat.getColor(this, R.color.green_success))
+            binding.iconNotification.setColorFilter(ContextCompat.getColor(this, R.color.green_success))
+            binding.btnNotification.isEnabled = false
+            binding.btnNotification.alpha = 0.5f
+            binding.btnNotification.text = getString(R.string.permission_granted)
         } else {
-            statusNotification.text = getString(R.string.permission_required)
-            statusNotification.setTextColor(ContextCompat.getColor(this, R.color.coral_accent))
-            iconNotification.setColorFilter(ContextCompat.getColor(this, R.color.coral_accent))
-            btnNotification.isEnabled = true
-            btnNotification.alpha = 1f
-            btnNotification.text = getString(R.string.grant_permission)
+            binding.statusNotification.text = getString(R.string.permission_required)
+            binding.statusNotification.setTextColor(ContextCompat.getColor(this, R.color.coral_accent))
+            binding.iconNotification.setColorFilter(ContextCompat.getColor(this, R.color.coral_accent))
+            binding.btnNotification.isEnabled = true
+            binding.btnNotification.alpha = 1f
+            binding.btnNotification.text = getString(R.string.grant_permission)
         }
 
         // Launch button — only enabled when both permissions granted
         val allGranted = overlayGranted && notifGranted
-        btnLaunch.isEnabled = allGranted
-        btnLaunch.alpha = if (allGranted) 1f else 0.4f
+        binding.btnLaunch.isEnabled = allGranted
+        binding.btnLaunch.alpha = if (allGranted) 1f else 0.4f
     }
 
     // ── Launch Pet ────────────────────────────────────────────
@@ -202,7 +171,13 @@ class MainActivity : AppCompatActivity() {
 
     // ── Entrance Animations ───────────────────────────────────
     private fun animateEntrance() {
-        val views = listOf(titleText, subtitleText, cardOverlay, cardNotification, btnLaunch)
+        val views = listOf(
+            binding.titleText,
+            binding.subtitleText,
+            binding.cardOverlay,
+            binding.cardNotification,
+            binding.btnLaunch
+        )
         views.forEachIndexed { index, view ->
             view.alpha = 0f
             view.translationY = 60f

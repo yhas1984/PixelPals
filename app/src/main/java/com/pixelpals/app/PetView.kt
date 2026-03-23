@@ -3441,12 +3441,8 @@ class PetView(
 
     override fun onDetachedFromWindow() {
         pauseAnimation()
-        // Recycle bitmaps to free memory
-        for (bitmap in spriteFrames) {
-            if (!bitmap.isRecycled) {
-                bitmap.recycle()
-            }
-        }
+        // Don't recycle bitmaps - they may be reused if view is reattached
+        // This prevents "Canvas: trying to use a recycled bitmap" crash
         particles.clear()
         super.onDetachedFromWindow()
     }
