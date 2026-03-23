@@ -8,12 +8,14 @@ import kotlin.math.abs
 import kotlin.random.Random
 
 /**
- * ImpBehavior — Diablillo Alado (Winged Imp)
+ * ImpBehavior — Diablillo Alado (Winged Imp) v2
  *
- * Comportamiento de exploración:
- * 1. Aletea por toda la pantalla con movimientos sutiles
- * 2. Se detiene sobre "puntos de interés" (simulando apps)
- * 3. Vuela hacia donde el usuario toca
+ * Comportamiento mejorado:
+ * - Movimiento suave y continuo
+ * - Usa TODOS los frames con carisma
+ * - Reacciones variadas constantes
+ * - Flotación y respiración constante
+ * - Timeout de seguridad anti-congelamiento
  *
  * Frames (11 total):
  * 0: Idle_Base, 1: Wings_Up, 2: Wings_Down, 3: Glide
@@ -24,14 +26,13 @@ class ImpBehavior(
 ) : PetBehavior {
 
     enum class ImpState {
-        IDLE,               // Flotando suave
-        FLYING_AROUND,      // Explorando con aleteo
-        OBSERVING,          // Detenido mirando abajo (frame 5)
-        FLYING_TO_TARGET,   // Volando hacia posición
-        LANDING,            // Posándose momentáneamente
-        TURNING,            // Giro
-        FIRE_ATTACK,        // Fuego al tocar
-        BURNED_OUT          // Quemado
+        IDLE,
+        EXPLORING,        // Ciclo completo usando todos los frames
+        OBSERVING,
+        FLYING_TO_TARGET,
+        LANDING,
+        FIRE_ATTACK,
+        BURNED_OUT
     }
 
     private var state = ImpState.IDLE
@@ -39,34 +40,37 @@ class ImpBehavior(
     private var stateTimer = 0f
     private var burnTimer = 0f
     private var isBurned = false
+    private var globalTime = 0f
 
     // Exploración
     private var targetX = 0f
     private var targetY = 0f
-    private var velocityX = 0f
-    private var velocityY = 0f
-    private val flySpeed = 2f
+    private var currentX = 0f
+    private var currentY = 0f
 
-    // Puntos de interés (simulación de apps)
+    // Puntos de interés
     data class PointOfInterest(val x: Float, val y: Float, val name: String)
     private val pointsOfInterest = mutableListOf<PointOfInterest>()
-    private var currentPOI: PointOfInterest? = null
+
+    // Carisma
+    private val reactions = listOf("😈", "🔥", "✨", "💫", "👀", "🦇", "⭐", "🌙", "💨", "🫧")
+    private var reactionTimer = 0f
+    private var nextReaction = 2f + Random.nextFloat() * 3f
+
+    // Timeout de seguridad
+    private val maxStateTime = 4f
 
     init {
         generatePointsOfInterest()
     }
 
-    /** Generar puntos de interés simulando posiciones de apps */
     private fun generatePointsOfInterest() {
         pointsOfInterest.clear()
-        // Status bar
         pointsOfInterest.add(PointOfInterest(540f, 60f, "Status"))
-        // Dock inferior
         pointsOfInterest.add(PointOfInterest(180f, 1780f, "Dock1"))
         pointsOfInterest.add(PointOfInterest(360f, 1780f, "Dock2"))
         pointsOfInterest.add(PointOfInterest(540f, 1780f, "Dock3"))
         pointsOfInterest.add(PointOfInterest(720f, 1780f, "Dock4"))
-        // Grid apps (filas simuladas)
         for (row in 0 until 4) {
             for (col in 0 until 4) {
                 val x = 130f + col * 180f
@@ -83,116 +87,180 @@ class ImpBehavior(
     override fun updateIdle(dt: Float) {
         timer += dt
         stateTimer += dt
+        globalTime += dt
+        reactionTimer += dt
+
+        // Flotación base SIEMPRE activa
+        val baseFloatY = sin(globalTime * 1.5f) * 4f
+        val baseFloatX = sin(globalTime * 0.8f) * 2f
+
+        // Respiración sutil SIEMPRE activa
+        val breathe = sin(globalTime * 2f) * 0.015f
+        petView.animScaleY = 1f + breathe
+        petView.animScaleX = 1f - breathe * 0.5f
+
+        // Reacciones variadas
+        if (reactionTimer > nextReaction) {
+            val reaction = reactions.random()
+            petView.showBubble(reaction)
+            petView.playHaptic(20)
+            reactionTimer = 0f
+            nextReaction = 1.5f + Random.nextFloat() * 3f
+
+            // Squish aleatorio para dar vida
+            petView.animScaleX = 1.15f
+            petView.animScaleY = 0.9f
+        }
+
+        // Timeout de seguridad
+        if (stateTimer > maxStateTime && state != ImpState.EXPLORING) {
+            forceExploring()
+        }
 
         when (state) {
             ImpState.IDLE -> {
-                // Flotación suave
+                // Flotación suave con frame frontal
                 petView.currentFrame = 0
-                petView.animOffsetY = sin(timer * 1.2f) * 5f
-                petView.animOffsetX = sin(timer * 0.6f) * 3f
+                petView.animOffsetY = baseFloatY
+                petView.animOffsetX = baseFloatX
 
-                // Después de 2-3s, empezar a explorar
-                if (stateTimer > 2f + Random.nextFloat()) {
+                if (stateTimer > 1.5f + Random.nextFloat() * 0.5f) {
                     startExploring()
                 }
             }
 
-            ImpState.FLYING_AROUND -> {
-                // Aleteo constante mientras explora
-                val flapCycle = timer % 0.5f
-                petView.currentFrame = when {
-                    flapCycle < 0.17f -> 0
-                    flapCycle < 0.33f -> 1
-                    else -> 2
+            ImpState.EXPLORING -> {
+                // Ciclo completo de exploración usando TODOS los frames
+                val cycleDuration = 6f  // 6 segundos por ciclo completo
+                val cyclePos = timer % cycleDuration
+
+                when {
+                    // Fase 1: Aleteo (frames 0-2)
+                    cyclePos < 1.5f -> {
+                        val flapPos = cyclePos % 0.4f
+                        petView.currentFrame = when {
+                            flapPos < 0.13f -> 0
+                            flapPos < 0.26f -> 1
+                            else -> 2
+                        }
+                        petView.animOffsetY = baseFloatY + when {
+                            flapPos < 0.13f -> 0f
+                            flapPos < 0.26f -> -3f
+                            else -> 3f
+                        }
+                    }
+                    // Fase 2: Glide (frame 3)
+                    cyclePos < 2.5f -> {
+                        petView.currentFrame = 3
+                        petView.animOffsetY = baseFloatY
+                    }
+                    // Fase 3: Giro (frames 4-7)
+                    cyclePos < 3.5f -> {
+                        val turnPos = (cyclePos - 2.5f) % 1f
+                        petView.currentFrame = when {
+                            turnPos < 0.25f -> 4
+                            turnPos < 0.50f -> 5
+                            turnPos < 0.75f -> 6
+                            else -> 7
+                        }
+                        petView.animOffsetY = baseFloatY
+                    }
+                    // Fase 4: Aleteo rápido (frames 0-2)
+                    cyclePos < 4.5f -> {
+                        val flapPos = cyclePos % 0.3f
+                        petView.currentFrame = when {
+                            flapPos < 0.10f -> 0
+                            flapPos < 0.20f -> 1
+                            else -> 2
+                        }
+                        petView.animOffsetY = baseFloatY + when {
+                            flapPos < 0.10f -> 0f
+                            flapPos < 0.20f -> -4f
+                            else -> 4f
+                        }
+                    }
+                    // Fase 5: Glide suave (frame 3)
+                    cyclePos < 5.5f -> {
+                        petView.currentFrame = 3
+                        petView.animOffsetY = baseFloatY
+                    }
+                    // Fase 6: Idle frontal (frame 0)
+                    else -> {
+                        petView.currentFrame = 0
+                        petView.animOffsetY = baseFloatY
+                    }
                 }
 
-                // Bob sincronizado
-                petView.animOffsetY = when {
-                    flapCycle < 0.17f -> 0f
-                    flapCycle < 0.33f -> -3f
-                    else -> 3f
-                }
+                // Movimiento sinusoidal SUAVE por la pantalla
+                val moveX = sin(globalTime * 0.3f) * 80f  // 80px máximo, no 300px
+                val moveY = cos(globalTime * 0.25f) * 60f  // 60px máximo
+                petView.animOffsetX = baseFloatX + moveX
 
-                // Movimiento sinusoidal por toda la pantalla
-                val moveX = sin(timer * 0.15f) * 300f
-                val moveY = cos(timer * 0.12f) * 200f
-                petView.animOffsetX = moveX
-
-                // Cada 3-5s, decidir si detenerse
-                if (stateTimer > 3f + Random.nextFloat() * 2f) {
+                // Cada 4-6s, decidir si observar o volar a POI
+                if (stateTimer > 4f + Random.nextFloat() * 2f) {
                     val roll = Random.nextFloat()
                     when {
-                        roll < 0.50f -> {
-                            // 50%: Detenerse a observar
-                            startObserving()
-                        }
-                        roll < 0.80f -> {
-                            // 30%: Volar a un punto de interés
-                            flyToRandomPOI()
-                        }
-                        else -> {
-                            // 20%: Continuar explorando
-                            stateTimer = 0f
-                        }
+                        roll < 0.40f -> startObserving()
+                        roll < 0.70f -> flyToRandomPOI()
+                        else -> stateTimer = 0f  // Continuar explorando
                     }
                 }
             }
 
             ImpState.OBSERVING -> {
-                // Frame 5 (espalda) - mirando "hacia abajo" como observando apps
+                // Mirando "hacia abajo" con frame 5 (espalda)
                 petView.currentFrame = 5
-                petView.animOffsetY = sin(timer * 0.8f) * 2f
-                petView.animOffsetX = 0f
+                petView.animOffsetY = baseFloatY
+                petView.animOffsetX = baseFloatX * 0.5f
 
-                // Observar por 2-4s
-                stateTimer += dt
-                if (stateTimer > 2f + Random.nextFloat() * 2f) {
-                    petView.showBubble("👁️")
-                    state = ImpState.FLYING_AROUND
-                    stateTimer = 0f
+                // Máximo 2 segundos observando
+                if (stateTimer > 1.5f + Random.nextFloat() * 0.5f) {
+                    petView.showBubble(listOf("👁️", "👀", "🤔").random())
+                    forceExploring()
                 }
             }
 
             ImpState.FLYING_TO_TARGET -> {
-                // Aleteo rápido mientras vuela al objetivo
-                val flapCycle = timer % 0.3f
+                // Aleteo mientras vuela al objetivo
+                val flapPos = timer % 0.35f
                 petView.currentFrame = when {
-                    flapCycle < 0.10f -> 0
-                    flapCycle < 0.20f -> 1
+                    flapPos < 0.12f -> 0
+                    flapPos < 0.23f -> 1
                     else -> 2
                 }
 
-                // Mover hacia el objetivo con suavizado
-                val dx = targetX - petView.animOffsetX
-                val dy = targetY - petView.animOffsetY
+                // Mover hacia objetivo con interpolación suave
+                val dx = targetX - currentX
+                val dy = targetY - currentY
                 val dist = kotlin.math.sqrt(dx * dx + dy * dy)
 
-                if (dist > 20f) {
-                    // Interpolación suave
-                    petView.animOffsetX += dx * 0.03f
-                    petView.animOffsetY += dy * 0.03f
-                    // Bob mientras vuela
-                    petView.animOffsetY += sin(timer * 8f) * 2f
+                if (dist > 15f) {
+                    currentX += dx * 0.04f
+                    currentY += dy * 0.04f
+                    petView.animOffsetX = currentX + sin(timer * 6f) * 3f
+                    petView.animOffsetY = currentY + sin(timer * 8f) * 2f + baseFloatY
                 } else {
-                    // Llegó al objetivo
                     state = ImpState.LANDING
                     stateTimer = 0f
-                    petView.showBubble("🐾")
-                    petView.playHaptic(30)
+                    petView.showBubble(listOf("🐾", "✨", "💫").random())
+                    petView.playHaptic(25)
+                }
+
+                // Timeout para volar
+                if (stateTimer > 5f) {
+                    forceExploring()
                 }
             }
 
             ImpState.LANDING -> {
-                // Posándose sobre la "app"
+                // Posándose momentáneamente
                 petView.currentFrame = 0
-                petView.animOffsetY = sin(timer * 1.5f) * 3f
+                petView.animOffsetY = baseFloatY
+                petView.animOffsetX = baseFloatX
 
-                // Posarse por 1-2s
-                stateTimer += dt
-                if (stateTimer > 1.5f + Random.nextFloat()) {
-                    // Volver a explorar
-                    state = ImpState.FLYING_AROUND
-                    stateTimer = 0f
+                if (stateTimer > 1f + Random.nextFloat() * 0.5f) {
+                    petView.showBubble(listOf("😈", "🔥", "✨").random())
+                    forceExploring()
                 }
             }
 
@@ -202,22 +270,7 @@ class ImpBehavior(
                     timer < 0.50f -> 9
                     timer < 0.80f -> 10
                     else -> {
-                        state = ImpState.IDLE
-                        timer = 0f
-                        0
-                    }
-                }
-            }
-
-            ImpState.TURNING -> {
-                petView.currentFrame = when {
-                    timer < 0.12f -> 4
-                    timer < 0.24f -> 5
-                    timer < 0.36f -> 6
-                    timer < 0.48f -> 7
-                    else -> {
-                        state = ImpState.FLYING_AROUND
-                        timer = 0f
+                        forceExploring()
                         0
                     }
                 }
@@ -229,9 +282,8 @@ class ImpBehavior(
                 burnTimer += dt
                 if (burnTimer > 1.5f) {
                     isBurned = false
-                    state = ImpState.IDLE
+                    forceExploring()
                     burnTimer = 0f
-                    timer = 0f
                 }
             }
         }
@@ -240,19 +292,26 @@ class ImpBehavior(
     override fun updateDrag(dt: Float) {
         petView.currentFrame = 4
         petView.animRotation = 0f
+        petView.animScaleY = 0.95f + sin(timer * 5f) * 0.03f
     }
 
     override fun updateFalling(dt: Float) {
-        petView.currentFrame = 0
-        petView.animOffsetY = sin(timer * 2f) * 3f
+        // Ciclo de aleteo mientras cae
+        val flapPos = timer % 0.4f
+        petView.currentFrame = when {
+            flapPos < 0.13f -> 0
+            flapPos < 0.26f -> 1
+            else -> 2
+        }
+        petView.animOffsetY = sin(timer * 2f) * 4f
         if (petView.velocityY > 2f) petView.velocityY = -3f
     }
 
     override fun updateJumping(dt: Float) {
-        val flapCycle = timer % 0.4f
+        val flapPos = timer % 0.35f
         petView.currentFrame = when {
-            flapCycle < 0.13f -> 0
-            flapCycle < 0.26f -> 1
+            flapPos < 0.12f -> 0
+            flapPos < 0.23f -> 1
             else -> 2
         }
         if (petView.velocityY > 2f) petView.velocityY = -4f
@@ -278,8 +337,12 @@ class ImpBehavior(
         state = ImpState.IDLE
         timer = 0f
         stateTimer = 0f
+        globalTime = 0f
+        reactionTimer = 0f
         isBurned = false
         burnTimer = 0f
+        currentX = 0f
+        currentY = 0f
         petView.animAlpha = 1f
         petView.animScaleX = 1f
         petView.animScaleY = 1f
@@ -287,11 +350,17 @@ class ImpBehavior(
     }
 
     // ══════════════════════════════════════════════════════════
-    // ▌ EXPLORATION HELPERS
+    // ▌ HELPERS
     // ══════════════════════════════════════════════════════════
 
     private fun startExploring() {
-        state = ImpState.FLYING_AROUND
+        state = ImpState.EXPLORING
+        stateTimer = 0f
+        timer = 0f
+    }
+
+    private fun forceExploring() {
+        state = ImpState.EXPLORING
         stateTimer = 0f
         timer = 0f
     }
@@ -299,23 +368,25 @@ class ImpBehavior(
     private fun startObserving() {
         state = ImpState.OBSERVING
         stateTimer = 0f
-        timer = 0f
     }
 
     private fun flyToRandomPOI() {
         if (pointsOfInterest.isEmpty()) return
-        currentPOI = pointsOfInterest.random()
-        targetX = currentPOI!!.x
-        targetY = currentPOI!!.y
+        val poi = pointsOfInterest.random()
+        targetX = poi.x
+        targetY = poi.y
+        currentX = petView.animOffsetX
+        currentY = petView.animOffsetY
         state = ImpState.FLYING_TO_TARGET
         stateTimer = 0f
         timer = 0f
     }
 
-    /** Llamar cuando el usuario toca la pantalla para que el diablillo vuele ahí */
     fun onUserTouch(x: Float, y: Float) {
         targetX = x
         targetY = y
+        currentX = petView.animOffsetX
+        currentY = petView.animOffsetY
         state = ImpState.FLYING_TO_TARGET
         stateTimer = 0f
         timer = 0f
