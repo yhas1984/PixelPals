@@ -15,6 +15,7 @@ interface PetViewBridge {
     var animOffsetY: Float
     var animRotation: Float
     var animAlpha: Float
+    var animColorFilter: android.graphics.ColorFilter?
 
     // Physics
     var velocityX: Float
@@ -23,8 +24,13 @@ interface PetViewBridge {
     // State
     var state: PetState
 
+    // Screen dimensions
+    val screenWidth: Int
+    val screenHeight: Int
+
     // Actions
     fun showBubble(text: String)
     fun playHaptic(durationMs: Long)
     fun invalidate()
+    fun teleportToRandomEdge()
 }

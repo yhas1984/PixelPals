@@ -35,8 +35,8 @@ import android.util.Log
  */
 class PetView(
     context: Context,
-    private val screenWidth: Int,
-    private val screenHeight: Int,
+    override val screenWidth: Int,
+    override val screenHeight: Int,
     private val petSpriteSize: Int,
     private val petType: PetType
 ) : View(context), com.pixelpals.app.behavior.PetViewBridge {
@@ -125,6 +125,7 @@ class PetView(
     override var animOffsetX = 0f
     override var animOffsetY = 0f
     override var animRotation = 0f   // For drag "pataleo"
+    override var animColorFilter: android.graphics.ColorFilter? = null
 
     // ══════════════════════════════════════════════════════════
     // ▌ PHYSICS
@@ -368,8 +369,6 @@ class PetView(
             animColorFilter = null // Remove red tint
         }
     }
-
-    private var animColorFilter: android.graphics.ColorFilter? = null
 
     // ── Ginger Transition Functions ──
 
@@ -3417,6 +3416,13 @@ class PetView(
         } catch (e: Exception) {
             Log.w(TAG, "Failed to play haptic", e)
         }
+    }
+
+    override fun teleportToRandomEdge() {
+        val params = getWindowParams() ?: return
+        params.x = if (Random.nextBoolean()) 20 else screenWidth - petSpriteSize - 20
+        params.y = Random.nextInt(100, screenHeight - petSpriteSize - 200)
+        updateWindowLayout(params)
     }
 
     private fun getWindowParams(): WindowManager.LayoutParams? {
