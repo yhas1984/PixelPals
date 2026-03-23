@@ -3,128 +3,204 @@ package com.pixelpals.app.behavior
 import android.graphics.Canvas
 import com.pixelpals.app.PetState
 import kotlin.math.sin
+import kotlin.math.cos
+import kotlin.math.abs
 import kotlin.random.Random
 
 /**
  * ImpBehavior — Diablillo Alado (Winged Imp)
  *
+ * Comportamiento de exploración:
+ * 1. Aletea por toda la pantalla con movimientos sutiles
+ * 2. Se detiene sobre "puntos de interés" (simulando apps)
+ * 3. Vuela hacia donde el usuario toca
+ *
  * Frames (11 total):
- * 0: Idle_Base (alas neutras, frente)
- * 1: Wings_Up (alas arriba)
- * 2: Wings_Down (alas abajo)
- * 3: Glide (alas extendidas lateralmente)
- * 4: Turn_1/4 (perfil derecho)
- * 5: Turn_Back (espalda)
- * 6: Turn_3/4 (perfil izquierdo)
- * 7: Turn_Reset (frente con brillo)
- * 8: Fire_Prep (carga fuego)
- * 9: Fire_Release (llamarada)
- * 10: Fire_Cooldown (humo)
+ * 0: Idle_Base, 1: Wings_Up, 2: Wings_Down, 3: Glide
+ * 4-7: Turn sequence, 8-10: Fire attack
  */
 class ImpBehavior(
     private val petView: PetViewBridge
 ) : PetBehavior {
 
-    // ══════════════════════════════════════════════════════════
-    // ▌ STATE
-    // ══════════════════════════════════════════════════════════
-
     enum class ImpState {
-        IDLE,           // Frame 0: Mirando al frente
-        FLYING,         // Frames 0→1→2→1→0: Ciclo de aleteo
-        TURNING,        // Frames 4→5→6→7→0: Giro completo
-        GLIDING,        // Frame 3: Desplazamiento rápido
-        FIRE_ATTACK,    // Frames 8→9→10: Ataque de fuego
-        SURPRISED,      // Frames 4→5→6→7: Giro de susto
-        TELEPORTING,    // Invisible
-        BURNED_OUT      // Quemado por arrastre
+        IDLE,               // Flotando suave
+        FLYING_AROUND,      // Explorando con aleteo
+        OBSERVING,          // Detenido mirando abajo (frame 5)
+        FLYING_TO_TARGET,   // Volando hacia posición
+        LANDING,            // Posándose momentáneamente
+        TURNING,            // Giro
+        FIRE_ATTACK,        // Fuego al tocar
+        BURNED_OUT          // Quemado
     }
 
     private var state = ImpState.IDLE
     private var timer = 0f
-    private var decisionTimer = 0f
-    private var nextDecision = 2f + Random.nextFloat() * 3f
+    private var stateTimer = 0f
     private var burnTimer = 0f
     private var isBurned = false
 
+    // Exploración
+    private var targetX = 0f
+    private var targetY = 0f
+    private var velocityX = 0f
+    private var velocityY = 0f
+    private val flySpeed = 2f
+
+    // Puntos de interés (simulación de apps)
+    data class PointOfInterest(val x: Float, val y: Float, val name: String)
+    private val pointsOfInterest = mutableListOf<PointOfInterest>()
+    private var currentPOI: PointOfInterest? = null
+
+    init {
+        generatePointsOfInterest()
+    }
+
+    /** Generar puntos de interés simulando posiciones de apps */
+    private fun generatePointsOfInterest() {
+        pointsOfInterest.clear()
+        // Status bar
+        pointsOfInterest.add(PointOfInterest(540f, 60f, "Status"))
+        // Dock inferior
+        pointsOfInterest.add(PointOfInterest(180f, 1780f, "Dock1"))
+        pointsOfInterest.add(PointOfInterest(360f, 1780f, "Dock2"))
+        pointsOfInterest.add(PointOfInterest(540f, 1780f, "Dock3"))
+        pointsOfInterest.add(PointOfInterest(720f, 1780f, "Dock4"))
+        // Grid apps (filas simuladas)
+        for (row in 0 until 4) {
+            for (col in 0 until 4) {
+                val x = 130f + col * 180f
+                val y = 400f + row * 280f
+                pointsOfInterest.add(PointOfInterest(x, y, "App_${row}_${col}"))
+            }
+        }
+    }
+
     // ══════════════════════════════════════════════════════════
-    // ▌ PET BEHAVIOR INTERFACE
+    // ▌ PET BEHAVIOR
     // ══════════════════════════════════════════════════════════
 
     override fun updateIdle(dt: Float) {
         timer += dt
-        decisionTimer += dt
+        stateTimer += dt
 
         when (state) {
             ImpState.IDLE -> {
-                // Mirando al frente con flotación suave
+                // Flotación suave
+                petView.currentFrame = 0
+                petView.animOffsetY = sin(timer * 1.2f) * 5f
+                petView.animOffsetX = sin(timer * 0.6f) * 3f
+
+                // Después de 2-3s, empezar a explorar
+                if (stateTimer > 2f + Random.nextFloat()) {
+                    startExploring()
+                }
+            }
+
+            ImpState.FLYING_AROUND -> {
+                // Aleteo constante mientras explora
+                val flapCycle = timer % 0.5f
+                petView.currentFrame = when {
+                    flapCycle < 0.17f -> 0
+                    flapCycle < 0.33f -> 1
+                    else -> 2
+                }
+
+                // Bob sincronizado
+                petView.animOffsetY = when {
+                    flapCycle < 0.17f -> 0f
+                    flapCycle < 0.33f -> -3f
+                    else -> 3f
+                }
+
+                // Movimiento sinusoidal por toda la pantalla
+                val moveX = sin(timer * 0.15f) * 300f
+                val moveY = cos(timer * 0.12f) * 200f
+                petView.animOffsetX = moveX
+
+                // Cada 3-5s, decidir si detenerse
+                if (stateTimer > 3f + Random.nextFloat() * 2f) {
+                    val roll = Random.nextFloat()
+                    when {
+                        roll < 0.50f -> {
+                            // 50%: Detenerse a observar
+                            startObserving()
+                        }
+                        roll < 0.80f -> {
+                            // 30%: Volar a un punto de interés
+                            flyToRandomPOI()
+                        }
+                        else -> {
+                            // 20%: Continuar explorando
+                            stateTimer = 0f
+                        }
+                    }
+                }
+            }
+
+            ImpState.OBSERVING -> {
+                // Frame 5 (espalda) - mirando "hacia abajo" como observando apps
+                petView.currentFrame = 5
+                petView.animOffsetY = sin(timer * 0.8f) * 2f
+                petView.animOffsetX = 0f
+
+                // Observar por 2-4s
+                stateTimer += dt
+                if (stateTimer > 2f + Random.nextFloat() * 2f) {
+                    petView.showBubble("👁️")
+                    state = ImpState.FLYING_AROUND
+                    stateTimer = 0f
+                }
+            }
+
+            ImpState.FLYING_TO_TARGET -> {
+                // Aleteo rápido mientras vuela al objetivo
+                val flapCycle = timer % 0.3f
+                petView.currentFrame = when {
+                    flapCycle < 0.10f -> 0
+                    flapCycle < 0.20f -> 1
+                    else -> 2
+                }
+
+                // Mover hacia el objetivo con suavizado
+                val dx = targetX - petView.animOffsetX
+                val dy = targetY - petView.animOffsetY
+                val dist = kotlin.math.sqrt(dx * dx + dy * dy)
+
+                if (dist > 20f) {
+                    // Interpolación suave
+                    petView.animOffsetX += dx * 0.03f
+                    petView.animOffsetY += dy * 0.03f
+                    // Bob mientras vuela
+                    petView.animOffsetY += sin(timer * 8f) * 2f
+                } else {
+                    // Llegó al objetivo
+                    state = ImpState.LANDING
+                    stateTimer = 0f
+                    petView.showBubble("🐾")
+                    petView.playHaptic(30)
+                }
+            }
+
+            ImpState.LANDING -> {
+                // Posándose sobre la "app"
                 petView.currentFrame = 0
                 petView.animOffsetY = sin(timer * 1.5f) * 3f
-                petView.animOffsetX = sin(timer * 0.8f) * 2f
 
-                // Decisión autónoma
-                if (decisionTimer > nextDecision) {
-                    makeDecision()
-                    decisionTimer = 0f
-                    nextDecision = 2f + Random.nextFloat() * 3f
+                // Posarse por 1-2s
+                stateTimer += dt
+                if (stateTimer > 1.5f + Random.nextFloat()) {
+                    // Volver a explorar
+                    state = ImpState.FLYING_AROUND
+                    stateTimer = 0f
                 }
             }
-            ImpState.FLYING -> {
-                // Ciclo de aleteo: 0→1→2→1→0
-                val flapCycle = timer % 0.6f
-                petView.currentFrame = when {
-                    flapCycle < 0.15f -> 0  // Base
-                    flapCycle < 0.30f -> 1  // Wings up
-                    flapCycle < 0.45f -> 2  // Wings down
-                    else -> 1              // Wings back up
-                }
 
-                // Bob sincronizado con alas
-                petView.animOffsetY = when {
-                    flapCycle < 0.15f -> 0f
-                    flapCycle < 0.30f -> -3f  // Baja cuando alas suben
-                    flapCycle < 0.45f -> 3f   // Sube cuando alas bajan
-                    else -> -3f
-                }
-
-                // Terminar vuelo después de 2-4 segundos
-                if (timer > 2f + Random.nextFloat() * 2f) {
-                    state = ImpState.IDLE
-                    timer = 0f
-                }
-            }
-            ImpState.TURNING -> {
-                // Secuencia de giro: 4→5→6→7→0
-                petView.currentFrame = when {
-                    timer < 0.12f -> 4  // Turn 1/4
-                    timer < 0.24f -> 5  // Turn back
-                    timer < 0.36f -> 6  // Turn 3/4
-                    timer < 0.48f -> 7  // Turn reset
-                    else -> {
-                        state = ImpState.GLIDING
-                        timer = 0f
-                        0
-                    }
-                }
-            }
-            ImpState.GLIDING -> {
-                // Desplazamiento con frame 3 (glide)
-                petView.currentFrame = 3
-                petView.animOffsetY = sin(timer * 2f) * 2f
-
-                // Terminar después de 1-2 segundos
-                if (timer > 1f + Random.nextFloat() * 1f) {
-                    petView.velocityX = 0f
-                    state = ImpState.IDLE
-                    timer = 0f
-                }
-            }
             ImpState.FIRE_ATTACK -> {
-                // Secuencia de fuego: 8→9→10
                 petView.currentFrame = when {
-                    timer < 0.25f -> 8  // Fire prep
-                    timer < 0.50f -> 9  // Fire release
-                    timer < 0.80f -> 10 // Fire cooldown
+                    timer < 0.25f -> 8
+                    timer < 0.50f -> 9
+                    timer < 0.80f -> 10
                     else -> {
                         state = ImpState.IDLE
                         timer = 0f
@@ -132,26 +208,22 @@ class ImpBehavior(
                     }
                 }
             }
-            ImpState.SURPRISED -> {
-                // Giro rápido de susto: 4→5→6→7
+
+            ImpState.TURNING -> {
                 petView.currentFrame = when {
-                    timer < 0.10f -> 4
-                    timer < 0.20f -> 5
-                    timer < 0.30f -> 6
-                    timer < 0.40f -> 7
+                    timer < 0.12f -> 4
+                    timer < 0.24f -> 5
+                    timer < 0.36f -> 6
+                    timer < 0.48f -> 7
                     else -> {
-                        state = ImpState.IDLE
+                        state = ImpState.FLYING_AROUND
                         timer = 0f
                         0
                     }
                 }
             }
-            ImpState.TELEPORTING -> {
-                // Invisible durante teletransporte
-                petView.animAlpha = 0f
-            }
+
             ImpState.BURNED_OUT -> {
-                // Quemado - shake y filtro rojo
                 petView.currentFrame = 0
                 petView.animOffsetY = sin(timer * 20f) * 3f
                 burnTimer += dt
@@ -166,52 +238,29 @@ class ImpBehavior(
     }
 
     override fun updateDrag(dt: Float) {
-        // Sorprendido mientras es arrastrado
         petView.currentFrame = 4
         petView.animRotation = 0f
     }
 
     override fun updateFalling(dt: Float) {
-        // Vuela mirando al frente mientras cae
         petView.currentFrame = 0
         petView.animOffsetY = sin(timer * 2f) * 3f
-
-        // Anti-gravedad
-        if (petView.velocityY > 2f) {
-            petView.velocityY = -3f
-        }
-
-        // Límite superior
-        if (petView.animOffsetY < -50f) {
-            petView.animOffsetY = 50f
-            petView.velocityY = 2f
-        }
+        if (petView.velocityY > 2f) petView.velocityY = -3f
     }
 
     override fun updateJumping(dt: Float) {
-        // Ciclo de aleteo mientras salta
         val flapCycle = timer % 0.4f
         petView.currentFrame = when {
             flapCycle < 0.13f -> 0
             flapCycle < 0.26f -> 1
             else -> 2
         }
-
-        // Anti-gravedad suave
-        if (petView.velocityY > 2f) {
-            petView.velocityY = -4f
-        }
+        if (petView.velocityY > 2f) petView.velocityY = -4f
     }
 
-    override fun updateAutonomous(dt: Float) {
-        // Movimiento horizontal si está gliding
-        if (state == ImpState.GLIDING) {
-            // El movimiento se maneja en PetView
-        }
-    }
+    override fun updateAutonomous(dt: Float) {}
 
     override fun onInteract() {
-        // Fire Attack al tocar
         state = ImpState.FIRE_ATTACK
         timer = 0f
         petView.currentFrame = 8
@@ -221,17 +270,14 @@ class ImpBehavior(
         petView.playHaptic(80)
     }
 
-    override fun updateInteracting(dt: Float) {
-        // Handled in updateIdle with FIRE_ATTACK state
-    }
+    override fun updateInteracting(dt: Float) {}
 
-    override fun onDraw(canvas: Canvas, cx: Float, cy: Float) {
-        // No special drawing needed
-    }
+    override fun onDraw(canvas: Canvas, cx: Float, cy: Float) {}
 
     override fun reset() {
         state = ImpState.IDLE
         timer = 0f
+        stateTimer = 0f
         isBurned = false
         burnTimer = 0f
         petView.animAlpha = 1f
@@ -241,55 +287,37 @@ class ImpBehavior(
     }
 
     // ══════════════════════════════════════════════════════════
-    // ▌ PRIVATE HELPERS
+    // ▌ EXPLORATION HELPERS
     // ══════════════════════════════════════════════════════════
 
-    private fun makeDecision() {
-        if (isBurned) return
-
-        val roll = Random.nextFloat()
-        when {
-            roll < 0.40f -> {
-                // 40%: Volar (aleteo)
-                state = ImpState.FLYING
-                timer = 0f
-            }
-            roll < 0.60f -> {
-                // 20%: Girar y desplazarse
-                state = ImpState.TURNING
-                timer = 0f
-                // Velocidad reducida
-                val direction = if (Random.nextBoolean()) 1f else -1f
-                petView.velocityX = direction * (1.6f + Random.nextFloat() * 1.2f)
-            }
-            roll < 0.80f -> {
-                // 20%: Quedarse quieto
-                state = ImpState.IDLE
-                timer = 0f
-            }
-            roll < 0.90f -> {
-                // 10%: Teletransporte
-                teleport()
-            }
-            else -> {
-                // 10%: Giro de susto
-                state = ImpState.SURPRISED
-                timer = 0f
-                petView.showBubble("😈")
-            }
-        }
+    private fun startExploring() {
+        state = ImpState.FLYING_AROUND
+        stateTimer = 0f
+        timer = 0f
     }
 
-    private fun teleport() {
-        state = ImpState.TELEPORTING
-        petView.animAlpha = 0f
-
-        // Reaparecer después de 200ms
-        // (La animación se completará en el siguiente frame)
-        petView.animAlpha = 1f
-        state = ImpState.SURPRISED
+    private fun startObserving() {
+        state = ImpState.OBSERVING
+        stateTimer = 0f
         timer = 0f
-        petView.showBubble("😈")
-        petView.playHaptic(30)
+    }
+
+    private fun flyToRandomPOI() {
+        if (pointsOfInterest.isEmpty()) return
+        currentPOI = pointsOfInterest.random()
+        targetX = currentPOI!!.x
+        targetY = currentPOI!!.y
+        state = ImpState.FLYING_TO_TARGET
+        stateTimer = 0f
+        timer = 0f
+    }
+
+    /** Llamar cuando el usuario toca la pantalla para que el diablillo vuele ahí */
+    fun onUserTouch(x: Float, y: Float) {
+        targetX = x
+        targetY = y
+        state = ImpState.FLYING_TO_TARGET
+        stateTimer = 0f
+        timer = 0f
     }
 }
