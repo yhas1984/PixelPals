@@ -330,14 +330,13 @@ class PetView(
     }
 
     /** Fire jump - chaotic jump with fire emoji */
+    /** Fire ball attack - sequence 8→9→10 */
     private fun impFireJump() {
         impState = ImpState.FIRE_JUMP
-        val params = getWindowParams() ?: return
-        velocityY = -15f - Random.nextFloat() * 8f
-        velocityX = (Random.nextFloat() - 0.5f) * 12f
-        currentFrame = 5 // Fire frame
+        impRunTimer = 0f
+        currentFrame = 8 // Fire prep
         showBubble("🔥")
-        playHaptic(60)
+        playHaptic(80)
     }
 
     /** Jump scare toward user's last touch */
@@ -1786,32 +1785,31 @@ class PetView(
 
                 when (impState) {
                     ImpState.LURKING -> {
-                        // Lurking: alternate frames 0 and 1 with long pauses
+                        // Face front with gentle breathing
+                        currentFrame = 0 // Always face front
                         impLurkTimer += dt
-                        currentFrame = if (impLurkTimer % 3f < 1.5f) 0 else 1
-
-                        // Subtle menacing sway
+                        animOffsetY = sin(time * 1.5f) * 3f
                         animOffsetX = sin(time * 0.8f) * 2f
-                        animOffsetY = abs(sin(time * 1.2f)) * 1f
-
-                        // Make chaotic decision
                         if (impDecisionTimer > impNextDecision) {
                             impMakeDecision()
                             impDecisionTimer = 0f
                         }
                     }
                     ImpState.RUNNING -> {
+                        // Turn sequence then glide
                         impRunTimer += dt
-                        // Snappy run cycle: frames 2-3 every 80ms
-                        currentFrame = if ((impRunTimer * 12f).toInt() % 2 == 0) 2 else 3
-                        animOffsetY = abs(sin(impRunTimer * 15f)) * 4f
-
-                        // Snappy stop: abruptly stop after short distance
-                        if (impRunTimer > 0.5f + Random.nextFloat() * 0.5f) {
+                        currentFrame = when {
+                            impRunTimer < 0.12f -> 4  // Turn 1/4
+                            impRunTimer < 0.24f -> 5  // Turn back
+                            impRunTimer < 0.36f -> 6  // Turn 3/4
+                            impRunTimer < 0.48f -> 7  // Turn reset
+                            else -> 0  // Face front while gliding
+                        }
+                        animOffsetY = sin(time * 3f) * 2f
+                        if (impRunTimer > 2f + Random.nextFloat() * 2f) {
                             velocityX = 0f
                             impState = ImpState.LURKING
-                            currentFrame = 4 // Surprised at stopping
-                            showBubble("😈")
+                            currentFrame = 0
                         }
                     }
                     ImpState.FIRE_JUMP -> {
@@ -1978,17 +1976,14 @@ class PetView(
             params.x += (sin(time * 3f) * 3f).toInt()
         }
 
-        // Diablillo special: Can "fly" a bit before falling (gravedad inversa)
+        // Diablillo: Face front while flying
         if (petType == PetType.DIABLILLO) {
-            currentFrame = 5 // Fire/flying frame
-            // Random upward force to simulate "flying"
-            if (Random.nextFloat() < 0.1f && velocityY > 0) {
-                velocityY += -8f // Upward boost
-                animOffsetY = sin(time * 10f) * 5f
-            }
-            // Check if burned out
-            if (impIsBurned) {
-                animColorFilter = android.graphics.LightingColorFilter(0xFFFF4444.toInt(), 0x00000000)
+            currentFrame = 0 // Face front
+            animOffsetY = sin(time * 2f) * 3f
+            if (velocityY > 2f) velocityY = -3f
+            if (params.y < 50) {
+                params.y = 50
+                velocityY = 2f
             }
         }
 
