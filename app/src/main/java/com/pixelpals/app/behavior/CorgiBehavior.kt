@@ -140,15 +140,21 @@ class CorgiBehavior(
     }
 
     private fun updateWalkingState(dt: Float) {
-        // Walk from edge to edge
-        petView.animOffsetX += walkSpeed * walkDirection * dt
+        // Walk using real window position
+        val currentX = petView.windowX
+        val moveAmount = (walkSpeed * walkDirection * dt * 60f).toInt()
+        val newX = currentX + moveAmount
 
-        // Keep in bounds
-        val maxX = (petView.screenWidth / 2 - 30).toFloat()
-        if (petView.animOffsetX < -maxX || petView.animOffsetX > maxX) {
-            walkDirection *= -1f // Turn around
+        // Check bounds and turn around
+        if (newX <= 20) {
+            petView.windowX = 20
+            walkDirection = 1f // Turn right
+        } else if (newX >= petView.screenWidth - 80) {
+            petView.windowX = petView.screenWidth - 80
+            walkDirection = -1f // Turn left
+        } else {
+            petView.windowX = newX
         }
-        petView.animOffsetX = petView.animOffsetX.coerceIn(-maxX, maxX)
 
         // Flip based on direction
         petView.animScaleX = if (walkDirection > 0) 1f else -1f

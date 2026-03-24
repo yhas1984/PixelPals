@@ -127,6 +127,32 @@ class PetView(
     override var animRotation = 0f   // For drag "pataleo"
     override var animColorFilter: android.graphics.ColorFilter? = null
 
+    // Window position (absolute screen coordinates)
+    override var windowX: Int
+        get() = (layoutParams as? WindowManager.LayoutParams)?.x ?: 0
+        set(value) {
+            val params = layoutParams as? WindowManager.LayoutParams ?: return
+            if (value in 0..screenWidth) {
+                params.x = value
+                try {
+                    (context.getSystemService(Context.WINDOW_SERVICE) as? WindowManager)
+                        ?.updateViewLayout(this, params)
+                } catch (_: Exception) {}
+            }
+        }
+    override var windowY: Int
+        get() = (layoutParams as? WindowManager.LayoutParams)?.y ?: 0
+        set(value) {
+            val params = layoutParams as? WindowManager.LayoutParams ?: return
+            if (value in 0..screenHeight) {
+                params.y = value
+                try {
+                    (context.getSystemService(Context.WINDOW_SERVICE) as? WindowManager)
+                        ?.updateViewLayout(this, params)
+                } catch (_: Exception) {}
+            }
+        }
+
     // ══════════════════════════════════════════════════════════
     // ▌ PHYSICS
     // ══════════════════════════════════════════════════════════

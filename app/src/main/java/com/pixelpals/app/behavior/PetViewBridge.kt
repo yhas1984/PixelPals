@@ -28,6 +28,10 @@ interface PetViewBridge {
     val screenWidth: Int
     val screenHeight: Int
 
+    // Window position (absolute screen coordinates)
+    var windowX: Int
+    var windowY: Int
+
     // Actions
     fun showBubble(text: String)
     fun playHaptic(durationMs: Long)
