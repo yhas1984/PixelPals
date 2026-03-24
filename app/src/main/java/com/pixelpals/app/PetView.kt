@@ -1048,9 +1048,12 @@ class PetView(
             nubePlumaBitmap = ContextCompat.getDrawable(context, R.drawable.pluma_0)!!
                 .toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888)
         } else if (petType == PetType.CORGI) {
-            // Load Corgi frames - 11 frames with logical transitions
-            // 0: sit idle, 1: stand up, 2: walk left, 3: walk right,
-            // 4: run, 5: jump, 6: bark, 7-10: petting animation
+            // Load Corgi frames - 13 frames
+            // 0: quieto, 1: respiracion, 2: parpadea
+            // 3: caminata, 4: trote, 5: corre
+            // 6: olfatea, 7: olfatea cola arriba
+            // 8: cavando, 9: hueso
+            // 10: ladra, 11: panza arriba, 12: rodando feliz
             spriteFrames = listOf(
                 ContextCompat.getDrawable(context, R.drawable.corgi_0)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
                 ContextCompat.getDrawable(context, R.drawable.corgi_1)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
@@ -1062,7 +1065,9 @@ class PetView(
                 ContextCompat.getDrawable(context, R.drawable.corgi_7)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
                 ContextCompat.getDrawable(context, R.drawable.corgi_8)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
                 ContextCompat.getDrawable(context, R.drawable.corgi_9)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
-                ContextCompat.getDrawable(context, R.drawable.corgi_10)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888)
+                ContextCompat.getDrawable(context, R.drawable.corgi_10)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.corgi_11)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
+                ContextCompat.getDrawable(context, R.drawable.corgi_12)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888)
             )
         } else if (petType == PetType.JELLY) {
             // Load custom storyboard frames for Jelly (4 frames - bouncy slime)
