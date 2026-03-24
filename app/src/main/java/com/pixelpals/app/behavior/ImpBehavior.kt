@@ -88,13 +88,15 @@ class ImpBehavior(
                 }
             }
             State.FLY_VERTICAL -> {
-                // Move up/down
+                // Move up/down with bounds
                 petView.animOffsetY += 40f * petView.velocityY * dt
-                val minY = 50f
-                val maxY = (petView.screenHeight - 200).toFloat()
-                if (petView.animOffsetY < minY || petView.animOffsetY > maxY) {
+
+                // Keep within screen bounds (relative to center)
+                val maxY = (petView.screenHeight / 3).toFloat()
+                if (petView.animOffsetY < -maxY || petView.animOffsetY > maxY) {
                     petView.velocityY *= -1f
                 }
+                petView.animOffsetY = petView.animOffsetY.coerceIn(-maxY, maxY)
 
                 // After 2-4 seconds, go back to idle
                 if (stateTimer > 2f + Random.nextFloat() * 2f) {
@@ -102,34 +104,29 @@ class ImpBehavior(
                 }
             }
             State.FLY_HORIZONTAL -> {
-                // Move toward target
+                // Move toward target with bounds
                 val dx = targetX - petView.animOffsetX
                 val dy = targetY - petView.animOffsetY
                 val dist = abs(dx) + abs(dy)
 
-                if (dist > 20f) {
-                    // Move toward target
-                    val speedX = 120f * dt
-                    val speedY = 60f * dt
+                if (dist > 30f) {
+                    val speedX = 100f * dt
+                    val speedY = 50f * dt
                     petView.animOffsetX += sign(dx) * speedX.coerceAtMost(abs(dx))
                     petView.animOffsetY += sign(dy) * speedY.coerceAtMost(abs(dy))
 
-                    // Add floating bob
-                    petView.animOffsetY += sin(globalTime * 3f) * 2f
+                    // Clamp to screen bounds
+                    val maxX = (petView.screenWidth / 2 - 30).toFloat()
+                    val maxY = (petView.screenHeight / 3).toFloat()
+                    petView.animOffsetX = petView.animOffsetX.coerceIn(-maxX, maxX)
+                    petView.animOffsetY = petView.animOffsetY.coerceIn(-maxY, maxY)
                 } else {
-                    // Arrived - check if at edge
-                    val sw = petView.screenWidth.toFloat()
-                    if (petView.animOffsetX <= 20f || petView.animOffsetX >= sw - 80f) {
-                        // At edge - start climbing
-                        climbEdge = if (petView.animOffsetX <= 20f) 0f else sw - 60f
-                        changeState(State.CLIMBING)
-                    } else {
-                        changeState(State.IDLE_FRONT)
-                    }
+                    // Arrived - go back to idle
+                    changeState(State.IDLE_FRONT)
                 }
 
                 // Timeout
-                if (stateTimer > 4f) {
+                if (stateTimer > 3f) {
                     changeState(State.IDLE_FRONT)
                 }
             }
