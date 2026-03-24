@@ -1116,10 +1116,10 @@ class PetView(
             )
             currentFrame = 0 // Start with side view
         } else if (petType == PetType.DIABLILLO) {
-            // Load 11 frames for Diablillo Alado (winged imp)
-            // 0: Idle_Base, 1: Wings_Up, 2: Wings_Down, 3: Glide
-            // 4: Turn_1/4, 5: Turn_Back, 6: Turn_3/4, 7: Turn_Reset
-            // 8: Fire_Prep, 9: Fire_Release, 10: Fire_Cooldown
+            // Load 10 frames for Diablillo V2
+            // 0-1: Vuelo IDLE (frente), 2-3: Vuelo MOV (perfil)
+            // 4-6: Ataque Fuego (carga, llamarada, humo)
+            // 7-9: Escalada (brazo der, brazo izq, mirar atrás)
             spriteFrames = listOf(
                 ContextCompat.getDrawable(context, R.drawable.diablillo_0)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
                 ContextCompat.getDrawable(context, R.drawable.diablillo_1)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
@@ -1130,10 +1130,9 @@ class PetView(
                 ContextCompat.getDrawable(context, R.drawable.diablillo_6)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
                 ContextCompat.getDrawable(context, R.drawable.diablillo_7)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
                 ContextCompat.getDrawable(context, R.drawable.diablillo_8)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
-                ContextCompat.getDrawable(context, R.drawable.diablillo_9)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888),
-                ContextCompat.getDrawable(context, R.drawable.diablillo_10)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888)
+                ContextCompat.getDrawable(context, R.drawable.diablillo_9)!!.toBitmap(petSpriteSize, petSpriteSize, Bitmap.Config.ARGB_8888)
             )
-            currentFrame = 0 // Start with idle base
+            currentFrame = 0 // Start with idle front
         } else {
             // Load standard sprite - use drawable directly (PNGs should already be transparent)
             val drawable = ContextCompat.getDrawable(context, petType.spriteResId)!!

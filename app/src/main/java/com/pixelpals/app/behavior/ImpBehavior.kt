@@ -10,52 +10,59 @@ import kotlin.math.min
 import kotlin.random.Random
 
 /**
- * ImpBehavior — Diablillo Alado (Winged Imp) v3 - Utility AI
+ * ImpBehavior — Diablillo Travieso v4 - Perspectiva Dinámica
+ *
+ * Frames (10):
+ * 0: Alas arriba frente (Vuelo IDLE)
+ * 1: Alas abajo frente (Vuelo IDLE)
+ * 2: Alas arriba perfil (Vuelo MOV)
+ * 3: Alas abajo perfil (Vuelo MOV)
+ * 4: Carga diagonal (Fuego)
+ * 5: Llamarada diagonal (Fuego)
+ * 6: Humo diagonal (Fuego)
+ * 7: Escalar brazo derecho (Escalada)
+ * 8: Escalar brazo izquierdo (Escalada)
+ * 9: Mirar atrás (Escalada)
  *
  * Sistema de Necesidades:
- * - chaosLevel (0-100): Sube con el tiempo. Al 100, hace travesura pesada.
- * - boredom (0-100): Sube si lo ignoras. Al 100, jump scare.
- * - heat (0-100): Sube rápido si lo agarras. Al 100, se quema y escapa.
- *
- * Frames (11):
- * 0: Idle, 1: Wings_Up, 2: Wings_Down, 3: Glide
- * 4: Turn_1/4, 5: Turn_Back, 6: Turn_3/4, 7: Turn_Reset
- * 8: Fire_Prep, 9: Fire_Release, 10: Fire_Cooldown
+ * - chaosLevel: Sube con el tiempo → travesuras
+ * - boredom: Sube si lo ignoras → llamar atención
+ * - heat: Sube si lo agarras → se quema
  */
 class ImpBehavior(
     private val petView: PetViewBridge
 ) : PetBehavior {
 
     // ══════════════════════════════════════════════════════════
-    // ▌ NECESIDADES DEL DIABLILLO
+    // ▌ NECESIDADES
     // ══════════════════════════════════════════════════════════
 
-    private var chaosLevel = 0f      // Sube con el tiempo
-    private var boredom = 0f         // Sube si lo ignoras
-    private var heat = 0f            // Sube si lo agarras
+    private var chaosLevel = 0f
+    private var boredom = 0f
+    private var heat = 0f
 
     // ══════════════════════════════════════════════════════════
     // ▌ ESTADOS
     // ══════════════════════════════════════════════════════════
 
     enum class State {
-        LURKING,        // Acechando (frames 0-1)
-        RUNNING,        // Sprint (frames 2-3)
-        PLOTTING,       // Planeando travesura
-        JUMP_SCARE,     // Salto para asustar (frame 4)
-        FIRE_MISCHIEF,  // Fuego (frames 8-9-10)
-        TELEPORTING,    // Desaparece y reaparece
-        BURNED_OUT,     // Quemado (filtro rojo)
-        DRAGGED         // Siendo arrastrado
+        IDLE_FLY,       // Vuelo quieto mirando al usuario (frames 0-1)
+        MOVING_FLY,     // Vuelo horizontal (frames 2-3)
+        FIRE_ATTACK,    // Lanzallamas (frames 4-5-6)
+        CLIMBING,       // Escalando pared (frames 7-8-9)
+        DRAGGED,        // Siendo arrastrado
+        BURNED_OUT      // Quemado
     }
 
-    private var state = State.LURKING
+    private var state = State.IDLE_FLY
     private var stateTimer = 0f
     private var timer = 0f
     private var globalTime = 0f
 
-    // Teleport
-    private var isTeleportingOut = false
+    // Escalada
+    private var climbDirection = 1f  // 1 = subiendo, -1 = bajando
+    private var climbY = 0f
+    private var climbPauseTimer = 0f
 
     // ══════════════════════════════════════════════════════════
     // ▌ PET BEHAVIOR INTERFACE
@@ -76,83 +83,86 @@ class ImpBehavior(
             changeState(State.DRAGGED)
         }
 
-        // Temblor que aumenta con el calor
         val shakeIntensity = (heat / 100f) * 10f
         petView.animOffsetX = sin(stateTimer * 30f) * shakeIntensity
-        petView.currentFrame = 4
 
-        // Micro-vibraciones de advertencia
         if (heat > 70f && (stateTimer * 10f).toInt() % 3 == 0) {
             petView.playHaptic(10)
         }
     }
 
     override fun updateFalling(dt: Float) {
-        // Ciclo de aleteo
-        val flapPos = timer % 0.4f
-        petView.currentFrame = when {
-            flapPos < 0.13f -> 0
-            flapPos < 0.26f -> 1
-            else -> 2
-        }
+        // Aleteo frente mientras cae
+        val flapSpeed = 0.15f // 150ms
+        val flapPos = timer % (flapSpeed * 2)
+        petView.currentFrame = if (flapPos < flapSpeed) 0 else 1
+        petView.animScaleX = 1f // Sin flip
         petView.animOffsetY = sin(timer * 2f) * 4f
         if (petView.velocityY > 2f) petView.velocityY = -3f
     }
 
     override fun updateJumping(dt: Float) {
-        val flapPos = timer % 0.35f
-        petView.currentFrame = when {
-            flapPos < 0.12f -> 0
-            flapPos < 0.23f -> 1
-            else -> 2
-        }
+        // Aleteo rápido perfil mientras salta
+        val flapSpeed = 0.08f // 80ms
+        val flapPos = timer % (flapSpeed * 2)
+        petView.currentFrame = if (flapPos < flapSpeed) 2 else 3
         if (petView.velocityY > 2f) petView.velocityY = -4f
     }
 
     override fun updateAutonomous(dt: Float) {}
 
     override fun onInteract() {
-        if (state == State.BURNED_OUT) return // No hace caso si está quemado
+        if (state == State.BURNED_OUT) return
 
         boredom = 0f
-        chaosLevel += 15f // Tocarlo alimenta su caos
+        chaosLevel += 15f
 
         if (chaosLevel > 80f) {
-            changeState(State.FIRE_MISCHIEF)
+            changeState(State.FIRE_ATTACK)
         } else {
-            // Susto rápido
-            petView.currentFrame = 4
             petView.showBubble("😈")
             petView.playHaptic(20)
         }
     }
 
     override fun updateInteracting(dt: Float) {
-        // Animación de fuego
-        if (state == State.FIRE_MISCHIEF) {
+        if (state == State.FIRE_ATTACK) {
+            // Secuencia de fuego: 4→5→6
             petView.currentFrame = when {
-                stateTimer < 0.25f -> 8
-                stateTimer < 0.50f -> 9
-                stateTimer < 0.80f -> 10
+                stateTimer < 0.20f -> 4  // Carga
+                stateTimer < 0.70f -> 5  // Llamarada
+                stateTimer < 1.00f -> 6  // Humo
                 else -> {
-                    changeState(State.LURKING)
+                    changeState(State.IDLE_FLY)
                     0
                 }
+            }
+            // Burst haptic durante llamarada
+            if (stateTimer in 0.20f..0.70f && (stateTimer * 10f).toInt() % 2 == 0) {
+                petView.playHaptic(40)
             }
         }
     }
 
-    override fun onDraw(canvas: Canvas, cx: Float, cy: Float) {}
+    override fun onDraw(canvas: Canvas, cx: Float, cy: Float) {
+        // Rotación para escalada
+        if (state == State.CLIMBING) {
+            val edge = if (petView.animOffsetX < 0) -1f else 1f
+            canvas.save()
+            canvas.rotate(90f * edge, cx, cy)
+        }
+    }
 
     override fun reset() {
-        state = State.LURKING
+        state = State.IDLE_FLY
         timer = 0f
         stateTimer = 0f
         globalTime = 0f
         chaosLevel = 0f
         boredom = 0f
         heat = 0f
-        isTeleportingOut = false
+        climbY = 0f
+        climbDirection = 1f
         petView.animAlpha = 1f
         petView.animScaleX = 1f
         petView.animScaleY = 1f
@@ -160,21 +170,20 @@ class ImpBehavior(
     }
 
     // ══════════════════════════════════════════════════════════
-    // ▌ SISTEMA DE NECESIDADES
+    // ▌ NECESIDADES
     // ══════════════════════════════════════════════════════════
 
     private fun updateNeeds(dt: Float) {
         if (state == State.DRAGGED) {
-            heat = min(100f, heat + dt * 35f) // Se calienta rápido (~3s)
+            heat = min(100f, heat + dt * 35f)
             boredom = 0f
         } else {
-            heat = max(0f, heat - dt * 10f)   // Se enfría al soltar
-            boredom = min(100f, boredom + dt * 1.5f) // Se aburre
+            heat = max(0f, heat - dt * 10f)
+            boredom = min(100f, boredom + dt * 1.5f)
         }
 
-        if (state == State.LURKING || state == State.PLOTTING) {
-            val multiplier = if (state == State.PLOTTING) 3f else 1f
-            chaosLevel = min(100f, chaosLevel + dt * 2f * multiplier)
+        if (state == State.IDLE_FLY || state == State.CLIMBING) {
+            chaosLevel = min(100f, chaosLevel + dt * 2f)
         }
     }
 
@@ -183,56 +192,51 @@ class ImpBehavior(
     // ══════════════════════════════════════════════════════════
 
     private fun evaluateState() {
-        // Prioridad 1: ¡Quemarse!
         if (heat >= 100f && state != State.BURNED_OUT) {
             changeState(State.BURNED_OUT)
             return
         }
 
-        // Si está arrastrado o quemado, no tomar otras decisiones
         if (state == State.DRAGGED || state == State.BURNED_OUT) {
             if (state == State.BURNED_OUT && stateTimer > 2f) {
                 heat = 0f
-                changeState(State.LURKING)
+                changeState(State.IDLE_FLY)
             }
             return
         }
 
         when (state) {
-            State.LURKING -> {
+            State.IDLE_FLY -> {
                 if (boredom > 90f) {
-                    // Ignorado mucho tiempo → Susto
-                    changeState(State.JUMP_SCARE)
+                    // Mucho tiempo quieto → lanzallamas
+                    changeState(State.FIRE_ATTACK)
                 } else if (chaosLevel > 95f) {
-                    // Caos máximo → Travesura pesada
-                    if (Random.nextBoolean()) changeState(State.TELEPORTING)
-                    else changeState(State.FIRE_MISCHIEF)
+                    // Mucho caos → escalar pared
+                    changeState(State.CLIMBING)
                 } else if (stateTimer > 3f) {
-                    // Decisiones normales
                     val roll = Random.nextFloat()
                     when {
-                        roll < 0.30f -> changeState(State.RUNNING)
-                        roll < 0.50f -> changeState(State.PLOTTING)
-                        else -> stateTimer = 0f // Seguir lurking
+                        roll < 0.50f -> changeState(State.MOVING_FLY)
+                        roll < 0.70f -> changeState(State.CLIMBING)
+                        else -> stateTimer = 0f
                     }
                 }
             }
-            State.PLOTTING -> {
-                if (stateTimer > 2f) changeState(State.LURKING)
-            }
-            State.RUNNING -> {
-                if (stateTimer > 1.5f || abs(petView.velocityX) < 0.1f) {
-                    changeState(State.LURKING)
+            State.MOVING_FLY -> {
+                // Verificar si llegó a un borde
+                val atLeftEdge = petView.animOffsetX <= -petView.screenWidth / 2 + 50
+                val atRightEdge = petView.animOffsetX >= petView.screenWidth / 2 - 50
+                if (atLeftEdge || atRightEdge) {
+                    changeState(State.CLIMBING)
+                } else if (stateTimer > 2f) {
+                    changeState(State.IDLE_FLY)
                 }
             }
-            State.JUMP_SCARE -> {
-                if (stateTimer > 1.5f) changeState(State.LURKING)
+            State.FIRE_ATTACK -> {
+                if (stateTimer > 1.2f) changeState(State.IDLE_FLY)
             }
-            State.FIRE_MISCHIEF -> {
-                if (stateTimer > 1f) changeState(State.LURKING)
-            }
-            State.TELEPORTING -> {
-                // Manejado en applyAnimation
+            State.CLIMBING -> {
+                // Escalada manejada en applyAnimation
             }
             else -> {}
         }
@@ -243,81 +247,94 @@ class ImpBehavior(
     // ══════════════════════════════════════════════════════════
 
     private fun applyAnimation(dt: Float) {
-        // Flotación base siempre activa
         val baseFloatY = sin(globalTime * 1.5f) * 4f
-        val baseFloatX = sin(globalTime * 0.8f) * 2f
-
-        // Respiración siempre activa
         val breathe = sin(globalTime * 2f) * 0.015f
         petView.animScaleY = 1f + breathe
         petView.animScaleX = 1f - breathe * 0.5f
 
         when (state) {
-            State.LURKING -> {
-                // Alternar frames 0-1 lentamente
-                petView.currentFrame = if ((stateTimer * 0.5f).toInt() % 2 == 0) 0 else 1
+            State.IDLE_FLY -> {
+                // Vuelo quieto: frames 0-1 frente, 150ms
+                val flapSpeed = 0.15f
+                val flapPos = timer % (flapSpeed * 2)
+                petView.currentFrame = if (flapPos < flapSpeed) 0 else 1
                 petView.animOffsetY = baseFloatY
-                petView.animOffsetX = baseFloatX
-                petView.animAlpha = 1f
+                petView.animOffsetX = sin(globalTime * 0.8f) * 3f
+                petView.animScaleX = 1f // Sin flip, mira al usuario
             }
 
-            State.PLOTTING -> {
-                petView.currentFrame = 0
-                petView.animOffsetX = sin(stateTimer * 30f) * 2f // Vibra por emoción
+            State.MOVING_FLY -> {
+                // Vuelo horizontal: frames 2-3 perfil, 80ms
+                val flapSpeed = 0.08f
+                val flapPos = timer % (flapSpeed * 2)
+                petView.currentFrame = if (flapPos < flapSpeed) 2 else 3
                 petView.animOffsetY = baseFloatY
+
+                // Flip según dirección
+                val movingRight = petView.velocityX > 0
+                petView.animScaleX = if (movingRight) 1f else -1f
+
+                // Mover
+                val speed = 3f
+                petView.animOffsetX += speed * petView.animScaleX * dt
+                petView.animOffsetX = petView.animOffsetX.coerceIn(
+                    -petView.screenWidth / 2f + 30f,
+                    petView.screenWidth / 2f - 30f
+                )
             }
 
-            State.RUNNING -> {
-                // Sprint Naruto (frames 2-3 muy rápido)
-                petView.currentFrame = if ((stateTimer * 15f).toInt() % 2 == 0) 2 else 3
-                petView.animOffsetY = abs(sin(stateTimer * 20f)) * 5f
-            }
-
-            State.JUMP_SCARE -> {
-                petView.currentFrame = 4 // Cara de susto
-                petView.animScaleX = 1.2f
-                petView.animScaleY = 1.2f // Se hace más grande
-            }
-
-            State.FIRE_MISCHIEF -> {
+            State.FIRE_ATTACK -> {
+                // Lanzallamas: frames 4→5→6
                 petView.currentFrame = when {
-                    stateTimer < 0.25f -> 8  // Carga
-                    stateTimer < 0.50f -> 9  // Dispara
-                    stateTimer < 0.80f -> 10 // Humo
+                    stateTimer < 0.20f -> 4  // Carga
+                    stateTimer < 0.70f -> 5  // Llamarada
+                    stateTimer < 1.00f -> 6  // Humo
                     else -> 0
                 }
-                petView.animRotation = sin(stateTimer * 10f) * 15f // Gira en el aire
+                // Rotación diagonal
+                petView.animRotation = 15f
             }
 
-            State.TELEPORTING -> {
-                if (isTeleportingOut) {
-                    // Desaparecer
-                    petView.animAlpha = max(0f, 1f - stateTimer * 5f)
-                    if (petView.animAlpha <= 0f) {
-                        isTeleportingOut = false
-                        stateTimer = 0f
-                        petView.teleportToRandomEdge()
+            State.CLIMBING -> {
+                // Escalada: frames 7-8 alternando, ocasionalmente 9
+                climbPauseTimer += dt
+
+                if (climbPauseTimer > 3f && Random.nextFloat() < 0.02f) {
+                    // Mirar atrás para vigilar
+                    petView.currentFrame = 9
+                    if (climbPauseTimer > 4f) {
+                        climbPauseTimer = 0f
+                        petView.showBubble("👀")
                     }
                 } else {
-                    // Reaparecer
-                    petView.animAlpha = min(1f, stateTimer * 5f)
-                    petView.currentFrame = 4 // Cara de "¡Ajá!"
-                    if (petView.animAlpha >= 1f && stateTimer > 0.3f) {
-                        petView.showBubble("😈")
-                        petView.playHaptic(30)
-                        changeState(State.LURKING)
-                    }
+                    // Alternar brazos
+                    val armSpeed = 0.4f
+                    val armPos = timer % (armSpeed * 2)
+                    petView.currentFrame = if (armPos < armSpeed) 7 else 8
                 }
+
+                // Subir/bajar por el borde
+                climbY += climbDirection * 30f * dt
+                if (climbY > petView.screenHeight / 3f) climbDirection = -1f
+                if (climbY < -petView.screenHeight / 3f) climbDirection = 1f
+                petView.animOffsetY = climbY
+
+                // Rotación según lado
+                val atLeft = petView.animOffsetX < 0
+                petView.animRotation = if (atLeft) 90f else -90f
+
+                // Escalar más pequeño mientras trepa
+                petView.animScaleX = 0.9f
+                petView.animScaleY = 0.9f
             }
 
             State.BURNED_OUT -> {
-                petView.currentFrame = 5 // Modo fuego
-                petView.animOffsetX = sin(stateTimer * 40f) * 4f // Tiembla
+                petView.currentFrame = 5
+                petView.animOffsetX = sin(stateTimer * 40f) * 4f
             }
 
             State.DRAGGED -> {
                 petView.currentFrame = 4
-                // Ya manejado en updateDrag
             }
         }
     }
@@ -333,36 +350,35 @@ class ImpBehavior(
         timer = 0f
 
         when (newState) {
-            State.LURKING -> {
+            State.IDLE_FLY -> {
                 petView.velocityX = 0f
                 petView.animAlpha = 1f
+                petView.animRotation = 0f
+                petView.animScaleX = 1f
+                petView.animScaleY = 1f
             }
-            State.PLOTTING -> {
-                petView.velocityX = 0f
-                petView.showBubble("😈")
+            State.MOVING_FLY -> {
+                petView.velocityX = if (Random.nextBoolean()) 8f else -8f
             }
-            State.RUNNING -> {
-                petView.velocityX = if (Random.nextBoolean()) 15f else -15f
-            }
-            State.JUMP_SCARE -> {
+            State.FIRE_ATTACK -> {
+                chaosLevel = 0f
                 boredom = 0f
                 petView.currentFrame = 4
-                petView.velocityY = -18f
-                petView.showBubble("👹")
-                petView.playHaptic(50)
-            }
-            State.FIRE_MISCHIEF -> {
-                chaosLevel = 0f
-                petView.currentFrame = 8
-                petView.velocityY = -22f
-                petView.velocityX = (Random.nextFloat() - 0.5f) * 15f
                 petView.showBubble("🔥")
                 petView.playHaptic(60)
             }
-            State.TELEPORTING -> {
+            State.CLIMBING -> {
                 chaosLevel = 0f
-                isTeleportingOut = true
-                petView.velocityX = 0f
+                climbY = petView.animOffsetY
+                climbDirection = if (Random.nextBoolean()) 1f else -1f
+                climbPauseTimer = 0f
+                // Posicionar en el borde más cercano
+                if (petView.animOffsetX < 0) {
+                    petView.animOffsetX = -petView.screenWidth / 2f + 40f
+                } else {
+                    petView.animOffsetX = petView.screenWidth / 2f - 40f
+                }
+                petView.showBubble("😈")
             }
             State.BURNED_OUT -> {
                 petView.velocityY = 5f
@@ -381,16 +397,11 @@ class ImpBehavior(
     // ▌ INTERACCIÓN EXTERNA
     // ══════════════════════════════════════════════════════════
 
-    /** Doble-tap en posición vacía → el diablillo vuela ahí */
     fun onUserTouch(x: Float, y: Float) {
         if (state == State.BURNED_OUT) return
-
         boredom = 0f
-        chaosLevel += 10f
-
-        // Volar hacia donde tocó
-        changeState(State.RUNNING)
-        petView.velocityX = if (x > petView.screenWidth / 2) 10f else -10f
+        changeState(State.MOVING_FLY)
+        petView.velocityX = if (x > petView.screenWidth / 2) 8f else -8f
     }
 
     fun onDragStarted() {
@@ -399,7 +410,7 @@ class ImpBehavior(
 
     fun onDragEnded() {
         if (state == State.DRAGGED) {
-            changeState(State.LURKING)
+            changeState(State.IDLE_FLY)
             petView.velocityY = 2f
         }
     }
