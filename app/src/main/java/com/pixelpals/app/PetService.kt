@@ -211,9 +211,9 @@ class PetService : Service() {
         val screenWidth = metrics.widthPixels
         val screenHeight = metrics.heightPixels
 
-        // Pet size: 80dp → pixels (120dp for Diablillo - 50% larger)
+        // Pet size: 80dp → pixels (90dp for Diablillo - reduced 25%)
         val density = resources.displayMetrics.density
-        val baseSize = if (currentPetType == PetType.DIABLILLO) 120 else PET_SIZE_DP
+        val baseSize = if (currentPetType == PetType.DIABLILLO) 90 else PET_SIZE_DP
         val petSize = (baseSize * density).toInt()
 
         // View size slightly larger for shadow + bubbles

@@ -288,4 +288,9 @@ class CorgiBehavior(
         changeState(State.IDLE)
         petView.velocityY = 2f
     }
+
+    override fun onFling(velocityX: Float, velocityY: Float) {
+        changeState(State.ROLLING)
+        petView.playHaptic(60)
+    }
 }

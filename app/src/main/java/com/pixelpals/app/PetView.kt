@@ -132,25 +132,21 @@ class PetView(
         get() = (layoutParams as? WindowManager.LayoutParams)?.x ?: 0
         set(value) {
             val params = layoutParams as? WindowManager.LayoutParams ?: return
-            if (value in 0..screenWidth) {
-                params.x = value
-                try {
-                    (context.getSystemService(Context.WINDOW_SERVICE) as? WindowManager)
-                        ?.updateViewLayout(this, params)
-                } catch (_: Exception) {}
-            }
+            params.x = value.coerceIn(0, screenWidth)
+            try {
+                (context.getSystemService(Context.WINDOW_SERVICE) as? WindowManager)
+                    ?.updateViewLayout(this, params)
+            } catch (_: Exception) {}
         }
     override var windowY: Int
         get() = (layoutParams as? WindowManager.LayoutParams)?.y ?: 0
         set(value) {
             val params = layoutParams as? WindowManager.LayoutParams ?: return
-            if (value in 0..screenHeight) {
-                params.y = value
-                try {
-                    (context.getSystemService(Context.WINDOW_SERVICE) as? WindowManager)
-                        ?.updateViewLayout(this, params)
-                } catch (_: Exception) {}
-            }
+            params.y = value.coerceIn(0, screenHeight)
+            try {
+                (context.getSystemService(Context.WINDOW_SERVICE) as? WindowManager)
+                    ?.updateViewLayout(this, params)
+            } catch (_: Exception) {}
         }
 
     // ══════════════════════════════════════════════════════════
@@ -1275,8 +1271,9 @@ class PetView(
         }
 
         // ── Frame animation cycling ──
+        // NOTE: Corgi and Diablillo frames are 100% managed by their Behavior classes
         frameTimer += dt
-        if (frameTimer >= frameInterval) {
+        if (frameTimer >= frameInterval && petType != PetType.CORGI && petType != PetType.DIABLILLO) {
             frameTimer = 0f
             if (petType == PetType.BLOOP) {
                 currentFrame = when(state) {
@@ -1289,15 +1286,6 @@ class PetView(
                     PetState.DRAGGING, PetState.INTERACTING -> 4           // Awake/happy
                     PetState.FALLING -> if (sin(time * 4.0f) > 0) 2 else 3 // Curving left/right
                     else -> ((time * 1.0f).toInt() % 2)                    // Slow breathing every 1s
-                }
-            } else if (petType == PetType.CORGI) {
-                currentFrame = when(state) {
-                    PetState.DRAGGING, PetState.FALLING -> 1
-                    PetState.WALKING -> 1 + ((time * 6.6f).toInt() % 3) // Alternates 1, 2, 3
-                    PetState.INTERACTING -> {
-                        if (isSecretActive) 6 else 4 + ((time * 3f).toInt() % 2) // 6 is panza arriba, 4-5 is acariciar
-                    }
-                    else -> 0
                 }
             } else if (petType == PetType.JELLY) {
                 currentFrame = when(state) {
@@ -1835,26 +1823,6 @@ class PetView(
             currentFrame = 0 // Side view while held
             animRotation = 0f
             duckState = DuckState.DRAGGING
-        } else if (petType == PetType.DIABLILLO) {
-            // Diablillo: Being held - surprised then burn if held too long
-            currentFrame = 4 // Surprised frame
-            impDragTimer += dt
-            impState = ImpState.SURPRISED
-
-            // After 3 seconds, burn and escape
-            if (impDragTimer > 3f && !impIsBurned) {
-                impIsBurned = true
-                impState = ImpState.BURNED_OUT
-                impRunTimer = 0f
-                // Red tint to simulate burning
-                animColorFilter = android.graphics.LightingColorFilter(0xFFFF4444.toInt(), 0x00000000)
-                showBubble("🔥😤")
-                playStaccatoHaptic()
-                // Force drop
-                state = PetState.FALLING
-                velocityY = 2f
-                impDragTimer = 0f
-            }
         } else {
             // General pataleo
             animRotation = sin(time * 15f) * 10f
@@ -1947,16 +1915,7 @@ class PetView(
             params.x += (sin(time * 3f) * 3f).toInt()
         }
 
-        // Diablillo: Face front while flying
-        if (petType == PetType.DIABLILLO) {
-            currentFrame = 0 // Face front
-            animOffsetY = sin(time * 2f) * 3f
-            if (velocityY > 2f) velocityY = -3f
-            if (params.y < 50) {
-                params.y = 50
-                velocityY = 2f
-            }
-        }
+        // Diablillo: falling handled by ImpBehavior.updateFalling()
 
         // Limit to screen bounds collision
         if (params.y >= groundY) {
@@ -2101,70 +2060,7 @@ class PetView(
             }
 
             MovementStyle.WALK_RUN -> {
-                // Corgi: Must stand before walking, logical transitions
-                if (petType != PetType.CORGI) return
-
-                // Don't interrupt transitions
-                if (corgiIsTransitioning) return
-
-                moveTimer += dt
-
-                when (corgiPose) {
-                    CorgiPose.SITTING -> {
-                        // Sitting - stand up to move
-                        if (moveTimer > nextMoveTime) {
-                            corgiStartStand()
-                            moveTimer = 0f
-                        }
-                    }
-                    CorgiPose.STANDING -> {
-                        // Standing - can start walking
-                        if (moveTimer > 1f && !isMoving) {
-                            val maxSpeed = 2.5f + Random.nextFloat() * 1.5f
-                            velocityX = if (Random.nextBoolean()) maxSpeed else -maxSpeed
-                            isMoving = true
-                            corgiPose = CorgiPose.WALKING
-                            corgiWalkTimer = 0f
-                            moveActionTimer = 0f
-                            nextMoveTime = Random.nextFloat() * 4f + 2f
-                            moveTimer = 0f
-                        }
-                    }
-                    CorgiPose.WALKING -> {
-                        // Walking with paw animation
-                        corgiWalkTimer += dt
-                        params.x += velocityX.toInt()
-                        params.x = params.x.coerceIn(20, screenWidth - petSpriteSize - 20)
-
-                        // Alternate walk frames (moving paws)
-                        currentFrame = if ((corgiWalkTimer * 5f).toInt() % 2 == 0) 2 else 3
-                        animOffsetY = abs(sin(corgiWalkTimer * 10f)) * 3f
-
-                        // Digging for treasures (Corgi special)
-                        if (Random.nextFloat() < 0.002f) {
-                            isMoving = false
-                            velocityX = 0f
-                            corgiPose = CorgiPose.BARKING
-                            currentFrame = 6
-                            progress?.addTreasure("🦴")
-                            playHaptic(100)
-                            triggerReaction("🦴")
-                            return
-                        }
-
-                        // Stop and sit after walking
-                        if (corgiWalkTimer > 2f + Random.nextFloat() * 2f ||
-                            params.x <= 25 || params.x >= screenWidth - petSpriteSize - 25) {
-                            velocityX = 0f
-                            isMoving = false
-                            corgiStartSit()
-                        }
-                        updateWindowLayout(params)
-                    }
-                    else -> {
-                        // Other poses handled in updateIdleAnimation
-                    }
-                }
+                // Corgi: Movement handled entirely by CorgiBehavior
             }
 
             MovementStyle.ELEGANT_STRETCH -> {
@@ -2315,22 +2211,7 @@ class PetView(
                 }
             }
             MovementStyle.CHAOTIC_ZOOM -> {
-                // Diablillo: Chaotic movement with teleports and sprints
-                if (petType != PetType.DIABLILLO) return
-
-                val params = getWindowParams() ?: return
-
-                when (impState) {
-                    ImpState.RUNNING -> {
-                        // Snappy sprint
-                        params.x += velocityX.toInt()
-                        params.x = params.x.coerceIn(20, screenWidth - petSpriteSize - 20)
-                        updateWindowLayout(params)
-                    }
-                    else -> {
-                        // Decisions handled in updateIdleAnimation
-                    }
-                }
+                // Diablillo: Movement handled entirely by ImpBehavior
             }
         }
     }
@@ -2499,11 +2380,10 @@ class PetView(
             return
         }
 
-        // Legacy inline behavior (fallback)
+        // Legacy inline behavior (fallback) — Corgi/Diablillo handled by Behavior classes
         when (petType) {
-            PetType.CORGI -> {
-                showBubble("💕")
-                playHaptic(50) // Bark / sharp vibration
+            PetType.CORGI, PetType.DIABLILLO -> {
+                // Handled by CorgiBehavior/ImpBehavior.onInteract()
             }
             PetType.BLOOP -> {
                 showBubble("🫧")
@@ -2539,11 +2419,6 @@ class PetView(
                 // Patito: Quack Supremo!
                 duckQuackSupremo()
                 duckIdleTime = 0f
-            }
-            PetType.DIABLILLO -> {
-                // Diablillo: Fire jump with staccato haptic
-                impFireJump()
-                playStaccatoHaptic()
             }
         }
     }
@@ -3147,15 +3022,9 @@ class PetView(
     // ══════════════════════════════════════════════════════════
     private val gestureDetector = android.view.GestureDetector(context, object : android.view.GestureDetector.SimpleOnGestureListener() {
         override fun onFling(e1: MotionEvent?, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
-            if (petType == PetType.CORGI) {
-                isSecretActive = true // Swipe triggers panza arriba
-                triggerInteraction()
-                return true
-            }
-            if (petType == PetType.GINGER) {
-                isSecretActive = true // Swipe triggers belly rub sequence
-                triggerInteraction()
-                showBubble("😻")
+            // Delegate to behavior if available (Corgi/Diablillo/Ginger/etc)
+            behavior?.let {
+                it.onFling(velocityX, velocityY)
                 return true
             }
             return false
@@ -3189,6 +3058,12 @@ class PetView(
                     tapCount = 1
                 }
                 lastTapTime = now
+
+                // Notify behavior first; if it returns true, it intercepts the drag completely
+                if (behavior?.onTouchDown(event.rawX, event.rawY) == true) {
+                    // Behavior is handling the touch native
+                    return true
+                }
 
                 // ── Start drag ──
                 isDragging = true
@@ -3226,6 +3101,10 @@ class PetView(
             }
 
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                if (behavior?.onTouchUp() == true) {
+                    return true
+                }
+                
                 if (isDragging) {
                     isDragging = false
                     

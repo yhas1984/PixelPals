@@ -128,4 +128,12 @@ class GingerBehavior(
         petView.animScaleY = 1f
         petView.animRotation = 0f
     }
+
+    override fun onFling(velocityX: Float, velocityY: Float) {
+        gingerPose = GingerPose.BELLY_RUB
+        petView.showBubble("😻")
+        petView.playHaptic(120)
+        petView.currentFrame = 5 // Belly rub pose
+        petView.state = com.pixelpals.app.PetState.INTERACTING
+    }
 }

@@ -36,6 +36,13 @@ interface PetBehavior {
     /** Draw pet-specific elements */
     fun onDraw(canvas: Canvas, cx: Float, cy: Float)
 
+    /** Trigger action on fling/swipe gesture */
+    fun onFling(velocityX: Float, velocityY: Float) {}
+
+    /** Direct touch intercepts (return true if handled, preventing default drag) */
+    fun onTouchDown(x: Float, y: Float): Boolean = false
+    fun onTouchUp(): Boolean = false
+
     /** Reset state */
     fun reset()
 }
