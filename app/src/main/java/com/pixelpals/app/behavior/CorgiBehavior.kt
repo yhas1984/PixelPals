@@ -1,296 +1,164 @@
 package com.pixelpals.app.behavior
-
-import android.graphics.Canvas
 import com.pixelpals.app.PetState
+
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.content.Context
+import android.view.View
+import kotlinx.coroutines.*
 import kotlin.math.sin
 import kotlin.math.abs
 import kotlin.random.Random
+import com.pixelpals.app.R
 
 /**
- * CorgiBehavior v2 — Corgi Explorador con 13 frames
- *
- * Frames:
- * 0: quieto, 1: respiracion, 2: parpadea
- * 3: caminata, 4: trote, 5: corre
- * 6: olfatea, 7: olfatea cola arriba
- * 8: cavando, 9: hueso
- * 10: ladra, 11: panza arriba, 12: rodando feliz
+ * CorgiBehavior — Playful dog with sitting/standing states.
+ * Optimized with asynchronous loading and smooth animations.
  */
 class CorgiBehavior(
     private val petView: PetViewBridge
 ) : PetBehavior {
 
-    // ══════════════════════════════════════════════════════════
-    // ▌ ESTADOS
-    // ══════════════════════════════════════════════════════════
+    private var time = 0f
+    private var corgiPose = CorgiPose.SITTING
+    private var corgiIdleTimer = 0f
+    
+    private val frames = mutableListOf<Bitmap>()
+    private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    private var isLoading = true
 
-    private enum class State {
-        IDLE,       // Quieto con respiración y parpadeo (0,1,2)
-        WALKING,    // Caminando (3,4,5)
-        SNIFFING,   // Olfateando (6,7)
-        DIGGING,    // Cavando (8,9)
-        BARKING,    // Ladrando (10)
-        ROLLING     // Mimos panza arriba (11,12)
+    enum class CorgiPose { SITTING, STANDING, WALKING, BARKING, JUMPING }
+
+    init {
+        loadFramesAsync()
     }
 
-    private var state = State.IDLE
-    private var stateTimer = 0f
-    private var globalTime = 0f
-
-    // Frame animation
-    private var frameTimer = 0f
-    private var frameIndex = 0
-    private var currentSequence = listOf(0, 1, 0, 2)
-    private var frameDuration = 0.30f // 300ms por defecto
-
-    // Movement
-    private var walkDirection = 1f
-    private var walkSpeed = 80f
-
-    // ══════════════════════════════════════════════════════════
-    // ▌ PET BEHAVIOR
-    // ══════════════════════════════════════════════════════════
+    private fun loadFramesAsync() {
+        scope.launch {
+            val context = (petView as View).context
+            val resIds = listOf(
+                R.drawable.corgi_0, R.drawable.corgi_1, R.drawable.corgi_2,
+                R.drawable.corgi_3, R.drawable.corgi_4, R.drawable.corgi_5,
+                R.drawable.corgi_6, R.drawable.corgi_7, R.drawable.corgi_8,
+                R.drawable.corgi_9, R.drawable.corgi_10, R.drawable.corgi_11, R.drawable.corgi_12
+            )
+            
+            val loadedFrames = withContext(Dispatchers.IO) {
+                resIds.mapNotNull { id ->
+                    try {
+                        val b = BitmapFactory.decodeResource(context.resources, id)
+                        b?.let {
+                            Bitmap.createScaledBitmap(it, petView.petSpriteSize, petView.petSpriteSize, true)
+                        }
+                    } catch (e: Exception) { null }
+                }
+            }
+            
+            frames.addAll(loadedFrames)
+            isLoading = false
+            petView.invalidate()
+        }
+    }
 
     override fun updateIdle(dt: Float) {
-        globalTime += dt
-        stateTimer += dt
-        frameTimer += dt
+        if (isLoading) return
+        time += dt
+        corgiIdleTimer += dt
 
-        // Update frame
-        if (frameTimer >= frameDuration) {
-            frameTimer = 0f
-            frameIndex = (frameIndex + 1) % currentSequence.size
-            petView.currentFrame = currentSequence[frameIndex]
+        when (corgiPose) {
+            CorgiPose.SITTING -> {
+                petView.currentFrame = 0
+                petView.animOffsetY = sin(time * 2.0f) * 3f // Más suave
+                if (corgiIdleTimer > 4f) {
+                    corgiPose = CorgiPose.STANDING
+                    corgiIdleTimer = 0f
+                }
+            }
+            CorgiPose.STANDING -> {
+                petView.currentFrame = 1
+                petView.animOffsetX = sin(time * 3.0f) * 2f
+                if (corgiIdleTimer > 2f) {
+                    corgiPose = CorgiPose.SITTING
+                    corgiIdleTimer = 0f
+                }
+            }
+            else -> { petView.currentFrame = 0 }
         }
 
-        // State logic
-        when (state) {
-            State.IDLE -> updateIdleState(dt)
-            State.WALKING -> updateWalkingState(dt)
-            State.SNIFFING -> updateSniffingState(dt)
-            State.DIGGING -> updateDiggingState(dt)
-            State.BARKING -> updateBarkingState(dt)
-            State.ROLLING -> updateRollingState(dt)
+        if (Random.nextFloat() < 0.005f) {
+            petView.showBubble(listOf("¡Guau!", "❤️", "🦴", "🐾").random())
         }
-
-        // Breathing animation
-        val breathe = sin(globalTime * 2f) * 0.015f
-        petView.animScaleY = 1f + breathe
     }
 
     override fun updateDrag(dt: Float) {
-        petView.currentFrame = 0 // Quieto mientras es arrastrado
-        petView.animRotation = sin(globalTime * 15f) * 5f
+        time += dt
+        petView.animRotation = sin(time * 20f) * 12f
     }
 
     override fun updateFalling(dt: Float) {
-        petView.currentFrame = 4 // Trote mientras cae
-        petView.animScaleX = 1f
+        petView.currentFrame = 5
+        petView.animRotation += dt * 360f // Gira al caer
     }
 
     override fun updateJumping(dt: Float) {
-        petView.currentFrame = 5 // Corre mientras salta
+        petView.currentFrame = 5
     }
 
     override fun updateAutonomous(dt: Float) {}
 
     override fun onInteract() {
-        // Tap: bark with jump
-        changeState(State.BARKING)
+        petView.showBubble("❤️")
+        petView.playHaptic(40)
     }
 
     override fun updateInteracting(dt: Float) {
-        // BARKING state handles this
+        when {
+            dt < 0.3f -> {
+                petView.currentFrame = 7
+                petView.animScaleY = 0.90f
+            }
+            dt < 0.6f -> { petView.currentFrame = 8; petView.animOffsetY = -10f }
+            dt < 1.2f -> {
+                petView.currentFrame = 9
+                petView.animScaleY = 1.15f
+            }
+            dt < 2.0f -> {
+                petView.currentFrame = 7
+                petView.animScaleY = 1f
+            }
+            else -> {
+                petView.state = PetState.IDLE
+                reset()
+            }
+        }
     }
 
-    override fun onDraw(canvas: Canvas, cx: Float, cy: Float) {}
+    override fun onDraw(canvas: Canvas, cx: Float, cy: Float) {
+        if (isLoading || frames.isEmpty()) return
+        
+        val frameIdx = petView.currentFrame.coerceIn(0, frames.size - 1)
+        val bitmap = frames[frameIdx]
+        
+        canvas.save()
+        canvas.translate(cx + petView.animOffsetX, cy + petView.animOffsetY)
+        canvas.rotate(petView.animRotation)
+        canvas.scale(petView.animScaleX, petView.animScaleY)
+        
+        paint.alpha = (petView.animAlpha * 255).toInt()
+        paint.colorFilter = petView.animColorFilter
+        
+        canvas.drawBitmap(bitmap, -bitmap.width / 2f, -bitmap.height / 2f, paint)
+        canvas.restore()
+    }
 
     override fun reset() {
-        state = State.IDLE
-        stateTimer = 0f
-        globalTime = 0f
-        frameTimer = 0f
-        frameIndex = 0
-        petView.animAlpha = 1f
         petView.animScaleX = 1f
         petView.animScaleY = 1f
         petView.animRotation = 0f
-    }
-
-    // ══════════════════════════════════════════════════════════
-    // ▌ ESTADOS
-    // ══════════════════════════════════════════════════════════
-
-    private fun updateIdleState(dt: Float) {
-        // Gentle sitting pose
-        petView.animOffsetY = sin(globalTime * 1.5f) * 2f
         petView.animOffsetX = 0f
-        petView.animScaleX = 1f // Face user
-
-        // Every 4-6 seconds, decide what to do
-        if (stateTimer > 4f + Random.nextFloat() * 2f) {
-            val roll = Random.nextFloat()
-            when {
-                roll < 0.40f -> changeState(State.WALKING)
-                roll < 0.55f -> changeState(State.SNIFFING)
-                roll < 0.60f -> changeState(State.DIGGING) // 5% chance
-                else -> stateTimer = 0f // Stay idle
-            }
-        }
-    }
-
-    private fun updateWalkingState(dt: Float) {
-        // Walk using real window position
-        val currentX = petView.windowX
-        val moveAmount = (walkSpeed * walkDirection * dt * 60f).toInt()
-        val newX = currentX + moveAmount
-
-        // Check bounds and turn around
-        if (newX <= 20) {
-            petView.windowX = 20
-            walkDirection = 1f // Turn right
-        } else if (newX >= petView.screenWidth - 80) {
-            petView.windowX = petView.screenWidth - 80
-            walkDirection = -1f // Turn left
-        } else {
-            petView.windowX = newX
-        }
-
-        // Flip based on direction
-        petView.animScaleX = if (walkDirection > 0) 1f else -1f
-
-        // Walking bob
-        petView.animOffsetY = abs(sin(globalTime * 10f)) * 3f
-
-        // After 3-5 seconds, stop
-        if (stateTimer > 3f + Random.nextFloat() * 2f) {
-            changeState(State.IDLE)
-        }
-    }
-
-    private fun updateSniffingState(dt: Float) {
-        // Sniff sequence: 6 -> 7 -> 6
-        petView.animScaleX = 1f // Face user
-
-        // Slight lean forward while sniffing
-        petView.animOffsetY = sin(globalTime * 3f) * 2f
-
-        // After 2-3 seconds, stop sniffing
-        if (stateTimer > 2f + Random.nextFloat() * 1f) {
-            petView.showBubble("🐕")
-            changeState(State.IDLE)
-        }
-    }
-
-    private fun updateDiggingState(dt: Float) {
-        // Dig sequence: 8 -> 8 -> 8 -> 9 (bone)
-        // Shake while digging
-        petView.animOffsetX = sin(globalTime * 20f) * 3f
-
-        // After finding bone, show happiness
-        if (stateTimer > 2f) {
-            petView.showBubble("🦴")
-            petView.playHaptic(50)
-            changeState(State.IDLE)
-        }
-    }
-
-    private fun updateBarkingState(dt: Float) {
-        // Bark with jump
-        petView.animOffsetY = -abs(sin(globalTime * 8f)) * 5f
-
-        // After 1-1.5 seconds, stop barking
-        if (stateTimer > 1f + Random.nextFloat() * 0.5f) {
-            changeState(State.IDLE)
-        }
-    }
-
-    private fun updateRollingState(dt: Float) {
-        // Roll on back - alternate 11 and 12
-        petView.animScaleX = if ((globalTime * 2f).toInt() % 2 == 0) 1f else -1f
-
-        // After 2-3 seconds, stop rolling
-        if (stateTimer > 2f + Random.nextFloat() * 1f) {
-            petView.showBubble("❤️")
-            changeState(State.IDLE)
-        }
-    }
-
-    // ══════════════════════════════════════════════════════════
-    // ▌ TRANSICIONES
-    // ══════════════════════════════════════════════════════════
-
-    private fun changeState(newState: State) {
-        if (state == newState) return
-        state = newState
-        stateTimer = 0f
-        frameTimer = 0f
-        frameIndex = 0
-
-        currentSequence = when (newState) {
-            State.IDLE -> {
-                frameDuration = 0.30f // 300ms - slow breathing
-                petView.velocityX = 0f
-                petView.animRotation = 0f
-                petView.animScaleX = 1f
-                petView.animScaleY = 1f
-                listOf(0, 1, 0, 2) // Quieto, respira, quieto, parpadea
-            }
-            State.WALKING -> {
-                frameDuration = 0.08f // 80ms - fast paws
-                walkDirection = if (Random.nextBoolean()) 1f else -1f
-                listOf(3, 4, 5) // Caminata, trote, corre
-            }
-            State.SNIFFING -> {
-                frameDuration = 0.25f // 250ms - slow curious
-                petView.velocityX = 0f
-                listOf(6, 7, 6, 7) // Olfateo curioso
-            }
-            State.DIGGING -> {
-                frameDuration = 0.12f // 120ms - fast digging
-                petView.velocityX = 0f
-                petView.showBubble("🐾")
-                listOf(8, 8, 8, 9) // Cava 3 veces, saca hueso
-            }
-            State.BARKING -> {
-                frameDuration = 0.15f // 150ms
-                petView.velocityX = 0f
-                petView.velocityY = -10f // Jump
-                petView.showBubble("Woof!")
-                petView.playHaptic(50)
-                listOf(10) // Ladrido
-            }
-            State.ROLLING -> {
-                frameDuration = 0.18f // 180ms - medium mimos
-                petView.velocityX = 0f
-                petView.showBubble("💕")
-                listOf(11, 12, 11, 12) // Panza arriba y rodando
-            }
-        }
-
-        petView.currentFrame = currentSequence[0]
-    }
-
-    // ══════════════════════════════════════════════════════════
-    // ▌ INTERACCIÓN EXTERNA
-    // ══════════════════════════════════════════════════════════
-
-    /** Swipe over corgi → rolling (belly rub) */
-    fun onSwipe() {
-        changeState(State.ROLLING)
-    }
-
-    fun onDragStarted() {
-        petView.currentFrame = 0
-    }
-
-    fun onDragEnded() {
-        changeState(State.IDLE)
-        petView.velocityY = 2f
-    }
-
-    override fun onFling(velocityX: Float, velocityY: Float) {
-        changeState(State.ROLLING)
-        petView.playHaptic(60)
+        petView.animOffsetY = 0f
     }
 }

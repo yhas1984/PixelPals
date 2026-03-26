@@ -1,95 +1,65 @@
 package com.pixelpals.app.behavior
-import com.pixelpals.app.PetState
 
-import android.graphics.Canvas
-import kotlin.math.sin
-import kotlin.math.abs
+import com.pixelpals.app.PetState
+import com.pixelpals.app.R
+import kotlin.math.*
 import kotlin.random.Random
 
 /**
- * DuckBehavior — Curious duck that waddles, swims, and quacks.
+ * DuckBehavior — Curious and adventurous duck.
  */
 class DuckBehavior(
-    private val petView: PetViewBridge
-) : PetBehavior {
+    bridge: PetViewBridge
+) : BaseBehavior(bridge) {
 
-    private var time = 0f
-    var duckState = DuckState.IDLE_SIDE
-    var duckIdleTime = 0f
-    var duckWalkTimer = 0f
-    var duckWalkDirection = 1f
+    override val resourceIds = listOf(
+        R.drawable.patito_0, R.drawable.patito_1, R.drawable.patito_2,
+        R.drawable.patito_3, R.drawable.patito_4, R.drawable.patito_5,
+        R.drawable.patito_6, R.drawable.patito_7, R.drawable.patito_8,
+        R.drawable.patito_9, R.drawable.patito_10, R.drawable.patito_11,
+        R.drawable.patito_12, R.drawable.patito_13, R.drawable.patito_14
+    )
 
-    enum class DuckState { IDLE_SIDE, WALKING, CURIOSITY, QUACK_SUPREMO }
+    private var walkTimer = 0f
+    private var isWaddling = false
 
     override fun updateIdle(dt: Float) {
-        time += dt
-        duckIdleTime += dt
+        if (isLoading) return
+        super.updateIdle(dt)
+        
+        if (Random.nextFloat() < 0.01f) isWaddling = !isWaddling
 
-        when (duckState) {
-            DuckState.IDLE_SIDE -> {
-                val cycle = duckIdleTime % 3f
-                petView.currentFrame = if (cycle < 1.5f) 0 else 3
-            }
-            DuckState.WALKING -> {
-                duckWalkTimer += dt
-                petView.currentFrame = if ((duckWalkTimer * 5f).toInt() % 2 == 0) 1 else 2
-                petView.animOffsetY = abs(sin(duckWalkTimer * 10f)) * 3f
-                if (duckWalkTimer > 2f) {
-                    petView.velocityX = 0f
-                    duckState = DuckState.IDLE_SIDE
-                    duckWalkTimer = 0f
-                }
-            }
-            DuckState.CURIOSITY -> {
-                petView.currentFrame = if (duckIdleTime % 2f < 1f) 3 else 4
-            }
-            DuckState.QUACK_SUPREMO -> {
-                duckWalkTimer += dt
-                petView.currentFrame = when {
-                    duckWalkTimer < 0.2f -> 3
-                    duckWalkTimer < 0.5f -> 13
-                    duckWalkTimer < 1.0f -> 14
-                    else -> {
-                        duckState = DuckState.IDLE_SIDE
-                        duckWalkTimer = 0f
-                        0
-                    }
-                }
-            }
+        if (isWaddling) {
+            walkTimer += dt
+            bridge.currentFrame = if ((walkTimer * 8f).toInt() % 2 == 0) 1 else 2
+            bridge.animOffsetY = abs(sin(walkTimer * 15f)) * 5f
+            bridge.animRotation = sin(walkTimer * 10f) * 3f
+        } else {
+            val cycle = time % 3f
+            bridge.currentFrame = if (cycle < 2f) 0 else 3
+            bridge.animScaleY = 1f + sin(time * 2f) * 0.02f
+        }
+
+        if (Random.nextFloat() < 0.004f) {
+            bridge.showBubble("Quack!")
+            bridge.playHaptic(30)
         }
     }
 
-    override fun updateDrag(dt: Float) {
-        petView.currentFrame = 0
-    }
-
-    override fun updateFalling(dt: Float) {
-        petView.currentFrame = 1
-        petView.animOffsetY = sin(time * 5f) * 3f
-    }
-
-    override fun updateJumping(dt: Float) {
-        petView.currentFrame = 5
-    }
-
-    override fun updateAutonomous(dt: Float) {}
-
     override fun onInteract() {
-        duckState = DuckState.QUACK_SUPREMO
-        duckWalkTimer = 0f
-        petView.showBubble("Quack!")
-        petView.playHaptic(80)
+        super.onInteract()
+        bridge.showBubble("QUACK!!")
+        bridge.playHaptic(100)
     }
 
     override fun updateInteracting(dt: Float) {
-        // Handled in updateIdle with QUACK_SUPREMO state
-    }
-
-    override fun onDraw(canvas: Canvas, cx: Float, cy: Float) {}
-
-    override fun reset() {
-        duckState = DuckState.IDLE_SIDE
-        petView.animScaleX = 1f
-        petView.animScaleY = 1f
+        if (dt > 1.2f) {
+            bridge.state = PetState.IDLE
+            reset()
+        } else {
+            bridge.currentFrame = 14
+            bridge.animScaleY = 1.2f
+            bridge.animOffsetY = -15f
+        }
     }
 }

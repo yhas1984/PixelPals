@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import androidx.room.Delete
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -17,11 +18,11 @@ interface TreasureDao {
     suspend fun getTreasure(emoji: String): TreasureItem?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertTreasure(treasure: TreasureItem)
+    suspend fun insertTreasure(treasure: TreasureItem): Long
 
     @Update
-    suspend fun updateTreasure(treasure: TreasureItem)
+    suspend fun updateTreasure(treasure: TreasureItem): Int
 
-    @androidx.room.Delete
-    suspend fun deleteTreasure(treasure: TreasureItem)
+    @Delete
+    suspend fun deleteTreasure(treasure: TreasureItem): Int
 }

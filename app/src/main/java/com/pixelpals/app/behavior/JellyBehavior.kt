@@ -1,103 +1,72 @@
 package com.pixelpals.app.behavior
-import com.pixelpals.app.PetState
 
-import android.graphics.Canvas
-import android.view.animation.OvershootInterpolator
-import kotlin.math.sin
+import com.pixelpals.app.PetState
+import com.pixelpals.app.R
+import kotlin.math.*
 import kotlin.random.Random
 
 /**
  * JellyBehavior — Bouncy slime that wobbles and jumps.
+ * Inherits from BaseBehavior for optimized rendering.
  */
 class JellyBehavior(
-    private val petView: PetViewBridge
-) : PetBehavior {
+    bridge: PetViewBridge
+) : BaseBehavior(bridge) {
 
-    private var time = 0f
+    override val resourceIds = listOf(
+        R.drawable.jelly_0, R.drawable.jelly_1, R.drawable.jelly_2,
+        R.drawable.jelly_3, R.drawable.jelly_4, R.drawable.jelly_5,
+        R.drawable.jelly_6, R.drawable.jelly_7, R.drawable.jelly_8,
+        R.drawable.jelly_9, R.drawable.jelly_10, R.drawable.jelly_11
+    )
+
+    private var moveTimer = 0f
+    private var nextJumpTime = 3f + Random.nextFloat() * 2f
 
     override fun updateIdle(dt: Float) {
-        time += dt
-        val sine = sin(time * Math.PI / 0.6f).toFloat()
-        petView.animScaleY = 1.0f + sine * 0.06f
-        petView.animScaleX = 1.0f - sine * 0.04f
+        if (isLoading) return
+        super.updateIdle(dt)
+        
+        // Rhythmic breathing wobble
+        val sine = sin(time * 5f)
+        bridge.animScaleY = 1.0f + sine * 0.08f
+        bridge.animScaleX = 1.0f - sine * 0.05f
+        
+        // Animation frames
+        bridge.currentFrame = (time * 8f).toInt() % frames.size
 
-        val wobbleCycle = (time * 1.2f) % 8f
-        petView.currentFrame = when {
-            wobbleCycle < 1.0f -> 0
-            wobbleCycle < 2.0f -> 1
-            wobbleCycle < 3.0f -> 2
-            wobbleCycle < 4.0f -> 3
-            wobbleCycle < 5.0f -> 4
-            wobbleCycle < 6.0f -> 5
-            wobbleCycle < 7.0f -> 6
-            else -> 7
+        // Decide to jump
+        moveTimer += dt
+        if (moveTimer > nextJumpTime) {
+            bridge.state = PetState.JUMPING
+            bridge.velocityY = -20f
+            moveTimer = 0f
+            nextJumpTime = 2f + Random.nextFloat() * 4f
         }
-
-        if (Random.nextFloat() < 0.006f) {
-            val pop = listOf("✨", "💖", "🫧", "🍬", "🌈", "💫").random()
-            petView.showBubble(pop)
-        }
-    }
-
-    override fun updateDrag(dt: Float) {
-        petView.animRotation = sin(time * 15f) * 10f
-    }
-
-    override fun updateFalling(dt: Float) {
-        petView.currentFrame = 3
-        petView.animAlpha = 0.8f
     }
 
     override fun updateJumping(dt: Float) {
-        petView.currentFrame = 4
-    }
-
-    override fun updateAutonomous(dt: Float) {
-        // Jelly bounces autonomously - handled in PetView
+        // Stretch while jumping
+        bridge.currentFrame = 4
+        val stretch = abs(bridge.velocityY) / 25f
+        bridge.animScaleY = 1.1f + stretch * 0.2f
+        bridge.animScaleX = 0.9f - stretch * 0.1f
     }
 
     override fun onInteract() {
-        petView.showBubble("🟢")
-        petView.playHaptic(100)
+        super.onInteract()
+        bridge.showBubble("🟢 Boing!")
+        bridge.playHaptic(60)
     }
 
     override fun updateInteracting(dt: Float) {
-        when {
-            dt < 0.15f -> {
-                petView.currentFrame = 8
-                petView.animScaleX = 1.6f
-                petView.animScaleY = 0.4f
-                petView.playHaptic(80)
-            }
-            dt < 0.4f -> {
-                petView.currentFrame = 9
-                petView.animScaleX = 0.8f
-                petView.animScaleY = 1.3f
-            }
-            dt < 0.8f -> {
-                val t = (dt - 0.4f) / 0.4f
-                val overshoot = OvershootInterpolator(2.5f).getInterpolation(t)
-                petView.animScaleX = 0.8f + (1f - 0.8f) * overshoot
-                petView.animScaleY = 1.3f + (1f - 1.3f) * overshoot
-            }
-            dt < 2.0f -> {
-                petView.currentFrame = if ((dt * 4f).toInt() % 2 == 0) 5 else 6
-                petView.animScaleY = 1f + sin(dt * 6f) * 0.04f
-                petView.animScaleX = 1f - sin(dt * 6f) * 0.03f
-            }
-            else -> {
-                petView.state = PetState.IDLE
-                reset()
-            }
+        if (dt > 1.0f) {
+            bridge.state = PetState.IDLE
+            reset()
+        } else {
+            // Squish reaction
+            bridge.animScaleY = 0.5f
+            bridge.animScaleX = 1.5f
         }
-    }
-
-    override fun onDraw(canvas: Canvas, cx: Float, cy: Float) {}
-
-    override fun reset() {
-        petView.animAlpha = 0.95f
-        petView.animScaleX = 1f
-        petView.animScaleY = 1f
-        petView.animRotation = 0f
     }
 }
