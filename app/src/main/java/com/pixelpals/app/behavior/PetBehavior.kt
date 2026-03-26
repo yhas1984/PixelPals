@@ -45,4 +45,12 @@ interface PetBehavior {
 
     /** Reset state */
     fun reset()
+
+    // --- Lifecycle and Events ---
+    fun resume() {}
+    fun pause() {}
+    fun onTreasureConsumed(emoji: String) {}
+    fun onBatteryStatusChanged(percent: Int, isCharging: Boolean) {}
+    fun onKeyboardVisibilityChanged(visible: Boolean, height: Int) {}
+    fun onAirplaneModeChanged(isAirplane: Boolean) {}
 }

@@ -1,109 +1,49 @@
 package com.pixelpals.app.behavior
-import com.pixelpals.app.PetState
 
-import android.graphics.Canvas
-import kotlin.math.sin
-import kotlin.math.abs
+import com.pixelpals.app.PetState
+import com.pixelpals.app.R
+import kotlin.math.*
 import kotlin.random.Random
 
 /**
- * NubeMichiBehavior — Fluffy cloud cat that floats like a feather.
- * Transforms to pluma when falling.
+ * NubeMichiBehavior — Gatito nube con movimientos suaves.
  */
 class NubeMichiBehavior(
-    private val petView: PetViewBridge
-) : PetBehavior {
+    bridge: PetViewBridge
+) : BaseBehavior(bridge) {
 
-    private var time = 0f
-    var showPluma = false
+    override val resourceIds = listOf(
+        R.drawable.gato_0, R.drawable.gato_1, R.drawable.gato_2, R.drawable.gato_3
+    )
 
     override fun updateIdle(dt: Float) {
-        time += dt
-        // Cloud-like floating
-        val floatY = sin(time * 1.2f) * 15f
-        val floatX = sin(time * 0.8f) * 8f
-        petView.animOffsetY = floatY
-        petView.animOffsetX = floatX
-
-        // Breathing
+        if (isLoading) return
+        super.updateIdle(dt)
+        
+        // Flotación muy suave y lenta
+        bridge.animOffsetY = sin(time * 1.2f) * 12f
+        bridge.animOffsetX = cos(time * 0.5f) * 5f
+        
+        // Respiración (escala)
         val breathe = sin(time * 1.5f) * 0.04f
-        petView.animScaleY = 1f + breathe
-        petView.animScaleX = 1f - breathe * 0.3f
+        bridge.animScaleY = 1f + breathe
+        bridge.animScaleX = 1f - breathe * 0.2f
 
-        // Cycle frames
-        val frameCycle = (time * 0.5f) % 4f
-        petView.currentFrame = when {
-            frameCycle < 1.5f -> 0
-            frameCycle < 2.5f -> 1
-            frameCycle < 3.5f -> 2
-            else -> 3
-        }
-
-        showPluma = false
-    }
-
-    override fun updateDrag(dt: Float) {
-        petView.animRotation = sin(time * 3f) * 15f
-        showPluma = false
-        petView.animAlpha = 1f
-    }
-
-    override fun updateFalling(dt: Float) {
-        // Transform to pluma
-        petView.animAlpha = 0f // Cat invisible
-        showPluma = true
-        petView.currentFrame = 0
-    }
-
-    override fun updateJumping(dt: Float) {
-        petView.currentFrame = 2
-    }
-
-    override fun updateAutonomous(dt: Float) {
-        // Rarely moves
+        // Frames (animación lenta)
+        bridge.currentFrame = (time * 4f).toInt() % frames.size
     }
 
     override fun onInteract() {
-        val reaction = listOf("☁️", "💕", "✨", "😻").random()
-        petView.showBubble(reaction)
-        petView.playHaptic(25)
-        showPluma = false
-        petView.animAlpha = 1f
+        super.onInteract()
+        bridge.showBubble("☁️ Purrr...")
+        bridge.playHaptic(20)
+        bridge.animScaleY = 1.25f // Se infla
     }
 
     override fun updateInteracting(dt: Float) {
-        // Coqueta interaction
-        petView.animAlpha = 1f
-        when {
-            dt < 0.5f -> {
-                petView.currentFrame = 3
-                petView.animScaleX = 1.08f
-                petView.animScaleY = 1.12f
-            }
-            dt < 1.5f -> {
-                petView.currentFrame = if ((dt * 3f).toInt() % 2 == 0) 0 else 1
-                petView.animScaleY = 1f + sin(dt * 8f) * 0.03f
-            }
-            dt < 2.5f -> {
-                petView.currentFrame = 2
-                val breathe = sin(dt * 3f) * 0.02f
-                petView.animScaleY = 1f + breathe
-            }
-            else -> {
-                petView.state = PetState.IDLE
-                reset()
-            }
+        if (dt > 1.2f) {
+            bridge.state = PetState.IDLE
+            reset()
         }
-    }
-
-    override fun onDraw(canvas: Canvas, cx: Float, cy: Float) {
-        // Pluma drawing handled by PetView
-    }
-
-    override fun reset() {
-        petView.animAlpha = 1f
-        petView.animScaleX = 1f
-        petView.animScaleY = 1f
-        petView.animRotation = 0f
     }
 }

@@ -12,7 +12,6 @@ import android.content.IntentFilter
 import android.graphics.PixelFormat
 import android.graphics.Rect
 import android.os.BatteryManager
-import android.os.Build
 import android.os.IBinder
 import android.util.DisplayMetrics
 import android.view.Gravity
@@ -80,7 +79,7 @@ class PetService : Service() {
                 return START_NOT_STICKY
             }
             ACTION_CONSUME_TREASURE -> {
-                val emoji = intent?.getStringExtra("TREASURE_EMOJI") ?: "✨"
+                val emoji = intent.getStringExtra("TREASURE_EMOJI") ?: "✨"
                 petView?.consumeTreasure(emoji)
                 return START_STICKY
             }
@@ -203,7 +202,7 @@ class PetService : Service() {
     private fun createPetOverlay() {
         if (isViewAttached) return
 
-        windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        windowManager = getSystemService(WindowManager::class.java)
 
         val metrics = DisplayMetrics()
         @Suppress("DEPRECATION")
@@ -240,7 +239,7 @@ class PetService : Service() {
             isViewAttached = true
             petProgress?.let { petView?.setProgress(it) }
             petView?.resumeAnimation()
-            setupKeyboardDetection(screenWidth, screenHeight)
+            setupKeyboardDetection(screenHeight)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -318,7 +317,7 @@ class PetService : Service() {
      * Uses a zero-width probe view to detect keyboard appearance.
      * When the usable screen height shrinks, the keyboard is visible.
      */
-    private fun setupKeyboardDetection(screenWidth: Int, screenHeight: Int) {
+    private fun setupKeyboardDetection(screenHeight: Int) {
         val wm = windowManager ?: return
 
         keyboardProbe = View(this)
@@ -333,6 +332,7 @@ class PetService : Service() {
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.TOP or Gravity.START
+            @Suppress("DEPRECATION")
             softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
         }
 
