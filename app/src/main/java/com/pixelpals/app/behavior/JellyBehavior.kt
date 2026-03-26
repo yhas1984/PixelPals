@@ -1,41 +1,32 @@
 package com.pixelpals.app.behavior
 
 import com.pixelpals.app.PetState
-import com.pixelpals.app.R
 import kotlin.math.*
 import kotlin.random.Random
 
-/**
- * JellyBehavior — Bouncy slime that wobbles and jumps.
- * Inherits from BaseBehavior for optimized rendering.
- */
 class JellyBehavior(
     bridge: PetViewBridge
 ) : BaseBehavior(bridge) {
 
-    override val resourceIds = listOf(
-        R.drawable.jelly_0, R.drawable.jelly_1, R.drawable.jelly_2,
-        R.drawable.jelly_3, R.drawable.jelly_4, R.drawable.jelly_5,
-        R.drawable.jelly_6, R.drawable.jelly_7, R.drawable.jelly_8,
-        R.drawable.jelly_9, R.drawable.jelly_10, R.drawable.jelly_11
-    )
+    override val resourceIds = (0..20).map { i ->
+        (bridge as android.view.View).context.resources.getIdentifier(
+            "jelly_$i", "drawable", (bridge as android.view.View).context.packageName
+        )
+    }
 
     private var moveTimer = 0f
     private var nextJumpTime = 3f + Random.nextFloat() * 2f
 
     override fun updateIdle(dt: Float) {
-        if (isLoading) return
+        if (isLoading || frames.isEmpty()) return
         super.updateIdle(dt)
         
-        // Rhythmic breathing wobble
         val sine = sin(time * 5f)
         bridge.animScaleY = 1.0f + sine * 0.08f
         bridge.animScaleX = 1.0f - sine * 0.05f
         
-        // Animation frames
         bridge.currentFrame = (time * 8f).toInt() % frames.size
 
-        // Decide to jump
         moveTimer += dt
         if (moveTimer > nextJumpTime) {
             bridge.state = PetState.JUMPING
@@ -46,7 +37,7 @@ class JellyBehavior(
     }
 
     override fun updateJumping(dt: Float) {
-        // Stretch while jumping
+        if (frames.isEmpty()) return
         bridge.currentFrame = 4
         val stretch = abs(bridge.velocityY) / 25f
         bridge.animScaleY = 1.1f + stretch * 0.2f
@@ -64,7 +55,6 @@ class JellyBehavior(
             bridge.state = PetState.IDLE
             reset()
         } else {
-            // Squish reaction
             bridge.animScaleY = 0.5f
             bridge.animScaleX = 1.5f
         }

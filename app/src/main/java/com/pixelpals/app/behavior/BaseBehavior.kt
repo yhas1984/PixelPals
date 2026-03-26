@@ -12,19 +12,20 @@ import kotlin.random.Random
 
 /**
  * BaseBehavior — Motor de movimiento y comportamiento.
- * Ahora incluye lógica para navegar por TODA la pantalla.
  */
 abstract class BaseBehavior(
     protected val bridge: PetViewBridge
 ) : PetBehavior {
 
     protected var time: Float = 0f
-    protected val frames = mutableListOf<Bitmap>()
+    protected var interactionTimer: Float = 0f 
+    
+    // Lista que soporta frames nulos para no perder el orden de los índices
+    protected val frames = mutableListOf<Bitmap?>()
     protected val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { isFilterBitmap = true }
     protected val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     protected var isLoading = true
 
-    // Parámetros de movimiento
     protected var velX = 0f
     protected var velY = 0f
     protected var targetX = 0f
@@ -41,32 +42,29 @@ abstract class BaseBehavior(
         scope.launch {
             val context = (bridge as View).context
             val loadedFrames = withContext(Dispatchers.IO) {
-                resourceIds.mapNotNull { id ->
-                    try {
-                        val b = BitmapFactory.decodeResource(context.resources, id)
-                        b?.let {
-                            Bitmap.createScaledBitmap(it, bridge.petSpriteSize, bridge.petSpriteSize, true)
-                        }
-                    } catch (e: Exception) { null }
+                resourceIds.map { id ->
+                    if (id == 0) null
+                    else {
+                        try {
+                            val b = BitmapFactory.decodeResource(context.resources, id)
+                            if (b != null) {
+                                Bitmap.createScaledBitmap(b, bridge.petSpriteSize, bridge.petSpriteSize, true)
+                            } else null
+                        } catch (e: Exception) { null }
+                    }
                 }
             }
-            if (loadedFrames.isNotEmpty()) {
-                frames.clear()
-                frames.addAll(loadedFrames)
-                isLoading = false
-                bridge.invalidate()
-            }
+            frames.clear()
+            frames.addAll(loadedFrames)
+            isLoading = false
+            bridge.invalidate()
         }
     }
 
     override fun updateIdle(dt: Float) {
+        if (isLoading || frames.isEmpty()) return
         time += dt
-        if (frames.isNotEmpty()) {
-            // Reducción del 30% de velocidad (8fps -> 5.6fps)
-            bridge.currentFrame = (time * 5.6f).toInt() % frames.size
-        }
         
-        // Lógica de navegación básica por defecto
         updateDecision(dt)
         applyMovement(dt)
     }
@@ -87,11 +85,11 @@ abstract class BaseBehavior(
                 velY = (dy / dist) * speed
             }
             
-            decisionTimer = Random.nextFloat() * 4f + 2f
+            decisionTimer = Random.nextFloat() * 3f + 1f 
         }
     }
 
-    protected open fun getBaseSpeed(): Float = 100f
+    protected open fun getBaseSpeed(): Float = 100f 
 
     protected fun applyMovement(dt: Float) {
         val params = bridge.getWindowParams() ?: return
@@ -99,11 +97,14 @@ abstract class BaseBehavior(
         params.x += (velX * dt).toInt()
         params.y += (velY * dt).toInt()
 
-        if (params.x < 0 || params.x > bridge.screenWidth - bridge.petSpriteSize) velX *= -1
-        if (params.y < 50 || params.y > bridge.screenHeight - bridge.petSpriteSize - 100) velY *= -1
-
-        if (velX > 5) bridge.animScaleX = -1f
-        else if (velX < -5) bridge.animScaleX = 1f
+        if (params.x < 0 || params.x > bridge.screenWidth - bridge.petSpriteSize) {
+            velX *= -1
+            decisionTimer = 0f
+        }
+        if (params.y < 50 || params.y > bridge.screenHeight - bridge.petSpriteSize - 100) {
+            velY *= -1
+            decisionTimer = 0f
+        }
 
         bridge.updateWindowLayout(params)
     }
@@ -132,12 +133,15 @@ abstract class BaseBehavior(
 
     override fun onInteract() {
         bridge.state = PetState.INTERACTING
+        interactionTimer = 0f 
         bridge.trackInteraction()
         bridge.playHaptic(50)
     }
 
     override fun updateInteracting(dt: Float) {
-        if (dt > 1.5f) {
+        interactionTimer += dt 
+        
+        if (interactionTimer > 3.0f) {
             bridge.state = PetState.IDLE
             reset()
         }
@@ -146,7 +150,8 @@ abstract class BaseBehavior(
     override fun onDraw(canvas: Canvas, cx: Float, cy: Float) {
         if (isLoading || frames.isEmpty()) return
         val frameIdx = bridge.currentFrame.coerceIn(0, frames.size - 1)
-        val bitmap = frames[frameIdx]
+        val bitmap = frames[frameIdx] ?: return // Si el frame no existe, no dibujar nada o ignorar
+
         canvas.save()
         canvas.translate(cx + bridge.animOffsetX, cy + bridge.animOffsetY)
         canvas.rotate(bridge.animRotation)

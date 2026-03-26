@@ -1,164 +1,123 @@
 package com.pixelpals.app.behavior
+
 import com.pixelpals.app.PetState
-
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Canvas
-import android.graphics.Paint
-import android.content.Context
-import android.view.View
-import kotlinx.coroutines.*
-import kotlin.math.sin
-import kotlin.math.abs
 import kotlin.random.Random
-import com.pixelpals.app.R
 
-/**
- * CorgiBehavior — Playful dog with sitting/standing states.
- * Optimized with asynchronous loading and smooth animations.
- */
 class CorgiBehavior(
-    private val petView: PetViewBridge
-) : PetBehavior {
+    bridge: PetViewBridge
+) : BaseBehavior(bridge) {
 
-    private var time = 0f
-    private var corgiPose = CorgiPose.SITTING
-    private var corgiIdleTimer = 0f
-    
-    private val frames = mutableListOf<Bitmap>()
-    private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-    private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
-    private var isLoading = true
-
-    enum class CorgiPose { SITTING, STANDING, WALKING, BARKING, JUMPING }
-
-    init {
-        loadFramesAsync()
+    override val resourceIds = (0..20).mapNotNull { i ->
+        val id = (bridge as android.view.View).context.resources.getIdentifier(
+            "corgi_$i", "drawable", (bridge as android.view.View).context.packageName
+        )
+        if (id != 0) id else null
     }
 
-    private fun loadFramesAsync() {
-        scope.launch {
-            val context = (petView as View).context
-            val resIds = listOf(
-                R.drawable.corgi_0, R.drawable.corgi_1, R.drawable.corgi_2,
-                R.drawable.corgi_3, R.drawable.corgi_4, R.drawable.corgi_5,
-                R.drawable.corgi_6, R.drawable.corgi_7, R.drawable.corgi_8,
-                R.drawable.corgi_9, R.drawable.corgi_10, R.drawable.corgi_11, R.drawable.corgi_12
-            )
-            
-            val loadedFrames = withContext(Dispatchers.IO) {
-                resIds.mapNotNull { id ->
-                    try {
-                        val b = BitmapFactory.decodeResource(context.resources, id)
-                        b?.let {
-                            Bitmap.createScaledBitmap(it, petView.petSpriteSize, petView.petSpriteSize, true)
-                        }
-                    } catch (e: Exception) { null }
-                }
-            }
-            
-            frames.addAll(loadedFrames)
-            isLoading = false
-            petView.invalidate()
-        }
-    }
+    private var internalState = CorgiState.WALKING
+    private var stateTimer = 0f
+    private var hasFoundBone = false
+
+    enum class CorgiState { WALKING, SNIFFING, DIGGING, IDLE, SPINNING }
+
+    override fun getBaseSpeed(): Float = 120f 
 
     override fun updateIdle(dt: Float) {
-        if (isLoading) return
+        if (isLoading || frames.isEmpty()) return
         time += dt
-        corgiIdleTimer += dt
+        stateTimer += dt
 
-        when (corgiPose) {
-            CorgiPose.SITTING -> {
-                petView.currentFrame = 0
-                petView.animOffsetY = sin(time * 2.0f) * 3f // Más suave
-                if (corgiIdleTimer > 4f) {
-                    corgiPose = CorgiPose.STANDING
-                    corgiIdleTimer = 0f
+        when (internalState) {
+            CorgiState.WALKING -> {
+                val cycle = (time * 6f).toInt() % 3
+                bridge.currentFrame = min(cycle, frames.size - 1)
+                
+                updateDecision(dt) 
+                applyMovement(dt)  
+
+                if (velX > 2f) bridge.animScaleX = 1f 
+                else if (velX < -2f) bridge.animScaleX = -1f
+
+                if (stateTimer > 4f && Random.nextFloat() < 0.02f) {
+                    changeState(CorgiState.SNIFFING)
+                } else if (stateTimer > 8f) {
+                    changeState(CorgiState.IDLE)
                 }
             }
-            CorgiPose.STANDING -> {
-                petView.currentFrame = 1
-                petView.animOffsetX = sin(time * 3.0f) * 2f
-                if (corgiIdleTimer > 2f) {
-                    corgiPose = CorgiPose.SITTING
-                    corgiIdleTimer = 0f
+            CorgiState.SNIFFING -> {
+                bridge.currentFrame = min(3, frames.size - 1) 
+                velX = 0f
+                velY = 0f
+                if (stateTimer > 2f) {
+                    if (Random.nextFloat() < 0.6f) changeState(CorgiState.DIGGING)
+                    else changeState(CorgiState.IDLE)
                 }
             }
-            else -> { petView.currentFrame = 0 }
+            CorgiState.DIGGING -> {
+                velX = 0f
+                velY = 0f
+                if (stateTimer < 2f) {
+                    bridge.currentFrame = min(4, frames.size - 1)
+                    if ((time * 15f).toInt() % 2 == 0) bridge.animOffsetX = (Random.nextFloat() - 0.5f) * 6f 
+                } else {
+                    bridge.currentFrame = min(5, frames.size - 1)
+                    bridge.animOffsetX = 0f
+                    if (!hasFoundBone) {
+                        bridge.showBubble("🦴!")
+                        hasFoundBone = true
+                    }
+                }
+                if (stateTimer > 4f) changeState(CorgiState.IDLE)
+            }
+            CorgiState.IDLE -> {
+                velX = 0f
+                velY = 0f
+                bridge.currentFrame = if ((time * 2f).toInt() % 2 == 0) min(6, frames.size - 1) else min(7, frames.size - 1)
+                if (stateTimer > 3f) changeState(CorgiState.WALKING)
+            }
+            else -> {}
         }
-
-        if (Random.nextFloat() < 0.005f) {
-            petView.showBubble(listOf("¡Guau!", "❤️", "🦴", "🐾").random())
-        }
     }
 
-    override fun updateDrag(dt: Float) {
-        time += dt
-        petView.animRotation = sin(time * 20f) * 12f
+    private fun changeState(newState: CorgiState) {
+        internalState = newState
+        stateTimer = 0f
+        hasFoundBone = false
+        bridge.animOffsetX = 0f
+        if (newState == CorgiState.WALKING) decisionTimer = 0f 
     }
-
-    override fun updateFalling(dt: Float) {
-        petView.currentFrame = 5
-        petView.animRotation += dt * 360f // Gira al caer
-    }
-
-    override fun updateJumping(dt: Float) {
-        petView.currentFrame = 5
-    }
-
-    override fun updateAutonomous(dt: Float) {}
 
     override fun onInteract() {
-        petView.showBubble("❤️")
-        petView.playHaptic(40)
+        super.onInteract() 
+        changeState(CorgiState.SPINNING) 
+        velX = 0f 
+        velY = 0f
+        bridge.showBubble("✨🐾")
+        bridge.playHaptic(30)
     }
 
     override fun updateInteracting(dt: Float) {
-        when {
-            dt < 0.3f -> {
-                petView.currentFrame = 7
-                petView.animScaleY = 0.90f
+        if (frames.size < 10) {
+            bridge.currentFrame = frames.size - 1
+            interactionTimer += dt
+            if (interactionTimer >= 3.0f) {
+                bridge.state = PetState.IDLE
+                changeState(CorgiState.WALKING)
             }
-            dt < 0.6f -> { petView.currentFrame = 8; petView.animOffsetY = -10f }
-            dt < 1.2f -> {
-                petView.currentFrame = 9
-                petView.animScaleY = 1.15f
-            }
-            dt < 2.0f -> {
-                petView.currentFrame = 7
-                petView.animScaleY = 1f
-            }
-            else -> {
-                petView.state = PetState.IDLE
-                reset()
-            }
+            return
+        }
+
+        interactionTimer += dt 
+
+        if (interactionTimer < 3.0f) {
+            // REDUCIDO UN 50%: de 8f pasa a 4f.
+            val cycle = (interactionTimer * 4f).toInt() % 2
+            bridge.currentFrame = if (cycle == 0) 8 else 9
+        } else {
+            bridge.state = PetState.IDLE
+            changeState(CorgiState.WALKING)
         }
     }
 
-    override fun onDraw(canvas: Canvas, cx: Float, cy: Float) {
-        if (isLoading || frames.isEmpty()) return
-        
-        val frameIdx = petView.currentFrame.coerceIn(0, frames.size - 1)
-        val bitmap = frames[frameIdx]
-        
-        canvas.save()
-        canvas.translate(cx + petView.animOffsetX, cy + petView.animOffsetY)
-        canvas.rotate(petView.animRotation)
-        canvas.scale(petView.animScaleX, petView.animScaleY)
-        
-        paint.alpha = (petView.animAlpha * 255).toInt()
-        paint.colorFilter = petView.animColorFilter
-        
-        canvas.drawBitmap(bitmap, -bitmap.width / 2f, -bitmap.height / 2f, paint)
-        canvas.restore()
-    }
-
-    override fun reset() {
-        petView.animScaleX = 1f
-        petView.animScaleY = 1f
-        petView.animRotation = 0f
-        petView.animOffsetX = 0f
-        petView.animOffsetY = 0f
-    }
+    private fun min(a: Int, b: Int): Int = if (a < b) a else b
 }

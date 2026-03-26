@@ -1,7 +1,6 @@
 package com.pixelpals.app.behavior
 
 import com.pixelpals.app.PetState
-import com.pixelpals.app.R
 import kotlin.math.*
 import kotlin.random.Random
 
@@ -12,19 +11,17 @@ class DuckBehavior(
     bridge: PetViewBridge
 ) : BaseBehavior(bridge) {
 
-    override val resourceIds = listOf(
-        R.drawable.patito_0, R.drawable.patito_1, R.drawable.patito_2,
-        R.drawable.patito_3, R.drawable.patito_4, R.drawable.patito_5,
-        R.drawable.patito_6, R.drawable.patito_7, R.drawable.patito_8,
-        R.drawable.patito_9, R.drawable.patito_10, R.drawable.patito_11,
-        R.drawable.patito_12, R.drawable.patito_13, R.drawable.patito_14
-    )
+    override val resourceIds = (0..20).map { i ->
+        (bridge as android.view.View).context.resources.getIdentifier(
+            "patito_$i", "drawable", (bridge as android.view.View).context.packageName
+        )
+    }
 
     private var walkTimer = 0f
     private var isWaddling = false
 
     override fun updateIdle(dt: Float) {
-        if (isLoading) return
+        if (isLoading || frames.isEmpty()) return
         super.updateIdle(dt)
         
         if (Random.nextFloat() < 0.01f) isWaddling = !isWaddling
@@ -53,6 +50,7 @@ class DuckBehavior(
     }
 
     override fun updateInteracting(dt: Float) {
+        if (frames.isEmpty()) return
         if (dt > 1.2f) {
             bridge.state = PetState.IDLE
             reset()
