@@ -19,6 +19,7 @@ import android.view.View
 import android.view.WindowManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import org.json.JSONObject
 
 class PetService : Service() {
 
@@ -41,6 +42,23 @@ class PetService : Service() {
     private var airplaneReceiver: BroadcastReceiver? = null
     private var isViewAttached = false
     private var currentPetType: PetType = PetType.CORGI
+
+    private fun debugLog(runId: String, hypothesisId: String, location: String, message: String, data: JSONObject) {
+        // #region agent log
+        try {
+            val payload = JSONObject().apply {
+                put("sessionId", "a40953")
+                put("runId", runId)
+                put("hypothesisId", hypothesisId)
+                put("location", location)
+                put("message", message)
+                put("data", data)
+                put("timestamp", System.currentTimeMillis())
+            }
+            Log.i("AGENT_DEBUG", payload.toString())
+        } catch (_: Exception) {}
+        // #endregion
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -91,12 +109,13 @@ class PetService : Service() {
 
         petView = PetView(this, metrics.widthPixels, metrics.heightPixels, petSize, currentPetType)
 
-        // CORRECCIÓN: Quitamos FLAG_NOT_FOCUSABLE para permitir toques
+        // Evita robar foco al sistema (mejora back/gestos), manteniendo el overlay touchable.
         val params = WindowManager.LayoutParams(
             viewSize,
             viewSize,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                     WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
                     WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
             PixelFormat.TRANSPARENT
@@ -105,6 +124,21 @@ class PetService : Service() {
             x = metrics.widthPixels / 2 - viewSize / 2
             y = metrics.heightPixels / 3
         }
+        debugLog(
+            runId = "post-fix",
+            hypothesisId = "H1",
+            location = "PetService.kt:createPetOverlay",
+            message = "Overlay params creados",
+            data = JSONObject().apply {
+                put("flags", params.flags)
+                put("width", params.width)
+                put("height", params.height)
+                put("screenWidth", metrics.widthPixels)
+                put("screenHeight", metrics.heightPixels)
+                put("x", params.x)
+                put("y", params.y)
+            }
+        )
 
         try {
             windowManager?.addView(petView, params)

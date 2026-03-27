@@ -8,8 +8,13 @@ import android.view.animation.OvershootInterpolator
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import com.pixelpals.app.launcher.LauncherAccessibilityService
+import com.pixelpals.app.launcher.LauncherPlatformRepository
+import java.io.File
+import org.json.JSONObject
 
 /**
  * PetSelectionActivity — Pantalla de selección de mascota.
@@ -33,6 +38,27 @@ class PetSelectionActivity : AppCompatActivity() {
 
     private var selectedType: PetType? = null
     private val allCards = mutableListOf<LinearLayout>()
+    private var pendingLaunchCount = 0
+    private val debugLogPath = "/media/yhas/_dde_data/home/yhas/Programacion/PixelPals/PixelPals/.cursor/debug-a40953.log"
+
+    private fun debugLog(runId: String, hypothesisId: String, location: String, message: String, data: JSONObject) {
+        // #region agent log
+        val payload = JSONObject().apply {
+            put("sessionId", "a40953")
+            put("runId", runId)
+            put("hypothesisId", hypothesisId)
+            put("location", location)
+            put("message", message)
+            put("data", data)
+            put("timestamp", System.currentTimeMillis())
+        }
+        Log.i("AGENT_DEBUG", payload.toString())
+        try {
+            File(debugLogPath).appendText(payload.toString() + "\n")
+        } catch (_: Exception) {
+        }
+        // #endregion
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -74,6 +100,17 @@ class PetSelectionActivity : AppCompatActivity() {
 
     private fun selectPet(selectedCard: LinearLayout, type: PetType) {
         selectedType = type
+        pendingLaunchCount++
+        debugLog(
+            runId = "post-fix",
+            hypothesisId = "H3",
+            location = "PetSelectionActivity.kt:selectPet",
+            message = "Selección de mascota y encolado de launch",
+            data = JSONObject().apply {
+                put("selectedType", type.name)
+                put("pendingLaunchCount", pendingLaunchCount)
+            }
+        )
 
         // ── Visual selection feedback ──
         allCards.forEach { card ->
@@ -102,10 +139,30 @@ class PetSelectionActivity : AppCompatActivity() {
     }
 
     private fun launchPet(type: PetType) {
+        debugLog(
+            runId = "post-fix",
+            hypothesisId = "H3",
+            location = "PetSelectionActivity.kt:launchPet",
+            message = "Lanzando servicio de mascota",
+            data = JSONObject().apply {
+                put("type", type.name)
+                put("pendingLaunchCountAtLaunch", pendingLaunchCount)
+            }
+        )
         val serviceIntent = Intent(this, PetService::class.java).apply {
             putExtra(EXTRA_PET_TYPE, type.name)
         }
         ContextCompat.startForegroundService(this, serviceIntent)
+
+        if (type == PetType.GINGER &&
+            !LauncherPlatformRepository.isServiceEnabled(this, LauncherAccessibilityService::class.java)
+        ) {
+            Toast.makeText(
+                this,
+                "Activa Accesibilidad para que Ginger salte sobre tus apps reales.",
+                Toast.LENGTH_LONG
+            ).show()
+        }
 
         Toast.makeText(
             this,

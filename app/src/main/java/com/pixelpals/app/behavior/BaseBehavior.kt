@@ -4,8 +4,10 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Paint
+import android.util.Log
 import android.view.View
 import com.pixelpals.app.PetState
+import org.json.JSONObject
 import kotlinx.coroutines.*
 import kotlin.math.sin
 import kotlin.random.Random
@@ -32,6 +34,11 @@ abstract class BaseBehavior(
     protected var targetY = 0f
     protected var decisionTimer = 0f
 
+    // Acumuladores de movimiento sub-píxel para que, incluso con velocidades bajas,
+    // el movimiento se vuelva perceptible (evita que (vel * dt).toInt() quede en 0).
+    private var carryX: Float = 0f
+    private var carryY: Float = 0f
+
     abstract val resourceIds: List<Int>
 
     init {
@@ -39,24 +46,80 @@ abstract class BaseBehavior(
     }
 
     private fun loadFramesAsync() {
+        val startedAt = System.currentTimeMillis()
         scope.launch {
             val context = (bridge as View).context
-            val loadedFrames = withContext(Dispatchers.IO) {
-                resourceIds.map { id ->
-                    if (id == 0) null
-                    else {
-                        try {
-                            val b = BitmapFactory.decodeResource(context.resources, id)
-                            if (b != null) {
-                                Bitmap.createScaledBitmap(b, bridge.petSpriteSize, bridge.petSpriteSize, true)
-                            } else null
-                        } catch (e: Exception) { null }
-                    }
+
+            val decodeOne: (Int) -> Bitmap? = { id ->
+                if (id == 0) null
+                else {
+                    try {
+                        val b = BitmapFactory.decodeResource(context.resources, id)
+                        b?.let { Bitmap.createScaledBitmap(it, bridge.petSpriteSize, bridge.petSpriteSize, true) }
+                    } catch (_: Exception) { null }
+                }
+            }
+
+            val total = resourceIds.size
+            // Para mascotas con pocos frames (ej. Bloop 0..8) cargamos todo de golpe para que
+            // las transiciones (incluida la transparencia) no ocurran con frames aun nulos.
+            val initialCount = if (total <= 9) total else minOf(8, total)
+            val tmp = MutableList<Bitmap?>(total) { null }
+
+            // 1) Carga inicial para que el pet no se vea "en blanco" mientras decodifica todo.
+            val initialElapsed = withContext(Dispatchers.IO) {
+                val loaded = resourceIds.take(initialCount).map { id -> decodeOne(id) }
+                loaded to (System.currentTimeMillis() - startedAt)
+            }
+            for (i in 0 until initialCount) tmp[i] = initialElapsed.first[i]
+            frames.clear()
+            frames.addAll(tmp)
+            isLoading = false
+            try {
+                val payload = JSONObject().apply {
+                    put("sessionId", "a40953")
+                    put("runId", "post-fix")
+                    put("hypothesisId", "H4")
+                    put("location", "BaseBehavior.kt:loadFramesAsync")
+                    put("message", "Carga inicial de frames completada")
+                    put("data", JSONObject().apply {
+                        put("behavior", this@BaseBehavior::class.java.simpleName)
+                        put("resourceCount", resourceIds.size)
+                        put("initialLoadedFrames", initialCount)
+                        put("elapsedMs", initialElapsed.second)
+                    })
+                    put("timestamp", System.currentTimeMillis())
+                }
+                Log.i("AGENT_DEBUG", payload.toString())
+            } catch (_: Exception) {}
+            bridge.invalidate()
+
+            // 2) Carga completa en background.
+            withContext(Dispatchers.IO) {
+                for (idx in initialCount until total) {
+                    tmp[idx] = decodeOne(resourceIds[idx])
                 }
             }
             frames.clear()
-            frames.addAll(loadedFrames)
-            isLoading = false
+            frames.addAll(tmp)
+
+            try {
+                val payload = JSONObject().apply {
+                    put("sessionId", "a40953")
+                    put("runId", "post-fix")
+                    put("hypothesisId", "H4")
+                    put("location", "BaseBehavior.kt:loadFramesAsync")
+                    put("message", "Carga completa de frames completada")
+                    put("data", JSONObject().apply {
+                        put("behavior", this@BaseBehavior::class.java.simpleName)
+                        put("resourceCount", resourceIds.size)
+                        put("loadedFrames", frames.count { it != null })
+                        put("elapsedMs", System.currentTimeMillis() - startedAt)
+                    })
+                    put("timestamp", System.currentTimeMillis())
+                }
+                Log.i("AGENT_DEBUG", payload.toString())
+            } catch (_: Exception) {}
             bridge.invalidate()
         }
     }
@@ -93,17 +156,46 @@ abstract class BaseBehavior(
 
     protected fun applyMovement(dt: Float) {
         val params = bridge.getWindowParams() ?: return
-        
-        params.x += (velX * dt).toInt()
-        params.y += (velY * dt).toInt()
 
-        if (params.x < 0 || params.x > bridge.screenWidth - bridge.petSpriteSize) {
+        carryX += velX * dt
+        carryY += velY * dt
+
+        val moveX = carryX.toInt()
+        val moveY = carryY.toInt()
+
+        params.x += moveX
+        params.y += moveY
+
+        carryX -= moveX.toFloat()
+        carryY -= moveY.toFloat()
+
+        val minX = 0
+        val maxX = (bridge.screenWidth - bridge.petSpriteSize).coerceAtLeast(0)
+        val minY = 50
+        val maxY = (bridge.screenHeight - bridge.petSpriteSize - 100).coerceAtLeast(minY)
+
+        if (params.x < minX) {
+            params.x = minX
             velX *= -1
             decisionTimer = 0f
+            carryX = 0f
+        } else if (params.x > maxX) {
+            params.x = maxX
+            velX *= -1
+            decisionTimer = 0f
+            carryX = 0f
         }
-        if (params.y < 50 || params.y > bridge.screenHeight - bridge.petSpriteSize - 100) {
+
+        if (params.y < minY) {
+            params.y = minY
             velY *= -1
             decisionTimer = 0f
+            carryY = 0f
+        } else if (params.y > maxY) {
+            params.y = maxY
+            velY *= -1
+            decisionTimer = 0f
+            carryY = 0f
         }
 
         bridge.updateWindowLayout(params)
@@ -151,6 +243,7 @@ abstract class BaseBehavior(
         if (isLoading || frames.isEmpty()) return
         val frameIdx = bridge.currentFrame.coerceIn(0, frames.size - 1)
         val bitmap = frames[frameIdx] ?: return // Si el frame no existe, no dibujar nada o ignorar
+        paint.alpha = (bridge.animAlpha.coerceIn(0f, 1f) * 255).toInt()
 
         canvas.save()
         canvas.translate(cx + bridge.animOffsetX, cy + bridge.animOffsetY)
