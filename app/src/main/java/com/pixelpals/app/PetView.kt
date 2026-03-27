@@ -18,6 +18,7 @@ import kotlin.math.*
 import kotlin.random.Random
 import android.util.Log
 import com.pixelpals.app.behavior.*
+import org.json.JSONObject
 
 class PetView(
     context: Context,
@@ -26,6 +27,22 @@ class PetView(
     override val petSpriteSize: Int,
     private val petType: PetType
 ) : View(context), PetViewBridge {
+    private fun debugLog(runId: String, hypothesisId: String, location: String, message: String, data: JSONObject) {
+        // #region agent log
+        try {
+            val payload = JSONObject().apply {
+                put("sessionId", "a40953")
+                put("runId", runId)
+                put("hypothesisId", hypothesisId)
+                put("location", location)
+                put("message", message)
+                put("data", data)
+                put("timestamp", System.currentTimeMillis())
+            }
+            Log.i("AGENT_DEBUG", payload.toString())
+        } catch (_: Exception) {}
+        // #endregion
+    }
 
     override var state = PetState.IDLE
     override var currentFrame = 0
@@ -40,6 +57,32 @@ class PetView(
     override var velocityY = 0f
     override var windowX: Int = 0
     override var windowY: Int = 0
+
+    // Emoji bubble (emoticons de avisos/interacción).
+    private var bubbleText: String? = null
+    private var bubbleTimer: Float = 0f
+    private var bubbleAlpha: Float = 0f
+    private val bubbleDurationMs = 2200f
+    private val bubblePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.WHITE
+        textAlign = Paint.Align.CENTER
+        textSize = petSpriteSize.toFloat() * 0.24f
+    }
+
+    private val bubbleStrokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.BLACK
+        style = Paint.Style.STROKE
+        strokeWidth = petSpriteSize.toFloat() * 0.06f
+        textAlign = Paint.Align.CENTER
+        textSize = petSpriteSize.toFloat() * 0.24f
+    }
+
+    private val bubbleShadowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.BLACK
+        setShadowLayer(6f, 0f, 4f, Color.BLACK)
+        textAlign = Paint.Align.CENTER
+        textSize = petSpriteSize.toFloat() * 0.24f
+    }
 
     override val groundY get() = screenHeight - petSpriteSize - 120
 
@@ -76,11 +119,15 @@ class PetView(
     }
 
     override fun showBubble(text: String) {
-        // Implementación básica
+        bubbleText = text
+        bubbleTimer = bubbleDurationMs
+        bubbleAlpha = 1f
     }
 
     override fun hideBubble() {
-        // Implementación básica
+        bubbleText = null
+        bubbleTimer = 0f
+        bubbleAlpha = 0f
     }
 
     override fun teleportToRandomEdge() {
@@ -145,8 +192,17 @@ class PetView(
     override fun onAirplaneModeChanged(isAirplane: Boolean) {
         behavior?.onAirplaneModeChanged(isAirplane)
     }
-    
+
     private fun update(dt: Float) {
+        // bubbleTimer está en ms conceptualmente; dt viene en segundos.
+        if (bubbleTimer > 0f) {
+            bubbleTimer -= dt * 1000f
+            bubbleAlpha = (bubbleTimer / bubbleDurationMs).coerceIn(0f, 1f)
+            if (bubbleTimer <= 0f) {
+                bubbleText = null
+                bubbleAlpha = 0f
+            }
+        }
         when (state) {
             PetState.IDLE -> behavior?.updateIdle(dt)
             PetState.DRAGGING -> behavior?.updateDrag(dt)
@@ -161,6 +217,23 @@ class PetView(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         behavior?.onDraw(canvas, (width / 2).toFloat(), (height / 2).toFloat())
+
+        // Dibuja el bubble encima del pet.
+        val text = bubbleText ?: return
+        if (bubbleAlpha <= 0f) return
+
+        bubblePaint.alpha = (255 * bubbleAlpha).toInt()
+        bubbleStrokePaint.alpha = bubblePaint.alpha
+        bubbleShadowPaint.alpha = bubblePaint.alpha
+        val cx = width / 2f
+        // Posición del bubble dentro del canvas (antes podía quedar negativo si petSpriteSize ~ viewHeight).
+        val desiredCy = height / 2f - petSpriteSize * 0.28f
+        val minCy = bubblePaint.textSize * 1.2f
+        val maxCy = height - bubblePaint.textSize * 0.6f
+        val cy = desiredCy.coerceIn(minCy, maxCy)
+
+        canvas.drawText(text, cx, cy, bubbleStrokePaint)
+        canvas.drawText(text, cx, cy, bubblePaint)
     }
 
     // Manejo de arrastre (drag and drop)
@@ -180,6 +253,22 @@ class PetView(
 
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
+                debugLog(
+                    runId = "post-fix",
+                    hypothesisId = "H2",
+                    location = "PetView.kt:onTouchEvent",
+                    message = "Touch down capturado por overlay",
+                    data = JSONObject().apply {
+                        put("rawX", event.rawX)
+                        put("rawY", event.rawY)
+                        put("viewWidth", width)
+                        put("viewHeight", height)
+                        put("paramsX", params.x)
+                        put("paramsY", params.y)
+                        put("screenWidth", screenWidth)
+                        put("screenHeight", screenHeight)
+                    }
+                )
                 if (behavior?.onTouchDown(event.rawX, event.rawY) == true) return true
                 
                 initialX = params.x
@@ -202,6 +291,18 @@ class PetView(
                 
                 if (state == PetState.DRAGGING) {
                     val dist = hypot(event.rawX - initialTouchX, event.rawY - initialTouchY)
+                    debugLog(
+                        runId = "post-fix",
+                        hypothesisId = "H3",
+                        location = "PetView.kt:onTouchEvent",
+                        message = "Touch up y distancia drag",
+                        data = JSONObject().apply {
+                            put("dragDistance", dist)
+                            put("treatedAsClick", dist < 15f)
+                            put("finalX", params.x)
+                            put("finalY", params.y)
+                        }
+                    )
                     if (dist < 15) { // Threshold para considerar click
                         performClick()
                         // No entramos en FALLING si es un click

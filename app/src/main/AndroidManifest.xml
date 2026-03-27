@@ -53,6 +53,19 @@
                 android:value="floating_pet_overlay" />
         </service>
 
+        <service
+            android:name=".launcher.LauncherAccessibilityService"
+            android:exported="false"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/launcher_accessibility_service" />
+        </service>
+
         <!-- Treasure Album UI -->
         <activity
             android:name=".TreasureAlbumActivity"

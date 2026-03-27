@@ -14,49 +14,85 @@ class JellyBehavior(
         )
     }
 
-    private var moveTimer = 0f
-    private var nextJumpTime = 3f + Random.nextFloat() * 2f
+    private enum class JellyMode { BOUNCING, CHARGING, SPLAT }
+    private var mode = JellyMode.BOUNCING
+    private var modeTimer = 0f
+    private var nextJumpTime = 1.8f + Random.nextFloat() * 1.4f
 
     override fun updateIdle(dt: Float) {
         if (isLoading || frames.isEmpty()) return
-        super.updateIdle(dt)
-        
-        val sine = sin(time * 5f)
-        bridge.animScaleY = 1.0f + sine * 0.08f
-        bridge.animScaleX = 1.0f - sine * 0.05f
-        
-        bridge.currentFrame = (time * 8f).toInt() % frames.size
+        time += dt
+        modeTimer += dt
 
-        moveTimer += dt
-        if (moveTimer > nextJumpTime) {
-            bridge.state = PetState.JUMPING
-            bridge.velocityY = -20f
-            moveTimer = 0f
-            nextJumpTime = 2f + Random.nextFloat() * 4f
+        when (mode) {
+            JellyMode.BOUNCING -> {
+                updateDecision(dt)
+                applyMovement(dt)
+                bridge.currentFrame = ((time * 10f).toInt() % 4).coerceAtMost(frames.size - 1)
+                val wobble = sin(time * 7f)
+                bridge.animScaleY = 1f + wobble * 0.10f
+                bridge.animScaleX = 1f - wobble * 0.08f
+                bridge.animOffsetY = abs(sin(time * 12f)) * 3f
+                if (modeTimer > nextJumpTime) {
+                    mode = JellyMode.CHARGING
+                    modeTimer = 0f
+                    velX = 0f
+                    velY = 0f
+                }
+            }
+
+            JellyMode.CHARGING -> {
+                bridge.currentFrame = 4.coerceAtMost(frames.size - 1)
+                val compress = (modeTimer / 0.45f).coerceIn(0f, 1f)
+                bridge.animScaleY = 1f - compress * 0.45f
+                bridge.animScaleX = 1f + compress * 0.35f
+                if (modeTimer > 0.45f) {
+                    mode = JellyMode.SPLAT
+                    modeTimer = 0f
+                }
+            }
+
+            JellyMode.SPLAT -> {
+                bridge.currentFrame = 5.coerceAtMost(frames.size - 1)
+                bridge.animScaleY = 0.7f + sin(modeTimer * 20f) * 0.12f
+                bridge.animScaleX = 1.25f - sin(modeTimer * 20f) * 0.10f
+                if (modeTimer > 0.55f) {
+                    mode = JellyMode.BOUNCING
+                    modeTimer = 0f
+                    nextJumpTime = 1.6f + Random.nextFloat() * 1.6f
+                    decisionTimer = 0f
+                }
+            }
         }
     }
 
     override fun updateJumping(dt: Float) {
-        if (frames.isEmpty()) return
-        bridge.currentFrame = 4
-        val stretch = abs(bridge.velocityY) / 25f
-        bridge.animScaleY = 1.1f + stretch * 0.2f
-        bridge.animScaleX = 0.9f - stretch * 0.1f
+        updateIdle(dt)
     }
 
     override fun onInteract() {
-        super.onInteract()
+        bridge.state = PetState.INTERACTING
+        interactionTimer = 0f
         bridge.showBubble("🟢 Boing!")
         bridge.playHaptic(60)
+        mode = JellyMode.CHARGING
+        modeTimer = 0f
     }
 
     override fun updateInteracting(dt: Float) {
-        if (dt > 1.0f) {
+        interactionTimer += dt
+        bridge.currentFrame = 6.coerceAtMost(frames.size - 1)
+        bridge.animScaleY = 0.55f + abs(sin(interactionTimer * 14f)) * 0.20f
+        bridge.animScaleX = 1.35f - abs(sin(interactionTimer * 14f)) * 0.15f
+        if (interactionTimer > 1.0f) {
             bridge.state = PetState.IDLE
             reset()
-        } else {
-            bridge.animScaleY = 0.5f
-            bridge.animScaleX = 1.5f
         }
+    }
+
+    override fun reset() {
+        super.reset()
+        mode = JellyMode.BOUNCING
+        modeTimer = 0f
     }
 }
