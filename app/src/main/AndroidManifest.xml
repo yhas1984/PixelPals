@@ -21,7 +21,7 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.PixelPals"
-        tools:targetApi="34">
+        tools:targetApi="35">
 
         <!-- Main Activity: Onboarding & Permissions -->
         <activity
