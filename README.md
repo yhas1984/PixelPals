@@ -23,10 +23,11 @@ Cada mascota tiene lógica de movimiento propia, animaciones, interacción táct
 ### Stack técnico
 
 - Kotlin
-- Android SDK 34 (`minSdk 26`)
+- `compileSdk 36`, `targetSdk 35`, `minSdk 26`
 - Room
 - Coroutines
 - Foreground Service + Overlay (`SYSTEM_ALERT_WINDOW`)
+- Release con R8; `shrinkResources` desactivado por frames cargados dinámicamente (`getIdentifier()`)
 
 ### Estructura del proyecto
 
@@ -36,12 +37,19 @@ Cada mascota tiene lógica de movimiento propia, animaciones, interacción táct
 - `app/src/main/java/com/pixelpals/app/launcher/`: soporte de accesibilidad para plataformas del launcher.
 - `app/src/main/res/`: recursos visuales, drawables y layouts.
 
+### Versiones publicadas (referencia)
+
+Definidas en [`app/build.gradle.kts`](app/build.gradle.kts):
+
+- `versionName`: `1.0.1`
+- `versionCode`: `2` (Play exige subir el código en cada nuevo envío)
+
 ### Requisitos
 
 - JDK 17
-- Android SDK (platform 34)
+- Android SDK (instalar la plataforma de `compileSdk`, p. ej. Android API 36)
 - Gradle Wrapper incluido (`./gradlew`)
-- Dispositivo físico o emulador Android 8.0+.
+- Dispositivo físico o emulador Android 8.0+ (`minSdk` 26).
 
 ### Configuración local
 
@@ -100,8 +108,8 @@ Texto recomendado para la ficha o formulario de revisión:
 
 ### Estado del proyecto
 
-V1 completada y estabilizada.  
-Actualmente se trabaja en mejoras incrementales (V1.1+) y preparación para publicación en Google Play.
+V1 estable; versiones recientes alineadas con **Google Play** (`targetSdk 35`, documentación y política de privacidad).  
+Mejoras incrementales en V1.1+.
 
 ---
 
@@ -122,10 +130,11 @@ Each pet has its own movement logic, animation set, touch interactions, and pers
 ### Tech stack
 
 - Kotlin
-- Android SDK 34 (`minSdk 26`)
+- `compileSdk 36`, `targetSdk 35`, `minSdk 26`
 - Room
 - Coroutines
 - Foreground Service + Overlay (`SYSTEM_ALERT_WINDOW`)
+- Release with R8; `shrinkResources` disabled for dynamically loaded frames (`getIdentifier()`)
 
 ### Project structure
 
@@ -135,12 +144,19 @@ Each pet has its own movement logic, animation set, touch interactions, and pers
 - `app/src/main/java/com/pixelpals/app/launcher/`: accessibility support for launcher platform detection.
 - `app/src/main/res/`: visual resources, drawables, and layouts.
 
+### Published versions (reference)
+
+Defined in [`app/build.gradle.kts`](app/build.gradle.kts):
+
+- `versionName`: `1.0.1`
+- `versionCode`: `2` (Play requires a higher code for each new upload)
+
 ### Requirements
 
 - JDK 17
-- Android SDK (platform 34)
+- Android SDK (install the `compileSdk` platform, e.g. Android API 36)
 - Included Gradle Wrapper (`./gradlew`)
-- Android 8.0+ device or emulator.
+- Android 8.0+ device or emulator (`minSdk` 26).
 
 ### Local setup
 
@@ -169,7 +185,17 @@ Release:
 Typical outputs:
 
 - APK: `app/build/outputs/apk/release/`
-- AAB: `app/build/outputs/bundle/release/`
+- AAB: `app/build/outputs/bundle/release/app-release.aab`
+
+### Google Play (AAB)
+
+Current Play policy requires **minimum target API 35**; this project uses `targetSdk 35`.
+
+- Build: `./gradlew :app:bundleRelease`
+- Unsigned output is usually `app-release.aab` in the folder above.
+- **Do not upload** an AAB signed only with the **debug** key; Play will reject it.
+- Sign with your **release keystore** (or configure `signingConfigs.release` in Gradle and use Play App Signing).
+- Each upload needs a **higher `versionCode`** than the last one accepted in the console.
 
 ### Sensitive permissions
 
@@ -199,5 +225,5 @@ Suggested wording for store listing or review forms:
 
 ### Project status
 
-V1 is completed and stabilized.  
-Current focus is incremental hardening (V1.1+) and Google Play readiness.
+V1 stable; recent releases aligned with **Google Play** (`targetSdk 35`, docs and privacy policy).  
+Incremental improvements in V1.1+.
