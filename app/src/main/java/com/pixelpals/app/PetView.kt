@@ -27,6 +27,9 @@ class PetView(
     override val petSpriteSize: Int,
     private val petType: PetType
 ) : View(context), PetViewBridge {
+    private val progress = PetProgress(context)
+    private var activeSecondsAccumulator = 0f
+
     private fun debugLog(runId: String, hypothesisId: String, location: String, message: String, data: JSONObject) {
         // #region agent log
         try {
@@ -53,6 +56,16 @@ class PetView(
     override var animRotation = 0f
     override var animAlpha = 1f
     override var animColorFilter: ColorFilter? = null
+    private var treasureEffectScaleX = 1f
+    private var treasureEffectScaleY = 1f
+    private var treasureEffectOffsetX = 0f
+    private var treasureEffectOffsetY = 0f
+    private var treasureEffectRotation = 0f
+    override val renderScaleX: Float get() = animScaleX * treasureEffectScaleX
+    override val renderScaleY: Float get() = animScaleY * treasureEffectScaleY
+    override val renderOffsetX: Float get() = animOffsetX + treasureEffectOffsetX
+    override val renderOffsetY: Float get() = animOffsetY + treasureEffectOffsetY
+    override val renderRotation: Float get() = animRotation + treasureEffectRotation
     override var velocityX = 0f
     override var velocityY = 0f
     override var windowX: Int = 0
@@ -63,6 +76,8 @@ class PetView(
     private var bubbleTimer: Float = 0f
     private var bubbleAlpha: Float = 0f
     private val bubbleDurationMs = 2200f
+    private var treasureReactionTimer = 0f
+    private val treasureReactionDuration = 0.95f
     private val bubblePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.WHITE
         textAlign = Paint.Align.CENTER
@@ -138,7 +153,10 @@ class PetView(
     }
 
     override fun trackInteraction() {
-        // Implementación básica
+        progress.trackInteraction()
+        progress.maybeAwardTreasureFromInteraction()?.let { treasure ->
+            showBubble(treasure)
+        }
     }
     
     override fun playHaptic(durationMs: Long) {
@@ -174,10 +192,13 @@ class PetView(
     }
 
     override fun setProgress(progress: PetProgress) {
-        // Actualizar UI según progreso si es necesario
+        // Actualmente PetView mantiene su propio progreso persistente.
     }
 
     override fun consumeTreasure(emoji: String) {
+        showBubble(emoji)
+        playHaptic(35)
+        treasureReactionTimer = treasureReactionDuration
         behavior?.onTreasureConsumed(emoji)
     }
 
@@ -194,6 +215,15 @@ class PetView(
     }
 
     private fun update(dt: Float) {
+        activeSecondsAccumulator += dt
+        while (activeSecondsAccumulator >= 60f) {
+            progress.trackMinute()
+            activeSecondsAccumulator -= 60f
+            progress.maybeAwardTreasureFromActiveMinute()?.let { treasure ->
+                showBubble(treasure)
+            }
+        }
+
         // bubbleTimer está en ms conceptualmente; dt viene en segundos.
         if (bubbleTimer > 0f) {
             bubbleTimer -= dt * 1000f
@@ -211,6 +241,24 @@ class PetView(
             PetState.INTERACTING -> behavior?.updateInteracting(dt)
             else -> behavior?.updateAutonomous(dt)
         }
+
+        if (treasureReactionTimer > 0f) {
+            treasureReactionTimer = (treasureReactionTimer - dt).coerceAtLeast(0f)
+            val progress = 1f - (treasureReactionTimer / treasureReactionDuration)
+            val bounce = abs(sin(progress * PI.toFloat() * 3f))
+            treasureEffectScaleX = 1f + bounce * 0.08f
+            treasureEffectScaleY = 1f - bounce * 0.06f
+            treasureEffectOffsetX = sin(progress * PI.toFloat() * 4f) * 2f
+            treasureEffectOffsetY = -bounce * 6f
+            treasureEffectRotation = sin(progress * PI.toFloat() * 2f) * 3f
+        } else {
+            treasureEffectScaleX = 1f
+            treasureEffectScaleY = 1f
+            treasureEffectOffsetX = 0f
+            treasureEffectOffsetY = 0f
+            treasureEffectRotation = 0f
+        }
+
         invalidate()
     }
 

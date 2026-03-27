@@ -246,9 +246,9 @@ abstract class BaseBehavior(
         paint.alpha = (bridge.animAlpha.coerceIn(0f, 1f) * 255).toInt()
 
         canvas.save()
-        canvas.translate(cx + bridge.animOffsetX, cy + bridge.animOffsetY)
-        canvas.rotate(bridge.animRotation)
-        canvas.scale(bridge.animScaleX, bridge.animScaleY)
+        canvas.translate(cx + bridge.renderOffsetX, cy + bridge.renderOffsetY)
+        canvas.rotate(bridge.renderRotation)
+        canvas.scale(bridge.renderScaleX, bridge.renderScaleY)
         canvas.drawBitmap(bitmap, -bitmap.width / 2f, -bitmap.height / 2f, paint)
         canvas.restore()
     }

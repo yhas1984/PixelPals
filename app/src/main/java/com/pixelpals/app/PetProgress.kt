@@ -26,6 +26,11 @@ import kotlinx.coroutines.launch
  *   - 3 XP por evento secreto presenciado
  */
 class PetProgress(context: Context) {
+    companion object {
+        private const val KEY_LAST_TREASURE_INTERACTION_MILESTONE = "last_treasure_interaction_milestone"
+        private const val KEY_LAST_TREASURE_ACTIVE_MILESTONE = "last_treasure_active_milestone"
+        private const val KEY_LAST_TREASURE_EMOJI = "last_treasure_emoji"
+    }
 
     private val prefs: SharedPreferences =
         context.getSharedPreferences("pixelpals_progress", Context.MODE_PRIVATE)
@@ -119,8 +124,106 @@ class PetProgress(context: Context) {
         }
     }
 
-    /** Get a random treasure for finding */
-    fun rollTreasure(): String = allTreasures.random()
+    /** Get a treasure trying to avoid repetition and favoring missing/rarer ones. */
+    fun rollTreasure(): String {
+        val treasureMap = getTreasureMap()
+        val lastTreasure = prefs.getString(KEY_LAST_TREASURE_EMOJI, null)
+
+        val unseenTreasures = allTreasures.filter { (treasureMap[it] ?: 0) == 0 }
+        val basePool = if (unseenTreasures.isNotEmpty()) {
+            unseenTreasures
+        } else {
+            val minCount = allTreasures.minOf { treasureMap[it] ?: 0 }
+            allTreasures.filter { (treasureMap[it] ?: 0) == minCount }
+        }
+
+        val filteredPool = if (lastTreasure != null && basePool.size > 1) {
+            basePool.filter { it != lastTreasure }.ifEmpty { basePool }
+        } else {
+            basePool
+        }
+
+        return filteredPool.random().also { selected ->
+            prefs.edit().putString(KEY_LAST_TREASURE_EMOJI, selected).apply()
+        }
+    }
+
+    fun maybeAwardTreasureFromInteraction(): String? {
+        val milestone = when {
+            treasureCount == 0 && totalInteractions >= 3 -> 1
+            else -> totalInteractions / 12
+        }
+        val lastMilestone = prefs.getInt(KEY_LAST_TREASURE_INTERACTION_MILESTONE, 0)
+        if (milestone <= lastMilestone || milestone <= 0) return null
+
+        val treasure = rollTreasure()
+        addTreasure(treasure)
+        prefs.edit().putInt(KEY_LAST_TREASURE_INTERACTION_MILESTONE, milestone).apply()
+        return treasure
+    }
+
+    fun maybeAwardTreasureFromActiveMinute(): String? {
+        val milestone = when {
+            treasureCount == 0 && totalActiveMinutes >= 1 -> 1
+            else -> totalActiveMinutes / 4
+        }
+        val lastMilestone = prefs.getInt(KEY_LAST_TREASURE_ACTIVE_MILESTONE, 0)
+        if (milestone <= lastMilestone || milestone <= 0) return null
+
+        val treasure = rollTreasure()
+        addTreasure(treasure)
+        prefs.edit().putInt(KEY_LAST_TREASURE_ACTIVE_MILESTONE, milestone).apply()
+        return treasure
+    }
+
+    suspend fun syncRoomWithLegacyMap() {
+        val dao = db.treasureDao()
+        val now = System.currentTimeMillis()
+        val legacyMap = getTreasureMap()
+
+        legacyMap.forEach { (emoji, count) ->
+            if (count <= 0) return@forEach
+            val existing = dao.getTreasure(emoji)
+            if (existing == null) {
+                dao.insertTreasure(TreasureItem(emoji, count, now, now))
+            } else if (existing.count != count) {
+                dao.updateTreasure(existing.copy(count = count, lastFoundAt = now))
+            }
+        }
+
+        dao.getAllTreasuresSnapshot().forEach { roomItem ->
+            val legacyCount = legacyMap[roomItem.emoji] ?: 0
+            if (legacyCount <= 0) {
+                dao.deleteTreasure(roomItem)
+            }
+        }
+    }
+
+    suspend fun consumeTreasure(emoji: String): Int {
+        val dao = db.treasureDao()
+        val map = getTreasureMap().toMutableMap()
+        val currentCount = map[emoji] ?: 0
+        if (currentCount <= 0) return 0
+
+        val newCount = currentCount - 1
+        if (newCount <= 0) {
+            map.remove(emoji)
+        } else {
+            map[emoji] = newCount
+        }
+        saveTreasureMap(map)
+
+        val existing = dao.getTreasure(emoji)
+        if (existing != null) {
+            if (newCount <= 0) {
+                dao.deleteTreasure(existing)
+            } else {
+                dao.updateTreasure(existing.copy(count = newCount, lastFoundAt = System.currentTimeMillis()))
+            }
+        }
+
+        return newCount
+    }
 
     fun getTreasureMap(): Map<String, Int> {
         val raw = prefs.getString("treasures", "") ?: ""
