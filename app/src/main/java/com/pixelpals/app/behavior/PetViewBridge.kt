@@ -19,6 +19,11 @@ interface PetViewBridge {
     var animRotation: Float
     var animAlpha: Float
     var animColorFilter: ColorFilter?
+    val renderScaleX: Float
+    val renderScaleY: Float
+    val renderOffsetX: Float
+    val renderOffsetY: Float
+    val renderRotation: Float
 
     // --- Physics & Position ---
     var velocityX: Float

@@ -12,6 +12,7 @@ import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
 class TreasureAlbumActivity : AppCompatActivity() {
@@ -45,24 +46,27 @@ class TreasureAlbumActivity : AppCompatActivity() {
 
         val recyclerView = findViewById<RecyclerView>(R.id.recyclerViewTreasures)
         val tvEmptyState = findViewById<TextView>(R.id.tvEmptyState)
+        val progress = PetProgress(this)
 
         val dao = AppDatabase.getDatabase(this).treasureDao()
         
         // Purgado de Base de Datos para limpiar los errores del Corgi
         scope.launch(Dispatchers.IO) {
-            val rogueItem = dao.getTreasure("Hueso Prehistórico")
+            progress.syncRoomWithLegacyMap()
+
+            val rogueItem = dao.getTreasure("🦴")
             debugLog(
                 runId = "post-fix",
                 hypothesisId = "H1",
                 location = "TreasureAlbumActivity.kt:onCreate",
                 message = "Resultado de búsqueda de item rogue",
                 data = JSONObject().apply {
-                    put("queryEmoji", "Hueso Prehistórico")
+                    put("queryEmoji", "🦴")
                     put("found", rogueItem != null)
                     put("foundEmoji", rogueItem?.emoji ?: "null")
                 }
             )
-            if (rogueItem != null) {
+            if (rogueItem != null && rogueItem.count <= 0) {
                 dao.deleteTreasure(rogueItem)
             }
         }
@@ -79,10 +83,8 @@ class TreasureAlbumActivity : AppCompatActivity() {
                         put("countBefore", treasure.count)
                     }
                 )
-                if (treasure.count <= 1) {
-                    dao.deleteTreasure(treasure)
-                } else {
-                    dao.updateTreasure(treasure.copy(count = treasure.count - 1))
+                val remaining = withContext(Dispatchers.IO) {
+                    progress.consumeTreasure(treasure.emoji)
                 }
                 
                 // Alert Pet!
@@ -91,7 +93,15 @@ class TreasureAlbumActivity : AppCompatActivity() {
                     putExtra("TREASURE_EMOJI", treasure.emoji)
                 }
                 androidx.core.content.ContextCompat.startForegroundService(this@TreasureAlbumActivity, consumeIntent)
-                android.widget.Toast.makeText(this@TreasureAlbumActivity, "¡Le diste un ${treasure.emoji} a tu mascota!", android.widget.Toast.LENGTH_SHORT).show()
+                android.widget.Toast.makeText(
+                    this@TreasureAlbumActivity,
+                    if (remaining > 0) {
+                        "¡Le diste un ${treasure.emoji} a tu mascota! Quedan $remaining."
+                    } else {
+                        "¡Le diste un ${treasure.emoji} a tu mascota!"
+                    },
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
             }
         }
         recyclerView.layoutManager = LinearLayoutManager(this)

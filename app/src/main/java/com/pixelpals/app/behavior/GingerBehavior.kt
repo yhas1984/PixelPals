@@ -8,8 +8,8 @@ import kotlin.math.sin
 import kotlin.random.Random
 
 /**
- * GingerBehavior — Gatita juguetona que se sienta, salta entre plataformas
- * del escritorio y camina un poco sobre cada una.
+ * GingerBehavior — Gatita juguetona que descansa en los laterales
+ * y cruza la pantalla con caminatas largas y diagonales.
  */
 class GingerBehavior(
     bridge: PetViewBridge
@@ -50,13 +50,18 @@ class GingerBehavior(
     private var walkDir = 1f
     private var facingDir = 1f
     private var walkStartX = 0f
+    private var walkStartY = 0f
     private var walkTargetX = 0f
+    private var walkTargetY = 0f
+
+    private val idleDuration = 2.4f
+    private val walkDuration = 7.0f
 
     override fun getBaseSpeed(): Float = 78f
 
     private fun facingScale(directionX: Float, stretch: Float = 1f): Float {
         val magnitude = abs(stretch)
-        return if (directionX >= 0f) magnitude else -magnitude
+        return if (directionX >= 0f) -magnitude else magnitude
     }
 
     private fun ensurePlatforms(force: Boolean = false) {
@@ -157,13 +162,31 @@ class GingerBehavior(
         ensurePlatforms(force = true)
         if (platforms.size < 2) return
 
-        val current = platforms[currentPlatformIndex]
-        val candidates = platforms.indices.filter { it != currentPlatformIndex }
-        targetPlatformIndex = candidates.random()
+        val params = bridge.getWindowParams()
+        val startX = params?.x?.toFloat() ?: bridge.windowX.toFloat()
+        val startY = params?.y?.toFloat() ?: bridge.windowY.toFloat()
+        currentPlatformIndex = nearestPlatformIndex(startX, startY)
+
+        val forwardCandidates = platforms.indices.filter { index ->
+            if (index == currentPlatformIndex) return@filter false
+            val candidate = platforms[index]
+            val deltaX = candidate.x - startX
+            val enoughDistance = abs(deltaX) >= bridge.petSpriteSize * 0.45f
+            enoughDistance && ((walkDir > 0f && deltaX > 0f) || (walkDir < 0f && deltaX < 0f))
+        }
+        val candidates = if (forwardCandidates.isNotEmpty()) {
+            forwardCandidates
+        } else {
+            platforms.indices.filter { it != currentPlatformIndex }
+        }
+
+        targetPlatformIndex = candidates.minByOrNull { index ->
+            abs(platforms[index].x - startX) + abs(platforms[index].y - startY) * 0.35f
+        } ?: currentPlatformIndex
         val target = platforms[targetPlatformIndex]
 
-        jumpStartX = current.x
-        jumpStartY = current.y
+        jumpStartX = startX
+        jumpStartY = startY
         jumpEndX = target.x
         jumpEndY = target.y
         jumpDir = if (jumpEndX >= jumpStartX) 1f else -1f
@@ -176,23 +199,29 @@ class GingerBehavior(
     private fun startWalking() {
         mode = Mode.WALKING
         modeTimer = 0f
-        currentPlatformIndex = targetPlatformIndex
-        val platform = platforms[currentPlatformIndex]
-        val minX = 0f
-        val maxX = (bridge.screenWidth - bridge.petSpriteSize).coerceAtLeast(0).toFloat()
-        val desiredDistance = Random.nextInt(52, 97).toFloat()
-        val preferredDir = jumpDir
-        val preferredTarget = platform.x + desiredDistance * preferredDir
+        val params = bridge.getWindowParams()
+        val startX = params?.x?.toFloat() ?: bridge.windowX.toFloat()
+        val startY = params?.y?.toFloat() ?: bridge.windowY.toFloat()
+        val minX = 8f
+        val maxX = (bridge.screenWidth - bridge.petSpriteSize - 8).coerceAtLeast(8).toFloat()
+        val minY = 80f
+        val maxY = (bridge.screenHeight - bridge.petSpriteSize - 120).coerceAtLeast(80).toFloat()
 
-        walkDir = when {
-            preferredTarget in minX..maxX -> preferredDir
-            platform.x - desiredDistance >= minX -> -1f
-            platform.x + desiredDistance <= maxX -> 1f
-            else -> preferredDir
+        walkDir = if (startX <= (minX + maxX) * 0.5f) 1f else -1f
+        walkStartX = startX.coerceIn(minX, maxX)
+        walkStartY = startY.coerceIn(minY, maxY)
+        walkTargetX = if (walkDir > 0f) maxX else minX
+        walkTargetY = Random.nextFloat() * (maxY - minY) + minY
+
+        if (abs(walkTargetY - walkStartY) < bridge.petSpriteSize * 0.6f) {
+            val shift = bridge.petSpriteSize * 0.9f
+            walkTargetY = if (walkStartY < (minY + maxY) * 0.5f) {
+                (walkStartY + shift).coerceIn(minY, maxY)
+            } else {
+                (walkStartY - shift).coerceIn(minY, maxY)
+            }
         }
 
-        walkStartX = platform.x
-        walkTargetX = (platform.x + desiredDistance * walkDir).coerceIn(minX, maxX)
         facingDir = walkDir
     }
 
@@ -204,7 +233,6 @@ class GingerBehavior(
 
         when (mode) {
             Mode.SITTING -> {
-                placeOnCurrentPlatform()
                 bridge.animRotation = 0f
                 bridge.animOffsetX = 0f
                 bridge.animOffsetY = sin(time * 1.5f) * 2f
@@ -212,18 +240,17 @@ class GingerBehavior(
                 bridge.animScaleY = 1f + sin(time * 1.1f) * 0.015f
 
                 bridge.currentFrame = when {
-                    modeTimer < 1.6f -> 0
-                    modeTimer < 3.1f -> 1
+                    modeTimer < idleDuration * 0.34f -> 1
+                    modeTimer < idleDuration * 0.68f -> 0
                     else -> 2
                 }
 
-                if (modeTimer >= 4.2f) {
-                    startJump()
+                if (modeTimer >= idleDuration) {
+                    startWalking()
                 }
             }
 
             Mode.PREPARE_JUMP -> {
-                placeOnCurrentPlatform()
                 bridge.currentFrame = 2
                 bridge.animRotation = 0f
                 bridge.animOffsetX = 0f
@@ -266,35 +293,38 @@ class GingerBehavior(
                 }
 
                 if (t >= 1f) {
-                    startWalking()
+                    currentPlatformIndex = targetPlatformIndex
+                    startSitting()
                 }
             }
 
             Mode.WALKING -> {
                 val params = bridge.getWindowParams() ?: return
-                val platform = platforms[currentPlatformIndex]
-                val walkDuration = 1.9f
                 val t = (modeTimer / walkDuration).coerceIn(0f, 1f)
                 val easedT = sin((t * Math.PI.toFloat()) / 2f)
                 val x = walkStartX + (walkTargetX - walkStartX) * easedT
+                val y = walkStartY + (walkTargetY - walkStartY) * easedT
 
                 params.x = x.roundToInt()
-                params.y = platform.y.roundToInt()
+                params.y = y.roundToInt()
                 bridge.updateWindowLayout(params)
 
-                val walkFrame = if (((modeTimer / 0.12f).toInt() % 2) == 0) 11 else 12
-                bridge.currentFrame = walkFrame
-                bridge.animScaleX = if (walkFrame == 12) {
-                    facingScale(-walkDir)
+                val walkFrame = if (modeTimer < 0.22f) {
+                    10
                 } else {
-                    facingScale(walkDir)
+                    if ((((modeTimer - 0.22f) / 0.14f).toInt() % 2) == 0) 11 else 12
                 }
+                bridge.currentFrame = walkFrame
+                bridge.animScaleX = facingScale(walkDir)
                 bridge.animScaleY = 1f
                 bridge.animRotation = 0f
                 bridge.animOffsetX = 0f
                 bridge.animOffsetY = sin(time * 8f) * 1.5f
 
                 if (t >= 1f) {
+                    params.x = walkTargetX.roundToInt()
+                    params.y = walkTargetY.roundToInt()
+                    bridge.updateWindowLayout(params)
                     startSitting()
                 }
             }
@@ -312,10 +342,8 @@ class GingerBehavior(
 
     override fun updateInteracting(dt: Float) {
         if (frames.isEmpty()) return
-        ensurePlatforms()
         interactionTimer += dt
 
-        placeOnCurrentPlatform()
         bridge.currentFrame = 3
         bridge.animScaleX = facingScale(facingDir)
         bridge.animScaleY = 1f + sin(interactionTimer * 8f) * 0.03f

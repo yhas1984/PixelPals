@@ -14,6 +14,9 @@ interface TreasureDao {
     @Query("SELECT * FROM treasures ORDER BY lastFoundAt DESC")
     fun getAllTreasures(): Flow<List<TreasureItem>>
 
+    @Query("SELECT * FROM treasures")
+    suspend fun getAllTreasuresSnapshot(): List<TreasureItem>
+
     @Query("SELECT * FROM treasures WHERE emoji = :emoji LIMIT 1")
     suspend fun getTreasure(emoji: String): TreasureItem?
 
