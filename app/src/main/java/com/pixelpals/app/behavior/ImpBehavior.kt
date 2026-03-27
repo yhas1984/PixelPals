@@ -92,9 +92,8 @@ class ImpBehavior(bridge: PetViewBridge) : BaseBehavior(bridge) {
 
     override fun updateFalling(dt: Float) {
         // Sin volteretas al soltar
-        time += dt
-        bridge.currentFrame = 0
-        bridge.animRotation = 0f
+        bridge.state = PetState.IDLE
+        reset()
     }
 
     override fun onInteract() {

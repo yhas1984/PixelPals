@@ -253,9 +253,9 @@ class BloopBehavior(bridge: PetViewBridge) : BaseBehavior(bridge) {
     override fun updateFalling(dt: Float) {
         // Al soltarlo, se estabiliza y vuelve a flotación
         bridge.animRotation = 0f
+        bridge.state = PetState.IDLE
         mode = Mode.FLOAT_VISIBLE
-        bridge.animAlpha = 1f
-        bridge.currentFrame = 1
+        reset()
     }
 
     override fun updateInteracting(dt: Float) {

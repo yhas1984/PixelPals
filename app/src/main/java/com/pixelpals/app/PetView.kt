@@ -3,6 +3,7 @@ package com.pixelpals.app
 import android.content.Context
 import android.graphics.*
 import android.os.Build
+import android.util.DisplayMetrics
 import android.os.Handler
 import android.os.Looper
 import android.os.VibrationEffect
@@ -14,6 +15,11 @@ import android.view.View
 import android.view.WindowManager
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import kotlin.math.*
 import kotlin.random.Random
 import android.util.Log
@@ -22,12 +28,13 @@ import org.json.JSONObject
 
 class PetView(
     context: Context,
-    override val screenWidth: Int,
-    override val screenHeight: Int,
+    override var screenWidth: Int,
+    override var screenHeight: Int,
     override val petSpriteSize: Int,
     private val petType: PetType
 ) : View(context), PetViewBridge {
     private val progress = PetProgress(context)
+    private val uiScope = CoroutineScope(Dispatchers.Main + Job())
     private var activeSecondsAccumulator = 0f
 
     private fun debugLog(runId: String, hypothesisId: String, location: String, message: String, data: JSONObject) {
@@ -154,8 +161,10 @@ class PetView(
 
     override fun trackInteraction() {
         progress.trackInteraction()
-        progress.maybeAwardTreasureFromInteraction()?.let { treasure ->
-            showBubble(treasure)
+        uiScope.launch {
+            progress.maybeAwardTreasureFromInteraction()?.let { treasure ->
+                showBubble(treasure)
+            }
         }
     }
     
@@ -215,12 +224,15 @@ class PetView(
     }
 
     private fun update(dt: Float) {
+        refreshScreenMetrics()
         activeSecondsAccumulator += dt
         while (activeSecondsAccumulator >= 60f) {
             progress.trackMinute()
             activeSecondsAccumulator -= 60f
-            progress.maybeAwardTreasureFromActiveMinute()?.let { treasure ->
-                showBubble(treasure)
+            uiScope.launch {
+                progress.maybeAwardTreasureFromActiveMinute()?.let { treasure ->
+                    showBubble(treasure)
+                }
             }
         }
 
@@ -355,12 +367,40 @@ class PetView(
                         performClick()
                         // No entramos en FALLING si es un click
                     } else {
-                        state = PetState.FALLING
+                        // Soltar tras arrastrar debe devolver la mascota a un estado estable
+                        // en su nueva posición; FALLING dejaba varios behaviors bloqueados.
+                        state = PetState.IDLE
+                        behavior?.reset()
                     }
                 }
                 return true
             }
+            MotionEvent.ACTION_CANCEL -> {
+                state = PetState.IDLE
+                behavior?.reset()
+                return true
+            }
         }
         return super.onTouchEvent(event)
+    }
+
+    override fun onDetachedFromWindow() {
+        behavior?.destroy()
+        uiScope.cancel()
+        super.onDetachedFromWindow()
+    }
+
+    private fun refreshScreenMetrics() {
+        val wm = context.getSystemService(Context.WINDOW_SERVICE) as? WindowManager ?: return
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val bounds = wm.currentWindowMetrics.bounds
+            screenWidth = bounds.width()
+            screenHeight = bounds.height()
+        } else {
+            @Suppress("DEPRECATION")
+            val metrics = DisplayMetrics().also { wm.defaultDisplay.getMetrics(it) }
+            screenWidth = metrics.widthPixels
+            screenHeight = metrics.heightPixels
+        }
     }
 }

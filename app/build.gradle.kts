@@ -19,7 +19,9 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = true
-            isShrinkResources = true
+            // Several pets load animation frames dynamically via getIdentifier().
+            // Keep resource shrinking off until those frames are referenced statically.
+            isShrinkResources = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

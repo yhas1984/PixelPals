@@ -210,7 +210,8 @@ abstract class BaseBehavior(
 
     override fun updateFalling(dt: Float) {
         time += dt
-        bridge.animRotation += dt * 500f
+        bridge.state = PetState.IDLE
+        reset()
     }
 
     override fun updateJumping(dt: Float) {
@@ -244,6 +245,7 @@ abstract class BaseBehavior(
         val frameIdx = bridge.currentFrame.coerceIn(0, frames.size - 1)
         val bitmap = frames[frameIdx] ?: return // Si el frame no existe, no dibujar nada o ignorar
         paint.alpha = (bridge.animAlpha.coerceIn(0f, 1f) * 255).toInt()
+        paint.colorFilter = bridge.animColorFilter
 
         canvas.save()
         canvas.translate(cx + bridge.renderOffsetX, cy + bridge.renderOffsetY)
@@ -254,10 +256,22 @@ abstract class BaseBehavior(
     }
 
     override fun reset() {
+        velX = 0f
+        velY = 0f
+        targetX = 0f
+        targetY = 0f
+        decisionTimer = 0f
+        carryX = 0f
+        carryY = 0f
         bridge.animScaleX = 1f
         bridge.animScaleY = 1f
         bridge.animRotation = 0f
         bridge.animOffsetX = 0f
         bridge.animOffsetY = 0f
+        bridge.animColorFilter = null
+    }
+
+    override fun destroy() {
+        scope.cancel()
     }
 }

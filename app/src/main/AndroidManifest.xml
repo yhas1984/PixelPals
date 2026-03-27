@@ -5,9 +5,6 @@
     <!-- Overlay permission for floating window -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
-    <!-- Internet for Gemini API calls -->
-    <uses-permission android:name="android.permission.INTERNET" />
-
     <!-- Foreground service permission -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
@@ -69,7 +66,7 @@
         <!-- Treasure Album UI -->
         <activity
             android:name=".TreasureAlbumActivity"
-            android:exported="true"
+            android:exported="false"
             android:theme="@style/Theme.PixelPals"
             android:label="Álbum de Tesoros" />
 

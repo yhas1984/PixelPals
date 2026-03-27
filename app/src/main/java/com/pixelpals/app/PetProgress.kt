@@ -7,6 +7,8 @@ import com.pixelpals.app.database.TreasureItem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * PetProgress — El Tamagotchi interior.
@@ -37,6 +39,7 @@ class PetProgress(context: Context) {
 
     private val db = AppDatabase.getDatabase(context)
     private val scope = CoroutineScope(Dispatchers.IO)
+    private val treasureMutex = Mutex()
 
     // ── Happiness / XP ─────────────────────────────────────────
 
@@ -104,22 +107,27 @@ class PetProgress(context: Context) {
         "🍄", "🔑", "🧩", "🎵", "🪶", "🍬", "🌙", "💍", "👑", "🔮", "🍕"
     )
 
-    fun addTreasure(emoji: String) {
-        // 1. Legado: mantener map para XP rápido en PetService
+    private suspend fun addTreasureInternal(emoji: String) {
+        val dao = db.treasureDao()
         val map = getTreasureMap().toMutableMap()
-        map[emoji] = (map[emoji] ?: 0) + 1
+        val newCount = (map[emoji] ?: 0) + 1
+        map[emoji] = newCount
         saveTreasureMap(map)
         addXP(10)
 
-        // 2. Room Database: Persistir detalles de colección
+        val now = System.currentTimeMillis()
+        val existing = dao.getTreasure(emoji)
+        if (existing != null) {
+            dao.updateTreasure(existing.copy(count = newCount, lastFoundAt = now))
+        } else {
+            dao.insertTreasure(TreasureItem(emoji, newCount, now, now))
+        }
+    }
+
+    fun addTreasure(emoji: String) {
         scope.launch {
-            val dao = db.treasureDao()
-            val existing = dao.getTreasure(emoji)
-            val now = System.currentTimeMillis()
-            if (existing != null) {
-                dao.updateTreasure(existing.copy(count = existing.count + 1, lastFoundAt = now))
-            } else {
-                dao.insertTreasure(TreasureItem(emoji, 1, now, now))
+            treasureMutex.withLock {
+                addTreasureInternal(emoji)
             }
         }
     }
@@ -148,62 +156,64 @@ class PetProgress(context: Context) {
         }
     }
 
-    fun maybeAwardTreasureFromInteraction(): String? {
+    suspend fun maybeAwardTreasureFromInteraction(): String? = treasureMutex.withLock {
         val milestone = when {
             treasureCount == 0 && totalInteractions >= 3 -> 1
             else -> totalInteractions / 12
         }
         val lastMilestone = prefs.getInt(KEY_LAST_TREASURE_INTERACTION_MILESTONE, 0)
-        if (milestone <= lastMilestone || milestone <= 0) return null
+        if (milestone <= lastMilestone || milestone <= 0) return@withLock null
 
         val treasure = rollTreasure()
-        addTreasure(treasure)
+        addTreasureInternal(treasure)
         prefs.edit().putInt(KEY_LAST_TREASURE_INTERACTION_MILESTONE, milestone).apply()
-        return treasure
+        treasure
     }
 
-    fun maybeAwardTreasureFromActiveMinute(): String? {
+    suspend fun maybeAwardTreasureFromActiveMinute(): String? = treasureMutex.withLock {
         val milestone = when {
             treasureCount == 0 && totalActiveMinutes >= 1 -> 1
             else -> totalActiveMinutes / 4
         }
         val lastMilestone = prefs.getInt(KEY_LAST_TREASURE_ACTIVE_MILESTONE, 0)
-        if (milestone <= lastMilestone || milestone <= 0) return null
+        if (milestone <= lastMilestone || milestone <= 0) return@withLock null
 
         val treasure = rollTreasure()
-        addTreasure(treasure)
+        addTreasureInternal(treasure)
         prefs.edit().putInt(KEY_LAST_TREASURE_ACTIVE_MILESTONE, milestone).apply()
-        return treasure
+        treasure
     }
 
     suspend fun syncRoomWithLegacyMap() {
-        val dao = db.treasureDao()
-        val now = System.currentTimeMillis()
-        val legacyMap = getTreasureMap()
+        treasureMutex.withLock {
+            val dao = db.treasureDao()
+            val now = System.currentTimeMillis()
+            val legacyMap = getTreasureMap()
 
-        legacyMap.forEach { (emoji, count) ->
-            if (count <= 0) return@forEach
-            val existing = dao.getTreasure(emoji)
-            if (existing == null) {
-                dao.insertTreasure(TreasureItem(emoji, count, now, now))
-            } else if (existing.count != count) {
-                dao.updateTreasure(existing.copy(count = count, lastFoundAt = now))
+            legacyMap.forEach { (emoji, count) ->
+                if (count <= 0) return@forEach
+                val existing = dao.getTreasure(emoji)
+                if (existing == null) {
+                    dao.insertTreasure(TreasureItem(emoji, count, now, now))
+                } else if (existing.count != count) {
+                    dao.updateTreasure(existing.copy(count = count, lastFoundAt = now))
+                }
             }
-        }
 
-        dao.getAllTreasuresSnapshot().forEach { roomItem ->
-            val legacyCount = legacyMap[roomItem.emoji] ?: 0
-            if (legacyCount <= 0) {
-                dao.deleteTreasure(roomItem)
+            dao.getAllTreasuresSnapshot().forEach { roomItem ->
+                val legacyCount = legacyMap[roomItem.emoji] ?: 0
+                if (legacyCount <= 0) {
+                    dao.deleteTreasure(roomItem)
+                }
             }
         }
     }
 
-    suspend fun consumeTreasure(emoji: String): Int {
+    suspend fun consumeTreasure(emoji: String): Int = treasureMutex.withLock {
         val dao = db.treasureDao()
         val map = getTreasureMap().toMutableMap()
         val currentCount = map[emoji] ?: 0
-        if (currentCount <= 0) return 0
+        if (currentCount <= 0) return@withLock 0
 
         val newCount = currentCount - 1
         if (newCount <= 0) {
@@ -221,8 +231,7 @@ class PetProgress(context: Context) {
                 dao.updateTreasure(existing.copy(count = newCount, lastFoundAt = System.currentTimeMillis()))
             }
         }
-
-        return newCount
+        newCount
     }
 
     fun getTreasureMap(): Map<String, Int> {

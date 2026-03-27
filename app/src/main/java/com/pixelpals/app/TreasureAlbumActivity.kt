@@ -8,9 +8,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.pixelpals.app.database.AppDatabase
-import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -18,8 +19,7 @@ import org.json.JSONObject
 class TreasureAlbumActivity : AppCompatActivity() {
 
     private lateinit var adapter: TreasureAdapter
-    private val scope = CoroutineScope(Dispatchers.Main)
-    private val debugLogPath = "/media/yhas/_dde_data/home/yhas/Programacion/PixelPals/PixelPals/.cursor/debug-a40953.log"
+    private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     private fun debugLog(runId: String, hypothesisId: String, location: String, message: String, data: JSONObject) {
         // #region agent log
@@ -33,10 +33,6 @@ class TreasureAlbumActivity : AppCompatActivity() {
             put("timestamp", System.currentTimeMillis())
         }
         Log.i("AGENT_DEBUG", payload.toString())
-        try {
-            File(debugLogPath).appendText(payload.toString() + "\n")
-        } catch (_: Exception) {
-        }
         // #endregion
     }
 
@@ -120,5 +116,10 @@ class TreasureAlbumActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    override fun onDestroy() {
+        scope.cancel()
+        super.onDestroy()
     }
 }

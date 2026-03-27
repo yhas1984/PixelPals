@@ -49,6 +49,7 @@ interface PetBehavior {
     // --- Lifecycle and Events ---
     fun resume() {}
     fun pause() {}
+    fun destroy() {}
     fun onTreasureConsumed(emoji: String) {}
     fun onBatteryStatusChanged(percent: Int, isCharging: Boolean) {}
     fun onKeyboardVisibilityChanged(visible: Boolean, height: Int) {}

@@ -119,5 +119,10 @@ class CorgiBehavior(
         }
     }
 
+    override fun reset() {
+        super.reset()
+        changeState(CorgiState.WALKING)
+    }
+
     private fun min(a: Int, b: Int): Int = if (a < b) a else b
 }

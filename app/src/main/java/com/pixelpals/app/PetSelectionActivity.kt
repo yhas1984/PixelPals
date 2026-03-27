@@ -13,13 +13,12 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.pixelpals.app.launcher.LauncherAccessibilityService
 import com.pixelpals.app.launcher.LauncherPlatformRepository
-import java.io.File
 import org.json.JSONObject
 
 /**
  * PetSelectionActivity — Pantalla de selección de mascota.
  *
- * Presenta las 6 mascotas en una grilla con sus sprites.
+ * Presenta las mascotas en una grilla con sus sprites.
  * Al tocar una, se selecciona y se lanza el servicio con esa mascota.
  */
 class PetSelectionActivity : AppCompatActivity() {
@@ -38,8 +37,8 @@ class PetSelectionActivity : AppCompatActivity() {
 
     private var selectedType: PetType? = null
     private val allCards = mutableListOf<LinearLayout>()
-    private var pendingLaunchCount = 0
-    private val debugLogPath = "/media/yhas/_dde_data/home/yhas/Programacion/PixelPals/PixelPals/.cursor/debug-a40953.log"
+    private var isLaunching = false
+    private lateinit var selectedPetStore: SelectedPetStore
 
     private fun debugLog(runId: String, hypothesisId: String, location: String, message: String, data: JSONObject) {
         // #region agent log
@@ -53,16 +52,13 @@ class PetSelectionActivity : AppCompatActivity() {
             put("timestamp", System.currentTimeMillis())
         }
         Log.i("AGENT_DEBUG", payload.toString())
-        try {
-            File(debugLogPath).appendText(payload.toString() + "\n")
-        } catch (_: Exception) {
-        }
         // #endregion
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_pet_selection)
+        selectedPetStore = SelectedPetStore(this)
 
         bindViews()
         setupCards()
@@ -99,21 +95,23 @@ class PetSelectionActivity : AppCompatActivity() {
     }
 
     private fun selectPet(selectedCard: LinearLayout, type: PetType) {
+        if (isLaunching) return
+        isLaunching = true
         selectedType = type
-        pendingLaunchCount++
+        selectedPetStore.save(type)
         debugLog(
             runId = "post-fix",
             hypothesisId = "H3",
             location = "PetSelectionActivity.kt:selectPet",
-            message = "Selección de mascota y encolado de launch",
+            message = "Selección de mascota y launch bloqueado a un solo intento",
             data = JSONObject().apply {
                 put("selectedType", type.name)
-                put("pendingLaunchCount", pendingLaunchCount)
             }
         )
 
         // ── Visual selection feedback ──
         allCards.forEach { card ->
+            card.isEnabled = false
             if (card == selectedCard) {
                 card.setBackgroundResource(R.drawable.bg_card_pet_selected)
                 card.animate()
@@ -146,7 +144,7 @@ class PetSelectionActivity : AppCompatActivity() {
             message = "Lanzando servicio de mascota",
             data = JSONObject().apply {
                 put("type", type.name)
-                put("pendingLaunchCountAtLaunch", pendingLaunchCount)
+                put("launchLocked", isLaunching)
             }
         )
         val serviceIntent = Intent(this, PetService::class.java).apply {

@@ -19,6 +19,7 @@ import android.view.View
 import android.view.WindowManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import org.json.JSONObject
 
 class PetService : Service() {
@@ -36,12 +37,13 @@ class PetService : Service() {
 
     private var windowManager: WindowManager? = null
     private var petView: PetView? = null
-    private var keyboardProbe: View? = null
     private var screenReceiver: ScreenStateReceiver? = null
     private var batteryReceiver: BroadcastReceiver? = null
     private var airplaneReceiver: BroadcastReceiver? = null
     private var isViewAttached = false
     private var currentPetType: PetType = PetType.CORGI
+    private var isForegroundStarted = false
+    private lateinit var selectedPetStore: SelectedPetStore
 
     private fun debugLog(runId: String, hypothesisId: String, location: String, message: String, data: JSONObject) {
         // #region agent log
@@ -62,15 +64,23 @@ class PetService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        selectedPetStore = SelectedPetStore(this)
+        currentPetType = selectedPetStore.load()
         createNotificationChannel()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        val action = intent?.action
+        if (action != ACTION_STOP) {
+            ensureForeground()
+        }
+
         when (intent?.action) {
             ACTION_HIDE -> { hidePet(); return START_STICKY }
             ACTION_SHOW -> { showPet(); return START_STICKY }
             ACTION_STOP -> { stopSelf(); return START_NOT_STICKY }
             ACTION_CONSUME_TREASURE -> {
+                ensureOverlayReady()
                 val emoji = intent.getStringExtra("TREASURE_EMOJI") ?: "✨"
                 petView?.consumeTreasure(emoji)
                 return START_STICKY
@@ -79,18 +89,14 @@ class PetService : Service() {
 
         val petTypeName = intent?.getStringExtra(PetSelectionActivity.EXTRA_PET_TYPE)
         if (petTypeName != null) {
-            currentPetType = try { PetType.valueOf(petTypeName) } catch (e: Exception) { PetType.CORGI }
+            currentPetType = try { PetType.valueOf(petTypeName) } catch (e: Exception) { selectedPetStore.load() }
+            selectedPetStore.save(currentPetType)
             if (isViewAttached) removePetOverlay()
+        } else {
+            currentPetType = selectedPetStore.load()
         }
 
-        startForeground(NOTIFICATION_ID, buildNotification(false))
-
-        if (!isViewAttached) {
-            createPetOverlay()
-            registerScreenReceiver()
-            registerBatteryReceiver()
-            registerAirplaneReceiver()
-        }
+        ensureOverlayReady()
 
         return START_STICKY
     }
@@ -144,7 +150,10 @@ class PetService : Service() {
             windowManager?.addView(petView, params)
             isViewAttached = true
             petView?.resumeAnimation()
-        } catch (e: Exception) { e.printStackTrace() }
+        } catch (e: Exception) {
+            Log.e(TAG, "No se pudo adjuntar el overlay", e)
+            stopSelf()
+        }
     }
 
     private fun removePetOverlay() {
@@ -179,33 +188,75 @@ class PetService : Service() {
     private fun showPet() { petView?.visibility = View.VISIBLE }
 
     private fun registerBatteryReceiver() {
+        if (batteryReceiver != null) return
         batteryReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
                 val level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
-                petView?.onBatteryChanged(level, false)
+                val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, 100).coerceAtLeast(1)
+                val status = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
+                val isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
+                    status == BatteryManager.BATTERY_STATUS_FULL
+                val percent = ((level * 100f) / scale).toInt().coerceIn(0, 100)
+                petView?.onBatteryChanged(percent, isCharging)
             }
         }
-        registerReceiver(batteryReceiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        ContextCompat.registerReceiver(
+            this,
+            batteryReceiver,
+            IntentFilter(Intent.ACTION_BATTERY_CHANGED),
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
     }
     
     private fun registerAirplaneReceiver() {
+        if (airplaneReceiver != null) return
         airplaneReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
                 val isAirplane = intent.getBooleanExtra("state", false)
                 petView?.onAirplaneModeChanged(isAirplane)
             }
         }
-        registerReceiver(airplaneReceiver, IntentFilter(Intent.ACTION_AIRPLANE_MODE_CHANGED))
+        ContextCompat.registerReceiver(
+            this,
+            airplaneReceiver,
+            IntentFilter(Intent.ACTION_AIRPLANE_MODE_CHANGED),
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
     }
 
     private fun registerScreenReceiver() {
+        if (screenReceiver != null) return
         screenReceiver = ScreenStateReceiver { on -> if (on) petView?.resumeAnimation() else petView?.pauseAnimation() }
         val filter = IntentFilter().apply { addAction(Intent.ACTION_SCREEN_OFF); addAction(Intent.ACTION_SCREEN_ON) }
-        registerReceiver(screenReceiver, filter)
+        ContextCompat.registerReceiver(
+            this,
+            screenReceiver,
+            filter,
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
+    }
+
+    private fun ensureForeground() {
+        if (!isForegroundStarted) {
+            startForeground(NOTIFICATION_ID, buildNotification(false))
+            isForegroundStarted = true
+        } else {
+            updateNotification(false)
+        }
+    }
+
+    private fun ensureOverlayReady() {
+        if (!isViewAttached) {
+            createPetOverlay()
+            registerScreenReceiver()
+            registerBatteryReceiver()
+            registerAirplaneReceiver()
+        }
     }
 
     override fun onDestroy() {
         removePetOverlay()
+        isForegroundStarted = false
         try { 
             batteryReceiver?.let { unregisterReceiver(it) }
             airplaneReceiver?.let { unregisterReceiver(it) }
