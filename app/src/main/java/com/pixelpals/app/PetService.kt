@@ -168,13 +168,19 @@ class PetService : Service() {
     }
 
     private fun createNotificationChannel() {
-        val channel = NotificationChannel(CHANNEL_ID, "PixelPals", NotificationManager.IMPORTANCE_LOW)
+        val channel = NotificationChannel(
+            CHANNEL_ID,
+            getString(R.string.notif_channel_name),
+            NotificationManager.IMPORTANCE_LOW
+        ).apply {
+            description = getString(R.string.notif_channel_desc)
+        }
         getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
     }
 
     private fun buildNotification(isHidden: Boolean): Notification {
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("PixelPals Activo")
+            .setContentTitle(getString(R.string.notif_active_title))
             .setSmallIcon(android.R.drawable.ic_menu_compass)
             .setOngoing(true)
             .build()

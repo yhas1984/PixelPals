@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">PixelPals</string>
+    <string name="app_name">ScreenPets</string>
     <string name="subtitle">Tu compañero mascota virtual ✨</string>
 
     <!-- Permisos -->
@@ -29,8 +29,9 @@
     <string name="diablillo_desc">El Diablillo Travieso\n¡Ji-ji!</string>
 
     <!-- Notificación -->
-    <string name="notif_channel_name">PixelPals Mascota</string>
+    <string name="notif_channel_name">ScreenPets Mascota</string>
     <string name="notif_channel_desc">Mantiene a tu mascota virtual viva en la pantalla</string>
+    <string name="notif_active_title">ScreenPets Activo</string>
 
     <!-- Accesibilidad -->
     <string name="overlay_icon_desc">Icono de permiso de superposición</string>

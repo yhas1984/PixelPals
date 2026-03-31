@@ -11,8 +11,6 @@ import android.widget.Toast
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import com.pixelpals.app.launcher.LauncherAccessibilityService
-import com.pixelpals.app.launcher.LauncherPlatformRepository
 import org.json.JSONObject
 
 /**
@@ -151,16 +149,6 @@ class PetSelectionActivity : AppCompatActivity() {
             putExtra(EXTRA_PET_TYPE, type.name)
         }
         ContextCompat.startForegroundService(this, serviceIntent)
-
-        if (type == PetType.GINGER &&
-            !LauncherPlatformRepository.isServiceEnabled(this, LauncherAccessibilityService::class.java)
-        ) {
-            Toast.makeText(
-                this,
-                "Activa Accesibilidad para que Ginger salte sobre tus apps reales.",
-                Toast.LENGTH_LONG
-            ).show()
-        }
 
         Toast.makeText(
             this,

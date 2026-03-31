@@ -20,14 +20,14 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/Theme.PixelPals"
+        android:theme="@style/Theme.ScreenPets"
         tools:targetApi="35">
 
         <!-- Main Activity: Onboarding & Permissions -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.PixelPals">
+            android:theme="@style/Theme.ScreenPets">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -38,7 +38,7 @@
         <activity
             android:name=".PetSelectionActivity"
             android:exported="false"
-            android:theme="@style/Theme.PixelPals" />
+            android:theme="@style/Theme.ScreenPets" />
 
         <!-- Pet Foreground Service -->
         <service
@@ -50,24 +50,11 @@
                 android:value="floating_pet_overlay" />
         </service>
 
-        <service
-            android:name=".launcher.LauncherAccessibilityService"
-            android:exported="false"
-            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
-            <intent-filter>
-                <action android:name="android.accessibilityservice.AccessibilityService" />
-            </intent-filter>
-
-            <meta-data
-                android:name="android.accessibilityservice"
-                android:resource="@xml/launcher_accessibility_service" />
-        </service>
-
         <!-- Treasure Album UI -->
         <activity
             android:name=".TreasureAlbumActivity"
             android:exported="false"
-            android:theme="@style/Theme.PixelPals"
+            android:theme="@style/Theme.ScreenPets"
             android:label="Álbum de Tesoros" />
 
     </application>
