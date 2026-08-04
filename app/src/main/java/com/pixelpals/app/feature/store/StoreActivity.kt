@@ -126,13 +126,22 @@ class StoreActivity : AppCompatActivity() {
         billing.launchPurchase(this, pack.productId) { success ->
             if (success) {
                 lifecycleScope.launch {
-                    repository.grantPremiumPack(pack, selectedPet, source = "billing")
-                    analytics.track("premium_pack_purchased", mapOf("product_id" to pack.productId))
-                    Toast.makeText(
-                        this@StoreActivity,
-                        getString(R.string.coins_purchase_success, pack.bonusCoins),
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    val autoEquipped = repository.grantPremiumPack(
+                        pack = pack,
+                        petType = selectedPet,
+                        source = "billing",
+                    )
+                    analytics.track(
+                        "premium_pack_purchased",
+                        mapOf("product_id" to pack.productId, "auto_equipped" to (autoEquipped ?: "none"))
+                    )
+                    val msg = if (autoEquipped != null) {
+                        "Pack comprado. Equipado: ${autoEquipped}"
+                    } else {
+                        getString(R.string.coins_purchase_success, pack.bonusCoins)
+                    }
+                    Toast.makeText(this@StoreActivity, msg, Toast.LENGTH_SHORT).show()
+                    if (autoEquipped != null) notifyAccessoryChanged()
                     refreshHeader()
                 }
             }

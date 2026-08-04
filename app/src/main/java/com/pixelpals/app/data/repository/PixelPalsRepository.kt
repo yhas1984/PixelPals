@@ -300,19 +300,40 @@ class PixelPalsRepository(context: Context) {
 
     /**
      * Otorga un pack premium (accesorios + monedas). Cada accesorio del pack queda como owned.
+     * Si [autoEquipFirst] es true y el pet activo soporta el primer accesorio del pack, lo equipa.
+     * Devuelve el id del accesorio auto-equipado (o null si nada).
      */
-    suspend fun grantPremiumPack(pack: com.pixelpals.app.data.catalog.PremiumPack, petType: PetType?, source: String) {
-        db.withTransaction {
-            grantOwnedProduct(pack.productId, source)
-            pack.accessoryIds.forEach { accId ->
-                grantOwnedProduct(accId, source)
-            }
-            if (pack.bonusCoins > 0) {
-                val petId = petType?.let { petIdOf(it) } ?: "wallet"
-                val bond = ensureBondEntity(petId)
-                db.petBondDao().upsert(bond.copy(softCurrency = bond.softCurrency + pack.bonusCoins))
-            }
+    suspend fun grantPremiumPack(
+        pack: com.pixelpals.app.data.catalog.PremiumPack,
+        petType: PetType?,
+        source: String,
+        autoEquipFirst: Boolean = true,
+    ): String? = db.withTransaction {
+        grantOwnedProduct(pack.productId, source)
+        pack.accessoryIds.forEach { accId -> grantOwnedProduct(accId, source) }
+        if (pack.bonusCoins > 0) {
+            val petId = petType?.let { petIdOf(it) } ?: "wallet"
+            val bond = ensureBondEntity(petId)
+            db.petBondDao().upsert(bond.copy(softCurrency = bond.softCurrency + pack.bonusCoins))
         }
+        // Auto-equip del primer accesorio compatible con el pet activo
+        if (autoEquipFirst && petType != null) {
+            val petId = petIdOf(petType)
+            val catalog = AccessoryCatalog.all(appContext)
+            val firstCompatible = pack.accessoryIds.firstOrNull { accId ->
+                catalog.firstOrNull { it.id == accId }?.let { acc -> petId in acc.supportedPetIds } == true
+            }
+            if (firstCompatible != null) {
+                db.equippedAccessoryDao().upsert(
+                    com.pixelpals.app.database.EquippedAccessoryEntity(
+                        petId = petId,
+                        accessoryId = firstCompatible,
+                        equippedAt = System.currentTimeMillis(),
+                    )
+                )
+            }
+            firstCompatible
+        } else null
     }
 
     /**

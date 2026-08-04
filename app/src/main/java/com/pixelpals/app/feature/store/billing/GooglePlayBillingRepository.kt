@@ -37,13 +37,12 @@ class GooglePlayBillingRepository(
             // Premium pets
             "pet_angel_premium",
             "pet_diablillo_premium",
-            // Accessories (legacy V1)
+            // Accessories (V1.5 — todos)
             "acc_halo_glow",
             "acc_royal_crown",
             "acc_star_trail",
             "acc_cozy_scarf",
             "acc_party_spark",
-            // Accessories (V1.5)
             "acc_celestial_wings",
             "acc_demonic_wings",
             "acc_duck_jetpack",
@@ -57,12 +56,32 @@ class GooglePlayBillingRepository(
             "acc_duck_inner_tube",
             "acc_heart_glasses",
             "acc_magic_wand",
-            // Coin packs (V1.5 monetization)
+            "acc_viking_helmet",
+            "acc_ninja_mask",
+            "acc_shield_back",
+            "acc_astronaut_helmet",
+            "acc_alien_antennas",
+            "acc_ufo_jetpack",
+            "acc_pirate_hat",
+            "acc_eye_patch",
+            "acc_treasure_chest",
+            "acc_chef_hat",
+            "acc_unicorn_horn",
+            "acc_lightning_bolt",
+            "acc_robot_antenna",
+            "acc_crown_of_thorns",
+            "acc_ice_crown",
+            "acc_fire_cape",
+            "acc_monocle",
+            "acc_mustache",
+            "acc_sword",
+            "acc_shield_cool",
+            // Coin packs
             "coins_small",
             "coins_medium",
             "coins_large",
             "coins_mega",
-            // Premium packs (V1.5 monetization)
+            // Premium packs
             "pack_celestial",
             "pack_demonic",
             "pack_adventure",
