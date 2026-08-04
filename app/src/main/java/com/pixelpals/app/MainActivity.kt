@@ -40,6 +40,7 @@ class MainActivity : AppCompatActivity() {
         ActivityResultContracts.StartActivityForResult()
     ) {
         updatePermissionUI()
+        maybeAutoRequestNotification()
     }
 
     private val notificationPermissionLauncher = registerForActivityResult(
@@ -129,6 +130,16 @@ class MainActivity : AppCompatActivity() {
                 analytics.track("notification_permission_requested")
                 notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
+        }
+    }
+
+    private var autoNotificationRequested = false
+
+    private fun maybeAutoRequestNotification() {
+        if (autoNotificationRequested) return
+        if (hasOverlayPermission() && !hasNotificationPermission()) {
+            autoNotificationRequested = true
+            requestNotificationPermission()
         }
     }
 

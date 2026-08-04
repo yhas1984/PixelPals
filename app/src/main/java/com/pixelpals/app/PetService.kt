@@ -42,6 +42,7 @@ class PetService : Service() {
         private const val EXTRA_REFRESH_CELEBRATE = "REFRESH_CELEBRATE"
         private const val PET_SIZE_DP = 80
         private const val HOME_POLL_INTERVAL_MS = 2000L
+        private const val HOME_POLL_INTERVAL_SLOW_MS = 30_000L
 
         fun requestPetRefresh(context: Context, message: String? = null, celebrate: Boolean = false) {
             if (!isRunning) return
@@ -85,9 +86,17 @@ class PetService : Service() {
     private val homeCheckRunnable = object : Runnable {
         override fun run() {
             if (isViewAttached) {
+                val hadUsageAccess = DesktopForegroundHelper.hasUsageAccess(this@PetService)
                 refreshPetVisibilityForForeground()
+                val nextInterval = if (hadUsageAccess) {
+                    HOME_POLL_INTERVAL_MS
+                } else {
+                    HOME_POLL_INTERVAL_SLOW_MS
+                }
+                homeCheckHandler.postDelayed(this, nextInterval)
+            } else {
+                homeCheckHandler.postDelayed(this, HOME_POLL_INTERVAL_SLOW_MS)
             }
-            homeCheckHandler.postDelayed(this, HOME_POLL_INTERVAL_MS)
         }
     }
 
