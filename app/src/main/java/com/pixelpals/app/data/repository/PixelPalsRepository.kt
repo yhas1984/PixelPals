@@ -58,6 +58,8 @@ class PixelPalsRepository(context: Context) {
 
     suspend fun recordActiveMinute(petType: PetType): PetStatusSnapshot {
         val petId = petIdOf(petType)
+        val bond = ensureBondEntity(petId)
+        db.petBondDao().upsert(bond.copy(activeMinutes = bond.activeMinutes + 1))
         return applyMutation(petId) {
             copy(
                 hunger = (hunger - 2).coerceAtLeast(0),
@@ -641,10 +643,7 @@ class PixelPalsRepository(context: Context) {
     suspend fun maybeAwardTreasureFromActiveMinute(petType: PetType): String? = db.withTransaction {
         val petId = petIdOf(petType)
         val bond = ensureBondEntity(petId)
-        val now = System.currentTimeMillis()
-        val activeMinutes = if (bond.firstSeenAt > 0L) {
-            ((now - bond.firstSeenAt) / 60_000L).toInt().coerceAtLeast(0)
-        } else 0
+        val activeMinutes = bond.activeMinutes
         val treasureCount = db.treasureDao().getAllTreasuresSnapshot().sumOf { it.count }
         val milestone = when {
             treasureCount == 0 && activeMinutes >= 1 -> 1

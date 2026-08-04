@@ -94,7 +94,10 @@ class AccessorySpriteRenderer(context: Context) {
             // Volteo horizontal alrededor del eje del ancla.
             canvas.scale(-1f, 1f, anchorX, anchorY)
         }
+        val previousFilter = paint.isFilterBitmap
+        paint.isFilterBitmap = true
         canvas.drawBitmap(sheet, srcRect, dstRect, paint)
+        paint.isFilterBitmap = previousFilter
         canvas.restore()
     }
 
@@ -126,6 +129,15 @@ class AccessorySpriteRenderer(context: Context) {
             }
         }
         return clock.frameIndex
+    }
+
+    /** Libera los bitmaps cacheados (llamar al detach del view). */
+    fun clear() {
+        atlasCache.values.filterNotNull().forEach { bitmap ->
+            if (!bitmap.isRecycled) bitmap.recycle()
+        }
+        atlasCache.clear()
+        clipClocks.clear()
     }
 
     private companion object {

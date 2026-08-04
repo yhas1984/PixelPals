@@ -55,7 +55,9 @@ class PetView(
     private var lastTimeWindowKey = ""
 
     private val motionEngine = MotionEngine()
+    private var accessorySpriteRendererInitialized = false
     private val accessorySpriteRenderer by lazy {
+        accessorySpriteRendererInitialized = true
         com.pixelpals.app.feature.overlay.behavior.AccessorySpriteRenderer(context)
     }
     private var lastFrameDelta = 0f
@@ -406,16 +408,17 @@ class PetView(
         val accessory = equippedAccessory ?: return
         if (accessory.slot != slot) return
 
-        // Pase 1: si el accesorio es BEHIND (alas, jetpack), dibujar detrás.
+        // Pase 1: si el accesorio tiene sprite BEHIND (alas, jetpack), dibujar detrás.
         // Pase 3: si es FRONT (gorros, gafas), dibujar encima.
-        val spriteLayer = accessory.sprite?.zLayer
-        val isBehind = spriteLayer == com.pixelpals.app.data.catalog.SpriteZLayer.BEHIND
-        val isFrontPass = slot == com.pixelpals.app.data.catalog.AccessorySlot.HEAD ||
-            slot == com.pixelpals.app.data.catalog.AccessorySlot.FACE ||
-            slot == com.pixelpals.app.data.catalog.AccessorySlot.BODY
-        if (isBehind == isFrontPass) return
+        // El fallback emoji se dibuja siempre (los offsets del catálogo ya ubican el slot).
+        val sprite = accessory.sprite
+        if (sprite != null) {
+            val isBehind = sprite.zLayer == com.pixelpals.app.data.catalog.SpriteZLayer.BEHIND
+            val isFrontPass = slot == com.pixelpals.app.data.catalog.AccessorySlot.HEAD ||
+                slot == com.pixelpals.app.data.catalog.AccessorySlot.FACE ||
+                slot == com.pixelpals.app.data.catalog.AccessorySlot.BODY
+            if (isBehind == isFrontPass) return
 
-        if (accessory.sprite != null) {
             accessorySpriteRenderer.draw(
                 canvas = canvas,
                 accessory = accessory,
@@ -423,7 +426,7 @@ class PetView(
                 petCenterY = height / 2f + renderOffsetY,
                 petSpriteSize = petSpriteSize,
                 dt = lastFrameDelta,
-                flapping = state == PetState.FALLING || state == PetState.JUMPING,
+                flapping = isFlapping(),
                 facingRight = renderScaleX >= 0f,
                 paint = accessoryPaint,
             )
@@ -435,6 +438,12 @@ class PetView(
         val cx = width / 2f + renderOffsetX + (accessory.offsetXRatio * petSpriteSize * if (renderScaleX >= 0f) 1f else -1f)
         val cy = height / 2f + renderOffsetY + (accessory.offsetYRatio * petSpriteSize)
         canvas.drawText(accessory.emoji, cx, cy, accessoryPaint)
+    }
+
+    /** Las alas/gadgets aletean en salto o cuando el pet se mueve rápido. */
+    private fun isFlapping(): Boolean {
+        if (state == PetState.JUMPING || state == PetState.FALLING) return true
+        return kotlin.math.abs(velocityX) > petSpriteSize * 0.35f
     }
 
     private fun maybeShowAmbientMoodBubble() {
@@ -612,6 +621,7 @@ class PetView(
     override fun onDetachedFromWindow() {
         recycleVelocityTracker()
         behavior?.destroy()
+        if (accessorySpriteRendererInitialized) accessorySpriteRenderer.clear()
         uiScope.cancel()
         super.onDetachedFromWindow()
     }

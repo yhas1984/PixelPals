@@ -190,6 +190,48 @@
     <string name="store_premium_hint">Desbloqueo premium</string>
     <string name="store_offer_emoji">🐾</string>
 
+    <!-- Tienda V1.5: tabs -->
+    <string name="store_tab_coins">Monedas</string>
+    <string name="store_tab_accessories">Accesorios</string>
+    <string name="store_tab_packs">Packs</string>
+
+    <!-- Tienda V1.5: packs de monedas -->
+    <string name="coins_pack_small_title">Pack Inicio</string>
+    <string name="coins_pack_small_subtitle">100 monedas</string>
+    <string name="coins_pack_medium_title">Pack Dulce</string>
+    <string name="coins_pack_medium_subtitle">350 monedas</string>
+    <string name="coins_pack_large_title">Pack Mega</string>
+    <string name="coins_pack_large_subtitle">1000 monedas</string>
+    <string name="coins_pack_mega_title">Pack Giga</string>
+    <string name="coins_pack_mega_subtitle">2500 monedas +5%% extra</string>
+    <string name="coins_pack_best_value">Mejor valor</string>
+    <string name="coins_purchase_success">¡+%1$d monedas añadidas!</string>
+    <string name="coins_wallet_format">💰 %1$d monedas</string>
+
+    <!-- Tienda V1.5: packs premium -->
+    <string name="pack_celestial_title">Pack Celestial</string>
+    <string name="pack_celestial_subtitle">Halo + Alas Celestiales + 100 monedas</string>
+    <string name="pack_demonic_title">Pack Demoníaco</string>
+    <string name="pack_demonic_subtitle">Corona + Alas Demoníacas + 100 monedas</string>
+    <string name="pack_adventure_title">Pack Aventura</string>
+    <string name="pack_adventure_subtitle">Jetpack + Gafas de Piloto + 100 monedas</string>
+
+    <!-- Tienda V1.5: acciones -->
+    <string name="store_buy_with_real_money">Comprar</string>
+    <string name="store_buy_with_coins">Comprar con %1$d monedas</string>
+    <string name="store_restore_v15">Restaurar compras</string>
+    <string name="store_filter_all">Todos</string>
+    <string name="store_filter_slot_head">Sombreros</string>
+    <string name="store_filter_slot_face">Gafas</string>
+    <string name="store_filter_slot_back">Alas</string>
+    <string name="store_filter_slot_gadget">Gadgets</string>
+    <string name="store_filter_slot_body">Cuerpo</string>
+    <string name="store_buy_with_coins_button">Comprar con %1$d monedas</string>
+    <string name="store_owned_hint_default">sin accesorio</string>
+    <string name="store_error_not_enough_coins">No tienes suficientes monedas</string>
+    <string name="store_error_bond_required">Nivel de vínculo insuficiente</string>
+    <string name="store_error_generic">No se pudo completar la compra</string>
+
     <!-- Álbum de tesoros -->
     <string name="treasure_album_title">Álbum de tesoros</string>
     <string name="treasure_album_subtitle">Sorpresas recogidas, ordenadas por la última que encontraste.</string>

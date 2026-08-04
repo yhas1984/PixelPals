@@ -2,7 +2,9 @@ package com.pixelpals.app
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.pixelpals.app.core.domain.PetType
 import com.pixelpals.app.data.catalog.AccessoryPurchaseResult
+import com.pixelpals.app.data.repository.PixelPalsRepository
 import com.pixelpals.app.database.AppDatabase
 import com.pixelpals.app.status.CareAction
 import kotlinx.coroutines.runBlocking

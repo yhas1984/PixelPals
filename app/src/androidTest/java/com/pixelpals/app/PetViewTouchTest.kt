@@ -5,6 +5,8 @@ import android.view.MotionEvent
 import android.view.WindowManager
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.pixelpals.app.core.domain.PetState
+import com.pixelpals.app.core.domain.PetType
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith

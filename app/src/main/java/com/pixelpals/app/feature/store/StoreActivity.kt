@@ -41,6 +41,7 @@ class StoreActivity : AppCompatActivity() {
     private val analytics: AnalyticsTracker by lazy { AppServices.analytics(this) }
     private val billing: BillingRepository by lazy { AppServices.billingRepository(this) }
     private lateinit var selectedPet: PetType
+    private var isStoreCreated = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,11 +67,13 @@ class StoreActivity : AppCompatActivity() {
 
         refreshHeader()
         analytics.track("store_opened_v15")
+        isStoreCreated = true
     }
 
     override fun onResume() {
         super.onResume()
-        refreshHeader()
+        // onCreate ya refrescó; en onResume solo si ya estábamos creados (retorno de compra).
+        if (isStoreCreated) refreshHeader()
     }
 
     private fun refreshHeader() {
@@ -119,6 +122,18 @@ class StoreActivity : AppCompatActivity() {
             repository.equipAccessory(selectedPet, null)
             notifyAccessoryChanged()
         }
+    }
+
+    /** Muestra un toast con el motivo de compra fallida. */
+    fun showPurchaseError(result: com.pixelpals.app.data.catalog.AccessoryPurchaseResult) {
+        val message = when (result) {
+            com.pixelpals.app.data.catalog.AccessoryPurchaseResult.NOT_ENOUGH_COINS ->
+                getString(R.string.store_error_not_enough_coins)
+            com.pixelpals.app.data.catalog.AccessoryPurchaseResult.BOND_REQUIRED ->
+                getString(R.string.store_error_bond_required)
+            else -> getString(R.string.store_error_generic)
+        }
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
     /** Compra un pack premium (accesorios + monedas) */

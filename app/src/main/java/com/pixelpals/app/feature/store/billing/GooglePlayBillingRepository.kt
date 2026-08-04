@@ -7,6 +7,7 @@ import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClientStateListener
 import com.android.billingclient.api.BillingFlowParams
 import com.android.billingclient.api.BillingResult
+import com.android.billingclient.api.ConsumeParams
 import com.android.billingclient.api.PendingPurchasesParams
 import com.android.billingclient.api.ProductDetails
 import com.android.billingclient.api.Purchase
@@ -14,6 +15,7 @@ import com.android.billingclient.api.PurchasesUpdatedListener
 import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryProductDetailsResult
 import com.android.billingclient.api.QueryPurchasesParams
+import com.pixelpals.app.data.catalog.CoinProduct
 import com.pixelpals.app.data.repository.PixelPalsRepository
 import com.pixelpals.app.core.analytics.AnalyticsTracker
 import kotlinx.coroutines.CoroutineScope
@@ -168,14 +170,36 @@ class GooglePlayBillingRepository(
     private suspend fun grantPurchase(purchase: Purchase, source: String): Int {
         if (purchase.purchaseState != Purchase.PurchaseState.PURCHASED) return 0
         var granted = 0
+        var hasConsumable = false
         for (productId in purchase.products) {
             if (!isWhitelisted(productId)) continue
             repository.grantOwnedProduct(productId, source)
+            // Los coin packs también otorgan su cantidad al balance del pet activo.
+            CoinProduct.CATALOG.firstOrNull { it.productId == productId }?.let { coinPack ->
+                repository.grantCoins(petType = null, amount = coinPack.coinAmount)
+            }
             analytics.track("store_purchase_granted", mapOf("product_id" to productId, "source" to source))
             granted++
+            if (productId.startsWith("coins_")) hasConsumable = true
         }
-        if (granted > 0) acknowledgeSafely(purchase)
+        if (granted > 0) {
+            acknowledgeSafely(purchase)
+            // Los coin packs son consumibles: Play bloquea comprar el mismo SKU de nuevo
+            // hasta consumirlo. Consumimos aquí para permitir compras repetidas.
+            if (hasConsumable) consumeSafely(purchase)
+        }
         return granted
+    }
+
+    private suspend fun consumeSafely(purchase: Purchase) {
+        suspendCancellableCoroutine<Unit> { cont ->
+            billingClient.consumeAsync(
+                ConsumeParams.newBuilder().setPurchaseToken(purchase.purchaseToken).build()
+            ) { billingResult, _ ->
+                analytics.track("store_consume", mapOf("code" to billingResult.responseCode.toString()))
+                if (cont.isActive) cont.resume(Unit)
+            }
+        }
     }
 
     private suspend fun acknowledgeSafely(purchase: Purchase) {

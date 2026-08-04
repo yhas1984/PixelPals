@@ -160,6 +160,7 @@ class PetBehaviorSmokeTest {
             PetType.MOKI -> PetPersonality.CURIOUS
         }
         override val equippedAccessory: AccessoryCatalogItem? = null
+        override fun activeModifiers(): List<com.pixelpals.app.data.catalog.PetModifier> = emptyList()
         override var windowX: Int = params.x
         override var windowY: Int = params.y
 
@@ -177,7 +178,6 @@ class PetBehaviorSmokeTest {
         override fun trackInteraction() = Unit
         override fun resumeAnimation() = Unit
         override fun pauseAnimation() = Unit
-        override fun setProgress(progress: PetProgress) = Unit
         override fun consumeTreasure(emoji: String) = Unit
         override fun recordCareAction(action: CareAction) = Unit
         override fun onBatteryChanged(percent: Int, isCharging: Boolean) = Unit

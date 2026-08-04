@@ -249,4 +249,8 @@
     <string name="store_owned_hint_default">no accessory</string>
     <string name="store_buy_with_coins_button">Buy with %1$d coins</string>
     <string name="store_preview_price">—</string>
+
+    <string name="store_error_not_enough_coins">Not enough coins</string>
+    <string name="store_error_bond_required">Bond level too low</string>
+    <string name="store_error_generic">Purchase could not be completed</string>
 </resources>
