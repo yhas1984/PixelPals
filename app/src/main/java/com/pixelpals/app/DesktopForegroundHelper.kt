@@ -45,7 +45,9 @@ object DesktopForegroundHelper {
     }
 
     /**
-     * Última app que pasó a primer plano en la ventana reciente de eventos.
+     * Última app en primer plano mediante máquina de estados sobre el stream de eventos.
+     * Los pares resume/stop cancelan estados obsoletos; así un "resume" repetido de un
+     * overlay del sistema (p. ej. la pantalla asistente de ColorOS) no queda clavado.
      */
     @Suppress("DEPRECATION")
     private fun queryLastForegroundPackage(context: Context): String? {
@@ -55,18 +57,20 @@ object DesktopForegroundHelper {
             val begin = end - QUERY_WINDOW_MS
             val events = usm.queryEvents(begin, end)
             val ev = UsageEvents.Event()
-            var last: String? = null
-            var sawEvent = false
+            var current: String? = null
             while (events.hasNextEvent()) {
                 events.getNextEvent(ev)
-                sawEvent = true
-                when {
-                    ev.eventType == UsageEvents.Event.MOVE_TO_FOREGROUND -> last = ev.packageName
-                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
-                        ev.eventType == UsageEvents.Event.ACTIVITY_RESUMED -> last = ev.packageName
+                when (ev.eventType) {
+                    UsageEvents.Event.MOVE_TO_FOREGROUND,
+                    UsageEvents.Event.ACTIVITY_RESUMED -> current = ev.packageName
+                    UsageEvents.Event.MOVE_TO_BACKGROUND,
+                    UsageEvents.Event.ACTIVITY_PAUSED,
+                    UsageEvents.Event.ACTIVITY_STOPPED,
+                    EVENT_ACTIVITY_DESTROYED,
+                    EVENT_ACTIVITY_STOPPED_NEW -> if (ev.packageName == current) current = null
                 }
             }
-            if (!sawEvent) null else last
+            current
         } catch (e: Exception) {
             Log.w(TAG, "Usage query failed")
             null
@@ -75,11 +79,15 @@ object DesktopForegroundHelper {
 
     /**
      * True si lo que el usuario ve como “frente” es el escritorio (lanzador por defecto).
+     * Si el estado es desconocido, devuelve true (conservador: la mascota se muestra).
      */
     fun isLauncherForeground(context: Context): Boolean {
         if (!hasUsageAccess(context)) return true
         val launcherPkg = defaultLauncherPackage(context.packageManager) ?: return true
-        val fg = queryLastForegroundPackage(context) ?: return false
+        val fg = queryLastForegroundPackage(context) ?: return true
         return fg == launcherPkg
     }
+
+    private const val EVENT_ACTIVITY_STOPPED_NEW = 23
+    private const val EVENT_ACTIVITY_DESTROYED = 13
 }

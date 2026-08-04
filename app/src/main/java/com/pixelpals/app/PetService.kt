@@ -86,18 +86,23 @@ class PetService : Service() {
 
     private val homeCheckRunnable = object : Runnable {
         override fun run() {
-            if (isViewAttached) {
-                refreshKeyboardVisibility()
-                val hadUsageAccess = DesktopForegroundHelper.hasUsageAccess(this@PetService)
-                refreshPetVisibilityForForeground()
-                val nextInterval = if (hadUsageAccess) {
-                    HOME_POLL_INTERVAL_MS
+            try {
+                if (isViewAttached) {
+                    refreshKeyboardVisibility()
+                    val hadUsageAccess = DesktopForegroundHelper.hasUsageAccess(this@PetService)
+                    refreshPetVisibilityForForeground()
+                    val nextInterval = if (hadUsageAccess) {
+                        HOME_POLL_INTERVAL_MS
+                    } else {
+                        HOME_POLL_INTERVAL_SLOW_MS
+                    }
+                    homeCheckHandler.postDelayed(this, nextInterval)
                 } else {
-                    HOME_POLL_INTERVAL_SLOW_MS
+                    homeCheckHandler.postDelayed(this, HOME_POLL_INTERVAL_SLOW_MS)
                 }
-                homeCheckHandler.postDelayed(this, nextInterval)
-            } else {
-                homeCheckHandler.postDelayed(this, HOME_POLL_INTERVAL_SLOW_MS)
+            } catch (e: Exception) {
+                Log.w(TAG, "Polling cycle failed; keeping service alive", e)
+                homeCheckHandler.postDelayed(this, HOME_POLL_INTERVAL_MS)
             }
         }
     }
@@ -114,6 +119,12 @@ class PetService : Service() {
         lastImeVisible = visible
         val height = insets.getInsets(WindowInsets.Type.ime()).bottom
         petView?.onKeyboardChanged(visible, height)
+        if (!visible) {
+            // Re-afirma la posición tras cerrar el teclado por si el sistema re-layout la ventana.
+            val view = petView ?: return
+            val params = view.getWindowParams() ?: return
+            runCatching { wm.updateViewLayout(view, params) }
+        }
     }
 
     override fun onCreate() {
@@ -193,6 +204,8 @@ class PetService : Service() {
         petView = PetView(this, metrics.widthPixels, metrics.heightPixels, petSize, currentPetType)
 
         // Evita robar foco al sistema (mejora back/gestos), manteniendo el overlay touchable.
+        // adjustNothing: el sistema no debe panear/insetar la ventana cuando abre el teclado;
+        // la mascota se reposiciona por nuestra cuenta según el IME.
         val params = WindowManager.LayoutParams(
             viewSize,
             viewSize,
@@ -201,6 +214,7 @@ class PetService : Service() {
             PixelFormat.TRANSPARENT
         ).apply {
             gravity = Gravity.TOP or Gravity.START
+            softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING
             x = metrics.widthPixels / 2 - viewSize / 2
             y = metrics.heightPixels / 3
         }
@@ -252,7 +266,8 @@ class PetService : Service() {
             applyPetOverlayVisible(true)
             return
         }
-        applyPetOverlayVisible(DesktopForegroundHelper.isLauncherForeground(this))
+        val launcher = DesktopForegroundHelper.isLauncherForeground(this)
+        applyPetOverlayVisible(launcher)
     }
 
     private fun applyPetOverlayVisible(visible: Boolean) {

@@ -129,7 +129,9 @@ class PetView(
 
     override val groundY: Int
         get() = screenHeight - petSpriteSize -
-            (56f * resources.displayMetrics.density).roundToInt()
+            (56f * resources.displayMetrics.density).roundToInt() - keyboardHeightPx
+
+    private var keyboardHeightPx = 0
 
     private val behavior: PetBehavior? by lazy {
         PetBehaviorFactory.create(petType, this)
@@ -287,6 +289,7 @@ class PetView(
     }
 
     override fun onKeyboardChanged(visible: Boolean, height: Int) {
+        keyboardHeightPx = if (visible) height.coerceAtLeast(0) else 0
         behavior?.onKeyboardVisibilityChanged(visible, height)
     }
 
