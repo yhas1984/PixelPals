@@ -1,0 +1,134 @@
+package com.pixelpals.app.feature.overlay.behavior
+
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Rect
+import android.graphics.RectF
+import android.util.Log
+import com.pixelpals.app.data.catalog.AccessoryCatalogItem
+import com.pixelpals.app.data.catalog.AccessorySpriteSpec
+import com.pixelpals.app.data.catalog.SpriteClip
+import java.util.concurrent.ConcurrentHashMap
+
+/**
+ * Renderiza el sprite atlas de un accesorio sobre el pet.
+ *
+ * Soporta clips animados (idle / flap) con reloj propio por accesorio,
+ * ancla relativa al centro del pet y capa (detrás / delante del cuerpo).
+ */
+class AccessorySpriteRenderer(context: Context) {
+
+    private val appContext = context.applicationContext
+    private val atlasCache = ConcurrentHashMap<String, Bitmap?>()
+    private val clipClocks = ConcurrentHashMap<String, ClipClock>()
+
+    private data class ClipClock(var elapsedMs: Long, var frameIndex: Int, var currentClipKey: String)
+
+    /** Carga y cachea el atlas PNG del accesorio desde assets. */
+    private fun atlasOf(spec: AccessorySpriteSpec): Bitmap? {
+        atlasCache[spec.atlasPath]?.let { return it }
+        val bitmap = try {
+            appContext.assets.open(spec.atlasPath).use { input ->
+                BitmapFactory.decodeStream(input)
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Cannot load accessory atlas ${spec.atlasPath}", e)
+            null
+        }
+        atlasCache[spec.atlasPath] = bitmap
+        return bitmap
+    }
+
+    /**
+     * Dibuja el accesorio centrado en (petCenterX, petCenterY) — el centro del sprite del pet.
+     *
+     * @param flapping si true, intenta reproducir el clip "flap" (alas/gadgets activos).
+     * @param facingRight si false, voltea horizontalmente el accesorio.
+     */
+    fun draw(
+        canvas: Canvas,
+        accessory: AccessoryCatalogItem,
+        petCenterX: Float,
+        petCenterY: Float,
+        petSpriteSize: Int,
+        dt: Float,
+        flapping: Boolean,
+        facingRight: Boolean,
+        paint: Paint,
+    ) {
+        val spec = accessory.sprite ?: return
+        val sheet = atlasOf(spec) ?: return
+        if (sheet.isRecycled) return
+
+        val clip = spec.clipOrDefault(flapping) ?: return
+        val frame = advanceClock(accessory.id, spec, clip, dt, flapping)
+
+        val cols = spec.columns.coerceAtLeast(1)
+        val rows = spec.rows.coerceAtLeast(1)
+        val totalFrames = cols * rows
+        val frameIndex = clip.frames[frame % clip.frames.size].coerceIn(0, totalFrames - 1)
+        val row = frameIndex / cols
+        val col = frameIndex % cols
+
+        val srcRect = Rect(
+            col * spec.frameWidth,
+            row * spec.frameHeight,
+            (col + 1) * spec.frameWidth,
+            (row + 1) * spec.frameHeight,
+        )
+
+        // El frame del atlas se dibuja centrado en el ancla.
+        val anchorScale = spec.scale * petSpriteSize / spec.frameWidth
+        val anchorX = petCenterX + spec.anchor.xRatio * petSpriteSize
+        val anchorY = petCenterY + spec.anchor.yRatio * petSpriteSize
+
+        val halfW = spec.frameWidth * anchorScale / 2f
+        val halfH = spec.frameHeight * anchorScale / 2f
+        val dstRect = RectF(anchorX - halfW, anchorY - halfH, anchorX + halfW, anchorY + halfH)
+
+        canvas.save()
+        if (!facingRight) {
+            // Volteo horizontal alrededor del eje del ancla.
+            canvas.scale(-1f, 1f, anchorX, anchorY)
+        }
+        canvas.drawBitmap(sheet, srcRect, dstRect, paint)
+        canvas.restore()
+    }
+
+    private fun advanceClock(
+        accessoryId: String,
+        spec: AccessorySpriteSpec,
+        clip: SpriteClip,
+        dt: Float,
+        flapping: Boolean,
+    ): Int {
+        val clipKey = if (flapping && spec.clips.containsKey("flap")) "flap" else "idle"
+        val clock = clipClocks.computeIfAbsent(accessoryId) { ClipClock(0L, 0, clipKey) }
+
+        if (clock.currentClipKey != clipKey) {
+            clock.currentClipKey = clipKey
+            clock.elapsedMs = 0L
+            clock.frameIndex = 0
+        }
+
+        clock.elapsedMs += (dt * 1000f).toLong()
+        if (clip.frameDurationMs <= 0) return clock.frameIndex
+
+        while (clock.elapsedMs >= clip.frameDurationMs && clip.frames.size > 1) {
+            clock.elapsedMs -= clip.frameDurationMs
+            if (clip.loop) {
+                clock.frameIndex = (clock.frameIndex + 1) % clip.frames.size
+            } else {
+                clock.frameIndex = (clock.frameIndex + 1).coerceAtMost(clip.frames.size - 1)
+            }
+        }
+        return clock.frameIndex
+    }
+
+    private companion object {
+        const val TAG = "AccessorySpriteRenderer"
+    }
+}

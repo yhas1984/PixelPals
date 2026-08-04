@@ -55,6 +55,10 @@ class PetView(
     private var lastTimeWindowKey = ""
 
     private val motionEngine = MotionEngine()
+    private val accessorySpriteRenderer by lazy {
+        com.pixelpals.app.feature.overlay.behavior.AccessorySpriteRenderer(context)
+    }
+    private var lastFrameDelta = 0f
     private val touchSlop = ViewConfiguration.get(context).scaledTouchSlop.toFloat()
     private val minimumFlingVelocity = ViewConfiguration.get(context).scaledMinimumFlingVelocity.toFloat()
     private val maximumFlingVelocity = ViewConfiguration.get(context).scaledMaximumFlingVelocity.toFloat()
@@ -160,7 +164,9 @@ class PetView(
         override fun doFrame(frameTimeNanos: Long) {
             if (!isAnimating) return
             if (lastFrameTimeNanos != 0L && frameTimeNanos > lastFrameTimeNanos) {
-                val step = motionEngine.splitDelta((frameTimeNanos - lastFrameTimeNanos) / 1_000_000_000f)
+                val rawDt = (frameTimeNanos - lastFrameTimeNanos) / 1_000_000_000f
+                val step = motionEngine.splitDelta(rawDt)
+                lastFrameDelta = step.stepDt.coerceAtLeast(1f / 60f)
                 repeat(step.steps) { update(step.stepDt) }
             }
             lastFrameTimeNanos = frameTimeNanos
@@ -399,6 +405,32 @@ class PetView(
     private fun drawAccessorySlot(canvas: Canvas, slot: com.pixelpals.app.data.catalog.AccessorySlot) {
         val accessory = equippedAccessory ?: return
         if (accessory.slot != slot) return
+
+        // Pase 1: si el accesorio es BEHIND (alas, jetpack), dibujar detrás.
+        // Pase 3: si es FRONT (gorros, gafas), dibujar encima.
+        val spriteLayer = accessory.sprite?.zLayer
+        val isBehind = spriteLayer == com.pixelpals.app.data.catalog.SpriteZLayer.BEHIND
+        val isFrontPass = slot == com.pixelpals.app.data.catalog.AccessorySlot.HEAD ||
+            slot == com.pixelpals.app.data.catalog.AccessorySlot.FACE ||
+            slot == com.pixelpals.app.data.catalog.AccessorySlot.BODY
+        if (isBehind == isFrontPass) return
+
+        if (accessory.sprite != null) {
+            accessorySpriteRenderer.draw(
+                canvas = canvas,
+                accessory = accessory,
+                petCenterX = width / 2f + renderOffsetX,
+                petCenterY = height / 2f + renderOffsetY,
+                petSpriteSize = petSpriteSize,
+                dt = lastFrameDelta,
+                flapping = state == PetState.FALLING || state == PetState.JUMPING,
+                facingRight = renderScaleX >= 0f,
+                paint = accessoryPaint,
+            )
+            return
+        }
+
+        // Fallback: emoji (accesorios sin sprite aún).
         accessoryPaint.textSize = petSpriteSize * accessory.scale
         val cx = width / 2f + renderOffsetX + (accessory.offsetXRatio * petSpriteSize * if (renderScaleX >= 0f) 1f else -1f)
         val cy = height / 2f + renderOffsetY + (accessory.offsetYRatio * petSpriteSize)

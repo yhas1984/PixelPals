@@ -53,6 +53,7 @@ android {
 
     testOptions {
         unitTests.isIncludeAndroidResources = true
+        unitTests.isReturnDefaultValues = true
     }
 
     packaging {
@@ -93,6 +94,7 @@ dependencies {
     testImplementation("androidx.test:core:1.7.0")
     testImplementation("androidx.test:runner:1.7.0")
     testImplementation("androidx.room:room-testing:$roomVersion")
+    testImplementation("org.json:json:20240303")
 
     androidTestImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test:core:1.7.0")

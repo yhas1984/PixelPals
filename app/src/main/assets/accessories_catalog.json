@@ -8,14 +8,29 @@
       "description": "Un aro brillante para mascotas celestiales y elegantes.",
       "emoji": "💫",
       "slot": "HEAD",
-      "visual": { "type": "emoji", "offsetX": 0.0, "offsetY": -0.34, "scale": 0.26 },
+      "visual": {
+        "type": "emoji",
+        "offsetX": 0.0,
+        "offsetY": -0.34,
+        "scale": 0.26
+      },
       "modifiers": [],
       "isPremium": true,
       "packLabel": "Celestial Pack",
-      "supportedPetIds": ["angel", "ginger", "bloop", "nube_michi", "moki"],
+      "supportedPetIds": [
+        "angel",
+        "ginger",
+        "bloop",
+        "nube_michi",
+        "moki"
+      ],
       "coinPrice": null,
       "bondRequired": 0,
-      "tags": ["glow", "premium", "halo"]
+      "tags": [
+        "glow",
+        "premium",
+        "halo"
+      ]
     },
     {
       "id": "royal_crown",
@@ -24,14 +39,49 @@
       "description": "Una corona tierna para presumir en pantalla.",
       "emoji": "👑",
       "slot": "HEAD",
-      "visual": { "type": "emoji", "offsetX": 0.0, "offsetY": -0.32, "scale": 0.24 },
+      "visual": {
+        "type": "emoji",
+        "offsetX": 0.0,
+        "offsetY": -0.32,
+        "scale": 0.24
+      },
       "modifiers": [],
       "isPremium": true,
       "packLabel": "Royal Pack",
-      "supportedPetIds": ["corgi", "ginger", "angel", "diablillo"],
+      "supportedPetIds": [
+        "corgi",
+        "ginger",
+        "angel",
+        "diablillo"
+      ],
       "coinPrice": null,
       "bondRequired": 0,
-      "tags": ["crown", "premium"]
+      "tags": [
+        "crown",
+        "premium"
+      ],
+      "sprite": {
+        "atlasPath": "accessories/royal_crown/royal_crown.png",
+        "frameWidth": 384,
+        "frameHeight": 384,
+        "columns": 1,
+        "rows": 1,
+        "clips": {
+          "idle": {
+            "frames": [
+              0
+            ],
+            "frameDurationMs": 150,
+            "loop": true
+          }
+        },
+        "anchor": {
+          "xRatio": 0.0,
+          "yRatio": -0.4
+        },
+        "zLayer": "FRONT",
+        "scale": 0.55
+      }
     },
     {
       "id": "star_trail",
@@ -40,16 +90,39 @@
       "description": "Estrellitas que siguen a tu pet en movimiento.",
       "emoji": "✨",
       "slot": "BODY",
-      "visual": { "type": "emoji", "offsetX": 0.23, "offsetY": -0.05, "scale": 0.22 },
+      "visual": {
+        "type": "emoji",
+        "offsetX": 0.23,
+        "offsetY": -0.05,
+        "scale": 0.22
+      },
       "modifiers": [
-        { "type": "trailParticles", "particle": "SPARKLES", "density": 3 }
+        {
+          "type": "trailParticles",
+          "particle": "SPARKLES",
+          "density": 3
+        }
       ],
       "isPremium": true,
       "packLabel": "Dreamy Pack",
-      "supportedPetIds": ["bloop", "nube_michi", "angel", "moki", "corgi", "ginger", "jelly", "patito", "diablillo"],
+      "supportedPetIds": [
+        "bloop",
+        "nube_michi",
+        "angel",
+        "moki",
+        "corgi",
+        "ginger",
+        "jelly",
+        "patito",
+        "diablillo"
+      ],
       "coinPrice": 45,
       "bondRequired": 12,
-      "tags": ["premium", "trail", "stars"]
+      "tags": [
+        "premium",
+        "trail",
+        "stars"
+      ]
     },
     {
       "id": "cozy_scarf",
@@ -58,14 +131,50 @@
       "description": "Una bufanda suave para darle un look adorable y calentito.",
       "emoji": "🧣",
       "slot": "BODY",
-      "visual": { "type": "emoji", "offsetX": 0.0, "offsetY": -0.02, "scale": 0.24 },
+      "visual": {
+        "type": "emoji",
+        "offsetX": 0.0,
+        "offsetY": -0.02,
+        "scale": 0.24
+      },
       "modifiers": [],
       "isPremium": true,
       "packLabel": "Cozy Pack",
-      "supportedPetIds": ["corgi", "ginger", "patito", "nube_michi"],
+      "supportedPetIds": [
+        "corgi",
+        "ginger",
+        "patito",
+        "nube_michi"
+      ],
       "coinPrice": null,
       "bondRequired": 0,
-      "tags": ["premium", "warm", "scarf"]
+      "tags": [
+        "premium",
+        "warm",
+        "scarf"
+      ],
+      "sprite": {
+        "atlasPath": "accessories/cozy_scarf/cozy_scarf.png",
+        "frameWidth": 384,
+        "frameHeight": 384,
+        "columns": 1,
+        "rows": 1,
+        "clips": {
+          "idle": {
+            "frames": [
+              0
+            ],
+            "frameDurationMs": 150,
+            "loop": true
+          }
+        },
+        "anchor": {
+          "xRatio": 0.0,
+          "yRatio": -0.02
+        },
+        "zLayer": "FRONT",
+        "scale": 0.6
+      }
     },
     {
       "id": "party_spark",
@@ -74,16 +183,39 @@
       "description": "Un toque festivo para días especiales y momentos de juego.",
       "emoji": "🎉",
       "slot": "BODY",
-      "visual": { "type": "emoji", "offsetX": 0.24, "offsetY": -0.08, "scale": 0.22 },
+      "visual": {
+        "type": "emoji",
+        "offsetX": 0.24,
+        "offsetY": -0.08,
+        "scale": 0.22
+      },
       "modifiers": [
-        { "type": "trailParticles", "particle": "BUBBLES", "density": 2 }
+        {
+          "type": "trailParticles",
+          "particle": "BUBBLES",
+          "density": 2
+        }
       ],
       "isPremium": true,
       "packLabel": "Party Pack",
-      "supportedPetIds": ["bloop", "nube_michi", "angel", "moki", "corgi", "ginger", "jelly", "patito", "diablillo"],
+      "supportedPetIds": [
+        "bloop",
+        "nube_michi",
+        "angel",
+        "moki",
+        "corgi",
+        "ginger",
+        "jelly",
+        "patito",
+        "diablillo"
+      ],
       "coinPrice": null,
       "bondRequired": 0,
-      "tags": ["premium", "party", "fun"]
+      "tags": [
+        "premium",
+        "party",
+        "fun"
+      ]
     },
     {
       "id": "celestial_wings",
@@ -92,17 +224,71 @@
       "description": "Alas luminosas que elevan a tu pet y dejan un rastro de estrellas.",
       "emoji": "🪽",
       "slot": "BACK",
-      "visual": { "type": "emoji", "offsetX": 0.0, "offsetY": -0.1, "scale": 0.45 },
+      "visual": {
+        "type": "emoji",
+        "offsetX": 0.0,
+        "offsetY": -0.1,
+        "scale": 0.45
+      },
       "modifiers": [
-        { "type": "speedBoost", "multiplier": 1.10 },
-        { "type": "trailParticles", "particle": "STARDUST", "density": 5 }
+        {
+          "type": "wingLift",
+          "liftMultiplier": 0.15,
+          "airTimeMultiplier": 0.25
+        },
+        {
+          "type": "trailParticles",
+          "particle": "STARDUST",
+          "density": 5
+        }
       ],
       "isPremium": true,
       "packLabel": "Celestial Pack",
-      "supportedPetIds": ["angel", "bloop", "nube_michi", "moki"],
+      "supportedPetIds": [
+        "angel",
+        "bloop",
+        "nube_michi",
+        "moki"
+      ],
       "coinPrice": null,
       "bondRequired": 12,
-      "tags": ["gadget", "wings", "premium"]
+      "tags": [
+        "gadget",
+        "wings",
+        "premium"
+      ],
+      "sprite": {
+        "atlasPath": "accessories/celestial_wings/celestial_wings.png",
+        "frameWidth": 384,
+        "frameHeight": 384,
+        "columns": 4,
+        "rows": 1,
+        "clips": {
+          "idle": {
+            "frames": [
+              0
+            ],
+            "frameDurationMs": 150,
+            "loop": true
+          },
+          "flap": {
+            "frames": [
+              0,
+              1,
+              2,
+              3
+            ],
+            "frameDurationMs": 140,
+            "loop": true
+          }
+        },
+        "anchor": {
+          "xRatio": 0.0,
+          "yRatio": -0.1
+        },
+        "zLayer": "BEHIND",
+        "scale": 0.7
+      }
     },
     {
       "id": "demonic_wings",
@@ -111,17 +297,70 @@
       "description": "Alas oscuras que avivan al travieso con un rastro de fuego.",
       "emoji": "🦇",
       "slot": "BACK",
-      "visual": { "type": "emoji", "offsetX": 0.0, "offsetY": -0.1, "scale": 0.45 },
+      "visual": {
+        "type": "emoji",
+        "offsetX": 0.0,
+        "offsetY": -0.1,
+        "scale": 0.45
+      },
       "modifiers": [
-        { "type": "speedBoost", "multiplier": 1.10 },
-        { "type": "trailParticles", "particle": "FIRE", "density": 5 }
+        {
+          "type": "wingLift",
+          "liftMultiplier": 0.15,
+          "airTimeMultiplier": 0.25
+        },
+        {
+          "type": "trailParticles",
+          "particle": "FIRE",
+          "density": 5
+        }
       ],
       "isPremium": true,
       "packLabel": "Demonic Pack",
-      "supportedPetIds": ["diablillo", "ginger", "jelly"],
+      "supportedPetIds": [
+        "diablillo",
+        "ginger",
+        "jelly"
+      ],
       "coinPrice": null,
       "bondRequired": 12,
-      "tags": ["gadget", "wings", "premium"]
+      "tags": [
+        "gadget",
+        "wings",
+        "premium"
+      ],
+      "sprite": {
+        "atlasPath": "accessories/demonic_wings/demonic_wings.png",
+        "frameWidth": 384,
+        "frameHeight": 384,
+        "columns": 4,
+        "rows": 1,
+        "clips": {
+          "idle": {
+            "frames": [
+              0
+            ],
+            "frameDurationMs": 150,
+            "loop": true
+          },
+          "flap": {
+            "frames": [
+              0,
+              1,
+              2,
+              3
+            ],
+            "frameDurationMs": 140,
+            "loop": true
+          }
+        },
+        "anchor": {
+          "xRatio": 0.0,
+          "yRatio": -0.1
+        },
+        "zLayer": "BEHIND",
+        "scale": 0.7
+      }
     },
     {
       "id": "duck_jetpack",
@@ -130,17 +369,68 @@
       "description": "Pequeño jetpack que lanza al patito más alto en cada salto.",
       "emoji": "🚀",
       "slot": "GADGET",
-      "visual": { "type": "emoji", "offsetX": -0.05, "offsetY": -0.45, "scale": 0.30 },
+      "visual": {
+        "type": "emoji",
+        "offsetX": -0.05,
+        "offsetY": -0.45,
+        "scale": 0.3
+      },
       "modifiers": [
-        { "type": "speedBoost", "multiplier": 1.18 },
-        { "type": "trailParticles", "particle": "FIRE", "density": 4 }
+        {
+          "type": "wingLift",
+          "liftMultiplier": 0.18,
+          "airTimeMultiplier": 0.2
+        },
+        {
+          "type": "trailParticles",
+          "particle": "FIRE",
+          "density": 4
+        }
       ],
       "isPremium": true,
       "packLabel": "Adventure Pack",
-      "supportedPetIds": ["patito"],
+      "supportedPetIds": [
+        "patito"
+      ],
       "coinPrice": null,
       "bondRequired": 8,
-      "tags": ["gadget", "jetpack", "premium"]
+      "tags": [
+        "gadget",
+        "jetpack",
+        "premium"
+      ],
+      "sprite": {
+        "atlasPath": "accessories/duck_jetpack/duck_jetpack.png",
+        "frameWidth": 384,
+        "frameHeight": 384,
+        "columns": 4,
+        "rows": 1,
+        "clips": {
+          "idle": {
+            "frames": [
+              0
+            ],
+            "frameDurationMs": 150,
+            "loop": true
+          },
+          "flap": {
+            "frames": [
+              0,
+              1,
+              2,
+              3
+            ],
+            "frameDurationMs": 140,
+            "loop": true
+          }
+        },
+        "anchor": {
+          "xRatio": 0.0,
+          "yRatio": -0.45
+        },
+        "zLayer": "BEHIND",
+        "scale": 0.55
+      }
     },
     {
       "id": "round_glasses",
@@ -149,14 +439,54 @@
       "description": "Gafas redondas para el look intelectual.",
       "emoji": "🤓",
       "slot": "FACE",
-      "visual": { "type": "emoji", "offsetX": 0.0, "offsetY": -0.05, "scale": 0.24 },
+      "visual": {
+        "type": "emoji",
+        "offsetX": 0.0,
+        "offsetY": -0.05,
+        "scale": 0.24
+      },
       "modifiers": [],
       "isPremium": false,
       "packLabel": "Starter Pack",
-      "supportedPetIds": ["bloop", "nube_michi", "angel", "moki", "corgi", "ginger", "jelly", "patito", "diablillo"],
+      "supportedPetIds": [
+        "bloop",
+        "nube_michi",
+        "angel",
+        "moki",
+        "corgi",
+        "ginger",
+        "jelly",
+        "patito",
+        "diablillo"
+      ],
       "coinPrice": 25,
       "bondRequired": 0,
-      "tags": ["cosmetic", "glasses"]
+      "tags": [
+        "cosmetic",
+        "glasses"
+      ],
+      "sprite": {
+        "atlasPath": "accessories/round_glasses/round_glasses.png",
+        "frameWidth": 384,
+        "frameHeight": 384,
+        "columns": 1,
+        "rows": 1,
+        "clips": {
+          "idle": {
+            "frames": [
+              0
+            ],
+            "frameDurationMs": 150,
+            "loop": true
+          }
+        },
+        "anchor": {
+          "xRatio": 0.0,
+          "yRatio": -0.05
+        },
+        "zLayer": "FRONT",
+        "scale": 0.5
+      }
     },
     {
       "id": "pilot_glasses",
@@ -165,14 +495,49 @@
       "description": "Gafas de aviador para los más aventureros.",
       "emoji": "🕶️",
       "slot": "FACE",
-      "visual": { "type": "emoji", "offsetX": 0.0, "offsetY": -0.05, "scale": 0.26 },
+      "visual": {
+        "type": "emoji",
+        "offsetX": 0.0,
+        "offsetY": -0.05,
+        "scale": 0.26
+      },
       "modifiers": [],
       "isPremium": true,
       "packLabel": "Adventure Pack",
-      "supportedPetIds": ["corgi", "patito", "moki"],
+      "supportedPetIds": [
+        "corgi",
+        "patito",
+        "moki"
+      ],
       "coinPrice": null,
       "bondRequired": 5,
-      "tags": ["cosmetic", "premium", "glasses"]
+      "tags": [
+        "cosmetic",
+        "premium",
+        "glasses"
+      ],
+      "sprite": {
+        "atlasPath": "accessories/pilot_glasses/pilot_glasses.png",
+        "frameWidth": 384,
+        "frameHeight": 384,
+        "columns": 1,
+        "rows": 1,
+        "clips": {
+          "idle": {
+            "frames": [
+              0
+            ],
+            "frameDurationMs": 150,
+            "loop": true
+          }
+        },
+        "anchor": {
+          "xRatio": 0.0,
+          "yRatio": -0.08
+        },
+        "zLayer": "FRONT",
+        "scale": 0.52
+      }
     },
     {
       "id": "magic_hat",
@@ -181,14 +546,51 @@
       "description": "Un sombrero de mago misterioso con una estrella.",
       "emoji": "🎩",
       "slot": "HEAD",
-      "visual": { "type": "emoji", "offsetX": 0.0, "offsetY": -0.4, "scale": 0.30 },
+      "visual": {
+        "type": "emoji",
+        "offsetX": 0.0,
+        "offsetY": -0.4,
+        "scale": 0.3
+      },
       "modifiers": [],
       "isPremium": true,
       "packLabel": "Magic Pack",
-      "supportedPetIds": ["bloop", "nube_michi", "angel", "moki", "ginger"],
+      "supportedPetIds": [
+        "bloop",
+        "nube_michi",
+        "angel",
+        "moki",
+        "ginger"
+      ],
       "coinPrice": null,
       "bondRequired": 10,
-      "tags": ["cosmetic", "premium", "hat"]
+      "tags": [
+        "cosmetic",
+        "premium",
+        "hat"
+      ],
+      "sprite": {
+        "atlasPath": "accessories/magic_hat/magic_hat.png",
+        "frameWidth": 384,
+        "frameHeight": 384,
+        "columns": 1,
+        "rows": 1,
+        "clips": {
+          "idle": {
+            "frames": [
+              0
+            ],
+            "frameDurationMs": 150,
+            "loop": true
+          }
+        },
+        "anchor": {
+          "xRatio": 0.0,
+          "yRatio": -0.42
+        },
+        "zLayer": "FRONT",
+        "scale": 0.62
+      }
     },
     {
       "id": "tiara",
@@ -197,14 +599,49 @@
       "description": "Una tiara brillante para las mascotas más elegantes.",
       "emoji": "👸",
       "slot": "HEAD",
-      "visual": { "type": "emoji", "offsetX": 0.0, "offsetY": -0.36, "scale": 0.24 },
+      "visual": {
+        "type": "emoji",
+        "offsetX": 0.0,
+        "offsetY": -0.36,
+        "scale": 0.24
+      },
       "modifiers": [],
       "isPremium": false,
       "packLabel": "Royal Pack",
-      "supportedPetIds": ["nube_michi", "ginger", "angel", "bloop"],
+      "supportedPetIds": [
+        "nube_michi",
+        "ginger",
+        "angel",
+        "bloop"
+      ],
       "coinPrice": 30,
       "bondRequired": 0,
-      "tags": ["cosmetic", "tiara"]
+      "tags": [
+        "cosmetic",
+        "tiara"
+      ],
+      "sprite": {
+        "atlasPath": "accessories/tiara/tiara.png",
+        "frameWidth": 384,
+        "frameHeight": 384,
+        "columns": 1,
+        "rows": 1,
+        "clips": {
+          "idle": {
+            "frames": [
+              0
+            ],
+            "frameDurationMs": 150,
+            "loop": true
+          }
+        },
+        "anchor": {
+          "xRatio": 0.0,
+          "yRatio": -0.4
+        },
+        "zLayer": "FRONT",
+        "scale": 0.55
+      }
     },
     {
       "id": "bowtie",
@@ -213,14 +650,49 @@
       "description": "Una pajarita para eventos formales.",
       "emoji": "🎀",
       "slot": "BODY",
-      "visual": { "type": "emoji", "offsetX": 0.0, "offsetY": 0.05, "scale": 0.20 },
+      "visual": {
+        "type": "emoji",
+        "offsetX": 0.0,
+        "offsetY": 0.05,
+        "scale": 0.2
+      },
       "modifiers": [],
       "isPremium": false,
       "packLabel": "Royal Pack",
-      "supportedPetIds": ["corgi", "ginger", "patito", "jelly"],
+      "supportedPetIds": [
+        "corgi",
+        "ginger",
+        "patito",
+        "jelly"
+      ],
       "coinPrice": 20,
       "bondRequired": 0,
-      "tags": ["cosmetic", "formal"]
+      "tags": [
+        "cosmetic",
+        "formal"
+      ],
+      "sprite": {
+        "atlasPath": "accessories/bowtie/bowtie.png",
+        "frameWidth": 384,
+        "frameHeight": 384,
+        "columns": 1,
+        "rows": 1,
+        "clips": {
+          "idle": {
+            "frames": [
+              0
+            ],
+            "frameDurationMs": 150,
+            "loop": true
+          }
+        },
+        "anchor": {
+          "xRatio": 0.0,
+          "yRatio": 0.08
+        },
+        "zLayer": "FRONT",
+        "scale": 0.45
+      }
     },
     {
       "id": "rainbow_scarf",
@@ -229,14 +701,51 @@
       "description": "Bufanda arcoíris con colores vibrantes.",
       "emoji": "🌈",
       "slot": "BODY",
-      "visual": { "type": "emoji", "offsetX": 0.0, "offsetY": -0.02, "scale": 0.26 },
+      "visual": {
+        "type": "emoji",
+        "offsetX": 0.0,
+        "offsetY": -0.02,
+        "scale": 0.26
+      },
       "modifiers": [],
       "isPremium": true,
       "packLabel": "Party Pack",
-      "supportedPetIds": ["corgi", "ginger", "patito", "nube_michi", "jelly"],
+      "supportedPetIds": [
+        "corgi",
+        "ginger",
+        "patito",
+        "nube_michi",
+        "jelly"
+      ],
       "coinPrice": null,
       "bondRequired": 5,
-      "tags": ["cosmetic", "premium", "scarf"]
+      "tags": [
+        "cosmetic",
+        "premium",
+        "scarf"
+      ],
+      "sprite": {
+        "atlasPath": "accessories/rainbow_scarf/rainbow_scarf.png",
+        "frameWidth": 384,
+        "frameHeight": 384,
+        "columns": 1,
+        "rows": 1,
+        "clips": {
+          "idle": {
+            "frames": [
+              0
+            ],
+            "frameDurationMs": 150,
+            "loop": true
+          }
+        },
+        "anchor": {
+          "xRatio": 0.0,
+          "yRatio": -0.02
+        },
+        "zLayer": "FRONT",
+        "scale": 0.6
+      }
     },
     {
       "id": "devil_horns",
@@ -245,14 +754,48 @@
       "description": "Cuernos rojos para un look travieso.",
       "emoji": "😈",
       "slot": "HEAD",
-      "visual": { "type": "emoji", "offsetX": 0.0, "offsetY": -0.35, "scale": 0.22 },
+      "visual": {
+        "type": "emoji",
+        "offsetX": 0.0,
+        "offsetY": -0.35,
+        "scale": 0.22
+      },
       "modifiers": [],
       "isPremium": false,
       "packLabel": "Demonic Pack",
-      "supportedPetIds": ["diablillo", "ginger", "jelly"],
+      "supportedPetIds": [
+        "diablillo",
+        "ginger",
+        "jelly"
+      ],
       "coinPrice": 35,
       "bondRequired": 8,
-      "tags": ["cosmetic", "horns"]
+      "tags": [
+        "cosmetic",
+        "horns"
+      ],
+      "sprite": {
+        "atlasPath": "accessories/devil_horns/devil_horns.png",
+        "frameWidth": 384,
+        "frameHeight": 384,
+        "columns": 1,
+        "rows": 1,
+        "clips": {
+          "idle": {
+            "frames": [
+              0
+            ],
+            "frameDurationMs": 150,
+            "loop": true
+          }
+        },
+        "anchor": {
+          "xRatio": 0.0,
+          "yRatio": -0.42
+        },
+        "zLayer": "FRONT",
+        "scale": 0.55
+      }
     },
     {
       "id": "duck_inner_tube",
@@ -261,16 +804,30 @@
       "description": "Un flotador para los chapuzones del patito.",
       "emoji": "🛟",
       "slot": "GADGET",
-      "visual": { "type": "emoji", "offsetX": 0.0, "offsetY": 0.1, "scale": 0.45 },
+      "visual": {
+        "type": "emoji",
+        "offsetX": 0.0,
+        "offsetY": 0.1,
+        "scale": 0.45
+      },
       "modifiers": [
-        { "type": "trailParticles", "particle": "BUBBLES", "density": 4 }
+        {
+          "type": "trailParticles",
+          "particle": "BUBBLES",
+          "density": 4
+        }
       ],
       "isPremium": true,
       "packLabel": "Adventure Pack",
-      "supportedPetIds": ["patito"],
+      "supportedPetIds": [
+        "patito"
+      ],
       "coinPrice": null,
       "bondRequired": 5,
-      "tags": ["gadget", "premium"]
+      "tags": [
+        "gadget",
+        "premium"
+      ]
     },
     {
       "id": "heart_glasses",
@@ -279,14 +836,28 @@
       "description": "Gafas con forma de corazón para enamorar.",
       "emoji": "😍",
       "slot": "FACE",
-      "visual": { "type": "emoji", "offsetX": 0.0, "offsetY": -0.05, "scale": 0.22 },
+      "visual": {
+        "type": "emoji",
+        "offsetX": 0.0,
+        "offsetY": -0.05,
+        "scale": 0.22
+      },
       "modifiers": [],
       "isPremium": false,
       "packLabel": "Starter Pack",
-      "supportedPetIds": ["bloop", "nube_michi", "angel", "moki", "ginger"],
+      "supportedPetIds": [
+        "bloop",
+        "nube_michi",
+        "angel",
+        "moki",
+        "ginger"
+      ],
       "coinPrice": 28,
       "bondRequired": 0,
-      "tags": ["cosmetic", "love"]
+      "tags": [
+        "cosmetic",
+        "love"
+      ]
     },
     {
       "id": "magic_wand",
@@ -295,18 +866,36 @@
       "description": "Una varita mágica que añade chispas al moverse.",
       "emoji": "🪄",
       "slot": "GADGET",
-      "visual": { "type": "emoji", "offsetX": 0.3, "offsetY": 0.0, "scale": 0.28 },
+      "visual": {
+        "type": "emoji",
+        "offsetX": 0.3,
+        "offsetY": 0.0,
+        "scale": 0.28
+      },
       "modifiers": [
-        { "type": "trailParticles", "particle": "SPARKLES", "density": 5 }
+        {
+          "type": "trailParticles",
+          "particle": "SPARKLES",
+          "density": 5
+        }
       ],
       "isPremium": true,
       "packLabel": "Magic Pack",
-      "supportedPetIds": ["bloop", "nube_michi", "angel", "moki", "ginger"],
+      "supportedPetIds": [
+        "bloop",
+        "nube_michi",
+        "angel",
+        "moki",
+        "ginger"
+      ],
       "coinPrice": null,
       "bondRequired": 15,
-      "tags": ["gadget", "premium", "magic"]
+      "tags": [
+        "gadget",
+        "premium",
+        "magic"
+      ]
     },
-
     {
       "id": "viking_helmet",
       "productId": "acc_viking_helmet",
@@ -314,14 +903,50 @@
       "description": "Un casco vikingo con cuernos para los más valientes.",
       "emoji": "🪖",
       "slot": "HEAD",
-      "visual": { "type": "emoji", "offsetX": 0.0, "offsetY": -0.36, "scale": 0.32 },
+      "visual": {
+        "type": "emoji",
+        "offsetX": 0.0,
+        "offsetY": -0.36,
+        "scale": 0.32
+      },
       "modifiers": [],
       "isPremium": true,
       "packLabel": "Warrior Pack",
-      "supportedPetIds": ["corgi", "jelly", "ginger", "diablillo"],
+      "supportedPetIds": [
+        "corgi",
+        "jelly",
+        "ginger",
+        "diablillo"
+      ],
       "coinPrice": null,
       "bondRequired": 18,
-      "tags": ["cosmetic", "premium", "warrior"]
+      "tags": [
+        "cosmetic",
+        "premium",
+        "warrior"
+      ],
+      "sprite": {
+        "atlasPath": "accessories/viking_helmet/viking_helmet.png",
+        "frameWidth": 384,
+        "frameHeight": 384,
+        "columns": 1,
+        "rows": 1,
+        "clips": {
+          "idle": {
+            "frames": [
+              0
+            ],
+            "frameDurationMs": 150,
+            "loop": true
+          }
+        },
+        "anchor": {
+          "xRatio": 0.0,
+          "yRatio": -0.38
+        },
+        "zLayer": "FRONT",
+        "scale": 0.55
+      }
     },
     {
       "id": "ninja_mask",
@@ -330,16 +955,34 @@
       "description": "Una máscara ninja para los más sigilosos.",
       "emoji": "🥷",
       "slot": "FACE",
-      "visual": { "type": "emoji", "offsetX": 0.0, "offsetY": -0.06, "scale": 0.28 },
+      "visual": {
+        "type": "emoji",
+        "offsetX": 0.0,
+        "offsetY": -0.06,
+        "scale": 0.28
+      },
       "modifiers": [
-        { "type": "speedBoost", "multiplier": 1.05 }
+        {
+          "type": "speedBoost",
+          "multiplier": 1.05
+        }
       ],
       "isPremium": true,
       "packLabel": "Warrior Pack",
-      "supportedPetIds": ["corgi", "jelly", "diablillo", "moki", "patito"],
+      "supportedPetIds": [
+        "corgi",
+        "jelly",
+        "diablillo",
+        "moki",
+        "patito"
+      ],
       "coinPrice": null,
       "bondRequired": 22,
-      "tags": ["gadget", "premium", "ninja"]
+      "tags": [
+        "gadget",
+        "premium",
+        "ninja"
+      ]
     },
     {
       "id": "shield_back",
@@ -348,16 +991,51 @@
       "description": "Un escudo en la espalda para parecer invencible.",
       "emoji": "🛡️",
       "slot": "BACK",
-      "visual": { "type": "emoji", "offsetX": 0.0, "offsetY": 0.05, "scale": 0.36 },
+      "visual": {
+        "type": "emoji",
+        "offsetX": 0.0,
+        "offsetY": 0.05,
+        "scale": 0.36
+      },
       "modifiers": [],
       "isPremium": true,
       "packLabel": "Warrior Pack",
-      "supportedPetIds": ["corgi", "ginger", "jelly", "angel"],
+      "supportedPetIds": [
+        "corgi",
+        "ginger",
+        "jelly",
+        "angel"
+      ],
       "coinPrice": null,
       "bondRequired": 18,
-      "tags": ["cosmetic", "premium", "warrior"]
+      "tags": [
+        "cosmetic",
+        "premium",
+        "warrior"
+      ],
+      "sprite": {
+        "atlasPath": "accessories/shield_back/shield_back.png",
+        "frameWidth": 384,
+        "frameHeight": 384,
+        "columns": 1,
+        "rows": 1,
+        "clips": {
+          "idle": {
+            "frames": [
+              0
+            ],
+            "frameDurationMs": 150,
+            "loop": true
+          }
+        },
+        "anchor": {
+          "xRatio": 0.0,
+          "yRatio": 0.05
+        },
+        "zLayer": "BEHIND",
+        "scale": 0.5
+      }
     },
-
     {
       "id": "astronaut_helmet",
       "productId": "acc_astronaut_helmet",
@@ -365,16 +1043,57 @@
       "description": "Un casco de astronauta para los exploradores espaciales.",
       "emoji": "🧑‍🚀",
       "slot": "HEAD",
-      "visual": { "type": "emoji", "offsetX": 0.0, "offsetY": -0.28, "scale": 0.40 },
+      "visual": {
+        "type": "emoji",
+        "offsetX": 0.0,
+        "offsetY": -0.28,
+        "scale": 0.4
+      },
       "modifiers": [
-        { "type": "trailParticles", "particle": "STARDUST", "density": 4 }
+        {
+          "type": "trailParticles",
+          "particle": "STARDUST",
+          "density": 4
+        }
       ],
       "isPremium": true,
       "packLabel": "Space Pack",
-      "supportedPetIds": ["moki", "angel", "bloop", "nube_michi", "patito"],
+      "supportedPetIds": [
+        "moki",
+        "angel",
+        "bloop",
+        "nube_michi",
+        "patito"
+      ],
       "coinPrice": null,
       "bondRequired": 20,
-      "tags": ["cosmetic", "premium", "space"]
+      "tags": [
+        "cosmetic",
+        "premium",
+        "space"
+      ],
+      "sprite": {
+        "atlasPath": "accessories/astronaut_helmet/astronaut_helmet.png",
+        "frameWidth": 384,
+        "frameHeight": 384,
+        "columns": 1,
+        "rows": 1,
+        "clips": {
+          "idle": {
+            "frames": [
+              0
+            ],
+            "frameDurationMs": 150,
+            "loop": true
+          }
+        },
+        "anchor": {
+          "xRatio": 0.0,
+          "yRatio": -0.2
+        },
+        "zLayer": "FRONT",
+        "scale": 0.55
+      }
     },
     {
       "id": "alien_antennas",
@@ -383,16 +1102,35 @@
       "description": "Antenas verdes que brillan en la oscuridad.",
       "emoji": "👽",
       "slot": "HEAD",
-      "visual": { "type": "emoji", "offsetX": 0.0, "offsetY": -0.45, "scale": 0.20 },
+      "visual": {
+        "type": "emoji",
+        "offsetX": 0.0,
+        "offsetY": -0.45,
+        "scale": 0.2
+      },
       "modifiers": [
-        { "type": "trailParticles", "particle": "SPARKLES", "density": 2 }
+        {
+          "type": "trailParticles",
+          "particle": "SPARKLES",
+          "density": 2
+        }
       ],
       "isPremium": true,
       "packLabel": "Space Pack",
-      "supportedPetIds": ["moki", "bloop", "angel", "nube_michi", "patito"],
+      "supportedPetIds": [
+        "moki",
+        "bloop",
+        "angel",
+        "nube_michi",
+        "patito"
+      ],
       "coinPrice": null,
       "bondRequired": 25,
-      "tags": ["cosmetic", "premium", "space"]
+      "tags": [
+        "cosmetic",
+        "premium",
+        "space"
+      ]
     },
     {
       "id": "ufo_jetpack",
@@ -401,19 +1139,70 @@
       "description": "Un mini OVNI que vuela al rededor de tu mascota.",
       "emoji": "🛸",
       "slot": "GADGET",
-      "visual": { "type": "emoji", "offsetX": 0.0, "offsetY": -0.55, "scale": 0.28 },
+      "visual": {
+        "type": "emoji",
+        "offsetX": 0.0,
+        "offsetY": -0.55,
+        "scale": 0.28
+      },
       "modifiers": [
-        { "type": "speedBoost", "multiplier": 1.15 },
-        { "type": "trailParticles", "particle": "STARDUST", "density": 6 }
+        {
+          "type": "wingLift",
+          "liftMultiplier": 0.15,
+          "airTimeMultiplier": 0.22
+        },
+        {
+          "type": "trailParticles",
+          "particle": "STARDUST",
+          "density": 6
+        }
       ],
       "isPremium": true,
       "packLabel": "Space Pack",
-      "supportedPetIds": ["patito", "moki", "bloop", "angel"],
+      "supportedPetIds": [
+        "patito",
+        "moki",
+        "bloop",
+        "angel"
+      ],
       "coinPrice": null,
       "bondRequired": 30,
-      "tags": ["gadget", "premium", "space"]
+      "tags": [
+        "gadget",
+        "premium",
+        "space"
+      ],
+      "sprite": {
+        "atlasPath": "accessories/ufo_jetpack/ufo_jetpack.png",
+        "frameWidth": 384,
+        "frameHeight": 384,
+        "columns": 2,
+        "rows": 1,
+        "clips": {
+          "idle": {
+            "frames": [
+              0
+            ],
+            "frameDurationMs": 150,
+            "loop": true
+          },
+          "flap": {
+            "frames": [
+              0,
+              1
+            ],
+            "frameDurationMs": 140,
+            "loop": true
+          }
+        },
+        "anchor": {
+          "xRatio": 0.0,
+          "yRatio": -0.55
+        },
+        "zLayer": "BEHIND",
+        "scale": 0.55
+      }
     },
-
     {
       "id": "pirate_hat",
       "productId": "acc_pirate_hat",
@@ -421,14 +1210,50 @@
       "description": "Un sombrero pirata con calavera.",
       "emoji": "🏴‍☠️",
       "slot": "HEAD",
-      "visual": { "type": "emoji", "offsetX": 0.0, "offsetY": -0.38, "scale": 0.28 },
+      "visual": {
+        "type": "emoji",
+        "offsetX": 0.0,
+        "offsetY": -0.38,
+        "scale": 0.28
+      },
       "modifiers": [],
       "isPremium": true,
       "packLabel": "Pirate Pack",
-      "supportedPetIds": ["corgi", "patito", "ginger", "jelly"],
+      "supportedPetIds": [
+        "corgi",
+        "patito",
+        "ginger",
+        "jelly"
+      ],
       "coinPrice": null,
       "bondRequired": 15,
-      "tags": ["cosmetic", "premium", "pirate"]
+      "tags": [
+        "cosmetic",
+        "premium",
+        "pirate"
+      ],
+      "sprite": {
+        "atlasPath": "accessories/pirate_hat/pirate_hat.png",
+        "frameWidth": 384,
+        "frameHeight": 384,
+        "columns": 1,
+        "rows": 1,
+        "clips": {
+          "idle": {
+            "frames": [
+              0
+            ],
+            "frameDurationMs": 150,
+            "loop": true
+          }
+        },
+        "anchor": {
+          "xRatio": 0.0,
+          "yRatio": -0.4
+        },
+        "zLayer": "FRONT",
+        "scale": 0.58
+      }
     },
     {
       "id": "eye_patch",
@@ -437,14 +1262,29 @@
       "description": "Un parche pirata sobre el ojo.",
       "emoji": "👁️",
       "slot": "FACE",
-      "visual": { "type": "emoji", "offsetX": -0.06, "offsetY": -0.06, "scale": 0.18 },
+      "visual": {
+        "type": "emoji",
+        "offsetX": -0.06,
+        "offsetY": -0.06,
+        "scale": 0.18
+      },
       "modifiers": [],
       "isPremium": true,
       "packLabel": "Pirate Pack",
-      "supportedPetIds": ["corgi", "ginger", "patito", "jelly", "diablillo"],
+      "supportedPetIds": [
+        "corgi",
+        "ginger",
+        "patito",
+        "jelly",
+        "diablillo"
+      ],
       "coinPrice": null,
       "bondRequired": 12,
-      "tags": ["cosmetic", "premium", "pirate"]
+      "tags": [
+        "cosmetic",
+        "premium",
+        "pirate"
+      ]
     },
     {
       "id": "treasure_chest",
@@ -453,16 +1293,30 @@
       "description": "Un mini cofre del tesoro en la espalda.",
       "emoji": "💰",
       "slot": "BACK",
-      "visual": { "type": "emoji", "offsetX": 0.0, "offsetY": 0.05, "scale": 0.32 },
+      "visual": {
+        "type": "emoji",
+        "offsetX": 0.0,
+        "offsetY": 0.05,
+        "scale": 0.32
+      },
       "modifiers": [],
       "isPremium": true,
       "packLabel": "Pirate Pack",
-      "supportedPetIds": ["corgi", "patito", "ginger", "jelly", "diablillo"],
+      "supportedPetIds": [
+        "corgi",
+        "patito",
+        "ginger",
+        "jelly",
+        "diablillo"
+      ],
       "coinPrice": null,
       "bondRequired": 25,
-      "tags": ["cosmetic", "premium", "pirate"]
+      "tags": [
+        "cosmetic",
+        "premium",
+        "pirate"
+      ]
     },
-
     {
       "id": "chef_hat",
       "productId": "acc_chef_hat",
@@ -470,14 +1324,49 @@
       "description": "Un gorro de chef para los gourmets.",
       "emoji": "👨‍🍳",
       "slot": "HEAD",
-      "visual": { "type": "emoji", "offsetX": 0.0, "offsetY": -0.40, "scale": 0.32 },
+      "visual": {
+        "type": "emoji",
+        "offsetX": 0.0,
+        "offsetY": -0.4,
+        "scale": 0.32
+      },
       "modifiers": [],
       "isPremium": false,
       "packLabel": "Starter Pack",
-      "supportedPetIds": ["corgi", "ginger", "moki", "patito"],
+      "supportedPetIds": [
+        "corgi",
+        "ginger",
+        "moki",
+        "patito"
+      ],
       "coinPrice": 22,
       "bondRequired": 0,
-      "tags": ["cosmetic", "fun"]
+      "tags": [
+        "cosmetic",
+        "fun"
+      ],
+      "sprite": {
+        "atlasPath": "accessories/chef_hat/chef_hat.png",
+        "frameWidth": 384,
+        "frameHeight": 384,
+        "columns": 1,
+        "rows": 1,
+        "clips": {
+          "idle": {
+            "frames": [
+              0
+            ],
+            "frameDurationMs": 150,
+            "loop": true
+          }
+        },
+        "anchor": {
+          "xRatio": 0.0,
+          "yRatio": -0.4
+        },
+        "zLayer": "FRONT",
+        "scale": 0.55
+      }
     },
     {
       "id": "unicorn_horn",
@@ -486,16 +1375,57 @@
       "description": "Un cuerno brillante de unicornio multicolor.",
       "emoji": "🦄",
       "slot": "HEAD",
-      "visual": { "type": "emoji", "offsetX": 0.0, "offsetY": -0.4, "scale": 0.28 },
+      "visual": {
+        "type": "emoji",
+        "offsetX": 0.0,
+        "offsetY": -0.4,
+        "scale": 0.28
+      },
       "modifiers": [
-        { "type": "trailParticles", "particle": "SPARKLES", "density": 3 }
+        {
+          "type": "trailParticles",
+          "particle": "SPARKLES",
+          "density": 3
+        }
       ],
       "isPremium": true,
       "packLabel": "Magic Pack",
-      "supportedPetIds": ["nube_michi", "angel", "bloop", "ginger", "moki"],
+      "supportedPetIds": [
+        "nube_michi",
+        "angel",
+        "bloop",
+        "ginger",
+        "moki"
+      ],
       "coinPrice": null,
       "bondRequired": 20,
-      "tags": ["cosmetic", "premium", "magic"]
+      "tags": [
+        "cosmetic",
+        "premium",
+        "magic"
+      ],
+      "sprite": {
+        "atlasPath": "accessories/unicorn_horn/unicorn_horn.png",
+        "frameWidth": 384,
+        "frameHeight": 384,
+        "columns": 1,
+        "rows": 1,
+        "clips": {
+          "idle": {
+            "frames": [
+              0
+            ],
+            "frameDurationMs": 150,
+            "loop": true
+          }
+        },
+        "anchor": {
+          "xRatio": 0.0,
+          "yRatio": -0.42
+        },
+        "zLayer": "FRONT",
+        "scale": 0.45
+      }
     },
     {
       "id": "lightning_bolt",
@@ -504,16 +1434,56 @@
       "description": "Un rayo de electricidad al lado del pet.",
       "emoji": "⚡",
       "slot": "GADGET",
-      "visual": { "type": "emoji", "offsetX": 0.28, "offsetY": -0.05, "scale": 0.30 },
+      "visual": {
+        "type": "emoji",
+        "offsetX": 0.28,
+        "offsetY": -0.05,
+        "scale": 0.3
+      },
       "modifiers": [
-        { "type": "trailParticles", "particle": "SPARKLES", "density": 6 }
+        {
+          "type": "trailParticles",
+          "particle": "SPARKLES",
+          "density": 6
+        }
       ],
       "isPremium": true,
       "packLabel": "Tech Pack",
-      "supportedPetIds": ["diablillo", "jelly", "moki", "ginger"],
+      "supportedPetIds": [
+        "diablillo",
+        "jelly",
+        "moki",
+        "ginger"
+      ],
       "coinPrice": null,
       "bondRequired": 18,
-      "tags": ["gadget", "premium", "tech"]
+      "tags": [
+        "gadget",
+        "premium",
+        "tech"
+      ],
+      "sprite": {
+        "atlasPath": "accessories/lightning_bolt/lightning_bolt.png",
+        "frameWidth": 384,
+        "frameHeight": 384,
+        "columns": 1,
+        "rows": 1,
+        "clips": {
+          "idle": {
+            "frames": [
+              0
+            ],
+            "frameDurationMs": 150,
+            "loop": true
+          }
+        },
+        "anchor": {
+          "xRatio": 0.3,
+          "yRatio": -0.05
+        },
+        "zLayer": "FRONT",
+        "scale": 0.45
+      }
     },
     {
       "id": "robot_antenna",
@@ -522,14 +1492,27 @@
       "description": "Una antena robótica con lucecitas LED.",
       "emoji": "📡",
       "slot": "HEAD",
-      "visual": { "type": "emoji", "offsetX": 0.0, "offsetY": -0.48, "scale": 0.18 },
+      "visual": {
+        "type": "emoji",
+        "offsetX": 0.0,
+        "offsetY": -0.48,
+        "scale": 0.18
+      },
       "modifiers": [],
       "isPremium": true,
       "packLabel": "Tech Pack",
-      "supportedPetIds": ["moki", "jelly", "diablillo"],
+      "supportedPetIds": [
+        "moki",
+        "jelly",
+        "diablillo"
+      ],
       "coinPrice": null,
       "bondRequired": 16,
-      "tags": ["cosmetic", "premium", "tech"]
+      "tags": [
+        "cosmetic",
+        "premium",
+        "tech"
+      ]
     },
     {
       "id": "crown_of_thorns",
@@ -538,14 +1521,27 @@
       "description": "Una corona de espinas para los más oscuros.",
       "emoji": "🥀",
       "slot": "HEAD",
-      "visual": { "type": "emoji", "offsetX": 0.0, "offsetY": -0.35, "scale": 0.28 },
+      "visual": {
+        "type": "emoji",
+        "offsetX": 0.0,
+        "offsetY": -0.35,
+        "scale": 0.28
+      },
       "modifiers": [],
       "isPremium": true,
       "packLabel": "Demonic Pack",
-      "supportedPetIds": ["diablillo", "ginger", "jelly"],
+      "supportedPetIds": [
+        "diablillo",
+        "ginger",
+        "jelly"
+      ],
       "coinPrice": null,
       "bondRequired": 28,
-      "tags": ["cosmetic", "premium", "dark"]
+      "tags": [
+        "cosmetic",
+        "premium",
+        "dark"
+      ]
     },
     {
       "id": "ice_crown",
@@ -554,16 +1550,35 @@
       "description": "Una corona de hielo cristalino que brilla azul.",
       "emoji": "🧊",
       "slot": "HEAD",
-      "visual": { "type": "emoji", "offsetX": 0.0, "offsetY": -0.36, "scale": 0.26 },
+      "visual": {
+        "type": "emoji",
+        "offsetX": 0.0,
+        "offsetY": -0.36,
+        "scale": 0.26
+      },
       "modifiers": [
-        { "type": "trailParticles", "particle": "STARDUST", "density": 2 }
+        {
+          "type": "trailParticles",
+          "particle": "STARDUST",
+          "density": 2
+        }
       ],
       "isPremium": true,
       "packLabel": "Frost Pack",
-      "supportedPetIds": ["nube_michi", "angel", "bloop", "moki", "jelly"],
+      "supportedPetIds": [
+        "nube_michi",
+        "angel",
+        "bloop",
+        "moki",
+        "jelly"
+      ],
       "coinPrice": null,
       "bondRequired": 25,
-      "tags": ["cosmetic", "premium", "frost"]
+      "tags": [
+        "cosmetic",
+        "premium",
+        "frost"
+      ]
     },
     {
       "id": "fire_cape",
@@ -572,18 +1587,35 @@
       "description": "Una capa en llamas detrás del pet.",
       "emoji": "🔥",
       "slot": "BACK",
-      "visual": { "type": "emoji", "offsetX": 0.0, "offsetY": 0.1, "scale": 0.36 },
+      "visual": {
+        "type": "emoji",
+        "offsetX": 0.0,
+        "offsetY": 0.1,
+        "scale": 0.36
+      },
       "modifiers": [
-        { "type": "trailParticles", "particle": "FIRE", "density": 6 }
+        {
+          "type": "trailParticles",
+          "particle": "FIRE",
+          "density": 6
+        }
       ],
       "isPremium": true,
       "packLabel": "Fire Pack",
-      "supportedPetIds": ["diablillo", "ginger", "jelly", "corgi"],
+      "supportedPetIds": [
+        "diablillo",
+        "ginger",
+        "jelly",
+        "corgi"
+      ],
       "coinPrice": null,
       "bondRequired": 22,
-      "tags": ["gadget", "premium", "fire"]
+      "tags": [
+        "gadget",
+        "premium",
+        "fire"
+      ]
     },
-
     {
       "id": "monocle",
       "productId": "acc_monocle",
@@ -591,14 +1623,27 @@
       "description": "Un monóculo elegante para los más refinados.",
       "emoji": "🧐",
       "slot": "FACE",
-      "visual": { "type": "emoji", "offsetX": 0.0, "offsetY": -0.05, "scale": 0.20 },
+      "visual": {
+        "type": "emoji",
+        "offsetX": 0.0,
+        "offsetY": -0.05,
+        "scale": 0.2
+      },
       "modifiers": [],
       "isPremium": false,
       "packLabel": "Royal Pack",
-      "supportedPetIds": ["ginger", "corgi", "angel", "moki"],
+      "supportedPetIds": [
+        "ginger",
+        "corgi",
+        "angel",
+        "moki"
+      ],
       "coinPrice": 26,
       "bondRequired": 0,
-      "tags": ["cosmetic", "fancy"]
+      "tags": [
+        "cosmetic",
+        "fancy"
+      ]
     },
     {
       "id": "mustache",
@@ -607,14 +1652,27 @@
       "description": "Un bigote distinguido.",
       "emoji": "👨",
       "slot": "FACE",
-      "visual": { "type": "emoji", "offsetX": 0.0, "offsetY": 0.10, "scale": 0.16 },
+      "visual": {
+        "type": "emoji",
+        "offsetX": 0.0,
+        "offsetY": 0.1,
+        "scale": 0.16
+      },
       "modifiers": [],
       "isPremium": false,
       "packLabel": "Starter Pack",
-      "supportedPetIds": ["corgi", "ginger", "jelly", "diablillo"],
+      "supportedPetIds": [
+        "corgi",
+        "ginger",
+        "jelly",
+        "diablillo"
+      ],
       "coinPrice": 18,
       "bondRequired": 0,
-      "tags": ["cosmetic", "fun"]
+      "tags": [
+        "cosmetic",
+        "fun"
+      ]
     },
     {
       "id": "sword",
@@ -623,14 +1681,28 @@
       "description": "Una pequeña espada brillante al lado del pet.",
       "emoji": "⚔️",
       "slot": "GADGET",
-      "visual": { "type": "emoji", "offsetX": 0.30, "offsetY": 0.0, "scale": 0.26 },
+      "visual": {
+        "type": "emoji",
+        "offsetX": 0.3,
+        "offsetY": 0.0,
+        "scale": 0.26
+      },
       "modifiers": [],
       "isPremium": true,
       "packLabel": "Warrior Pack",
-      "supportedPetIds": ["corgi", "jelly", "ginger", "angel"],
+      "supportedPetIds": [
+        "corgi",
+        "jelly",
+        "ginger",
+        "angel"
+      ],
       "coinPrice": null,
       "bondRequired": 22,
-      "tags": ["gadget", "premium", "warrior"]
+      "tags": [
+        "gadget",
+        "premium",
+        "warrior"
+      ]
     },
     {
       "id": "shield_cool",
@@ -639,14 +1711,28 @@
       "description": "Un escudo brillante con runas arcanas.",
       "emoji": "🔰",
       "slot": "GADGET",
-      "visual": { "type": "emoji", "offsetX": -0.30, "offsetY": 0.05, "scale": 0.22 },
+      "visual": {
+        "type": "emoji",
+        "offsetX": -0.3,
+        "offsetY": 0.05,
+        "scale": 0.22
+      },
       "modifiers": [],
       "isPremium": true,
       "packLabel": "Warrior Pack",
-      "supportedPetIds": ["angel", "ginger", "jelly", "corgi"],
+      "supportedPetIds": [
+        "angel",
+        "ginger",
+        "jelly",
+        "corgi"
+      ],
       "coinPrice": null,
       "bondRequired": 22,
-      "tags": ["gadget", "premium", "warrior"]
+      "tags": [
+        "gadget",
+        "premium",
+        "warrior"
+      ]
     }
   ]
 }

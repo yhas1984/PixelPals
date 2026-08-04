@@ -78,6 +78,7 @@ object AccessoryCatalog {
         val tags = json.optJSONArray("tags")?.let { arr ->
             (0 until arr.length()).map { arr.getString(it) }.toSet()
         } ?: emptySet()
+        val sprite = json.optJSONObject("sprite")?.let { parseSprite(it) }
 
         return AccessoryCatalogItem(
             id = id,
@@ -94,6 +95,37 @@ object AccessoryCatalog {
             coinPrice = coinPrice,
             bondRequired = bondRequired,
             tags = tags,
+            sprite = sprite,
+        )
+    }
+
+    private fun parseSprite(json: JSONObject): AccessorySpriteSpec {
+        val clipsJson = json.optJSONObject("clips") ?: JSONObject()
+        val clips = mutableMapOf<String, SpriteClip>()
+        clipsJson.keys().forEach { key ->
+            val clipObj = clipsJson.getJSONObject(key)
+            val framesArr = clipObj.getJSONArray("frames")
+            clips[key] = SpriteClip(
+                frames = (0 until framesArr.length()).map { framesArr.getInt(it) },
+                frameDurationMs = clipObj.optLong("frameDurationMs", 150L),
+                loop = clipObj.optBoolean("loop", true),
+            )
+        }
+        val anchorJson = json.getJSONObject("anchor")
+        return AccessorySpriteSpec(
+            atlasPath = json.getString("atlasPath"),
+            frameWidth = json.getInt("frameWidth"),
+            frameHeight = json.getInt("frameHeight"),
+            columns = json.getInt("columns"),
+            rows = json.optInt("rows", 1),
+            clips = clips,
+            anchor = SpriteAnchor(
+                xRatio = anchorJson.optDouble("xRatio", 0.0).toFloat(),
+                yRatio = anchorJson.optDouble("yRatio", -0.3).toFloat(),
+            ),
+            zLayer = runCatching { SpriteZLayer.valueOf(json.getString("zLayer")) }
+                .getOrDefault(SpriteZLayer.FRONT),
+            scale = json.optDouble("scale", 1.0).toFloat(),
         )
     }
 
@@ -126,6 +158,13 @@ object AccessoryCatalog {
                 "speedBoost" -> out.add(
                     PetModifier.SpeedBoost(
                         multiplier = obj.optDouble("multiplier", 1.0).toFloat()
+                    )
+                )
+                "wingLift" -> out.add(
+                    PetModifier.WingLift(
+                        liftMultiplier = obj.optDouble("liftMultiplier", 0.15).toFloat(),
+                        airTimeMultiplier = obj.optDouble("airTimeMultiplier", 0.25).toFloat(),
+                        flapClip = obj.optString("flapClip", "flap"),
                     )
                 )
                 "trailParticles" -> out.add(

@@ -223,6 +223,27 @@ abstract class BaseBehavior(
         return speedBoost?.multiplier ?: 1f
     }
 
+    /** Modificador de vuelo (alas/jetpack) aplicado por el accesorio equipado. */
+    protected fun accessoryWingLift(): PetModifier.WingLift? {
+        return bridge.activeModifiers().firstOrNull { it is PetModifier.WingLift } as? PetModifier.WingLift
+    }
+
+    /**
+     * Factor de reducción de gravedad al caer con alas equipadas.
+     * 1.0 = caída normal; 0.75 = cae 25% más lento (airTimeMultiplier).
+     */
+    protected fun wingAirTimeFactor(): Float {
+        return 1f - (accessoryWingLift()?.airTimeMultiplier ?: 0f)
+    }
+
+    /**
+     * Factor de altura de salto con alas equipadas.
+     * 1.0 = salto normal; 1.15 = salta 15% más alto.
+     */
+    protected fun wingJumpFactor(): Float {
+        return 1f + (accessoryWingLift()?.liftMultiplier ?: 0f)
+    }
+
     protected fun currentMood(): PetMood = bridge.petStatus.mood
 
     protected fun moodSpeedMultiplier(): Float {
@@ -323,8 +344,17 @@ abstract class BaseBehavior(
 
     override fun updateJumping(dt: Float) {
         time += dt
-        bridge.animScaleY = 1.2f
-        bridge.animScaleX = 0.8f
+        // Con alas equipadas, el pet se mantiene "colgado" un instante y aletea.
+        val lift = accessoryWingLift()
+        if (lift != null) {
+            bridge.animScaleY = 1.2f * wingJumpFactor()
+            bridge.animScaleX = 0.8f / wingJumpFactor()
+            bridge.animOffsetY = -sin(time * 9f) * 3f
+            bridge.animRotation = sin(time * 7f) * 4f
+        } else {
+            bridge.animScaleY = 1.2f
+            bridge.animScaleX = 0.8f
+        }
     }
 
     override fun updateAutonomous(dt: Float) {

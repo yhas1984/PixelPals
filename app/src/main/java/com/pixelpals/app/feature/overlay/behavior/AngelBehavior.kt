@@ -73,7 +73,7 @@ class AngelBehavior(
         if (flapClock >= FLAP_INTERVAL_SECONDS) {
             flapClock %= FLAP_INTERVAL_SECONDS
             if (positionY > flightTargetY - bridge.petSpriteSize * 0.08f) {
-                velocityY -= bridge.petSpriteSize * 0.12f
+                velocityY -= bridge.petSpriteSize * 0.12f * wingJumpFactor()
             }
         }
         steer(dt, accelerationRatio = 0.78f, damping = 1.55f, maxSpeedRatio = 0.52f)

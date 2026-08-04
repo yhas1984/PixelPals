@@ -43,6 +43,7 @@ data class AccessoryCatalogItem(
     val coinPrice: Int? = null,
     val bondRequired: Int = 0,
     val tags: Set<String> = emptySet(),
+    val sprite: AccessorySpriteSpec? = null,
 ) {
     /** Compat: ratios para renderizado simple (legacy emojis). */
     val offsetXRatio: Float
