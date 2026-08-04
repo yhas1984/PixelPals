@@ -93,6 +93,20 @@ enum class PetType(
         interactionStyle = InteractionStyle.BELLY_RUB
     ),
 
+    ANGEL(
+        displayName = "Querubin",
+        description = "El Querubin Luminoso",
+        spriteResId = R.drawable.pet_angel,
+        gravity = 0.1f,
+        terminalVelocity = 3f,
+        bounceDamping = 0.0f,
+        agility = 0.95f,
+        boredomRate = 0.45f,
+        movementStyle = MovementStyle.DRIFT_SLOW,
+        idleStyle = IdleStyle.SINE_FLOAT,
+        interactionStyle = InteractionStyle.FEATHER_FALL
+    ),
+
     PATITO(
         displayName = "Patito",
         description = "El Patito Curioso",
@@ -121,6 +135,21 @@ enum class PetType(
         movementStyle = MovementStyle.CHAOTIC_ZOOM,
         idleStyle = IdleStyle.LURK_IDLE,
         interactionStyle = InteractionStyle.CHAOTIC_JUMP
+    ),
+
+    MOKI(
+        displayName = "Moki",
+        description = "El Camaleón Adhesivo",
+        spriteResId = R.drawable.pet_moki,
+        gravity = 0.6f,
+        terminalVelocity = 12f,
+        bounceDamping = 0f,
+        agility = 1.1f,
+        boredomRate = 0.9f,
+        exploreInterval = 3200L,
+        movementStyle = MovementStyle.STATIC_PERCH,
+        idleStyle = IdleStyle.BREATHING,
+        interactionStyle = InteractionStyle.FEATHER_FALL
     );
 }
 

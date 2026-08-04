@@ -1,0 +1,197 @@
+{
+  "version": 1,
+  "petId": "moki",
+  "atlasPath": "pets/moki/moki_sheet_v1.png",
+  "previewPath": "res://drawable-nodpi/pet_moki.png",
+  "frameWidth": 384,
+  "frameHeight": 384,
+  "columns": 5,
+  "rows": 4,
+  "frameCount": 20,
+  "pivot": {
+    "x": 192,
+    "y": 300
+  },
+  "renderHints": {
+    "innerTransparentPaddingPx": 8,
+    "recommendedBleedInsetPx": 1,
+    "filterBitmap": true
+  },
+  "clips": [
+    {
+      "id": "perch_loop",
+      "frames": [
+        0,
+        1,
+        2,
+        1,
+        0,
+        3
+      ],
+      "loop": true,
+      "frameDurationMs": 260
+    },
+    {
+      "id": "crawl_loop",
+      "frames": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "loop": true,
+      "frameDurationMs": 150
+    },
+    {
+      "id": "corner_turn",
+      "frames": [
+        8,
+        9,
+        10,
+        11
+      ],
+      "loop": false,
+      "frameDurationMs": 210
+    },
+    {
+      "id": "camouflage",
+      "frames": [
+        0,
+        12,
+        0
+      ],
+      "loop": false,
+      "frameDurationMs": 420
+    },
+    {
+      "id": "tongue_strike",
+      "frames": [
+        13,
+        14,
+        15,
+        16
+      ],
+      "loop": false,
+      "frameDurationMs": 125
+    },
+    {
+      "id": "drag_resist",
+      "frames": [
+        17
+      ],
+      "loop": false,
+      "frameDurationMs": 250
+    },
+    {
+      "id": "fling_land",
+      "frames": [
+        18,
+        19
+      ],
+      "loop": false,
+      "frameDurationMs": 280
+    }
+  ],
+  "frames": [
+    {
+      "index": 0,
+      "name": "perch_neutral",
+      "sourceHint": "board_01_perch.png"
+    },
+    {
+      "index": 1,
+      "name": "perch_breathe",
+      "sourceHint": "board_01_perch.png"
+    },
+    {
+      "index": 2,
+      "name": "perch_scan_left",
+      "sourceHint": "board_01_perch.png"
+    },
+    {
+      "index": 3,
+      "name": "perch_scan_right",
+      "sourceHint": "board_01_perch.png"
+    },
+    {
+      "index": 4,
+      "name": "crawl_reach",
+      "sourceHint": "board_02_crawl.png"
+    },
+    {
+      "index": 5,
+      "name": "crawl_plant",
+      "sourceHint": "board_02_crawl.png"
+    },
+    {
+      "index": 6,
+      "name": "crawl_follow",
+      "sourceHint": "board_02_crawl.png"
+    },
+    {
+      "index": 7,
+      "name": "crawl_recover",
+      "sourceHint": "board_02_crawl.png"
+    },
+    {
+      "index": 8,
+      "name": "corner_approach",
+      "sourceHint": "board_03_corner_v2.png"
+    },
+    {
+      "index": 9,
+      "name": "corner_front_plant",
+      "sourceHint": "board_03_corner_v2.png"
+    },
+    {
+      "index": 10,
+      "name": "corner_rear_follow",
+      "sourceHint": "board_03_corner_v2.png"
+    },
+    {
+      "index": 11,
+      "name": "corner_settle",
+      "sourceHint": "board_03_corner_v2.png"
+    },
+    {
+      "index": 12,
+      "name": "camouflage_hold",
+      "sourceHint": "board_04_camouflage_tongue.png"
+    },
+    {
+      "index": 13,
+      "name": "tongue_aim",
+      "sourceHint": "board_04_camouflage_tongue.png"
+    },
+    {
+      "index": 14,
+      "name": "tongue_extend",
+      "sourceHint": "board_04_camouflage_tongue.png"
+    },
+    {
+      "index": 15,
+      "name": "tongue_contact",
+      "sourceHint": "board_04_camouflage_tongue.png"
+    },
+    {
+      "index": 16,
+      "name": "tongue_retract",
+      "sourceHint": "board_05_reactions.png"
+    },
+    {
+      "index": 17,
+      "name": "drag_resist",
+      "sourceHint": "board_05_reactions.png"
+    },
+    {
+      "index": 18,
+      "name": "fling_tuck",
+      "sourceHint": "board_05_reactions.png"
+    },
+    {
+      "index": 19,
+      "name": "cling_land",
+      "sourceHint": "board_05_reactions.png"
+    }
+  ]
+}

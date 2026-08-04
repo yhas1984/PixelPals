@@ -6,21 +6,23 @@ import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.roundToInt
 import kotlin.math.sin
-import kotlin.random.Random
-import android.util.Log
-import org.json.JSONObject
+import com.pixelpals.app.motion.PetRandom
 
 /**
  * BloopBehavior — Fantasma juguetón.
- * IA: Vuelo (0-1), Alerta (2-3-4), Huida (5-6-7-8).
+ * IA: flotación, alerta, invisibilidad y huida diagonal.
  */
-class BloopBehavior(bridge: PetViewBridge) : BaseBehavior(bridge) {
+class BloopBehavior(bridge: PetViewBridge, override val random: PetRandom) : BaseBehavior(bridge, random) {
 
-    // Bloop tiene exactamente frames del 0 al 8
-    override val resourceIds = (0..8).map { i ->
-        (bridge as android.view.View).context.resources.getIdentifier(
-            "fantasma_$i", "drawable", (bridge as android.view.View).context.packageName
-        )
+    // The old neutral duplicate and fully invisible frame were removed.
+    override val resourceIds = listOf(
+        R.drawable.fantasma_1, R.drawable.fantasma_2, R.drawable.fantasma_3,
+        R.drawable.fantasma_4, R.drawable.fantasma_5, R.drawable.fantasma_7,
+        R.drawable.fantasma_8
+    )
+
+    init {
+        loadFramesAsync()
     }
 
     private enum class Mode { FLOAT_VISIBLE, DISAPPEAR, ALERT, ESCAPING }
@@ -50,28 +52,6 @@ class BloopBehavior(bridge: PetViewBridge) : BaseBehavior(bridge) {
         else if (horizontal < -1f) facingRight = false
     }
 
-    private fun debugLog(hypothesisId: String, message: String) {
-        try {
-            val params = bridge.getWindowParams()
-            val payload = JSONObject().apply {
-                put("sessionId", "a40953")
-                put("runId", "bloop")
-                put("hypothesisId", hypothesisId)
-                put("location", "BloopBehavior.kt")
-                put("message", message)
-                put("timestamp", System.currentTimeMillis())
-                put("data", JSONObject().apply {
-                    put("x", params?.x ?: -1)
-                    put("y", params?.y ?: -1)
-                    put("currentFrame", bridge.currentFrame)
-                    put("animAlpha", bridge.animAlpha)
-                    put("mode", mode.name)
-                })
-            }
-            Log.i("AGENT_DEBUG", payload.toString())
-        } catch (_: Exception) {}
-    }
-
     private fun teleportWithinWalls() {
         val params = bridge.getWindowParams() ?: return
         val minX = 0
@@ -79,8 +59,24 @@ class BloopBehavior(bridge: PetViewBridge) : BaseBehavior(bridge) {
         val minY = 50
         val maxY = (bridge.screenHeight - bridge.petSpriteSize - 100).coerceAtLeast(minY)
 
-        params.x = if (maxX == minX) minX else Random.nextInt(minX, maxX + 1)
-        params.y = if (maxY == minY) minY else Random.nextInt(minY, maxY + 1)
+        params.x = if (maxX == minX) minX else random.nextInt(minX, maxX + 1)
+        params.y = if (maxY == minY) minY else random.nextInt(minY, maxY + 1)
+        bridge.updateWindowLayout(params)
+    }
+
+    private fun applyGhostFlight(dt: Float) {
+        val params = bridge.getWindowParams() ?: return
+        val minX = 0
+        val maxX = (bridge.screenWidth - bridge.petSpriteSize).coerceAtLeast(0)
+        val minY = 50
+        val maxY = (bridge.screenHeight - bridge.petSpriteSize - 100).coerceAtLeast(minY)
+        val softMargin = bridge.petSpriteSize * 0.9f
+        if (params.x < minX + softMargin) velX = maxOf(abs(velX), 70f)
+        if (params.x > maxX - softMargin) velX = -maxOf(abs(velX), 70f)
+        if (params.y < minY + softMargin) velY = maxOf(abs(velY), 58f)
+        if (params.y > maxY - softMargin) velY = -maxOf(abs(velY), 58f)
+        params.x = (params.x + (velX * dt).roundToInt()).coerceIn(minX, maxX)
+        params.y = (params.y + (velY * dt).roundToInt()).coerceIn(minY, maxY)
         bridge.updateWindowLayout(params)
     }
 
@@ -92,7 +88,7 @@ class BloopBehavior(bridge: PetViewBridge) : BaseBehavior(bridge) {
             Mode.FLOAT_VISIBLE -> {
                 // Flotación normal (usando SOLO fantasma_1)
                 bridge.animAlpha = 1f
-                bridge.currentFrame = 1
+                bridge.currentFrame = 0
                 bridge.animOffsetY = sin(time * 1.6f) * 14f
                 bridge.animOffsetX = cos(time * 0.9f) * 7f
                 bridge.animRotation = sin(time * 0.7f) * 2.5f
@@ -103,52 +99,49 @@ class BloopBehavior(bridge: PetViewBridge) : BaseBehavior(bridge) {
                 // Movimiento por pantalla, siempre con clamp de paredes (BaseBehavior.applyMovement)
                 updateDecision(dt)
                 updateFacing(velX)
-                applyMovement(dt)
+                applyGhostFlight(dt)
 
-                    // Transparencia cada 5s durante 1s (fantasma_6 + alpha=0)
+                    // Fully transparent for one second; no dedicated invisible frame is needed.
                 disappearCountdown -= dt
                 if (disappearCountdown <= 0f) {
                     mode = Mode.DISAPPEAR
                     disappearRemaining = 1f
 
                     bridge.animAlpha = 0f
-                    bridge.currentFrame = 6
+                    bridge.currentFrame = 0
                     velX = 0f
                     velY = 0f
                     teleportWithinWalls()
                     bridge.showBubble("👻")
                     // Evita que al reaparecer dispare alertas encadenadas
                     alertCooldown = maxOf(alertCooldown, 4.5f)
-                    debugLog(hypothesisId = "H5", message = "DISAPPEAR_START")
                 }
 
                 // Avisos (usando SOLO fantasma_2/3/4)
                 alertCooldown -= dt
-                if (alertCooldown <= 0f && Random.nextFloat() < 0.10f) {
+                if (alertCooldown <= 0f && random.nextFloat() < 0.10f) {
                     mode = Mode.ALERT
                     alertRemaining = 1.8f
                     bridge.showBubble("!")
-                    debugLog(hypothesisId = "H6", message = "ALERT_START")
                 }
             }
 
             Mode.DISAPPEAR -> {
                 bridge.animAlpha = 0f
-                bridge.currentFrame = 6
+                bridge.currentFrame = 0
                 velX = 0f
                 velY = 0f
                 disappearRemaining -= dt
                 if (disappearRemaining <= 0f) {
                     mode = Mode.FLOAT_VISIBLE
                     bridge.animAlpha = 1f
-                    bridge.currentFrame = 1
+                    bridge.currentFrame = 0
                     decisionTimer = 0f
                     // Ciclo: transparente 1s y vuelve a flotar 4s => cada 5s inicia otra desaparición
                     disappearCountdown = 4f
                     // Lockout tras reaparecer para que no salte alerta inmediatamente
                     alertCooldown = maxOf(alertCooldown, 4.5f)
                     bridge.showBubble("...")
-                    debugLog(hypothesisId = "H5", message = "DISAPPEAR_END")
                 }
             }
 
@@ -156,9 +149,9 @@ class BloopBehavior(bridge: PetViewBridge) : BaseBehavior(bridge) {
                 // Notificación alternando entre fantasma_2/3/4
                 val cycle = (time * 4f).toInt() % 3
                 bridge.currentFrame = when (cycle) {
-                    0 -> 2
-                    1 -> 3
-                    else -> 4
+                    0 -> 1
+                    1 -> 2
+                    else -> 3
                 }
                 bridge.animAlpha = 1f
                 bridge.animOffsetY = sin(time * 3f) * 6f
@@ -170,13 +163,12 @@ class BloopBehavior(bridge: PetViewBridge) : BaseBehavior(bridge) {
                 // Mientras avisa, mantiene el “vagabundeo” sin salir de paredes
                 updateDecision(dt)
                 updateFacing(velX)
-                applyMovement(dt)
+                applyGhostFlight(dt)
 
                 alertRemaining -= dt
                 if (alertRemaining <= 0f) {
                     mode = Mode.FLOAT_VISIBLE
                     alertCooldown = 7f
-                    debugLog(hypothesisId = "H6", message = "ALERT_END")
                 }
             }
 
@@ -184,7 +176,7 @@ class BloopBehavior(bridge: PetViewBridge) : BaseBehavior(bridge) {
                 // Normalmente el escape ocurre en updateInteracting; si caemos aquí, volvemos a flotación.
                 mode = Mode.FLOAT_VISIBLE
                 bridge.animAlpha = 1f
-                bridge.currentFrame = 1
+                bridge.currentFrame = 0
                 decisionTimer = 0f
             }
         }
@@ -238,7 +230,26 @@ class BloopBehavior(bridge: PetViewBridge) : BaseBehavior(bridge) {
         if (kotlin.math.abs(escapeTargetY - currY) < bridge.petSpriteSize * 0.6f) {
             escapeTargetY = if (currY < midY) maxY else minY
         }
-        debugLog(hypothesisId = "H7", message = "ESCAPE_START")
+    }
+
+    override fun onFling(velocityX: Float, velocityY: Float) {
+        super.onInteract()
+        mode = Mode.ESCAPING
+        escapeRemaining = 1.8f
+        val params = bridge.getWindowParams()
+        val currX = (params?.x ?: bridge.windowX).toFloat()
+        val currY = (params?.y ?: bridge.windowY).toFloat()
+        escapeTargetX = if (velocityX >= 0f) {
+            (bridge.screenWidth - bridge.petSpriteSize).coerceAtLeast(0).toFloat()
+        } else {
+            0f
+        }
+        escapeTargetY = if (velocityY >= 0f) {
+            (bridge.screenHeight - bridge.petSpriteSize - 100).coerceAtLeast(50).toFloat()
+        } else {
+            50f
+        }
+        if (kotlin.math.abs(escapeTargetX - currX) < 20f) escapeTargetX = (bridge.screenWidth / 2f)
     }
 
     override fun updateDrag(dt: Float) {
@@ -247,7 +258,7 @@ class BloopBehavior(bridge: PetViewBridge) : BaseBehavior(bridge) {
         bridge.animScaleX = 1f
         bridge.animScaleY = 1f
         bridge.animAlpha = 1f
-        bridge.currentFrame = 1
+        bridge.currentFrame = 0
     }
 
     override fun updateFalling(dt: Float) {
@@ -266,9 +277,9 @@ class BloopBehavior(bridge: PetViewBridge) : BaseBehavior(bridge) {
         // Huida (usando SOLO fantasma_5/7/8)
         val cycle = (time * 10f).toInt() % 3
         bridge.currentFrame = when (cycle) {
-            0 -> 5
-            1 -> 7
-            else -> 8
+            0 -> 4
+            1 -> 5
+            else -> 6
         }
 
         // Huida: objetivo fijo para evitar “anclajes” por dx/dy ~ 0.
@@ -315,7 +326,6 @@ class BloopBehavior(bridge: PetViewBridge) : BaseBehavior(bridge) {
             mode = Mode.FLOAT_VISIBLE
             disappearCountdown = 5f
             reset()
-            debugLog(hypothesisId = "H7", message = "ESCAPE_END")
         }
     }
 

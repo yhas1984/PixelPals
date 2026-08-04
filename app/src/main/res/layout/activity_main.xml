@@ -1,18 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/mainScroll"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/bg_gradient"
-    android:fillViewport="true">
+    android:clipToPadding="false"
+    android:fillViewport="true"
+    android:paddingHorizontal="20dp"
+    android:paddingTop="0dp"
+    android:paddingBottom="32dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:gravity="center_horizontal"
-        android:paddingHorizontal="28dp"
-        android:paddingTop="64dp"
-        android:paddingBottom="40dp">
+        android:paddingTop="48dp">
 
         <!-- ── Logo / Title ── -->
         <TextView
@@ -20,9 +23,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/app_name"
-            android:textSize="42sp"
+            android:textSize="40sp"
             android:textStyle="bold"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/text_on_accent"
             android:fontFamily="sans-serif-black"
             android:letterSpacing="0.05" />
 
@@ -32,10 +35,45 @@
             android:layout_height="wrap_content"
             android:text="@string/subtitle"
             android:textSize="16sp"
-            android:textColor="#B0FFFFFF"
+            android:textColor="#E9F4FF"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="40dp"
             android:gravity="center" />
+
+        <LinearLayout
+            android:id="@+id/cardPermissionSummary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/bg_status_info"
+            android:orientation="vertical"
+            android:padding="18dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/permissions_overview_title"
+                android:textColor="@color/text_primary"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/txtPermissionSummary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textColor="@color/text_secondary"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/txtLaunchReason"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textColor="@color/status_info_fg"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+        </LinearLayout>
 
         <!-- ── Overlay Permission Card ── -->
         <LinearLayout
@@ -74,14 +112,14 @@
                         android:text="@string/overlay_title"
                         android:textSize="16sp"
                         android:textStyle="bold"
-                        android:textColor="#1A1A2E" />
+                        android:textColor="@color/text_primary" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/overlay_desc"
                         android:textSize="13sp"
-                        android:textColor="#666680"
+                        android:textColor="@color/text_secondary"
                         android:layout_marginTop="2dp" />
                 </LinearLayout>
 
@@ -90,21 +128,21 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/permission_required"
-                    android:textSize="11sp"
+                    android:textSize="12sp"
                     android:textStyle="bold" />
             </LinearLayout>
 
             <Button
                 android:id="@+id/btnOverlay"
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
+                android:layout_height="52dp"
                 android:layout_marginTop="14dp"
                 android:text="@string/grant_permission"
                 android:textAllCaps="false"
                 android:textSize="14sp"
                 android:textStyle="bold"
                 android:backgroundTint="@color/coral_accent"
-                android:textColor="#FFFFFF"
+                android:textColor="@color/text_on_accent"
                 android:insetTop="0dp"
                 android:insetBottom="0dp" />
         </LinearLayout>
@@ -146,14 +184,14 @@
                         android:text="@string/notification_title"
                         android:textSize="16sp"
                         android:textStyle="bold"
-                        android:textColor="#1A1A2E" />
+                        android:textColor="@color/text_primary" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/notification_desc"
                         android:textSize="13sp"
-                        android:textColor="#666680"
+                        android:textColor="@color/text_secondary"
                         android:layout_marginTop="2dp" />
                 </LinearLayout>
 
@@ -162,21 +200,93 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/permission_required"
-                    android:textSize="11sp"
+                    android:textSize="12sp"
                     android:textStyle="bold" />
             </LinearLayout>
 
             <Button
                 android:id="@+id/btnNotification"
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
+                android:layout_height="52dp"
                 android:layout_marginTop="14dp"
                 android:text="@string/grant_permission"
                 android:textAllCaps="false"
                 android:textSize="14sp"
                 android:textStyle="bold"
                 android:backgroundTint="@color/purple_soft"
-                android:textColor="#FFFFFF"
+                android:textColor="@color/text_on_accent"
+                android:insetTop="0dp"
+                android:insetBottom="0dp" />
+        </LinearLayout>
+
+        <!-- ── Usage access (desktop only) ── -->
+        <LinearLayout
+            android:id="@+id/cardUsage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_card"
+            android:padding="20dp"
+            android:layout_marginBottom="24dp"
+            android:elevation="6dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:id="@+id/iconUsage"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:src="@android:drawable/ic_menu_sort_by_size"
+                    android:contentDescription="@string/usage_icon_desc" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="14dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/usage_title"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_primary" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/usage_desc"
+                        android:textSize="13sp"
+                        android:textColor="@color/text_secondary"
+                        android:layout_marginTop="2dp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/statusUsage"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/permission_required"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/btnUsage"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="14dp"
+                android:text="@string/grant_permission"
+                android:textAllCaps="false"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:backgroundTint="@color/teal_accent"
+                android:textColor="@color/text_on_accent"
                 android:insetTop="0dp"
                 android:insetBottom="0dp" />
         </LinearLayout>
@@ -191,27 +301,51 @@
             android:textSize="18sp"
             android:textStyle="bold"
             android:backgroundTint="@color/golden_accent"
-            android:textColor="#1A1A2E"
+            android:textColor="@color/text_primary"
             android:enabled="false"
             android:alpha="0.4"
             android:elevation="8dp"
-            android:insetBottom="0dp" />
+            android:insetBottom="0dp"
+            android:minHeight="56dp" />
 
         <!-- Botón Álbum de Tesoros -->
         <Button
             android:id="@+id/btnAlbum"
             android:layout_width="match_parent"
-            android:layout_height="60dp"
+            android:layout_height="56dp"
             android:layout_marginTop="16dp"
-            android:text="🏆 Ver Álbum de Tesoros"
+            android:text="@string/open_treasure_album"
             android:textAllCaps="false"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:backgroundTint="#FFD700"
-            android:textColor="#000000"
+            android:backgroundTint="@color/surface_warm"
+            android:textColor="@color/text_primary"
             android:elevation="8dp"
             android:insetTop="0dp"
-            android:insetBottom="0dp" />
+            android:insetBottom="0dp"
+            android:minHeight="56dp" />
+
+        <Button
+            android:id="@+id/btnDashboard"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="16dp"
+            android:backgroundTint="@color/purple_soft"
+            android:text="@string/open_dashboard"
+            android:textAllCaps="false"
+            android:textColor="@color/text_on_accent"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btnStore"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="12dp"
+            android:backgroundTint="@color/coral_accent"
+            android:text="@string/open_store"
+            android:textAllCaps="false"
+            android:textColor="@color/text_on_accent"
+            android:textStyle="bold" />
 
     </LinearLayout>
 </ScrollView>

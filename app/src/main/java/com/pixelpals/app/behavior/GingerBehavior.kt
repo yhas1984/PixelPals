@@ -1,390 +1,376 @@
 package com.pixelpals.app.behavior
 
 import com.pixelpals.app.PetState
-import com.pixelpals.app.launcher.LauncherPlatformRepository
+import com.pixelpals.app.motion.PetRandom
+import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.math.sin
-import kotlin.random.Random
 
-/**
- * GingerBehavior — Gatita juguetona que descansa en los laterales
- * y cruza la pantalla con caminatas largas y diagonales.
- */
+/** Grounded feline movement for the redesigned Ginger atlas. */
 class GingerBehavior(
-    bridge: PetViewBridge
-) : BaseBehavior(bridge) {
-    private val context = (bridge as android.view.View).context
-
-    override val resourceIds = (0..12).map { i ->
-        context.resources.getIdentifier(
-            "ginger_$i", "drawable", context.packageName
-        )
-    }
+    bridge: PetViewBridge,
+    override val random: PetRandom,
+) : BaseBehavior(bridge, random) {
+    override val resourceIds: List<Int> = emptyList()
 
     private enum class Mode {
-        SITTING,
-        PREPARE_JUMP,
-        JUMPING,
-        WALKING
+        SIT,
+        GROOM,
+        SLEEP,
+        WAKE,
+        WALK,
+        STALK,
+        POUNCE_COIL,
+        AIRBORNE,
+        LAND,
+        TOUCH,
     }
 
-    private data class Platform(val x: Float, val y: Float)
+    private var mode: Mode = Mode.SIT
+    private var modeTimer: Float = 0f
+    private var modeDuration: Float = 1.6f
+    private var facingDirection: Float = -1f
+    private var moveStartX: Float = 0f
+    private var moveTargetX: Float = 0f
+    private var airX: Float = 0f
+    private var airY: Float = 0f
+    private var airVelocityX: Float = 0f
+    private var airVelocityY: Float = 0f
 
-    private val platforms = mutableListOf<Platform>()
-    private var platformsReady = false
-    private var lastPlatformRefreshAt = 0L
-
-    private var mode = Mode.SITTING
-    private var modeTimer = 0f
-
-    private var currentPlatformIndex = 0
-    private var targetPlatformIndex = 0
-
-    private var jumpStartX = 0f
-    private var jumpStartY = 0f
-    private var jumpEndX = 0f
-    private var jumpEndY = 0f
-    private var jumpDir = 1f
-
-    private var walkDir = 1f
-    private var facingDir = 1f
-    private var walkStartX = 0f
-    private var walkStartY = 0f
-    private var walkTargetX = 0f
-    private var walkTargetY = 0f
-
-    private val idleDuration = 2.4f
-    private val walkDuration = 7.0f
-
-    override fun getBaseSpeed(): Float = 78f
-
-    private fun facingScale(directionX: Float, stretch: Float = 1f): Float {
-        val magnitude = abs(stretch)
-        return if (directionX >= 0f) -magnitude else magnitude
-    }
-
-    private fun ensurePlatforms(force: Boolean = false) {
-        val now = System.currentTimeMillis()
-        if (!force && platformsReady && now - lastPlatformRefreshAt < 2_500L) return
-
-        val currentParams = bridge.getWindowParams()
-        val currentX = currentParams?.x?.toFloat() ?: bridge.windowX.toFloat()
-        val currentY = currentParams?.y?.toFloat() ?: bridge.windowY.toFloat()
-
-        platforms.clear()
-
-        val launcherPlatforms = LauncherPlatformRepository.loadPlatformPoints(
-            context = context,
-            petSpriteSize = bridge.petSpriteSize
-        )
-        if (launcherPlatforms.isNotEmpty()) {
-            launcherPlatforms.forEach { point ->
-                platforms += Platform(
-                    x = point.x.coerceIn(
-                        0f,
-                        (bridge.screenWidth - bridge.petSpriteSize).coerceAtLeast(0).toFloat()
-                    ),
-                    y = point.y.coerceIn(
-                        110f,
-                        (bridge.screenHeight - bridge.petSpriteSize - 160)
-                            .coerceAtLeast(110)
-                            .toFloat()
-                    )
-                )
-            }
-        }
-
-        if (platforms.isEmpty()) {
-            val minX = 0f
-            val maxX = (bridge.screenWidth - bridge.petSpriteSize).coerceAtLeast(0).toFloat()
-            val minY = 110f
-            val maxY = (bridge.screenHeight - bridge.petSpriteSize - 160).coerceAtLeast(minY.toInt()).toFloat()
-
-            val cols = 4
-            val rows = listOf(0.22f, 0.38f, 0.54f, 0.68f)
-            val horizontalStep = if (cols > 1) (maxX - minX) / (cols - 1) else 0f
-
-            for (rowRatio in rows) {
-                val y = (maxY * rowRatio).coerceIn(minY, maxY)
-                for (col in 0 until cols) {
-                    val x = (minX + horizontalStep * col).coerceIn(minX, maxX)
-                    platforms += Platform(x, y)
-                }
-            }
-        }
-
-        if (platforms.isNotEmpty()) {
-            currentPlatformIndex = nearestPlatformIndex(currentX, currentY)
-        }
-
-        platformsReady = true
-        lastPlatformRefreshAt = now
-    }
-
-    private fun nearestPlatformIndex(x: Float, y: Float): Int {
-        if (platforms.isEmpty()) return 0
-        var bestIdx = 0
-        var bestDist = Float.MAX_VALUE
-        platforms.forEachIndexed { index, platform ->
-            val dx = platform.x - x
-            val dy = platform.y - y
-            val dist = dx * dx + dy * dy
-            if (dist < bestDist) {
-                bestDist = dist
-                bestIdx = index
-            }
-        }
-        return bestIdx
-    }
-
-    private fun placeOnCurrentPlatform() {
-        val params = bridge.getWindowParams() ?: return
-        val platform = platforms.getOrNull(currentPlatformIndex) ?: return
-        params.x = platform.x.roundToInt()
-        params.y = platform.y.roundToInt()
-        bridge.updateWindowLayout(params)
-    }
-
-    private fun startSitting(resetTimer: Boolean = true) {
-        mode = Mode.SITTING
-        if (resetTimer) modeTimer = 0f
-        velX = 0f
-        velY = 0f
-        bridge.animRotation = 0f
-        bridge.animOffsetX = 0f
-        bridge.animOffsetY = 0f
-        bridge.animScaleX = facingScale(facingDir)
-        bridge.animScaleY = 1f
-    }
-
-    private fun startJump() {
-        ensurePlatforms(force = true)
-        if (platforms.size < 2) return
-
-        val params = bridge.getWindowParams()
-        val startX = params?.x?.toFloat() ?: bridge.windowX.toFloat()
-        val startY = params?.y?.toFloat() ?: bridge.windowY.toFloat()
-        currentPlatformIndex = nearestPlatformIndex(startX, startY)
-
-        val forwardCandidates = platforms.indices.filter { index ->
-            if (index == currentPlatformIndex) return@filter false
-            val candidate = platforms[index]
-            val deltaX = candidate.x - startX
-            val enoughDistance = abs(deltaX) >= bridge.petSpriteSize * 0.45f
-            enoughDistance && ((walkDir > 0f && deltaX > 0f) || (walkDir < 0f && deltaX < 0f))
-        }
-        val candidates = if (forwardCandidates.isNotEmpty()) {
-            forwardCandidates
-        } else {
-            platforms.indices.filter { it != currentPlatformIndex }
-        }
-
-        targetPlatformIndex = candidates.minByOrNull { index ->
-            abs(platforms[index].x - startX) + abs(platforms[index].y - startY) * 0.35f
-        } ?: currentPlatformIndex
-        val target = platforms[targetPlatformIndex]
-
-        jumpStartX = startX
-        jumpStartY = startY
-        jumpEndX = target.x
-        jumpEndY = target.y
-        jumpDir = if (jumpEndX >= jumpStartX) 1f else -1f
-        facingDir = jumpDir
-
-        mode = Mode.PREPARE_JUMP
-        modeTimer = 0f
-    }
-
-    private fun startWalking() {
-        mode = Mode.WALKING
-        modeTimer = 0f
-        val params = bridge.getWindowParams()
-        val startX = params?.x?.toFloat() ?: bridge.windowX.toFloat()
-        val startY = params?.y?.toFloat() ?: bridge.windowY.toFloat()
-        val minX = 8f
-        val maxX = (bridge.screenWidth - bridge.petSpriteSize - 8).coerceAtLeast(8).toFloat()
-        val minY = 80f
-        val maxY = (bridge.screenHeight - bridge.petSpriteSize - 120).coerceAtLeast(80).toFloat()
-
-        walkDir = if (startX <= (minX + maxX) * 0.5f) 1f else -1f
-        walkStartX = startX.coerceIn(minX, maxX)
-        walkStartY = startY.coerceIn(minY, maxY)
-        walkTargetX = if (walkDir > 0f) maxX else minX
-        walkTargetY = Random.nextFloat() * (maxY - minY) + minY
-
-        if (abs(walkTargetY - walkStartY) < bridge.petSpriteSize * 0.6f) {
-            val shift = bridge.petSpriteSize * 0.9f
-            walkTargetY = if (walkStartY < (minY + maxY) * 0.5f) {
-                (walkStartY + shift).coerceIn(minY, maxY)
-            } else {
-                (walkStartY - shift).coerceIn(minY, maxY)
-            }
-        }
-
-        facingDir = walkDir
+    init {
+        loadSpriteSheetAssetAsync(ATLAS_SPEC_PATH)
     }
 
     override fun updateIdle(dt: Float) {
-        if (isLoading || frames.isEmpty()) return
-        ensurePlatforms()
+        if (isLoading || spriteSheetBitmap == null || spriteFrameRects.isEmpty()) return
         time += dt
         modeTimer += dt
 
         when (mode) {
-            Mode.SITTING -> {
-                bridge.animRotation = 0f
-                bridge.animOffsetX = 0f
-                bridge.animOffsetY = sin(time * 1.5f) * 2f
-                bridge.animScaleX = facingScale(facingDir)
-                bridge.animScaleY = 1f + sin(time * 1.1f) * 0.015f
+            Mode.SIT -> updateSit()
+            Mode.GROOM -> updateGroom()
+            Mode.SLEEP -> updateSleep()
+            Mode.WAKE -> updateWake()
+            Mode.WALK -> updateWalk()
+            Mode.STALK -> updateStalk()
+            Mode.POUNCE_COIL -> updatePounceCoil()
+            Mode.AIRBORNE -> updateAirborne(dt)
+            Mode.LAND -> updateLand()
+            Mode.TOUCH -> updateTouch()
+        }
+    }
 
-                bridge.currentFrame = when {
-                    modeTimer < idleDuration * 0.34f -> 1
-                    modeTimer < idleDuration * 0.68f -> 0
-                    else -> 2
-                }
+    private fun updateSit() {
+        placeOnGround()
+        bridge.currentFrame = FRAME_SIT
+        applyFacing()
+        bridge.animScaleY = 1f + sin(time * 1.8f) * 0.018f
+        bridge.animOffsetY = sin(time * 1.3f) * 1.5f
+        bridge.animRotation = 0f
+        if (modeTimer >= modeDuration) chooseGroundAction()
+    }
 
-                if (modeTimer >= idleDuration) {
-                    startWalking()
-                }
-            }
+    private fun updateGroom() {
+        placeOnGround()
+        bridge.currentFrame = if ((modeTimer / 0.34f).toInt() % 2 == 0) FRAME_SIT else FRAME_GROOM
+        applyFacing()
+        bridge.animOffsetY = 0f
+        bridge.animRotation = sin(modeTimer * 5f) * 1.5f
+        if (modeTimer >= modeDuration) startSit()
+    }
 
-            Mode.PREPARE_JUMP -> {
-                bridge.currentFrame = 2
-                bridge.animRotation = 0f
-                bridge.animOffsetX = 0f
-                bridge.animOffsetY = sin(modeTimer * 10f) * 2f
-                bridge.animScaleX = facingScale(facingDir)
-                bridge.animScaleY = 1f
+    private fun updateSleep() {
+        placeOnGround()
+        bridge.currentFrame = FRAME_SLEEP
+        applyFacing()
+        val breath: Float = sin(time * 1.45f)
+        bridge.animScaleY = 1f + breath * 0.025f
+        bridge.animScaleX = facingScale(1f - breath * 0.012f)
+        bridge.animOffsetY = 0f
+        bridge.animRotation = 0f
+        if (modeTimer >= modeDuration) changeMode(Mode.WAKE, 0.84f)
+    }
 
-                if (modeTimer >= 0.35f) {
-                    mode = Mode.JUMPING
-                    modeTimer = 0f
-                }
-            }
+    private fun updateWake() {
+        placeOnGround()
+        bridge.currentFrame = when {
+            modeTimer < 0.24f -> FRAME_SLEEP
+            modeTimer < 0.66f -> FRAME_STRETCH
+            else -> FRAME_SIT
+        }
+        applyFacing()
+        bridge.animScaleY = 1f
+        bridge.animOffsetY = 0f
+        bridge.animRotation = 0f
+        if (modeTimer >= modeDuration) startWalk()
+    }
 
-            Mode.JUMPING -> {
-                val params = bridge.getWindowParams() ?: return
-                val t = (modeTimer / 1.0f).coerceIn(0f, 1f)
-                val arcHeight = bridge.petSpriteSize * 0.6f + abs(jumpEndX - jumpStartX) * 0.08f
+    private fun updateWalk() {
+        val params = bridge.getWindowParams() ?: return
+        val progress: Float = (modeTimer / modeDuration).coerceIn(0f, 1f)
+        val eased: Float = progress * progress * (3f - 2f * progress)
+        params.x = (moveStartX + (moveTargetX - moveStartX) * eased).roundToInt()
+            .coerceIn(0, maxWindowX())
+        params.y = groundY().roundToInt()
+        bridge.updateWindowLayout(params)
 
-                val x = jumpStartX + (jumpEndX - jumpStartX) * t
-                val groundY = jumpStartY + (jumpEndY - jumpStartY) * t
-                val y = groundY - sin((t * Math.PI).toFloat()) * arcHeight
+        bridge.currentFrame = FRAME_WALK_START + ((modeTimer / WALK_FRAME_SECONDS).toInt() % 4)
+        applyFacing()
+        bridge.animScaleY = 1f
+        bridge.animOffsetY = -abs(sin(modeTimer * PI.toFloat() / WALK_FRAME_SECONDS)) * 1.8f
+        bridge.animRotation = facingDirection * sin(modeTimer * 5.2f) * 1.2f
+        if (progress >= 1f) startSit(0.8f + random.nextFloat() * 0.8f)
+    }
 
-                params.x = x.roundToInt()
-                params.y = y.roundToInt()
-                bridge.updateWindowLayout(params)
+    private fun updateStalk() {
+        val params = bridge.getWindowParams() ?: return
+        val progress: Float = (modeTimer / modeDuration).coerceIn(0f, 1f)
+        params.x = (moveStartX + (moveTargetX - moveStartX) * progress).roundToInt()
+            .coerceIn(0, maxWindowX())
+        params.y = groundY().roundToInt()
+        bridge.updateWindowLayout(params)
 
-                bridge.animScaleX = facingScale(facingDir)
-                bridge.animScaleY = 1f
-                bridge.animOffsetX = 0f
-                bridge.animOffsetY = 0f
-                bridge.animRotation = jumpDir * 4f
+        bridge.currentFrame = FRAME_STALK_START + ((modeTimer / STALK_FRAME_SECONDS).toInt() % 3)
+        applyFacing()
+        bridge.animScaleY = 1f
+        bridge.animOffsetY = 0f
+        bridge.animRotation = 0f
+        if (progress >= 1f) changeMode(Mode.POUNCE_COIL, POUNCE_COIL_SECONDS)
+    }
 
-                bridge.currentFrame = when {
-                    t < 0.12f -> 4
-                    t < 0.24f -> 5
-                    t < 0.40f -> 6
-                    t < 0.58f -> 7
-                    t < 0.76f -> 8
-                    else -> 9
-                }
+    private fun updatePounceCoil() {
+        placeOnGround()
+        bridge.currentFrame = FRAME_POUNCE_COIL
+        applyFacing()
+        val compression: Float = (modeTimer / modeDuration).coerceIn(0f, 1f)
+        bridge.animScaleY = 1f - compression * 0.07f
+        bridge.animScaleX = facingScale(1f + compression * 0.05f)
+        bridge.animOffsetY = compression * 3f
+        bridge.animRotation = 0f
+        if (modeTimer >= modeDuration) {
+            startAirborne(
+                velocityX = facingDirection * bridge.petSpriteSize * 1.9f,
+                velocityY = -bridge.petSpriteSize * 2.45f,
+            )
+        }
+    }
 
-                if (t >= 1f) {
-                    currentPlatformIndex = targetPlatformIndex
-                    startSitting()
-                }
-            }
+    private fun updateAirborne(dt: Float) {
+        val params = bridge.getWindowParams() ?: return
+        val step: Float = dt.coerceIn(0f, 1f / 30f)
+        airVelocityY += bridge.petSpriteSize * 5.8f * step
+        airX += airVelocityX * step
+        airY += airVelocityY * step
 
-            Mode.WALKING -> {
-                val params = bridge.getWindowParams() ?: return
-                val t = (modeTimer / walkDuration).coerceIn(0f, 1f)
-                val easedT = sin((t * Math.PI.toFloat()) / 2f)
-                val x = walkStartX + (walkTargetX - walkStartX) * easedT
-                val y = walkStartY + (walkTargetY - walkStartY) * easedT
-
-                params.x = x.roundToInt()
-                params.y = y.roundToInt()
-                bridge.updateWindowLayout(params)
-
-                val walkFrame = if (modeTimer < 0.22f) {
-                    10
-                } else {
-                    if ((((modeTimer - 0.22f) / 0.14f).toInt() % 2) == 0) 11 else 12
-                }
-                bridge.currentFrame = walkFrame
-                bridge.animScaleX = facingScale(walkDir)
-                bridge.animScaleY = 1f
-                bridge.animRotation = 0f
-                bridge.animOffsetX = 0f
-                bridge.animOffsetY = sin(time * 8f) * 1.5f
-
-                if (t >= 1f) {
-                    params.x = walkTargetX.roundToInt()
-                    params.y = walkTargetY.roundToInt()
-                    bridge.updateWindowLayout(params)
-                    startSitting()
-                }
-            }
+        val maxX: Float = maxWindowX().toFloat()
+        if (airX < 0f || airX > maxX) {
+            airX = airX.coerceIn(0f, maxX)
+            airVelocityX *= -0.32f
+            facingDirection = if (airVelocityX >= 0f) 1f else -1f
+        }
+        if (airY < TOP_LIMIT_PX) {
+            airY = TOP_LIMIT_PX
+            airVelocityY = abs(airVelocityY) * 0.2f
         }
 
-        if (Random.nextFloat() < 0.0012f) {
-            bridge.showBubble("miau")
+        val floor: Float = groundY()
+        if (airY >= floor && airVelocityY >= 0f) {
+            airY = floor
+            params.x = airX.roundToInt()
+            params.y = floor.roundToInt()
+            bridge.updateWindowLayout(params)
+            changeMode(Mode.LAND, LAND_SECONDS)
+            return
         }
+
+        params.x = airX.roundToInt()
+        params.y = airY.roundToInt()
+        bridge.updateWindowLayout(params)
+        bridge.currentFrame = FRAME_POUNCE_AIR
+        applyFacing()
+        bridge.animScaleY = 1f
+        bridge.animOffsetY = 0f
+        bridge.animRotation = (airVelocityY / bridge.petSpriteSize * 4f).coerceIn(-8f, 10f) * facingDirection
+    }
+
+    private fun updateLand() {
+        placeOnGround()
+        bridge.currentFrame = if (modeTimer < LAND_SECONDS * 0.48f) FRAME_LAND_IMPACT else FRAME_LAND_RECOVER
+        applyFacing()
+        val impact: Float = sin((modeTimer / LAND_SECONDS).coerceIn(0f, 1f) * PI).toFloat()
+        bridge.animScaleY = 0.92f + impact * 0.08f
+        bridge.animScaleX = facingScale(1.07f - impact * 0.07f)
+        bridge.animOffsetY = (1f - impact) * 3f
+        bridge.animRotation = 0f
+        if (modeTimer >= modeDuration) startSit(1.0f)
+    }
+
+    private fun updateTouch() {
+        bridge.currentFrame = FRAME_TOUCH
+        applyFacing()
+        bridge.animScaleY = 1f + sin(modeTimer * 10f) * 0.025f
+        bridge.animOffsetY = -abs(sin(modeTimer * 9f)) * 2f
+        bridge.animRotation = sin(modeTimer * 8f) * 2f
+    }
+
+    private fun chooseGroundAction() {
+        when (val roll: Float = random.nextFloat()) {
+            in 0f..<0.48f -> startWalk()
+            in 0.48f..<0.68f -> changeMode(Mode.GROOM, 1.35f)
+            in 0.68f..<0.84f -> changeMode(Mode.SLEEP, 3.8f + random.nextFloat() * 2.8f)
+            else -> startStalk()
+        }
+    }
+
+    private fun startWalk() {
+        val params = bridge.getWindowParams() ?: return
+        val maxX: Float = maxWindowX().toFloat()
+        moveStartX = params.x.toFloat().coerceIn(0f, maxX)
+        val preferredDirection: Float = if (moveStartX < maxX * 0.5f) 1f else -1f
+        facingDirection = if (random.nextFloat() < 0.78f) preferredDirection else -preferredDirection
+        val distance: Float = bridge.petSpriteSize * (1.1f + random.nextFloat() * 1.9f)
+        moveTargetX = (moveStartX + facingDirection * distance).coerceIn(0f, maxX)
+        if (abs(moveTargetX - moveStartX) < bridge.petSpriteSize * 0.45f) {
+            facingDirection *= -1f
+            moveTargetX = (moveStartX + facingDirection * distance).coerceIn(0f, maxX)
+        }
+        val duration: Float = (abs(moveTargetX - moveStartX) / (bridge.petSpriteSize * 0.56f))
+            .coerceIn(1.4f, 4.8f) / moodSpeedMultiplier()
+        changeMode(Mode.WALK, duration)
+    }
+
+    private fun startStalk() {
+        val params = bridge.getWindowParams() ?: return
+        val maxX: Float = maxWindowX().toFloat()
+        moveStartX = params.x.toFloat().coerceIn(0f, maxX)
+        facingDirection = if (moveStartX < maxX * 0.5f) 1f else -1f
+        val distance: Float = bridge.petSpriteSize * (0.8f + random.nextFloat() * 0.75f)
+        moveTargetX = (moveStartX + facingDirection * distance).coerceIn(0f, maxX)
+        val duration: Float = (abs(moveTargetX - moveStartX) / (bridge.petSpriteSize * 0.28f))
+            .coerceIn(1.4f, 3.2f)
+        changeMode(Mode.STALK, duration)
+    }
+
+    private fun startAirborne(velocityX: Float, velocityY: Float) {
+        val params = bridge.getWindowParams() ?: return
+        mode = Mode.AIRBORNE
+        modeTimer = 0f
+        modeDuration = Float.POSITIVE_INFINITY
+        airX = params.x.toFloat()
+        airY = params.y.toFloat()
+        airVelocityX = velocityX.coerceIn(-bridge.petSpriteSize * 4f, bridge.petSpriteSize * 4f)
+        airVelocityY = velocityY.coerceIn(-bridge.petSpriteSize * 4f, bridge.petSpriteSize * 2f)
+        if (abs(airVelocityX) > 1f) facingDirection = if (airVelocityX >= 0f) 1f else -1f
+    }
+
+    private fun startSit(duration: Float = 1.6f + random.nextFloat() * 1.4f) {
+        changeMode(Mode.SIT, duration)
+        placeOnGround()
+        clearTransforms()
+    }
+
+    private fun changeMode(nextMode: Mode, duration: Float) {
+        mode = nextMode
+        modeTimer = 0f
+        modeDuration = duration
+    }
+
+    private fun placeOnGround() {
+        val params = bridge.getWindowParams() ?: return
+        params.x = params.x.coerceIn(0, maxWindowX())
+        params.y = groundY().roundToInt()
+        bridge.updateWindowLayout(params)
+    }
+
+    private fun groundY(): Float = bridge.groundY.coerceAtLeast(TOP_LIMIT_PX.toInt()).toFloat()
+
+    private fun maxWindowX(): Int {
+        val width: Int = bridge.getWindowParams()?.width ?: bridge.petSpriteSize
+        return (bridge.screenWidth - width).coerceAtLeast(0)
+    }
+
+    private fun facingScale(stretch: Float = 1f): Float {
+        val magnitude: Float = abs(stretch)
+        return if (facingDirection < 0f) magnitude else -magnitude
+    }
+
+    private fun applyFacing() {
+        bridge.animScaleX = facingScale()
+    }
+
+    private fun clearTransforms() {
+        bridge.animScaleX = facingScale()
+        bridge.animScaleY = 1f
+        bridge.animRotation = 0f
+        bridge.animOffsetX = 0f
+        bridge.animOffsetY = 0f
+        bridge.animAlpha = 1f
     }
 
     override fun onInteract() {
         super.onInteract()
-        bridge.showBubble("😻")
+        val params = bridge.getWindowParams()
+        facingDirection = if ((params?.x ?: bridge.windowX) < maxWindowX() / 2f) -1f else 1f
+        changeMode(Mode.TOUCH, TOUCH_SECONDS)
+        bridge.showBubble("prrr")
+        bridge.playHaptic(24)
     }
 
     override fun updateInteracting(dt: Float) {
-        if (frames.isEmpty()) return
-        interactionTimer += dt
-
-        bridge.currentFrame = 3
-        bridge.animScaleX = facingScale(facingDir)
-        bridge.animScaleY = 1f + sin(interactionTimer * 8f) * 0.03f
-        bridge.animRotation = sin(interactionTimer * 6f) * 4f
-        bridge.animOffsetX = 0f
-        bridge.animOffsetY = sin(interactionTimer * 8f) * 2f
-
-        if (interactionTimer >= 1.35f) {
+        if (isLoading || spriteSheetBitmap == null || spriteFrameRects.isEmpty()) return
+        time += dt
+        modeTimer += dt
+        updateTouch()
+        if (modeTimer >= TOUCH_SECONDS) {
             bridge.state = PetState.IDLE
-            startSitting()
-            reset()
+            changeMode(Mode.POUNCE_COIL, POUNCE_COIL_SECONDS)
         }
     }
 
     override fun updateDrag(dt: Float) {
-        bridge.currentFrame = 1
-        bridge.animRotation = 0f
-        bridge.animScaleX = facingScale(facingDir)
+        bridge.currentFrame = FRAME_TOUCH
+        bridge.animScaleX = facingScale()
         bridge.animScaleY = 1f
+        bridge.animRotation = 0f
         bridge.animOffsetX = 0f
         bridge.animOffsetY = 0f
     }
 
-    override fun updateFalling(dt: Float) {
-        ensurePlatforms()
-        val params = bridge.getWindowParams() ?: return
-        currentPlatformIndex = nearestPlatformIndex(params.x.toFloat(), params.y.toFloat())
+    override fun onFling(velocityX: Float, velocityY: Float) {
         bridge.state = PetState.IDLE
-        startSitting()
-        reset()
+        startAirborne(velocityX * 0.34f, velocityY * 0.34f)
+        bridge.showBubble("mrrp")
     }
 
     override fun reset() {
         super.reset()
-        if (bridge.state == PetState.IDLE) {
-            bridge.animAlpha = 1f
-            bridge.animScaleX = facingScale(facingDir)
-            bridge.animScaleY = 1f
-            bridge.animRotation = 0f
-            bridge.animOffsetX = 0f
-            bridge.animOffsetY = 0f
+        val params = bridge.getWindowParams()
+        if (params != null && params.y < groundY() - 2f) {
+            startAirborne(0f, 0f)
+        } else {
+            startSit()
         }
+    }
+
+    private companion object {
+        const val ATLAS_SPEC_PATH: String = "pets/ginger/ginger_sheet_v2.json"
+        const val FRAME_SIT: Int = 0
+        const val FRAME_GROOM: Int = 1
+        const val FRAME_SLEEP: Int = 2
+        const val FRAME_STRETCH: Int = 3
+        const val FRAME_WALK_START: Int = 4
+        const val FRAME_STALK_START: Int = 8
+        const val FRAME_POUNCE_COIL: Int = 11
+        const val FRAME_POUNCE_AIR: Int = 12
+        const val FRAME_LAND_IMPACT: Int = 13
+        const val FRAME_LAND_RECOVER: Int = 14
+        const val FRAME_TOUCH: Int = 15
+        const val WALK_FRAME_SECONDS: Float = 0.135f
+        const val STALK_FRAME_SECONDS: Float = 0.19f
+        const val POUNCE_COIL_SECONDS: Float = 0.22f
+        const val LAND_SECONDS: Float = 0.32f
+        const val TOUCH_SECONDS: Float = 0.55f
+        const val TOP_LIMIT_PX: Float = 50f
     }
 }

@@ -32,6 +32,7 @@ class PetProgress(context: Context) {
         private const val KEY_LAST_TREASURE_INTERACTION_MILESTONE = "last_treasure_interaction_milestone"
         private const val KEY_LAST_TREASURE_ACTIVE_MILESTONE = "last_treasure_active_milestone"
         private const val KEY_LAST_TREASURE_EMOJI = "last_treasure_emoji"
+        private const val KEY_TREASURE_ROOM_MIGRATED = "treasure_room_migrated_v1"
     }
 
     private val prefs: SharedPreferences =
@@ -40,6 +41,17 @@ class PetProgress(context: Context) {
     private val db = AppDatabase.getDatabase(context)
     private val scope = CoroutineScope(Dispatchers.IO)
     private val treasureMutex = Mutex()
+
+    init {
+        if (!prefs.getBoolean(KEY_TREASURE_ROOM_MIGRATED, false)) {
+            scope.launch {
+                treasureMutex.withLock {
+                    syncLegacyTreasureState()
+                    prefs.edit().putBoolean(KEY_TREASURE_ROOM_MIGRATED, true).apply()
+                }
+            }
+        }
+    }
 
     // ── Happiness / XP ─────────────────────────────────────────
 
@@ -186,26 +198,8 @@ class PetProgress(context: Context) {
 
     suspend fun syncRoomWithLegacyMap() {
         treasureMutex.withLock {
-            val dao = db.treasureDao()
-            val now = System.currentTimeMillis()
-            val legacyMap = getTreasureMap()
-
-            legacyMap.forEach { (emoji, count) ->
-                if (count <= 0) return@forEach
-                val existing = dao.getTreasure(emoji)
-                if (existing == null) {
-                    dao.insertTreasure(TreasureItem(emoji, count, now, now))
-                } else if (existing.count != count) {
-                    dao.updateTreasure(existing.copy(count = count, lastFoundAt = now))
-                }
-            }
-
-            dao.getAllTreasuresSnapshot().forEach { roomItem ->
-                val legacyCount = legacyMap[roomItem.emoji] ?: 0
-                if (legacyCount <= 0) {
-                    dao.deleteTreasure(roomItem)
-                }
-            }
+            syncLegacyTreasureState()
+            prefs.edit().putBoolean(KEY_TREASURE_ROOM_MIGRATED, true).apply()
         }
     }
 
@@ -235,19 +229,48 @@ class PetProgress(context: Context) {
     }
 
     fun getTreasureMap(): Map<String, Int> {
-        val raw = prefs.getString("treasures", "") ?: ""
-        if (raw.isEmpty()) return emptyMap()
-        return try {
-            raw.split(",").filter { it.contains(":") }.associate {
-                val parts = it.split(":")
-                parts[0] to (parts.getOrNull(1)?.toIntOrNull() ?: 0)
-            }
-        } catch (_: Exception) { emptyMap() }
+        return decodeTreasureMap(prefs.getString("treasures", "") ?: "")
     }
 
     private fun saveTreasureMap(map: Map<String, Int>) {
         val encoded = map.entries.joinToString(",") { "${it.key}:${it.value}" }
         prefs.edit().putString("treasures", encoded).apply()
+    }
+
+    private suspend fun syncLegacyTreasureState() {
+        val legacyMap = decodeTreasureMap(prefs.getString("treasures", "") ?: "")
+        val roomMap = db.treasureDao().getAllTreasuresSnapshot().associate { it.emoji to it.count }
+        val mergedMap = (legacyMap.keys + roomMap.keys).associateWith { emoji ->
+            maxOf(legacyMap[emoji] ?: 0, roomMap[emoji] ?: 0)
+        }.filterValues { it > 0 }
+        saveTreasureMap(mergedMap)
+        syncRoomTreasureState(mergedMap)
+    }
+
+    private suspend fun syncRoomTreasureState(map: Map<String, Int>) {
+        val dao = db.treasureDao()
+        val now = System.currentTimeMillis()
+        val existing = dao.getAllTreasuresSnapshot().associateBy { it.emoji }
+        map.forEach { (emoji, count) ->
+            if (count <= 0) return@forEach
+            val current = existing[emoji]
+            when {
+                current == null -> dao.insertTreasure(TreasureItem(emoji, count, now, now))
+                current.count != count -> dao.updateTreasure(current.copy(count = count, lastFoundAt = now))
+            }
+        }
+    }
+
+    private fun decodeTreasureMap(raw: String): Map<String, Int> {
+        if (raw.isEmpty()) return emptyMap()
+        return try {
+            raw.split(",").filter { it.contains(":") }.associate {
+                val parts = it.split(":")
+                parts[0] to (parts.getOrNull(1)?.toIntOrNull() ?: 0)
+            }.filterValues { it > 0 }
+        } catch (_: Exception) {
+            emptyMap()
+        }
     }
 
     val treasureCount: Int

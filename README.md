@@ -22,7 +22,7 @@ Cada mascota tiene lógica de movimiento propia, animaciones, interacción táct
 ### Stack técnico
 
 - Kotlin
-- `compileSdk 36`, `targetSdk 35`, `minSdk 26`
+- `compileSdk 36`, `targetSdk 36`, `minSdk 26`
 - Room
 - Coroutines
 - Foreground Service + Overlay (`SYSTEM_ALERT_WINDOW`)
@@ -101,7 +101,7 @@ Texto recomendado para la ficha o formulario de revisión:
 
 ### Estado del proyecto
 
-V1 estable; versiones recientes alineadas con **Google Play** (`targetSdk 35`, documentación y política de privacidad).  
+V1 estable; versiones recientes alineadas con **Google Play** (`targetSdk 36`, documentación y política de privacidad).
 Mejoras incrementales en V1.1+.
 
 ---
@@ -122,7 +122,7 @@ Each pet has its own movement logic, animation set, touch interactions, and pers
 ### Tech stack
 
 - Kotlin
-- `compileSdk 36`, `targetSdk 35`, `minSdk 26`
+- `compileSdk 36`, `targetSdk 36`, `minSdk 26`
 - Room
 - Coroutines
 - Foreground Service + Overlay (`SYSTEM_ALERT_WINDOW`)
@@ -181,7 +181,7 @@ Typical outputs:
 
 ### Google Play (AAB)
 
-Current Play policy requires **minimum target API 35**; this project uses `targetSdk 35`.
+Current Play policy requires **minimum target API 36**; this project uses `targetSdk 36`.
 
 - Build: `./gradlew :app:bundleRelease`
 - Unsigned output is usually `app-release.aab` in the folder above.
@@ -211,5 +211,5 @@ Suggested wording for store listing or review forms:
 
 ### Project status
 
-V1 stable; recent releases aligned with **Google Play** (`targetSdk 35`, docs and privacy policy).  
+V1 stable; recent releases aligned with **Google Play** (`targetSdk 36`, docs and privacy policy).
 Incremental improvements in V1.1+.

@@ -1,20 +1,20 @@
 package com.pixelpals.app
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.*
 import android.os.Build
 import android.util.DisplayMetrics
-import android.os.Handler
-import android.os.Looper
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import android.view.Choreographer
 import android.view.MotionEvent
 import android.view.View
+import android.view.VelocityTracker
+import android.view.ViewConfiguration
 import android.view.WindowManager
 import androidx.core.content.ContextCompat
-import androidx.core.graphics.drawable.toBitmap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -24,8 +24,14 @@ import kotlin.math.*
 import kotlin.random.Random
 import android.util.Log
 import com.pixelpals.app.behavior.*
-import org.json.JSONObject
+import com.pixelpals.app.motion.MotionEngine
+import com.pixelpals.app.catalog.AccessoryCatalogItem
+import com.pixelpals.app.status.CareAction
+import com.pixelpals.app.status.PetMood
+import com.pixelpals.app.status.PetPersonality
+import com.pixelpals.app.status.PetStatusSnapshot
 
+@SuppressLint("ViewConstructor")
 class PetView(
     context: Context,
     override var screenWidth: Int,
@@ -34,25 +40,18 @@ class PetView(
     private val petType: PetType
 ) : View(context), PetViewBridge {
     private val progress = PetProgress(context)
+    private val repository = AppServices.repository(context)
+    private val analytics = AppServices.analytics(context)
     private val uiScope = CoroutineScope(Dispatchers.Main + Job())
     private var activeSecondsAccumulator = 0f
+    private var ambientBubbleCooldown = 12f
+    private var lastFrameTimeNanos = 0L
 
-    private fun debugLog(runId: String, hypothesisId: String, location: String, message: String, data: JSONObject) {
-        // #region agent log
-        try {
-            val payload = JSONObject().apply {
-                put("sessionId", "a40953")
-                put("runId", runId)
-                put("hypothesisId", hypothesisId)
-                put("location", location)
-                put("message", message)
-                put("data", data)
-                put("timestamp", System.currentTimeMillis())
-            }
-            Log.i("AGENT_DEBUG", payload.toString())
-        } catch (_: Exception) {}
-        // #endregion
-    }
+    private val motionEngine = MotionEngine()
+    private val touchSlop = ViewConfiguration.get(context).scaledTouchSlop.toFloat()
+    private val minimumFlingVelocity = ViewConfiguration.get(context).scaledMinimumFlingVelocity.toFloat()
+    private val maximumFlingVelocity = ViewConfiguration.get(context).scaledMaximumFlingVelocity.toFloat()
+    private var velocityTracker: VelocityTracker? = null
 
     override var state = PetState.IDLE
     override var currentFrame = 0
@@ -63,6 +62,21 @@ class PetView(
     override var animRotation = 0f
     override var animAlpha = 1f
     override var animColorFilter: ColorFilter? = null
+    override var petStatus: PetStatusSnapshot = PetStatusSnapshot(
+        petId = petType.name.lowercase(),
+        health = 92,
+        energy = 78,
+        hunger = 72,
+        hygiene = 84,
+        bond = 0,
+        mood = PetMood.HAPPY,
+        careStreakDays = 0,
+        softCurrency = 0,
+        dominantSuggestion = CareAction.CHECK_IN,
+        memoriesUnlocked = 0
+    )
+    override val petPersonality: PetPersonality = repository.getPersonality(petType)
+    override var equippedAccessory: AccessoryCatalogItem? = null
     private var treasureEffectScaleX = 1f
     private var treasureEffectScaleY = 1f
     private var treasureEffectOffsetX = 0f
@@ -105,24 +119,39 @@ class PetView(
         textAlign = Paint.Align.CENTER
         textSize = petSpriteSize.toFloat() * 0.24f
     }
+    private val accessoryPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.WHITE
+        textAlign = Paint.Align.CENTER
+        textSize = petSpriteSize.toFloat() * 0.24f
+        setShadowLayer(8f, 0f, 4f, Color.BLACK)
+    }
 
-    override val groundY get() = screenHeight - petSpriteSize - 120
+    override val groundY: Int
+        get() = screenHeight - petSpriteSize -
+            (56f * resources.displayMetrics.density).roundToInt()
 
     private val behavior: PetBehavior? by lazy {
         PetBehaviorFactory.create(petType, this)
     }
 
+    init {
+        uiScope.launch {
+            petStatus = repository.getStatusSnapshot(petType)
+            equippedAccessory = repository.getEquippedAccessory(petType)
+            showBubble(welcomeBubble())
+            invalidate()
+        }
+    }
+
     private var isAnimating = false
     private val frameCallback = object : Choreographer.FrameCallback {
-        private var lastFrameTime = 0L
         override fun doFrame(frameTimeNanos: Long) {
             if (!isAnimating) return
-            
-            if (lastFrameTime != 0L) {
-                val dt = (frameTimeNanos - lastFrameTime) / 1_000_000_000f
-                update(dt)
+            if (lastFrameTimeNanos != 0L && frameTimeNanos > lastFrameTimeNanos) {
+                val step = motionEngine.splitDelta((frameTimeNanos - lastFrameTimeNanos) / 1_000_000_000f)
+                repeat(step.steps) { update(step.stepDt) }
             }
-            lastFrameTime = frameTimeNanos
+            lastFrameTimeNanos = frameTimeNanos
             Choreographer.getInstance().postFrameCallback(this)
         }
     }
@@ -162,8 +191,21 @@ class PetView(
     override fun trackInteraction() {
         progress.trackInteraction()
         uiScope.launch {
+            petStatus = repository.recordInteraction(petType)
+            analytics.track(
+                "pet_interaction",
+                mapOf(
+                    "pet_id" to petStatus.petId,
+                    "mood" to petStatus.mood.name,
+                    "bond" to petStatus.bond.toString()
+                )
+            )
             progress.maybeAwardTreasureFromInteraction()?.let { treasure ->
                 showBubble(treasure)
+            } ?: run {
+                if (Random.nextFloat() < 0.45f) {
+                    showBubble(interactionBubble())
+                }
             }
         }
     }
@@ -176,12 +218,7 @@ class PetView(
                 @Suppress("DEPRECATION")
                 context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
             }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                vibrator.vibrate(VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE))
-            } else {
-                @Suppress("DEPRECATION")
-                vibrator.vibrate(durationMs)
-            }
+            vibrator.vibrate(VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE))
         } catch (e: Exception) {
             Log.w("PetView", "Failed to play haptic", e)
         }
@@ -190,6 +227,7 @@ class PetView(
     override fun resumeAnimation() {
         if (!isAnimating) {
             isAnimating = true
+            lastFrameTimeNanos = 0L
             Choreographer.getInstance().postFrameCallback(frameCallback)
             behavior?.resume()
         }
@@ -197,6 +235,7 @@ class PetView(
 
     override fun pauseAnimation() {
         isAnimating = false
+        lastFrameTimeNanos = 0L
         behavior?.pause()
     }
 
@@ -209,6 +248,37 @@ class PetView(
         playHaptic(35)
         treasureReactionTimer = treasureReactionDuration
         behavior?.onTreasureConsumed(emoji)
+    }
+
+    fun refreshFromRepository(message: String?, celebrate: Boolean) {
+        uiScope.launch {
+            petStatus = repository.getStatusSnapshot(petType)
+            equippedAccessory = repository.getEquippedAccessory(petType)
+            if (!message.isNullOrBlank()) showBubble(message)
+            if (celebrate) {
+                treasureReactionTimer = treasureReactionDuration
+                playHaptic(35)
+            }
+            invalidate()
+        }
+    }
+
+    override fun recordCareAction(action: CareAction) {
+        uiScope.launch {
+            petStatus = repository.applyCareAction(petType, action)
+            equippedAccessory = repository.getEquippedAccessory(petType)
+            showBubble(
+                careActionBubble(action)
+            )
+            analytics.track(
+                "care_action",
+                mapOf(
+                    "pet_id" to petStatus.petId,
+                    "action" to action.name.lowercase(),
+                    "mood" to petStatus.mood.name
+                )
+            )
+        }
     }
 
     override fun onBatteryChanged(percent: Int, isCharging: Boolean) {
@@ -230,6 +300,7 @@ class PetView(
             progress.trackMinute()
             activeSecondsAccumulator -= 60f
             uiScope.launch {
+                petStatus = repository.recordActiveMinute(petType)
                 progress.maybeAwardTreasureFromActiveMinute()?.let { treasure ->
                     showBubble(treasure)
                 }
@@ -243,6 +314,15 @@ class PetView(
             if (bubbleTimer <= 0f) {
                 bubbleText = null
                 bubbleAlpha = 0f
+            }
+        }
+        ambientBubbleCooldown -= dt
+        if (ambientBubbleCooldown <= 0f && bubbleText == null && state == PetState.IDLE) {
+            maybeShowAmbientMoodBubble()
+            ambientBubbleCooldown = when (petPersonality) {
+                PetPersonality.CHAOTIC -> 10f
+                PetPersonality.BOUNCY, PetPersonality.CURIOUS -> 14f
+                else -> 18f
             }
         }
         when (state) {
@@ -277,6 +357,7 @@ class PetView(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         behavior?.onDraw(canvas, (width / 2).toFloat(), (height / 2).toFloat())
+        drawAccessory(canvas)
 
         // Dibuja el bubble encima del pet.
         val text = bubbleText ?: return
@@ -296,14 +377,89 @@ class PetView(
         canvas.drawText(text, cx, cy, bubblePaint)
     }
 
+    private fun drawAccessory(canvas: Canvas) {
+        val accessory = equippedAccessory ?: return
+        accessoryPaint.textSize = petSpriteSize * accessory.scale
+        val cx = width / 2f + renderOffsetX + (accessory.offsetXRatio * petSpriteSize * if (renderScaleX >= 0f) 1f else -1f)
+        val cy = height / 2f + renderOffsetY + (accessory.offsetYRatio * petSpriteSize)
+        canvas.drawText(accessory.emoji, cx, cy, accessoryPaint)
+    }
+
+    private fun maybeShowAmbientMoodBubble() {
+        val bubble = ambientBubbleOptions().randomOrNull()
+        bubble?.let { showBubble(it) }
+    }
+
+    private fun welcomeBubble(): String {
+        return when (petPersonality) {
+            PetPersonality.ANGELIC -> "✨"
+            PetPersonality.CHAOTIC -> "😈"
+            PetPersonality.LOYAL -> "🐾"
+            PetPersonality.SWEET -> "💖"
+            PetPersonality.ELEGANT -> "🎀"
+            PetPersonality.BOUNCY -> "🫧"
+            PetPersonality.CURIOUS -> "👀"
+            PetPersonality.DREAMY -> "☁️"
+        }
+    }
+
+    private fun interactionBubble(): String {
+        val highBond = petStatus.bond >= 35
+        val options = when (petPersonality) {
+            PetPersonality.ANGELIC -> listOf("✨", "🤍", if (highBond) "🪽" else "💫")
+            PetPersonality.CHAOTIC -> listOf("😈", "⚡", if (highBond) "🔥" else "🎉")
+            PetPersonality.LOYAL -> listOf("🐾", "💛", if (highBond) "🦴" else "✨")
+            PetPersonality.SWEET -> listOf("💖", "🌸", if (highBond) "🥹" else "😊")
+            PetPersonality.ELEGANT -> listOf("🎀", "✨", if (highBond) "👑" else "😌")
+            PetPersonality.BOUNCY -> listOf("🫧", "🎉", if (highBond) "💥" else "😄")
+            PetPersonality.CURIOUS -> listOf("👀", "🌟", if (highBond) "🪿" else "❔")
+            PetPersonality.DREAMY -> listOf("☁️", "🌙", if (highBond) "💤" else "⭐")
+        }
+        return options.random()
+    }
+
+    private fun careActionBubble(action: CareAction): String {
+        return when (action) {
+            CareAction.FEED -> listOf("🍓", "🍪", "😋").random()
+            CareAction.CLEAN -> listOf("🫧", "✨", "🛁").random()
+            CareAction.PLAY -> listOf("🎉", "💫", "😄").random()
+            CareAction.REST -> listOf("💤", "🌙", "☁️").random()
+            CareAction.CHECK_IN -> listOf("💖", "✨", "😊").random()
+        }
+    }
+
+    private fun ambientBubbleOptions(): List<String> {
+        val moodOptions = when (petStatus.mood) {
+            PetMood.HAPPY -> listOf("✨", "💛")
+            PetMood.SLEEPY -> listOf("💤", "🌙")
+            PetMood.HUNGRY -> listOf("🍪", "🍓")
+            PetMood.DIRTY -> listOf("🫧", "💧")
+            PetMood.BORED -> listOf("🎈", "❔")
+            PetMood.EXCITED -> listOf("✨", "🎉", "💫")
+        }
+        val personalityBonus = when (petPersonality) {
+            PetPersonality.ANGELIC -> listOf("🤍")
+            PetPersonality.CHAOTIC -> listOf("😈")
+            PetPersonality.LOYAL -> listOf("🐾")
+            PetPersonality.SWEET -> listOf("🌸")
+            PetPersonality.ELEGANT -> listOf("🎀")
+            PetPersonality.BOUNCY -> listOf("🫧")
+            PetPersonality.CURIOUS -> listOf("👀")
+            PetPersonality.DREAMY -> listOf("☁️")
+        }
+        return moodOptions + personalityBonus
+    }
+
     // Manejo de arrastre (drag and drop)
     private var initialX = 0
     private var initialY = 0
     private var initialTouchX = 0f
     private var initialTouchY = 0f
+    private var hasDragged = false
 
     override fun performClick(): Boolean {
         super.performClick()
+        state = PetState.INTERACTING
         behavior?.onInteract()
         return true
     }
@@ -313,71 +469,66 @@ class PetView(
 
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
-                debugLog(
-                    runId = "post-fix",
-                    hypothesisId = "H2",
-                    location = "PetView.kt:onTouchEvent",
-                    message = "Touch down capturado por overlay",
-                    data = JSONObject().apply {
-                        put("rawX", event.rawX)
-                        put("rawY", event.rawY)
-                        put("viewWidth", width)
-                        put("viewHeight", height)
-                        put("paramsX", params.x)
-                        put("paramsY", params.y)
-                        put("screenWidth", screenWidth)
-                        put("screenHeight", screenHeight)
-                    }
-                )
                 if (behavior?.onTouchDown(event.rawX, event.rawY) == true) return true
-                
+
+                velocityTracker?.recycle()
+                velocityTracker = VelocityTracker.obtain()
+                addMovementToVelocityTracker(event)
                 initialX = params.x
                 initialY = params.y
                 initialTouchX = event.rawX
                 initialTouchY = event.rawY
+                hasDragged = false
                 state = PetState.DRAGGING
                 return true
             }
             MotionEvent.ACTION_MOVE -> {
+                addMovementToVelocityTracker(event)
                 if (state == PetState.DRAGGING) {
-                    params.x = initialX + (event.rawX - initialTouchX).toInt()
-                    params.y = initialY + (event.rawY - initialTouchY).toInt()
+                    if (!hasDragged) {
+                        hasDragged = hypot(
+                            event.rawX - initialTouchX,
+                            event.rawY - initialTouchY
+                        ) >= touchSlop
+                    }
+                    params.x = (initialX + (event.rawX - initialTouchX).toInt())
+                        .coerceIn(0, (screenWidth - params.width).coerceAtLeast(0))
+                    params.y = (initialY + (event.rawY - initialTouchY).toInt())
+                        .coerceIn(0, (screenHeight - params.height).coerceAtLeast(0))
                     updateWindowLayout(params)
                 }
                 return true
             }
             MotionEvent.ACTION_UP -> {
-                if (behavior?.onTouchUp() == true) return true
-                
+                addMovementToVelocityTracker(event)
+                if (behavior?.onTouchUp() == true) {
+                    recycleVelocityTracker()
+                    return true
+                }
                 if (state == PetState.DRAGGING) {
-                    val dist = hypot(event.rawX - initialTouchX, event.rawY - initialTouchY)
-                    debugLog(
-                        runId = "post-fix",
-                        hypothesisId = "H3",
-                        location = "PetView.kt:onTouchEvent",
-                        message = "Touch up y distancia drag",
-                        data = JSONObject().apply {
-                            put("dragDistance", dist)
-                            put("treatedAsClick", dist < 15f)
-                            put("finalX", params.x)
-                            put("finalY", params.y)
-                        }
-                    )
-                    if (dist < 15) { // Threshold para considerar click
+                    if (!hasDragged) {
                         performClick()
-                        // No entramos en FALLING si es un click
                     } else {
-                        // Soltar tras arrastrar debe devolver la mascota a un estado estable
-                        // en su nueva posición; FALLING dejaba varios behaviors bloqueados.
-                        state = PetState.IDLE
-                        behavior?.reset()
+                        velocityTracker?.computeCurrentVelocity(1000, maximumFlingVelocity)
+                        val flingVX = velocityTracker?.xVelocity ?: 0f
+                        val flingVY = velocityTracker?.yVelocity ?: 0f
+                        val isFling = abs(flingVX) >= minimumFlingVelocity ||
+                            abs(flingVY) >= minimumFlingVelocity
+                        if (isFling) {
+                            behavior?.onFling(flingVX, flingVY)
+                        } else {
+                            state = PetState.IDLE
+                            behavior?.reset()
+                        }
                     }
                 }
+                recycleVelocityTracker()
                 return true
             }
             MotionEvent.ACTION_CANCEL -> {
                 state = PetState.IDLE
                 behavior?.reset()
+                recycleVelocityTracker()
                 return true
             }
         }
@@ -385,9 +536,23 @@ class PetView(
     }
 
     override fun onDetachedFromWindow() {
+        recycleVelocityTracker()
         behavior?.destroy()
         uiScope.cancel()
         super.onDetachedFromWindow()
+    }
+
+    private fun recycleVelocityTracker() {
+        velocityTracker?.recycle()
+        velocityTracker = null
+    }
+
+    private fun addMovementToVelocityTracker(event: MotionEvent) {
+        val tracker = velocityTracker ?: return
+        val rawEvent = MotionEvent.obtain(event)
+        rawEvent.offsetLocation(event.rawX - event.x, event.rawY - event.y)
+        tracker.addMovement(rawEvent)
+        rawEvent.recycle()
     }
 
     private fun refreshScreenMetrics() {

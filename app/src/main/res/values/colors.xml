@@ -5,11 +5,36 @@
     <color name="dark_bg_mid">#121212</color>
     <color name="dark_bg_deep">#0A0A0A</color>
 
+    <!-- Pastel Surfaces -->
+    <color name="surface_base">#FFFDFE</color>
+    <color name="surface_elevated">#FFF7FC</color>
+    <color name="surface_tinted">#F7F1FF</color>
+    <color name="surface_subtle">#EEF9F6</color>
+    <color name="surface_warm">#FFF3EC</color>
+    <color name="surface_error">#FFF0F3</color>
+
+    <!-- Strokes / Text -->
+    <color name="stroke_soft">#E9DDEA</color>
+    <color name="stroke_strong">#D8C4E0</color>
+    <color name="text_primary">#1E1A2E</color>
+    <color name="text_secondary">#665C7A</color>
+    <color name="text_on_accent">#FFFDFE</color>
+
     <!-- Accent Colors -->
-    <color name="coral_accent">#FF6B6B</color>
-    <color name="golden_accent">#FFD900</color>
-    <color name="purple_soft">#A855F7</color>
-    <color name="teal_accent">#38BDF8</color>
+    <color name="coral_accent">#FF7A7A</color>
+    <color name="golden_accent">#FFD46B</color>
+    <color name="purple_soft">#A78BFA</color>
+    <color name="teal_accent">#4CC9D8</color>
+
+    <!-- Status Tones -->
+    <color name="status_success_bg">#EAFBF1</color>
+    <color name="status_success_fg">#137B3E</color>
+    <color name="status_error_bg">#FFF0F3</color>
+    <color name="status_error_fg">#B4233D</color>
+    <color name="status_info_bg">#F2ECFF</color>
+    <color name="status_info_fg">#5D3FD3</color>
+    <color name="status_empty_bg">#FFF7EC</color>
+    <color name="status_empty_fg">#A45A11</color>
 
     <!-- Pet Colors -->
     <color name="corgi_orange">#FF8C42</color>

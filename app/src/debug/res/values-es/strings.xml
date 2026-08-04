@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="debug_moki_title">Laboratorio de Moki</string>
+    <string name="debug_moki_instructions">Toca: lengua  •  Arrastra y lanza: readhesión</string>
+    <string name="debug_moki_state">Estado: %1$s  •  Superficie: %2$s</string>
+</resources>

@@ -1,35 +1,38 @@
 package com.pixelpals.app.behavior
 
 import com.pixelpals.app.PetState
+import com.pixelpals.app.R
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.math.sin
-import kotlin.random.Random
+import com.pixelpals.app.motion.PetRandom
 
 /**
  * DuckBehavior — Patito nadador que, al tocarlo, sale del agua,
  * vuela un momento y vuelve a aterrizar para seguir nadando.
  */
 class DuckBehavior(
-    bridge: PetViewBridge
-) : BaseBehavior(bridge) {
+    bridge: PetViewBridge,
+    override val random: PetRandom
+) : BaseBehavior(bridge, random) {
 
-    override val resourceIds = listOf(0, 1, 2, 3, 4, 5, 6, 7, 9).map { i ->
-        (bridge as android.view.View).context.resources.getIdentifier(
-            "patito_$i", "drawable", (bridge as android.view.View).context.packageName
-        )
+    override val resourceIds = listOf(R.drawable.patito_0, R.drawable.patito_1, R.drawable.patito_2, R.drawable.patito_3, R.drawable.patito_4, R.drawable.patito_5, R.drawable.patito_6, R.drawable.patito_7, R.drawable.patito_8, R.drawable.patito_9)
+
+    init {
+        loadFramesAsync()
     }
 
     private enum class DuckMode {
-        SWIM,
+        WADDLE,
         TAKEOFF,
-        FLY,
+        FLUTTER,
         LANDING,
-        LAND_END
+        LAND_END,
+        QUACK
     }
 
-    private var mode = DuckMode.SWIM
+    private var mode = DuckMode.WADDLE
     private var modeTimer = 0f
 
     private var facingDir = 1f
@@ -53,26 +56,29 @@ class DuckBehavior(
         return if (directionX >= 0f) magnitude else -magnitude
     }
 
+    private fun groundY(): Float = bridge.groundY.coerceAtLeast(60).toFloat()
+
     private fun startSwim(resetTimer: Boolean = true) {
         val params = bridge.getWindowParams() ?: return
         val minX = 0f
         val maxX = (bridge.screenWidth - bridge.petSpriteSize).coerceAtLeast(0).toFloat()
-        val minY = (bridge.screenHeight * 0.18f).roundToInt().toFloat()
-        val maxY = (bridge.screenHeight - bridge.petSpriteSize - 120).coerceAtLeast(minY.roundToInt()).toFloat()
+        val baseY = groundY()
 
-        mode = DuckMode.SWIM
+        mode = DuckMode.WADDLE
         if (resetTimer) modeTimer = 0f
 
         swimStartX = params.x.toFloat().coerceIn(minX, maxX)
-        swimStartY = params.y.toFloat().coerceIn(minY, maxY)
+        swimStartY = baseY
+        params.y = baseY.roundToInt()
+        bridge.updateWindowLayout(params)
 
-        swimTargetX = Random.nextInt(minX.roundToInt(), maxX.roundToInt() + 1).toFloat()
-        swimTargetY = Random.nextInt(minY.roundToInt(), maxY.roundToInt() + 1).toFloat()
+        swimTargetX = random.nextInt(minX.roundToInt(), maxX.roundToInt() + 1).toFloat()
+        swimTargetY = baseY
 
         val dx = swimTargetX - swimStartX
         if (abs(dx) > 10f) facingDir = if (dx >= 0f) 1f else -1f
 
-        val distance = kotlin.math.sqrt(dx * dx + (swimTargetY - swimStartY) * (swimTargetY - swimStartY))
+        val distance = abs(dx)
         swimDuration = (distance / 95f).coerceIn(2.2f, 5.6f)
     }
 
@@ -82,14 +88,14 @@ class DuckBehavior(
         modeTimer += dt
 
         when (mode) {
-            DuckMode.SWIM -> {
+            DuckMode.WADDLE -> {
                 val params = bridge.getWindowParams() ?: return
                 if (swimDuration <= 0f) startSwim(resetTimer = false)
 
                 val t = (modeTimer / swimDuration).coerceIn(0f, 1f)
                 val easedT = sin((t * PI).toFloat() / 2f)
                 val x = swimStartX + (swimTargetX - swimStartX) * easedT
-                val y = swimStartY + (swimTargetY - swimStartY) * easedT
+                val y = swimStartY
 
                 params.x = x.roundToInt()
                 params.y = y.roundToInt()
@@ -104,10 +110,13 @@ class DuckBehavior(
                 bridge.animScaleX = facingScale(facingDir)
                 bridge.animScaleY = 1f + sin(time * 4.4f) * 0.02f
                 bridge.animOffsetX = 0f
-                bridge.animOffsetY = sin(time * 8.5f) * 3f
-                bridge.animRotation = sin(time * 3.4f) * 2f
+                bridge.animOffsetY = abs(sin(time * 8.5f)) * 2f
+                bridge.animRotation = facingDir * sin(time * 6f) * 1.5f
 
-                if (t >= 1f) startSwim()
+                if (random.nextFloat() < 0.0014f) {
+                    mode = DuckMode.QUACK
+                    modeTimer = 0f
+                } else if (t >= 1f) startSwim()
             }
 
             DuckMode.TAKEOFF -> {
@@ -128,17 +137,17 @@ class DuckBehavior(
                 bridge.animRotation = facingDir * (6f * t)
 
                 if (t >= 1f) {
-                    mode = DuckMode.FLY
+                    mode = DuckMode.FLUTTER
                     modeTimer = 0f
                 }
             }
 
-            DuckMode.FLY -> {
+            DuckMode.FLUTTER -> {
                 val params = bridge.getWindowParams() ?: return
-                val flyDuration = wingFlapCycles * 0.24f
+                val flyDuration = wingFlapCycles * 0.14f
                 val t = (modeTimer / flyDuration).coerceIn(0f, 1f)
                 val x = flyStartX + (flyTargetX - flyStartX) * t
-                val y = flyStartY + (flyTargetY - flyStartY) * t - sin((t * PI).toFloat()) * bridge.petSpriteSize * 0.28f
+                val y = flyStartY + (flyTargetY - flyStartY) * t - sin((t * PI).toFloat()) * bridge.petSpriteSize * 0.18f
 
                 params.x = x.roundToInt()
                 params.y = y.roundToInt()
@@ -188,9 +197,16 @@ class DuckBehavior(
                     startSwim()
                 }
             }
+
+            DuckMode.QUACK -> {
+                bridge.currentFrame = 9
+                bridge.animScaleX = facingScale(facingDir)
+                bridge.animOffsetY = abs(sin(time * 7f)) * 2f
+                if (modeTimer >= 0.45f) startSwim()
+            }
         }
 
-        if (Random.nextFloat() < 0.0018f) {
+        if (random.nextFloat() < 0.0018f) {
             bridge.showBubble("cuac")
         }
     }
@@ -200,30 +216,42 @@ class DuckBehavior(
         val params = bridge.getWindowParams() ?: return
         val minX = 0f
         val maxX = (bridge.screenWidth - bridge.petSpriteSize).coerceAtLeast(0).toFloat()
-        val minY = 40f
-        val maxY = (bridge.screenHeight - bridge.petSpriteSize - 100).coerceAtLeast(minY.roundToInt()).toFloat()
+        val minY = groundY() - bridge.petSpriteSize * 0.45f
+        val maxY = groundY()
 
         flyStartX = params.x.toFloat()
         flyStartY = params.y.toFloat()
 
-        val flyDistanceX = bridge.petSpriteSize * (1.4f + Random.nextFloat() * 1.4f)
-        val flyDistanceY = bridge.petSpriteSize * (0.9f + Random.nextFloat() * 0.7f)
-        val goRight = if (flyStartX < bridge.screenWidth * 0.5f) Random.nextFloat() > 0.2f else Random.nextFloat() > 0.8f
+        val flyDistanceX = bridge.petSpriteSize * (1.4f + random.nextFloat() * 1.4f)
+        val flyDistanceY = bridge.petSpriteSize * (0.35f + random.nextFloat() * 0.18f)
+        val goRight = if (flyStartX < bridge.screenWidth * 0.5f) random.nextFloat() > 0.2f else random.nextFloat() > 0.8f
         facingDir = if (goRight) 1f else -1f
 
         flyTargetX = (flyStartX + if (goRight) flyDistanceX else -flyDistanceX).coerceIn(minX, maxX)
         flyTargetY = (flyStartY - flyDistanceY).coerceIn(minY, maxY)
-        landingTargetY = (flyStartY + bridge.petSpriteSize * 0.18f).coerceIn(minY, maxY)
-        wingFlapCycles = Random.nextInt(4, 7)
+        landingTargetY = groundY()
+        wingFlapCycles = random.nextInt(2, 4)
 
         mode = DuckMode.TAKEOFF
         modeTimer = 0f
         bridge.showBubble("cuac!")
     }
 
+    override fun onFling(velocityX: Float, velocityY: Float) {
+        super.onInteract()
+        facingDir = if (velocityX >= 0f) 1f else -1f
+        mode = DuckMode.TAKEOFF
+        modeTimer = 0f
+        flyStartX = bridge.windowX.toFloat()
+        flyStartY = bridge.windowY.toFloat()
+        flyTargetX = (flyStartX + velocityX * 0.08f).coerceIn(0f, (bridge.screenWidth - bridge.petSpriteSize).coerceAtLeast(0).toFloat())
+        flyTargetY = (flyStartY - abs(velocityY) * 0.02f).coerceIn(groundY() - bridge.petSpriteSize * 0.5f, groundY())
+        landingTargetY = groundY()
+    }
+
     override fun updateInteracting(dt: Float) {
         updateIdle(dt)
-        if (mode == DuckMode.SWIM) {
+        if (mode == DuckMode.WADDLE) {
             bridge.state = PetState.IDLE
         }
     }

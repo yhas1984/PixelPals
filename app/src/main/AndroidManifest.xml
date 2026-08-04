@@ -12,16 +12,23 @@
     <!-- Notification permission (Android 13+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- Lets Android list PixelPals in Settings > Usage access. -->
+    <uses-permission
+        android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
+
     <!-- Vibration permission -->
     <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
         android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.ScreenPets"
-        tools:targetApi="35">
+        tools:targetApi="36">
 
         <!-- Main Activity: Onboarding & Permissions -->
         <activity
@@ -38,16 +45,31 @@
         <activity
             android:name=".PetSelectionActivity"
             android:exported="false"
+            android:label="@string/choose_your_pet"
             android:theme="@style/Theme.ScreenPets" />
+
+        <activity
+            android:name=".status.PetDashboardActivity"
+            android:exported="false"
+            android:theme="@style/Theme.ScreenPets"
+            android:label="@string/dashboard_title" />
+
+        <activity
+            android:name=".store.StoreActivity"
+            android:exported="false"
+            android:theme="@style/Theme.ScreenPets"
+            android:label="@string/store_title" />
 
         <!-- Pet Foreground Service -->
         <service
             android:name=".PetService"
             android:exported="false"
-            android:foregroundServiceType="specialUse">
+            android:foregroundServiceType="specialUse"
+            android:label="@string/app_name"
+            tools:targetApi="36">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="floating_pet_overlay" />
+                android:value="@string/fgs_special_use_subtype" />
         </service>
 
         <!-- Treasure Album UI -->
@@ -55,7 +77,7 @@
             android:name=".TreasureAlbumActivity"
             android:exported="false"
             android:theme="@style/Theme.ScreenPets"
-            android:label="Álbum de Tesoros" />
+            android:label="@string/treasure_album_title" />
 
     </application>
 

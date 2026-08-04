@@ -3,6 +3,20 @@
     <string name="app_name">ScreenPets</string>
     <string name="subtitle">Your virtual pet companion ✨</string>
 
+    <!-- Shared / Edge-to-edge -->
+    <string name="edge_to_edge_hint">Content now respects the system bars.</string>
+
+    <!-- Permission onboarding -->
+    <string name="permissions_overview_title">Before launching, here’s what each permission does</string>
+    <string name="permissions_required_label">Required to start</string>
+    <string name="permissions_optional_label">Optional for desktop mode</string>
+    <string name="launch_ready">Ready to launch</string>
+    <string name="launch_disabled_reason_both">Grant overlay and notifications to continue.</string>
+    <string name="launch_disabled_reason_overlay">Overlay lets ScreenPets float above other apps.</string>
+    <string name="launch_disabled_reason_notification">Notifications keep pet controls reachable on Android 13+.</string>
+    <string name="launch_disabled_reason_optional">Usage access is only needed for the desktop-only mode.</string>
+    <string name="usage_optional_note">Optional. Only needed if you want ScreenPets to hide on other apps or behave like a desktop-only companion.</string>
+
     <!-- Permissions -->
     <string name="overlay_title">Screen Overlay</string>
     <string name="overlay_desc">Let your pet walk on top of other apps</string>
@@ -11,9 +25,13 @@
     <string name="permission_required">Required</string>
     <string name="permission_granted">✓ Granted</string>
     <string name="grant_permission">Grant Permission</string>
+    <string name="usage_title">Home screen only</string>
+    <string name="usage_desc">Hides the pet while other apps are open (not on top of Chrome, games, etc.). Grant “Usage access” for ScreenPets in the next screen.</string>
+    <string name="usage_icon_desc">Usage access permission icon</string>
 
     <!-- Actions -->
     <string name="launch_pet">🐾  Choose Your Pet!</string>
+    <string name="open_treasure_album">🏆 Treasure Album</string>
     <string name="pet_launched">Your pet is now exploring! 🐕</string>
     <string name="overlay_needed">Overlay permission is needed first</string>
 
@@ -25,6 +43,7 @@
     <string name="jelly_desc">The Jelly Slime\nBouncy &amp; wobbly</string>
     <string name="corgi_desc">The Explorer Corgi\nEnergetic &amp; loyal</string>
     <string name="ginger_desc">The Elegant Cat\nGraceful &amp; affectionate</string>
+    <string name="angel_desc">The Little Cherub\nRadiant &amp; serene</string>
     <string name="patito_desc">The Curious Duck\nQuack quack!</string>
     <string name="diablillo_desc">The Mischievous Imp\nHe-he!</string>
 
@@ -32,8 +51,161 @@
     <string name="notif_channel_name">ScreenPets Pet</string>
     <string name="notif_channel_desc">Keeps your virtual pet alive on screen</string>
     <string name="notif_active_title">ScreenPets Active</string>
+    <string name="notif_active_subtitle">Tap to care for your companion</string>
+    <string name="fgs_special_use_subtype" translatable="false">User-controlled floating virtual pet overlay</string>
 
     <!-- Accessibility -->
     <string name="overlay_icon_desc">Overlay permission icon</string>
     <string name="notification_icon_desc">Notification permission icon</string>
+
+    <!-- V2 Navigation -->
+    <string name="open_dashboard">Open Dashboard</string>
+    <string name="open_store">Open Store</string>
+
+    <!-- Selection V2 -->
+    <string name="selection_current_pet_format">%1$s feels %2$s • Bond: %3$d</string>
+    <string name="selection_hint_format">Suggested next care: %1$s • Current streak: %2$d</string>
+    <string name="selection_catalog_summary_format">Selected: %1$d • Owned: %2$d • Locked: %3$d</string>
+    <string name="selection_loading">Loading pet catalog…</string>
+    <string name="selection_error">We could not load the pet catalog.</string>
+    <string name="selection_retry">Retry</string>
+    <string name="selection_open_store_button">Open store</string>
+    <string name="selection_core_badge">Core</string>
+    <string name="selection_premium_badge">Premium</string>
+    <string name="selection_base_badge">Base</string>
+    <string name="selection_locked_state">Locked</string>
+    <string name="selection_owned_state">Owned</string>
+    <string name="selection_selected_state">Selected</string>
+    <string name="selection_unlock_button">Unlock</string>
+    <string name="selection_choose_button">Choose</string>
+    <string name="selection_selected_button">Selected</string>
+    <string name="selection_launching_pet_format">%1$s is heading out to play! 🐾</string>
+    <string name="selection_item_content_description">%1$s, %2$s. %3$s</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_title">Care Dashboard</string>
+    <string name="dashboard_subtitle_format">%1$s • Streak: %2$d • Coins: %3$d</string>
+    <string name="dashboard_companion_line_format">%1$s feels %2$s and is acting especially %3$s today.</string>
+    <string name="dashboard_loading">Refreshing dashboard…</string>
+    <string name="dashboard_error">We could not refresh the dashboard.</string>
+    <string name="dashboard_retry">Retry</string>
+    <string name="dashboard_state_ready">Dashboard updated</string>
+    <string name="dashboard_status">Live status</string>
+    <string name="dashboard_mood_format">Mood: %1$s • Bond: %2$d</string>
+    <string name="dashboard_suggestion_format">Suggested action: %1$s</string>
+    <string name="dashboard_highlights_format">Routines: %1$d/%2$d • Memories: %3$d</string>
+    <string name="dashboard_health_format">Health %1$d%%</string>
+    <string name="dashboard_energy_format">Energy %1$d%%</string>
+    <string name="dashboard_hunger_format">Hunger %1$d%%</string>
+    <string name="dashboard_hygiene_format">Hygiene %1$d%%</string>
+    <string name="dashboard_bond_format">Bond %1$d%%</string>
+    <string name="dashboard_bond_stage_format">%1$s · Bond %2$d</string>
+    <string name="dashboard_next_goal_format">Next goal: %1$s · %2$d to go</string>
+    <string name="dashboard_bond_complete">Major bond reached · you are inseparable</string>
+    <string name="bond_stage_new">First steps</string>
+    <string name="bond_stage_close">Close companions</string>
+    <string name="bond_stage_inseparable">Inseparable</string>
+    <string name="bond_stage_soulmates">Soulmates</string>
+    <string name="bond_goal_accessory">unlock their first accessory</string>
+    <string name="bond_goal_routine">save “Favorite routine”</string>
+    <string name="bond_goal_strong">build a strong bond</string>
+    <string name="dashboard_care_reward">💛 +%1$d bond · 🪙 +%2$d</string>
+    <string name="dashboard_care_received">%1$s appreciates your care</string>
+    <string name="dashboard_memory_unlocked">New memory: %1$s</string>
+    <string name="care_bubble_feed">So tasty! 🍓</string>
+    <string name="care_bubble_clean">I look great! ✨</string>
+    <string name="care_bubble_play">Again! 🎉</string>
+    <string name="care_bubble_rest">Zzz… 💛</string>
+    <string name="care_bubble_check_in">You came back! 💖</string>
+    <string name="dashboard_daily_tasks">Daily routine</string>
+    <string name="dashboard_memories">Memories</string>
+    <string name="dashboard_task_completed_format">• %1$s: %2$s — %3$s (+%4$d)</string>
+    <string name="dashboard_task_pending_format">• %1$s: %2$s (+%3$d)</string>
+    <string name="dashboard_memory_format">• %1$s\n%2$s</string>
+    <string name="action_feed">Feed</string>
+    <string name="action_clean">Clean</string>
+    <string name="action_play">Play</string>
+    <string name="action_rest">Rest</string>
+    <string name="action_check_in">Check in</string>
+    <string name="task_done">Done</string>
+    <string name="mood_happy">happy</string>
+    <string name="mood_sleepy">sleepy</string>
+    <string name="mood_hungry">hungry</string>
+    <string name="mood_dirty">messy</string>
+    <string name="mood_bored">bored</string>
+    <string name="mood_excited">excited</string>
+    <string name="personality_sweet">sweet</string>
+    <string name="personality_dreamy">dreamy</string>
+    <string name="personality_bouncy">bouncy</string>
+    <string name="personality_loyal">loyal</string>
+    <string name="personality_elegant">elegant</string>
+    <string name="personality_angelic">angelic</string>
+    <string name="personality_curious">curious</string>
+    <string name="personality_chaotic">chaotic</string>
+
+    <!-- Store -->
+    <string name="store_title">PixelPals Store</string>
+    <string name="store_subtitle_format">Packs and unlocks for %1$s</string>
+    <string name="store_featured_message_format">Today’s spotlight for %1$s: %2$s</string>
+    <string name="store_wallet_format">%1$s has %2$d 🪙 · Bond %3$d</string>
+    <string name="store_coin_price">%1$d 🪙</string>
+    <string name="store_bond_price">Bond %1$d</string>
+    <string name="store_unlock_coins_button">Unlock · %1$d 🪙</string>
+    <string name="store_missing_coins_button">Need %1$d 🪙</string>
+    <string name="store_bond_required_button">Needs bond %1$d</string>
+    <string name="store_bond_locked_state">Strengthen your bond to unlock it with coins.</string>
+    <string name="store_coin_offer_state">Earn it by caring for your pet. No purchase required.</string>
+    <string name="store_purchase_success">It looks great! Accessory unlocked and equipped.</string>
+    <string name="store_not_enough_coins">Complete daily care to earn the missing coins.</string>
+    <string name="store_bond_required">Share more moments to reach the required bond.</string>
+    <string name="store_accessory_unavailable">This accessory is not available for this pet.</string>
+    <string name="store_equipped_bubble">I love it! %1$s</string>
+    <string name="store_unequipped_bubble">Look saved ✨</string>
+    <string name="store_loading">Loading the store…</string>
+    <string name="store_error">We could not load the store.</string>
+    <string name="store_retry">Retry</string>
+    <string name="store_empty">Nothing available right now.</string>
+    <string name="store_restore_in_progress">Restoring purchases…</string>
+    <string name="store_restore_failed">We could not restore purchases.</string>
+    <string name="store_state_ready">Store ready</string>
+    <string name="store_restore">Restore purchases</string>
+    <plurals name="store_restored_count">
+        <item quantity="one">%1$d purchase restored</item>
+        <item quantity="other">%1$d purchases restored</item>
+    </plurals>
+    <string name="store_premium_pets">Premium characters</string>
+    <string name="store_accessories">Accessories and cosmetics</string>
+    <string name="store_preview_price">Preview</string>
+    <string name="store_locked_state">Available to unlock</string>
+    <string name="store_owned_state">Already yours</string>
+    <string name="store_selected_state">Currently selected</string>
+    <string name="store_equipped_state">Currently equipped</string>
+    <string name="store_buy_button">Buy</string>
+    <string name="store_select_button">Select</string>
+    <string name="store_selected_button">Selected</string>
+    <string name="store_equip_button">Equip</string>
+    <string name="store_unequip_button">Unequip</string>
+    <string name="store_item_content_description">%1$s, %2$s, %3$s.</string>
+    <string name="store_owned_hint">Owned items can be selected without another purchase.</string>
+    <string name="store_premium_hint">Premium unlock</string>
+    <string name="store_offer_emoji">🐾</string>
+
+    <!-- Treasure album -->
+    <string name="treasure_album_title">Treasure Album</string>
+    <string name="treasure_album_subtitle">Collected surprises, sorted by the last one you found.</string>
+    <string name="treasure_album_loading">Loading treasures…</string>
+    <string name="treasure_album_empty">No treasures yet. Keep playing with your pet to uncover more.</string>
+    <string name="treasure_album_error">We could not load the treasure album.</string>
+    <string name="treasure_album_retry">Retry</string>
+    <string name="treasure_album_ready">Album ready</string>
+    <string name="treasure_placeholder_emoji">💎</string>
+    <string name="treasure_count_format">Found: x%1$d</string>
+    <string name="treasure_last_found_format">Last found: %1$s</string>
+    <string name="treasure_item_content_description">Treasure %1$s, %2$s, %3$s</string>
+    <string name="treasure_consume_announcement">Gave %1$s to your pet. %2$s</string>
+    <plurals name="treasure_consume_remaining_count">
+        <item quantity="one">%1$d left.</item>
+        <item quantity="other">%1$d left.</item>
+    </plurals>
+    <string name="treasure_consume_none_left">No more left.</string>
 </resources>

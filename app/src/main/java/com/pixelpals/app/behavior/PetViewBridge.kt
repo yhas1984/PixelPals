@@ -4,6 +4,10 @@ import android.graphics.ColorFilter
 import android.view.WindowManager
 import com.pixelpals.app.PetState
 import com.pixelpals.app.PetProgress
+import com.pixelpals.app.catalog.AccessoryCatalogItem
+import com.pixelpals.app.status.CareAction
+import com.pixelpals.app.status.PetPersonality
+import com.pixelpals.app.status.PetStatusSnapshot
 
 /**
  * PetViewBridge — Interface for behaviors to access PetView state and perform actions.
@@ -43,6 +47,9 @@ interface PetViewBridge {
     val screenHeight: Int
     val petSpriteSize: Int
     val groundY: Int
+    val petStatus: PetStatusSnapshot
+    val petPersonality: PetPersonality
+    val equippedAccessory: AccessoryCatalogItem?
 
     // Window position (absolute screen coordinates)
     var windowX: Int
@@ -63,6 +70,7 @@ interface PetViewBridge {
     fun pauseAnimation()
     fun setProgress(progress: PetProgress)
     fun consumeTreasure(emoji: String)
+    fun recordCareAction(action: CareAction)
     fun onBatteryChanged(percent: Int, isCharging: Boolean)
     fun onKeyboardChanged(visible: Boolean, height: Int)
     fun onAirplaneModeChanged(isAirplane: Boolean)
