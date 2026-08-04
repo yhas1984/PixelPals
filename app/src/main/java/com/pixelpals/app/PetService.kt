@@ -44,7 +44,7 @@ class PetService : Service() {
         private const val EXTRA_REFRESH_MESSAGE = "REFRESH_MESSAGE"
         private const val EXTRA_REFRESH_CELEBRATE = "REFRESH_CELEBRATE"
         private const val PET_SIZE_DP = 80
-        private const val HOME_POLL_INTERVAL_MS = 15_000L
+        private const val HOME_POLL_INTERVAL_MS = 4_000L
         private const val HOME_POLL_INTERVAL_SLOW_MS = 60_000L
 
         fun requestPetRefresh(context: Context, message: String? = null, celebrate: Boolean = false) {

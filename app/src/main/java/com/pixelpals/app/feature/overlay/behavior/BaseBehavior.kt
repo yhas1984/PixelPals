@@ -60,13 +60,27 @@ abstract class BaseBehavior(
         val startedAt = System.currentTimeMillis()
         scope.launch {
             val context = (bridge as View).context
+            val spriteSize = bridge.petSpriteSize
 
             val decodeOne: (Int) -> Bitmap? = { id ->
                 if (id == 0) null
                 else {
                     try {
-                        val b = BitmapFactory.decodeResource(context.resources, id)
-                        b?.let { Bitmap.createScaledBitmap(it, bridge.petSpriteSize, bridge.petSpriteSize, true) }
+                        // Cache estático por (drawable, tamaño): al cambiar de pet no
+                        // re-decodificamos ni re-escalamos frames ya vistos.
+                        val key = cacheKey(id, spriteSize)
+                        val cached = FRAME_CACHE[key]
+                        if (cached != null) {
+                            cached
+                        } else {
+                            val b = BitmapFactory.decodeResource(context.resources, id)
+                            val scaled = b?.let {
+                                Bitmap.createScaledBitmap(it, spriteSize, spriteSize, true)
+                            }
+                            if (scaled != null && b !== scaled) b.recycle()
+                            if (scaled != null) FRAME_CACHE[key] = scaled
+                            scaled
+                        }
                     } catch (_: Exception) { null }
                 }
             }
@@ -143,8 +157,11 @@ abstract class BaseBehavior(
                 try {
                     val specJson = context.assets.open(specAssetPath).bufferedReader().use { it.readText() }
                     val spec = PetAtlasSpec.fromJson(JSONObject(specJson))
-                    val bitmap = context.assets.open(spec.atlasPath).use { input ->
-                        BitmapFactory.decodeStream(input)
+                    // Cache de atlas por ruta: cambiar de pet no re-decodifica el PNG grande.
+                    val bitmap = ATLAS_CACHE.getOrPut(spec.atlasPath) {
+                        context.assets.open(spec.atlasPath).use { input ->
+                            BitmapFactory.decodeStream(input)
+                        }
                     }
                     Triple(spec, bitmap, null as Exception?)
                 } catch (e: Exception) {
@@ -499,16 +516,28 @@ abstract class BaseBehavior(
 
     override fun destroy() {
         scope.cancel()
+        // Los frames cacheados (FRAME_CACHE) son compartidos entre instancias de pet:
+        // no se reciclan aquí, los reutiliza la siguiente mascota (evita re-decodificar).
         frames.filterNotNull().distinct().forEach { bitmap ->
-            if (!bitmap.isRecycled) bitmap.recycle()
+            if (!FRAME_CACHE.containsValue(bitmap) && !bitmap.isRecycled) bitmap.recycle()
         }
         frames.clear()
-        spriteSheetBitmap?.recycle()
+        if (spriteSheetBitmap != null && !ATLAS_CACHE.containsValue(spriteSheetBitmap)) {
+            spriteSheetBitmap?.recycle()
+        }
         spriteSheetBitmap = null
     }
 
     private companion object {
         const val LOW_BATTERY_THRESHOLD = 20
         const val ENVIRONMENT_REACTION_COOLDOWN_MS = 8L * 60L * 1000L
+
+        /** Cache de frames escalados por (drawableResId, petSpriteSize). */
+        val FRAME_CACHE = java.util.concurrent.ConcurrentHashMap<Long, Bitmap>()
+
+        /** Cache de atlases decodificados por ruta de asset. */
+        val ATLAS_CACHE = java.util.concurrent.ConcurrentHashMap<String, Bitmap>()
+
+        fun cacheKey(resId: Int, size: Int): Long = (resId.toLong() shl 32) or size.toLong()
     }
 }
