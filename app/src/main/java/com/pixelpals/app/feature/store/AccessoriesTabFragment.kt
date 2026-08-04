@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
@@ -25,6 +26,9 @@ class AccessoriesTabFragment : Fragment() {
     private val repository: PixelPalsRepository by lazy { AppServices.repository(requireContext()) }
     private val analytics: AnalyticsTracker by lazy { AppServices.analytics(requireContext()) }
     private val selectedPetStore by lazy { SelectedPetStore(requireContext()) }
+    private val accessorySpriteRenderer by lazy {
+        com.pixelpals.app.feature.overlay.behavior.AccessorySpriteRenderer(requireContext())
+    }
 
     private lateinit var root: LinearLayout
     private var renderJob: Job? = null
@@ -71,7 +75,21 @@ class AccessoriesTabFragment : Fragment() {
         owned: Boolean,
     ): View {
         val card = inflater.inflate(R.layout.item_accessory_v15, root, false)
-        card.findViewById<TextView>(R.id.txtAccEmoji).text = acc.emoji
+        val emojiView = card.findViewById<TextView>(R.id.txtAccEmoji)
+        val spriteView = card.findViewById<android.widget.ImageView>(R.id.imgAccSprite)
+
+        // Mostrar el sprite real si existe; el emoji solo como fallback.
+        val spriteBitmap = accessorySpriteRenderer.loadIdleFrame(acc)
+        if (spriteBitmap != null) {
+            spriteView.setImageBitmap(spriteBitmap)
+            spriteView.visibility = View.VISIBLE
+            emojiView.visibility = View.GONE
+        } else {
+            emojiView.text = acc.emoji
+            emojiView.visibility = View.VISIBLE
+            spriteView.visibility = View.GONE
+        }
+
         card.findViewById<TextView>(R.id.txtAccTitle).text = acc.displayName
         card.findViewById<TextView>(R.id.txtAccSubtitle).text = acc.description
         card.findViewById<TextView>(R.id.txtAccSlot).text = acc.slot.name

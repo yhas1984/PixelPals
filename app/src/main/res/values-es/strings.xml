@@ -253,4 +253,5 @@
     <string name="treasure_consume_none_left">No quedan más.</string>
     <string name="store_tab_pets">Mascotas</string>
     <string name="pet_unlocked_toast">¡%1$s desbloqueado!</string>
+    <string name="store_item_icon">Vista previa del accesorio</string>
 </resources>

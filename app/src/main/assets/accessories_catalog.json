@@ -437,7 +437,7 @@
       "productId": "acc_round_glasses",
       "displayName": "Round Glasses",
       "description": "Gafas redondas para el look intelectual.",
-      "emoji": "🤓",
+      "emoji": "👓",
       "slot": "FACE",
       "visual": {
         "type": "emoji",
@@ -834,7 +834,7 @@
       "productId": "acc_heart_glasses",
       "displayName": "Heart Glasses",
       "description": "Gafas con forma de corazón para enamorar.",
-      "emoji": "😍",
+      "emoji": "👓",
       "slot": "FACE",
       "visual": {
         "type": "emoji",
@@ -1041,7 +1041,7 @@
       "productId": "acc_astronaut_helmet",
       "displayName": "Astronaut Helmet",
       "description": "Un casco de astronauta para los exploradores espaciales.",
-      "emoji": "🧑‍🚀",
+      "emoji": "👨‍🚀",
       "slot": "HEAD",
       "visual": {
         "type": "emoji",
@@ -1650,7 +1650,7 @@
       "productId": "acc_mustache",
       "displayName": "Bigote",
       "description": "Un bigote distinguido.",
-      "emoji": "👨",
+      "emoji": "🧔",
       "slot": "FACE",
       "visual": {
         "type": "emoji",

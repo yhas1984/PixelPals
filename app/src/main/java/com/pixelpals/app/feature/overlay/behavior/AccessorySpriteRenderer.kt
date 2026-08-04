@@ -43,6 +43,38 @@ class AccessorySpriteRenderer(context: Context) {
     }
 
     /**
+     * Devuelve el bitmap del primer frame del clip idle (para la card de la tienda).
+     * Si el accesorio no tiene sprite, devuelve null (la card usará el emoji).
+     */
+    fun loadIdleFrame(accessory: AccessoryCatalogItem): Bitmap? {
+        val spec = accessory.sprite ?: return null
+        val sheet = atlasOf(spec) ?: return null
+        if (sheet.isRecycled) return null
+
+        val clip = spec.clipOrDefault(flapping = false) ?: return null
+        if (clip.frames.isEmpty()) return null
+        val frameIndex = clip.frames.first().coerceAtLeast(0)
+
+        val cols = spec.columns.coerceAtLeast(1)
+        val rows = spec.rows.coerceAtLeast(1)
+        val row = frameIndex / cols
+        val col = frameIndex % cols
+
+        return try {
+            Bitmap.createBitmap(
+                sheet,
+                col * spec.frameWidth,
+                row * spec.frameHeight,
+                spec.frameWidth,
+                spec.frameHeight,
+            )
+        } catch (e: Exception) {
+            Log.w(TAG, "Cannot extract frame for ${accessory.id}", e)
+            null
+        }
+    }
+
+    /**
      * Dibuja el accesorio anclado a la cabeza del pet.
      *
      * @param headAnchorYRatio fracción negativa del petSpriteSize donde está la

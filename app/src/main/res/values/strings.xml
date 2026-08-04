@@ -255,4 +255,5 @@
     <string name="store_error_generic">Purchase could not be completed</string>
     <string name="store_tab_pets">Pets</string>
     <string name="pet_unlocked_toast">%1$s unlocked!</string>
+    <string name="store_item_icon">Accessory preview</string>
 </resources>
