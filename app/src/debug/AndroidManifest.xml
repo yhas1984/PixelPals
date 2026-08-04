@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <activity
+            android:name=".debug.MokiPreviewActivity"
+            android:exported="true"
+            android:label="@string/debug_moki_title"
+            android:theme="@style/Theme.ScreenPets" />
+    </application>
+</manifest>

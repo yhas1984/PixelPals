@@ -3,20 +3,28 @@ package com.pixelpals.app.behavior
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
+import android.graphics.ColorMatrix
+import android.graphics.ColorMatrixColorFilter
 import android.graphics.Paint
+import android.graphics.Rect
+import android.graphics.RectF
 import android.util.Log
 import android.view.View
 import com.pixelpals.app.PetState
+import com.pixelpals.app.motion.PetRandom
+import com.pixelpals.app.status.PetMood
 import org.json.JSONObject
 import kotlinx.coroutines.*
 import kotlin.math.sin
-import kotlin.random.Random
+import kotlin.math.max
+import kotlin.math.min
 
 /**
  * BaseBehavior — Motor de movimiento y comportamiento.
  */
 abstract class BaseBehavior(
-    protected val bridge: PetViewBridge
+    protected val bridge: PetViewBridge,
+    protected open val random: PetRandom
 ) : PetBehavior {
 
     protected var time: Float = 0f
@@ -24,15 +32,21 @@ abstract class BaseBehavior(
     
     // Lista que soporta frames nulos para no perder el orden de los índices
     protected val frames = mutableListOf<Bitmap?>()
+    protected val spriteFrameRects = mutableListOf<Rect>()
+    protected var spriteSheetBitmap: Bitmap? = null
+    protected var spriteSheetSpec: PetAtlasSpec? = null
+    protected var spriteBleedInsetPx: Int = 2
+    protected var spriteFilterBitmap: Boolean = false
     protected val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { isFilterBitmap = true }
     protected val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     protected var isLoading = true
-
     protected var velX = 0f
     protected var velY = 0f
     protected var targetX = 0f
     protected var targetY = 0f
     protected var decisionTimer = 0f
+    private var lastBatteryStateKey = ""
+    private var lastEnvironmentReactionAt = 0L
 
     // Acumuladores de movimiento sub-píxel para que, incluso con velocidades bajas,
     // el movimiento se vuelva perceptible (evita que (vel * dt).toInt() quede en 0).
@@ -41,11 +55,7 @@ abstract class BaseBehavior(
 
     abstract val resourceIds: List<Int>
 
-    init {
-        loadFramesAsync()
-    }
-
-    private fun loadFramesAsync() {
+    protected fun loadFramesAsync() {
         val startedAt = System.currentTimeMillis()
         scope.launch {
             val context = (bridge as View).context
@@ -75,23 +85,6 @@ abstract class BaseBehavior(
             frames.clear()
             frames.addAll(tmp)
             isLoading = false
-            try {
-                val payload = JSONObject().apply {
-                    put("sessionId", "a40953")
-                    put("runId", "post-fix")
-                    put("hypothesisId", "H4")
-                    put("location", "BaseBehavior.kt:loadFramesAsync")
-                    put("message", "Carga inicial de frames completada")
-                    put("data", JSONObject().apply {
-                        put("behavior", this@BaseBehavior::class.java.simpleName)
-                        put("resourceCount", resourceIds.size)
-                        put("initialLoadedFrames", initialCount)
-                        put("elapsedMs", initialElapsed.second)
-                    })
-                    put("timestamp", System.currentTimeMillis())
-                }
-                Log.i("AGENT_DEBUG", payload.toString())
-            } catch (_: Exception) {}
             bridge.invalidate()
 
             // 2) Carga completa en background.
@@ -103,29 +96,98 @@ abstract class BaseBehavior(
             frames.clear()
             frames.addAll(tmp)
 
-            try {
-                val payload = JSONObject().apply {
-                    put("sessionId", "a40953")
-                    put("runId", "post-fix")
-                    put("hypothesisId", "H4")
-                    put("location", "BaseBehavior.kt:loadFramesAsync")
-                    put("message", "Carga completa de frames completada")
-                    put("data", JSONObject().apply {
-                        put("behavior", this@BaseBehavior::class.java.simpleName)
-                        put("resourceCount", resourceIds.size)
-                        put("loadedFrames", frames.count { it != null })
-                        put("elapsedMs", System.currentTimeMillis() - startedAt)
-                    })
-                    put("timestamp", System.currentTimeMillis())
-                }
-                Log.i("AGENT_DEBUG", payload.toString())
-            } catch (_: Exception) {}
             bridge.invalidate()
+        }
+    }
+
+    protected fun loadSpriteSheetAsync(sheetResId: Int, frameRects: List<Rect>) {
+        if (sheetResId == 0 || frameRects.isEmpty()) {
+            isLoading = false
+            return
+        }
+
+        val startedAt = System.currentTimeMillis()
+        isLoading = true
+        scope.launch {
+            val context = (bridge as View).context
+            val loadedSheet = withContext(Dispatchers.IO) {
+                try {
+                    BitmapFactory.decodeResource(context.resources, sheetResId)
+                } catch (_: Exception) {
+                    null
+                }
+            }
+
+            spriteSheetBitmap = loadedSheet
+            spriteSheetSpec = null
+            spriteFrameRects.clear()
+            spriteFrameRects.addAll(frameRects)
+            spriteBleedInsetPx = 2
+            spriteFilterBitmap = false
+            isLoading = loadedSheet == null
+
+            bridge.invalidate()
+        }
+    }
+
+    protected fun loadSpriteSheetAssetAsync(
+        specAssetPath: String,
+        onLoaded: ((PetAtlasSpec) -> Unit)? = null
+    ) {
+        val startedAt = System.currentTimeMillis()
+        isLoading = true
+        scope.launch {
+            val context = (bridge as View).context
+            val result = withContext(Dispatchers.IO) {
+                try {
+                    val specJson = context.assets.open(specAssetPath).bufferedReader().use { it.readText() }
+                    val spec = PetAtlasSpec.fromJson(JSONObject(specJson))
+                    val bitmap = context.assets.open(spec.atlasPath).use { input ->
+                        BitmapFactory.decodeStream(input)
+                    }
+                    Triple(spec, bitmap, null as Exception?)
+                } catch (e: Exception) {
+                    Triple(null, null, e)
+                }
+            }
+
+            val spec = result.first
+            val loadedSheet = result.second
+            val error = result.third
+
+            spriteSheetSpec = spec
+            spriteSheetBitmap = loadedSheet
+            spriteFrameRects.clear()
+            if (spec != null) {
+                spriteFrameRects.addAll(buildFrameRects(spec))
+                spriteBleedInsetPx = spec.renderHints.recommendedBleedInsetPx.coerceAtLeast(0)
+                spriteFilterBitmap = spec.renderHints.filterBitmap
+            }
+            isLoading = loadedSheet == null || spec == null
+
+            if (spec != null && loadedSheet != null) {
+                onLoaded?.invoke(spec)
+            }
+            bridge.invalidate()
+        }
+    }
+
+    private fun buildFrameRects(spec: PetAtlasSpec): List<Rect> {
+        return List(spec.frameCount) { index ->
+            val row = index / spec.columns
+            val col = index % spec.columns
+            Rect(
+                col * spec.frameWidth,
+                row * spec.frameHeight,
+                (col + 1) * spec.frameWidth,
+                (row + 1) * spec.frameHeight
+            )
         }
     }
 
     override fun updateIdle(dt: Float) {
         if (isLoading || frames.isEmpty()) return
+        sanitizeMotion()
         time += dt
         
         updateDecision(dt)
@@ -135,8 +197,8 @@ abstract class BaseBehavior(
     protected open fun updateDecision(dt: Float) {
         decisionTimer -= dt
         if (decisionTimer <= 0) {
-            targetX = Random.nextInt(50, bridge.screenWidth - bridge.petSpriteSize - 50).toFloat()
-            targetY = Random.nextInt(100, bridge.screenHeight - bridge.petSpriteSize - 200).toFloat()
+            targetX = random.nextInt(50, (bridge.screenWidth - bridge.petSpriteSize - 50).coerceAtLeast(51)).toFloat()
+            targetY = random.nextInt(100, (bridge.screenHeight - bridge.petSpriteSize - 200).coerceAtLeast(101)).toFloat()
             
             val dx = targetX - bridge.windowX
             val dy = targetY - bridge.windowY
@@ -148,17 +210,31 @@ abstract class BaseBehavior(
                 velY = (dy / dist) * speed
             }
             
-            decisionTimer = Random.nextFloat() * 3f + 1f 
+            decisionTimer = random.nextFloat() * 3f + 1f
         }
     }
 
     protected open fun getBaseSpeed(): Float = 100f 
 
+    protected fun currentMood(): PetMood = bridge.petStatus.mood
+
+    protected fun moodSpeedMultiplier(): Float {
+        return when (currentMood()) {
+            PetMood.EXCITED -> 1.12f
+            PetMood.HAPPY -> 1.0f
+            PetMood.BORED -> 0.94f
+            PetMood.HUNGRY -> 0.9f
+            PetMood.DIRTY -> 0.92f
+            PetMood.SLEEPY -> 0.84f
+        }
+    }
+
     protected fun applyMovement(dt: Float) {
         val params = bridge.getWindowParams() ?: return
 
-        carryX += velX * dt
-        carryY += velY * dt
+        val adjustedDt = dt * moodSpeedMultiplier()
+        carryX += velX * adjustedDt
+        carryY += velY * adjustedDt
 
         val moveX = carryX.toInt()
         val moveY = carryY.toInt()
@@ -198,12 +274,36 @@ abstract class BaseBehavior(
             carryY = 0f
         }
 
+        clampWindowParams(params, minX, maxX, minY, maxY)
         bridge.updateWindowLayout(params)
+    }
+
+    protected fun clampWindowParams(
+        params: android.view.WindowManager.LayoutParams,
+        minX: Int = 0,
+        maxX: Int = (bridge.screenWidth - bridge.petSpriteSize).coerceAtLeast(0),
+        minY: Int = 50,
+        maxY: Int = (bridge.screenHeight - bridge.petSpriteSize - 100).coerceAtLeast(minY)
+    ) {
+        params.x = params.x.coerceIn(minX, maxX)
+        params.y = params.y.coerceIn(minY, maxY)
+    }
+
+    protected fun sanitizeMotion() {
+        if (!velX.isFinite()) velX = 0f
+        if (!velY.isFinite()) velY = 0f
+        if (!targetX.isFinite()) targetX = 0f
+        if (!targetY.isFinite()) targetY = 0f
+        if (!decisionTimer.isFinite()) decisionTimer = 0f
     }
 
     override fun updateDrag(dt: Float) {
         time += dt
-        bridge.animRotation = sin(time * 20f) * 15f
+        bridge.animRotation = 0f
+        bridge.animScaleX = 1f
+        bridge.animScaleY = 1f
+        bridge.animOffsetX = 0f
+        bridge.animOffsetY = 0f
         velX = 0f
         velY = 0f
     }
@@ -224,6 +324,46 @@ abstract class BaseBehavior(
         applyMovement(dt)
     }
 
+    override fun onBatteryStatusChanged(percent: Int, isCharging: Boolean) {
+        val key = if (isCharging) {
+            "charging"
+        } else if (percent <= LOW_BATTERY_THRESHOLD) {
+            "low_$percent"
+        } else {
+            "ok"
+        }
+        if (key == lastBatteryStateKey) return
+        lastBatteryStateKey = key
+        when {
+            isCharging -> maybeShowEnvironmentBubble("⚡")
+            percent <= LOW_BATTERY_THRESHOLD -> maybeShowEnvironmentBubble("🔋")
+        }
+    }
+
+    override fun onAirplaneModeChanged(isAirplane: Boolean) {
+        if (isAirplane) maybeShowEnvironmentBubble("✈️")
+    }
+
+    override fun onKeyboardVisibilityChanged(visible: Boolean, height: Int) {
+        if (!visible) return
+        val params = bridge.getWindowParams() ?: return
+        val minY = 50
+        val maxY = (bridge.screenHeight - height - bridge.petSpriteSize - 100).coerceAtLeast(minY)
+        if (params.y > maxY) {
+            params.y = maxY
+            bridge.updateWindowLayout(params)
+        }
+        bridge.showBubble("🤫")
+    }
+
+    protected fun maybeShowEnvironmentBubble(emoji: String) {
+        val now = System.currentTimeMillis()
+        if (now - lastEnvironmentReactionAt < ENVIRONMENT_REACTION_COOLDOWN_MS) return
+        lastEnvironmentReactionAt = now
+        bridge.showBubble(emoji)
+        bridge.playHaptic(20)
+    }
+
     override fun onInteract() {
         bridge.state = PetState.INTERACTING
         interactionTimer = 0f 
@@ -241,18 +381,66 @@ abstract class BaseBehavior(
     }
 
     override fun onDraw(canvas: Canvas, cx: Float, cy: Float) {
-        if (isLoading || frames.isEmpty()) return
-        val frameIdx = bridge.currentFrame.coerceIn(0, frames.size - 1)
-        val bitmap = frames[frameIdx] ?: return // Si el frame no existe, no dibujar nada o ignorar
-        paint.alpha = (bridge.animAlpha.coerceIn(0f, 1f) * 255).toInt()
-        paint.colorFilter = bridge.animColorFilter
+        val moodAlphaMultiplier = when (currentMood()) {
+            PetMood.SLEEPY -> 0.92f
+            PetMood.DIRTY -> 0.95f
+            else -> 1f
+        }
+        paint.alpha = (bridge.animAlpha.coerceIn(0f, 1f) * moodAlphaMultiplier * 255).toInt()
+        paint.colorFilter = bridge.animColorFilter ?: moodColorFilter()
+
+        val frameIdx = bridge.currentFrame.coerceAtLeast(0)
+        val bitmap = if (frames.isNotEmpty()) {
+            frames[frameIdx.coerceIn(0, frames.size - 1)]
+        } else {
+            null
+        }
+        val spriteSheet = spriteSheetBitmap
+        val srcRect = if (spriteSheet != null && spriteFrameRects.isNotEmpty()) {
+            spriteFrameRects[frameIdx.coerceIn(0, spriteFrameRects.size - 1)]
+        } else {
+            null
+        }
+
+        if (isLoading || (bitmap == null && (spriteSheet == null || srcRect == null))) return
 
         canvas.save()
         canvas.translate(cx + bridge.renderOffsetX, cy + bridge.renderOffsetY)
         canvas.rotate(bridge.renderRotation)
         canvas.scale(bridge.renderScaleX, bridge.renderScaleY)
-        canvas.drawBitmap(bitmap, -bitmap.width / 2f, -bitmap.height / 2f, paint)
+        when {
+            bitmap != null -> canvas.drawBitmap(bitmap, -bitmap.width / 2f, -bitmap.height / 2f, paint)
+            spriteSheet != null && srcRect != null -> {
+                val halfSize = bridge.petSpriteSize / 2f
+                val dstRect = RectF(-halfSize, -halfSize, halfSize, halfSize)
+                val bleedInset = spriteBleedInsetPx.coerceAtLeast(0)
+                val insetSrcRect = Rect(
+                    (srcRect.left + bleedInset).coerceAtMost(srcRect.right),
+                    (srcRect.top + bleedInset).coerceAtMost(srcRect.bottom),
+                    (srcRect.right - bleedInset).coerceAtLeast(srcRect.left),
+                    (srcRect.bottom - bleedInset).coerceAtLeast(srcRect.top)
+                )
+                val previousFilter = paint.isFilterBitmap
+                paint.isFilterBitmap = spriteFilterBitmap
+                canvas.drawBitmap(spriteSheet, insetSrcRect, dstRect, paint)
+                paint.isFilterBitmap = previousFilter
+            }
+        }
         canvas.restore()
+    }
+
+    private fun moodColorFilter(): ColorMatrixColorFilter? {
+        return when (currentMood()) {
+            PetMood.DIRTY -> {
+                val matrix = ColorMatrix().apply { setSaturation(0.85f) }
+                ColorMatrixColorFilter(matrix)
+            }
+            PetMood.SLEEPY -> {
+                val matrix = ColorMatrix().apply { setScale(0.92f, 0.92f, 1.02f, 1f) }
+                ColorMatrixColorFilter(matrix)
+            }
+            else -> null
+        }
     }
 
     override fun reset() {
@@ -269,9 +457,21 @@ abstract class BaseBehavior(
         bridge.animOffsetX = 0f
         bridge.animOffsetY = 0f
         bridge.animColorFilter = null
+        bridge.animAlpha = 1f
     }
 
     override fun destroy() {
         scope.cancel()
+        frames.filterNotNull().distinct().forEach { bitmap ->
+            if (!bitmap.isRecycled) bitmap.recycle()
+        }
+        frames.clear()
+        spriteSheetBitmap?.recycle()
+        spriteSheetBitmap = null
+    }
+
+    private companion object {
+        const val LOW_BATTERY_THRESHOLD = 20
+        const val ENVIRONMENT_REACTION_COOLDOWN_MS = 8L * 60L * 1000L
     }
 }

@@ -1,355 +1,109 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/selectionScroll"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/bg_gradient"
-    android:fillViewport="true">
+    android:clipToPadding="false"
+    android:fillViewport="true"
+    android:paddingHorizontal="20dp"
+    android:paddingTop="0dp"
+    android:paddingBottom="28dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
         android:gravity="center_horizontal"
-        android:paddingHorizontal="24dp"
-        android:paddingTop="48dp"
-        android:paddingBottom="32dp">
+        android:orientation="vertical"
+        android:paddingTop="44dp">
 
-        <!-- Title -->
         <TextView
             android:id="@+id/titleSelect"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/choose_your_pet"
-            android:textSize="32sp"
-            android:textStyle="bold"
-            android:textColor="#FFFFFF"
-            android:fontFamily="sans-serif-black" />
+            android:textColor="@color/text_on_accent"
+            android:textSize="34sp"
+            android:textStyle="bold" />
 
         <TextView
+            android:id="@+id/txtSelectionSubtitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/choose_subtitle"
-            android:textSize="14sp"
-            android:textColor="#90FFFFFF"
             android:layout_marginTop="6dp"
-            android:layout_marginBottom="28dp"
-            android:gravity="center" />
-
-        <!-- Pet Cards Grid (2x2) -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="12dp">
-
-            <!-- Bloop -->
-            <LinearLayout
-                android:id="@+id/cardBloop"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:background="@drawable/bg_card_pet"
-                android:padding="14dp"
-                android:layout_marginEnd="6dp"
-                android:elevation="4dp"
-                android:clickable="true"
-                android:focusable="true">
-
-                <ImageView
-                    android:layout_width="96dp"
-                    android:layout_height="96dp"
-                    android:src="@drawable/pet_bloop"
-                    android:scaleType="fitCenter"
-                    android:contentDescription="Bloop" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Bloop"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="#1A1A2E"
-                    android:layout_marginTop="8dp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/bloop_desc"
-                    android:textSize="11sp"
-                    android:textColor="#666680"
-                    android:gravity="center" />
-            </LinearLayout>
-
-            <!-- Nube-Michi -->
-            <LinearLayout
-                android:id="@+id/cardNubeMichi"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:background="@drawable/bg_card_pet"
-                android:padding="14dp"
-                android:layout_marginStart="6dp"
-                android:elevation="4dp"
-                android:clickable="true"
-                android:focusable="true">
-
-                <ImageView
-                    android:layout_width="96dp"
-                    android:layout_height="96dp"
-                    android:src="@drawable/pet_nube_michi"
-                    android:scaleType="fitCenter"
-                    android:contentDescription="Nube-Michi" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Nube-Michi"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="#1A1A2E"
-                    android:layout_marginTop="8dp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/nube_michi_desc"
-                    android:textSize="11sp"
-                    android:textColor="#666680"
-                    android:gravity="center" />
-            </LinearLayout>
-        </LinearLayout>
+            android:layout_marginBottom="20dp"
+            android:gravity="center"
+            android:text="@string/choose_subtitle"
+            android:textColor="#E8F5FF"
+            android:textSize="14sp" />
 
         <LinearLayout
+            android:id="@+id/cardSelectionSummary"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="24dp">
+            android:layout_marginBottom="16dp"
+            android:background="@drawable/bg_status_info"
+            android:elevation="4dp"
+            android:orientation="vertical"
+            android:padding="18dp">
 
-            <!-- Jelly -->
-            <LinearLayout
-                android:id="@+id/cardJelly"
-                android:layout_width="0dp"
+            <TextView
+                android:id="@+id/txtCurrentMood"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:background="@drawable/bg_card_pet"
-                android:padding="14dp"
-                android:layout_marginEnd="6dp"
-                android:elevation="4dp"
-                android:clickable="true"
-                android:focusable="true">
+                android:textColor="@color/text_primary"
+                android:textSize="17sp"
+                android:textStyle="bold" />
 
-                <ImageView
-                    android:layout_width="96dp"
-                    android:layout_height="96dp"
-                    android:src="@drawable/pet_jelly"
-                    android:scaleType="fitCenter"
-                    android:contentDescription="Jelly" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Jelly"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="#1A1A2E"
-                    android:layout_marginTop="8dp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/jelly_desc"
-                    android:textSize="11sp"
-                    android:textColor="#666680"
-                    android:gravity="center" />
-            </LinearLayout>
-
-            <!-- Corgi -->
-            <LinearLayout
-                android:id="@+id/cardCorgi"
-                android:layout_width="0dp"
+            <TextView
+                android:id="@+id/txtCatalogSummary"
+                android:accessibilityLiveRegion="polite"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:background="@drawable/bg_card_pet"
-                android:padding="14dp"
-                android:layout_marginStart="6dp"
-                android:elevation="4dp"
-                android:clickable="true"
-                android:focusable="true">
+                android:layout_marginTop="6dp"
+                android:textColor="@color/status_info_fg"
+                android:textSize="13sp"
+                android:textStyle="bold" />
 
-                <ImageView
-                    android:layout_width="96dp"
-                    android:layout_height="96dp"
-                    android:src="@drawable/pet_corgi"
-                    android:scaleType="fitCenter"
-                    android:contentDescription="Corgi" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Corgi"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="#1A1A2E"
-                    android:layout_marginTop="8dp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/corgi_desc"
-                    android:textSize="11sp"
-                    android:textColor="#666680"
-                    android:gravity="center" />
-            </LinearLayout>
+            <TextView
+                android:id="@+id/txtSelectionHint"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:textColor="@color/text_secondary"
+                android:textSize="13sp" />
         </LinearLayout>
 
-        <!-- Row 3: Ginger -->
+        <Button
+            android:id="@+id/btnOpenStore"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginBottom="14dp"
+            android:backgroundTint="@color/coral_accent"
+            android:insetBottom="0dp"
+            android:insetTop="0dp"
+            android:text="@string/selection_open_store_button"
+            android:textAllCaps="false"
+            android:textColor="@color/text_on_accent"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btnOpenDashboard"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginBottom="16dp"
+            android:backgroundTint="@color/purple_soft"
+            android:insetBottom="0dp"
+            android:insetTop="0dp"
+            android:text="@string/open_dashboard"
+            android:textAllCaps="false"
+            android:textColor="@color/text_on_accent"
+            android:textStyle="bold" />
+
         <LinearLayout
+            android:id="@+id/catalogContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="24dp">
-
-            <!-- Ginger -->
-            <LinearLayout
-                android:id="@+id/cardGinger"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:background="@drawable/bg_card_pet"
-                android:padding="14dp"
-                android:elevation="4dp"
-                android:clickable="true"
-                android:focusable="true">
-
-                <ImageView
-                    android:layout_width="96dp"
-                    android:layout_height="96dp"
-                    android:src="@drawable/pet_ginger"
-                    android:scaleType="fitCenter"
-                    android:contentDescription="Ginger" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Ginger"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="#1A1A2E"
-                    android:layout_marginTop="8dp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/ginger_desc"
-                    android:textSize="11sp"
-                    android:textColor="#666680"
-                    android:gravity="center" />
-            </LinearLayout>
-        </LinearLayout>
-
-        <!-- Row 4: Patito -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="24dp">
-
-            <!-- Patito -->
-            <LinearLayout
-                android:id="@+id/cardPatito"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:background="@drawable/bg_card_pet"
-                android:padding="14dp"
-                android:elevation="4dp"
-                android:clickable="true"
-                android:focusable="true">
-
-                <ImageView
-                    android:layout_width="96dp"
-                    android:layout_height="96dp"
-                    android:src="@drawable/pet_patito"
-                    android:scaleType="fitCenter"
-                    android:contentDescription="Patito" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Patito"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="#1A1A2E"
-                    android:layout_marginTop="8dp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/patito_desc"
-                    android:textSize="11sp"
-                    android:textColor="#666680"
-                    android:gravity="center" />
-            </LinearLayout>
-        </LinearLayout>
-
-        <!-- Row 5: Diablillo -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="24dp">
-
-            <!-- Diablillo -->
-            <LinearLayout
-                android:id="@+id/cardDiablillo"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:background="@drawable/bg_card_pet"
-                android:padding="14dp"
-                android:elevation="4dp"
-                android:clickable="true"
-                android:focusable="true">
-
-                <ImageView
-                    android:layout_width="96dp"
-                    android:layout_height="96dp"
-                    android:src="@drawable/pet_diablillo"
-                    android:scaleType="fitCenter"
-                    android:contentDescription="Diablillo" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Diablillo"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="#1A1A2E"
-                    android:layout_marginTop="8dp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/diablillo_desc"
-                    android:textSize="11sp"
-                    android:textColor="#666680"
-                    android:gravity="center" />
-            </LinearLayout>
-        </LinearLayout>
-
+            android:orientation="vertical" />
     </LinearLayout>
 </ScrollView>

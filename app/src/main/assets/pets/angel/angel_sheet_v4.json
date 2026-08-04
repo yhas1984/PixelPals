@@ -1,0 +1,182 @@
+{
+  "version": 1,
+  "petId": "angel",
+  "atlasPath": "pets/angel/angel_sheet_v4.png",
+  "previewPath": "res://drawable-nodpi/pet_angel.png",
+  "frameWidth": 384,
+  "frameHeight": 384,
+  "columns": 4,
+  "rows": 4,
+  "frameCount": 16,
+  "pivot": {
+    "x": 192,
+    "y": 192
+  },
+  "renderHints": {
+    "innerTransparentPaddingPx": 16,
+    "recommendedBleedInsetPx": 1,
+    "filterBitmap": true
+  },
+  "clips": [
+    {
+      "id": "hover",
+      "frames": [
+        0,
+        1,
+        2,
+        3,
+        2,
+        1
+      ],
+      "loop": true,
+      "frameDurationMs": 180
+    },
+    {
+      "id": "flap",
+      "frames": [
+        4,
+        5
+      ],
+      "loop": true,
+      "frameDurationMs": 145
+    },
+    {
+      "id": "glide",
+      "frames": [
+        6,
+        7,
+        6
+      ],
+      "loop": true,
+      "frameDurationMs": 240
+    },
+    {
+      "id": "grace",
+      "frames": [
+        8,
+        9,
+        10,
+        11
+      ],
+      "loop": false,
+      "frameDurationMs": 230
+    },
+    {
+      "id": "prayer",
+      "frames": [
+        10,
+        11,
+        10
+      ],
+      "loop": true,
+      "frameDurationMs": 420
+    },
+    {
+      "id": "touch",
+      "frames": [
+        12
+      ],
+      "loop": false,
+      "frameDurationMs": 550
+    },
+    {
+      "id": "drag",
+      "frames": [
+        13
+      ],
+      "loop": false,
+      "frameDurationMs": 180
+    },
+    {
+      "id": "fling_recover",
+      "frames": [
+        14,
+        15
+      ],
+      "loop": false,
+      "frameDurationMs": 180
+    }
+  ],
+  "frames": [
+    {
+      "index": 0,
+      "name": "hover_neutral",
+      "sourceHint": "board_01_hover.png"
+    },
+    {
+      "index": 1,
+      "name": "hover_upstroke",
+      "sourceHint": "board_01_hover.png"
+    },
+    {
+      "index": 2,
+      "name": "hover_downstroke",
+      "sourceHint": "board_01_hover.png"
+    },
+    {
+      "index": 3,
+      "name": "hover_wide",
+      "sourceHint": "board_01_hover.png"
+    },
+    {
+      "index": 4,
+      "name": "flight_power",
+      "sourceHint": "board_02_flight.png"
+    },
+    {
+      "index": 5,
+      "name": "flight_pass",
+      "sourceHint": "board_02_flight.png"
+    },
+    {
+      "index": 6,
+      "name": "glide_level",
+      "sourceHint": "board_02_flight.png"
+    },
+    {
+      "index": 7,
+      "name": "glide_reach",
+      "sourceHint": "board_02_flight.png"
+    },
+    {
+      "index": 8,
+      "name": "halo_brighten",
+      "sourceHint": "board_03_grace.png"
+    },
+    {
+      "index": 9,
+      "name": "blessing",
+      "sourceHint": "board_03_grace.png"
+    },
+    {
+      "index": 10,
+      "name": "prayer",
+      "sourceHint": "board_03_grace.png"
+    },
+    {
+      "index": 11,
+      "name": "prayer_rest",
+      "sourceHint": "board_03_grace.png"
+    },
+    {
+      "index": 12,
+      "name": "touch_reach",
+      "sourceHint": "board_04_reactions.png"
+    },
+    {
+      "index": 13,
+      "name": "drag_resist",
+      "sourceHint": "board_04_reactions.png"
+    },
+    {
+      "index": 14,
+      "name": "fling_tuck",
+      "sourceHint": "board_04_reactions.png"
+    },
+    {
+      "index": 15,
+      "name": "recover_hover",
+      "sourceHint": "board_04_reactions.png"
+    }
+  ]
+}

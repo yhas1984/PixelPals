@@ -6,15 +6,16 @@ import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.roundToInt
 import kotlin.math.sin
-import kotlin.random.Random
+import com.pixelpals.app.motion.PetRandom
 
 /**
  * NubeMichiBehavior — Gatito nube somnoliento que despierta, camina
  * y al tocarlo se vuelve pluma antes de subir como nube esponjosa.
  */
 class NubeMichiBehavior(
-    bridge: PetViewBridge
-) : BaseBehavior(bridge) {
+    bridge: PetViewBridge,
+    override val random: PetRandom
+) : BaseBehavior(bridge, random) {
 
     override val resourceIds = listOf(
         R.drawable.gato_0, // dormido flotando
@@ -26,6 +27,10 @@ class NubeMichiBehavior(
         R.drawable.gato_6, // camina 2
         R.drawable.gato_7  // camina 3
     )
+
+    init {
+        loadFramesAsync()
+    }
 
     private enum class Mode {
         SLEEP_FLOAT,
@@ -41,6 +46,7 @@ class NubeMichiBehavior(
     private var walkTargetX = 0f
     private var walkDirection = 1f
     private var returnTargetY = 0f
+    private var cloudBandY = 0f
 
     override fun getBaseSpeed(): Float = 52f
 
@@ -57,6 +63,16 @@ class NubeMichiBehavior(
         bridge.animRotation = 0f
         bridge.animOffsetX = 0f
         bridge.animOffsetY = 0f
+        val params = bridge.getWindowParams() ?: return
+        val minY = (bridge.screenHeight * 0.18f).toInt()
+        val maxY = (bridge.screenHeight * 0.42f).toInt().coerceAtLeast(minY)
+        cloudBandY = if (cloudBandY == 0f) {
+            params.y.coerceIn(minY, maxY).toFloat()
+        } else {
+            cloudBandY.coerceIn(minY.toFloat(), maxY.toFloat())
+        }
+        params.y = cloudBandY.toInt()
+        bridge.updateWindowLayout(params)
     }
 
     private fun startWalk() {
@@ -133,15 +149,17 @@ class NubeMichiBehavior(
                 }
                 bridge.currentFrame = walkFrame
                 setFacing(walkDirection)
-                bridge.animOffsetY = sin(time * 6f) * 2f
+                bridge.animOffsetY = sin(time * 2f) * 5f
                 bridge.animOffsetX = 0f
                 bridge.animRotation = 0f
                 bridge.animScaleY = 1f + sin(time * 8f) * 0.01f
                 velY = 0f
-                applyMovement(dt)
+                val params = bridge.getWindowParams() ?: return
+                params.x = (params.x + (velX * dt).roundToInt()).coerceIn(0, (bridge.screenWidth - bridge.petSpriteSize).coerceAtLeast(0))
+                params.y = cloudBandY.toInt()
+                bridge.updateWindowLayout(params)
 
-                val params = bridge.getWindowParams()
-                val reached = params != null && abs(params.x - walkTargetX) <= 8f
+                val reached = abs(params.x - walkTargetX) <= 8f
                 if (reached || stateTimer >= 3.8f) {
                     startSleepFloat()
                 }
@@ -161,7 +179,7 @@ class NubeMichiBehavior(
         val params = bridge.getWindowParams()
         val currentX = params?.x ?: bridge.windowX
         walkDirection = if (currentX < bridge.screenWidth / 2) 1f else -1f
-        returnTargetY = Random.nextInt(
+        returnTargetY = random.nextInt(
             bridge.screenHeight / 6,
             bridge.screenHeight / 3
         ).toFloat()
@@ -169,6 +187,18 @@ class NubeMichiBehavior(
         bridge.playHaptic(20)
         velX = 0f
         velY = 0f
+    }
+
+    override fun onFling(velocityX: Float, velocityY: Float) {
+        super.onInteract()
+        mode = Mode.CLOUD_RETURN
+        stateTimer = 0f
+        returnTargetY = (bridge.screenHeight * 0.22f).coerceAtLeast(90f)
+        walkDirection = if (velocityX >= 0f) 1f else -1f
+        bridge.animScaleX = 1.08f
+        bridge.animScaleY = 1.08f
+        bridge.animRotation = velocityX * 0.01f
+        bridge.animOffsetY = -abs(velocityY) * 0.01f
     }
 
     override fun updateInteracting(dt: Float) {
@@ -251,6 +281,8 @@ class NubeMichiBehavior(
         super.reset()
         if (bridge.state == PetState.IDLE) {
             bridge.animAlpha = 1f
+            cloudBandY = 0f
+            startSleepFloat()
         }
     }
 }

@@ -1,6 +1,8 @@
 # PixelPals - mascotas ignoradas
 *.iml
 .gradle/
+/.gradle-local/
+/.signing/
 /local.properties
 /.idea/
 /build/
@@ -13,3 +15,7 @@
 *.ap_
 *.dex
 venv/
+
+# Python
+__pycache__/
+*.pyc

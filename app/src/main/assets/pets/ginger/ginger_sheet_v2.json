@@ -1,0 +1,187 @@
+{
+  "version": 1,
+  "petId": "ginger",
+  "atlasPath": "pets/ginger/ginger_sheet_v2.png",
+  "previewPath": "res://drawable-nodpi/pet_ginger.png",
+  "frameWidth": 384,
+  "frameHeight": 384,
+  "columns": 4,
+  "rows": 4,
+  "frameCount": 16,
+  "pivot": {
+    "x": 192,
+    "y": 368
+  },
+  "renderHints": {
+    "innerTransparentPaddingPx": 16,
+    "recommendedBleedInsetPx": 1,
+    "filterBitmap": true
+  },
+  "clips": [
+    {
+      "id": "sit",
+      "frames": [
+        0
+      ],
+      "loop": true,
+      "frameDurationMs": 1200
+    },
+    {
+      "id": "groom",
+      "frames": [
+        0,
+        1,
+        0
+      ],
+      "loop": false,
+      "frameDurationMs": 360
+    },
+    {
+      "id": "sleep",
+      "frames": [
+        2
+      ],
+      "loop": true,
+      "frameDurationMs": 1200
+    },
+    {
+      "id": "wake",
+      "frames": [
+        2,
+        3,
+        0
+      ],
+      "loop": false,
+      "frameDurationMs": 280
+    },
+    {
+      "id": "walk",
+      "frames": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "loop": true,
+      "frameDurationMs": 135
+    },
+    {
+      "id": "stalk",
+      "frames": [
+        8,
+        9,
+        10
+      ],
+      "loop": true,
+      "frameDurationMs": 190
+    },
+    {
+      "id": "pounce",
+      "frames": [
+        11,
+        12
+      ],
+      "loop": false,
+      "frameDurationMs": 120
+    },
+    {
+      "id": "land",
+      "frames": [
+        13,
+        14
+      ],
+      "loop": false,
+      "frameDurationMs": 150
+    },
+    {
+      "id": "touch_drag",
+      "frames": [
+        15
+      ],
+      "loop": false,
+      "frameDurationMs": 240
+    }
+  ],
+  "frames": [
+    {
+      "index": 0,
+      "name": "sit_neutral",
+      "sourceHint": "board_01_idle.png"
+    },
+    {
+      "index": 1,
+      "name": "groom_paw",
+      "sourceHint": "board_01_idle.png"
+    },
+    {
+      "index": 2,
+      "name": "sleep_curl",
+      "sourceHint": "board_01_idle.png"
+    },
+    {
+      "index": 3,
+      "name": "wake_stretch",
+      "sourceHint": "board_01_idle.png"
+    },
+    {
+      "index": 4,
+      "name": "walk_contact_a",
+      "sourceHint": "board_02_walk.png"
+    },
+    {
+      "index": 5,
+      "name": "walk_pass_a",
+      "sourceHint": "board_02_walk.png"
+    },
+    {
+      "index": 6,
+      "name": "walk_contact_b",
+      "sourceHint": "board_02_walk.png"
+    },
+    {
+      "index": 7,
+      "name": "walk_pass_b",
+      "sourceHint": "board_02_walk.png"
+    },
+    {
+      "index": 8,
+      "name": "stalk_crouch",
+      "sourceHint": "board_03_stalk.png"
+    },
+    {
+      "index": 9,
+      "name": "stalk_step",
+      "sourceHint": "board_03_stalk.png"
+    },
+    {
+      "index": 10,
+      "name": "stalk_freeze",
+      "sourceHint": "board_03_stalk.png"
+    },
+    {
+      "index": 11,
+      "name": "pounce_coil",
+      "sourceHint": "board_03_stalk.png"
+    },
+    {
+      "index": 12,
+      "name": "pounce_air",
+      "sourceHint": "board_04_action.png"
+    },
+    {
+      "index": 13,
+      "name": "land_impact",
+      "sourceHint": "board_04_action.png"
+    },
+    {
+      "index": 14,
+      "name": "land_recover",
+      "sourceHint": "board_04_action.png"
+    },
+    {
+      "index": 15,
+      "name": "touch_drag",
+      "sourceHint": "board_04_action.png"
+    }
+  ]
+}

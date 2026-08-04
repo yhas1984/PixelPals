@@ -1,20 +1,22 @@
 package com.pixelpals.app.behavior
 
 import com.pixelpals.app.PetState
+import com.pixelpals.app.R
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.math.sin
-import kotlin.random.Random
+import com.pixelpals.app.motion.PetRandom
 
 class JellyBehavior(
-    bridge: PetViewBridge
-) : BaseBehavior(bridge) {
+    bridge: PetViewBridge,
+    override val random: PetRandom
+) : BaseBehavior(bridge, random) {
 
-    override val resourceIds = (0..7).map { i ->
-        (bridge as android.view.View).context.resources.getIdentifier(
-            "jelly_$i", "drawable", (bridge as android.view.View).context.packageName
-        )
+    override val resourceIds = listOf(R.drawable.jelly_0, R.drawable.jelly_1, R.drawable.jelly_2, R.drawable.jelly_3, R.drawable.jelly_4, R.drawable.jelly_5, R.drawable.jelly_6, R.drawable.jelly_7)
+
+    init {
+        loadFramesAsync()
     }
 
     private enum class JellyMode {
@@ -39,46 +41,45 @@ class JellyBehavior(
 
     override fun getBaseSpeed(): Float = 0f
 
-    private fun randomIdleDelay(): Float = 1.0f + Random.nextFloat() * 0.9f
+    private fun randomIdleDelay(): Float = 1.0f + random.nextFloat() * 0.9f
 
     private fun startIdle(resetTimer: Boolean = true) {
         mode = JellyMode.IDLE
         if (resetTimer) modeTimer = 0f
         nextHopDelay = randomIdleDelay()
         bridge.currentFrame = 0
+        val params = bridge.getWindowParams() ?: return
+        params.y = floorY().roundToInt()
+        bridge.updateWindowLayout(params)
     }
+
+    private fun floorY(): Float = bridge.groundY.coerceAtLeast(50).toFloat()
 
     private fun startHopPreparation() {
         val params = bridge.getWindowParams() ?: return
         val minX = 0f
         val maxX = (bridge.screenWidth - bridge.petSpriteSize).coerceAtLeast(0).toFloat()
-        val minY = 70f
-        val maxY = (bridge.screenHeight - bridge.petSpriteSize - 110).coerceAtLeast(70).toFloat()
+        val floorY = floorY()
 
         hopStartX = params.x.toFloat()
-        hopStartY = params.y.toFloat()
+        hopStartY = floorY
+        params.y = floorY.roundToInt()
+        bridge.updateWindowLayout(params)
 
-        val horizontalDistance = Random.nextInt(
+        val horizontalDistance = random.nextInt(
             (bridge.petSpriteSize * 0.8f).roundToInt(),
             (bridge.petSpriteSize * 2.0f).roundToInt()
         ).toFloat()
-        val verticalDistance = Random.nextInt(
-            (bridge.petSpriteSize * 0.35f).roundToInt(),
-            (bridge.petSpriteSize * 1.0f).roundToInt()
-        ).toFloat()
-
         val moveRight = if (hopStartX < bridge.screenWidth * 0.5f) {
-            Random.nextFloat() > 0.25f
+            random.nextFloat() > 0.25f
         } else {
-            Random.nextFloat() > 0.75f
+            random.nextFloat() > 0.75f
         }
-        val moveDown = Random.nextBoolean()
 
         hopTargetX = (hopStartX + if (moveRight) horizontalDistance else -horizontalDistance)
             .coerceIn(minX, maxX)
-        hopTargetY = (hopStartY + if (moveDown) verticalDistance else -verticalDistance)
-            .coerceIn(minY, maxY)
-        hopHeight = bridge.petSpriteSize * (0.55f + Random.nextFloat() * 0.35f)
+        hopTargetY = floorY
+        hopHeight = bridge.petSpriteSize * (0.55f + random.nextFloat() * 0.35f)
 
         mode = JellyMode.PREPARE_HOP
         modeTimer = 0f
@@ -175,13 +176,34 @@ class JellyBehavior(
         bridge.showBubble("splash")
     }
 
+    override fun onFling(velocityX: Float, velocityY: Float) {
+        super.onInteract()
+        val params = bridge.getWindowParams() ?: return
+        val maxX = (bridge.screenWidth - bridge.petSpriteSize).coerceAtLeast(0).toFloat()
+        hopStartX = params.x.toFloat()
+        hopStartY = floorY()
+        params.y = hopStartY.roundToInt()
+        bridge.updateWindowLayout(params)
+        hopTargetX = (hopStartX + velocityX * 0.09f).coerceIn(0f, maxX)
+        hopTargetY = floorY()
+        hopHeight = (bridge.petSpriteSize * 0.7f + abs(velocityY) * 0.025f)
+            .coerceAtMost(bridge.petSpriteSize * 1.8f)
+        mode = JellyMode.HOPPING
+        modeTimer = 0f
+        bridge.state = PetState.IDLE
+        bridge.showBubble("boing")
+        bridge.animRotation = (velocityX * 0.02f).coerceIn(-20f, 20f)
+        bridge.animScaleX = 1.25f
+        bridge.animScaleY = 0.75f
+    }
+
     override fun updateInteracting(dt: Float) {
         if (frames.isEmpty()) return
         interactionTimer += dt
         val params = bridge.getWindowParams() ?: return
         val minX = 0f
         val maxX = (bridge.screenWidth - bridge.petSpriteSize).coerceAtLeast(0).toFloat()
-        val floorY = (bridge.screenHeight - bridge.petSpriteSize - 100).coerceAtLeast(50).toFloat()
+        val floorY = floorY()
 
         val fallT = (interactionTimer / 1.45f).coerceIn(0f, 1f)
         val meltProgress = fallT * fallT

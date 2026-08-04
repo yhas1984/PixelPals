@@ -1,4 +1,4 @@
-# PixelPals (ScreenPets)
+# ScreenPets
 
 [Español](#español) | [English](#english)
 
@@ -8,7 +8,7 @@ Privacy Policy / Politica de Privacidad: [PRIVACY_POLICY.md](PRIVACY_POLICY.md)
 
 ## Español
 
-PixelPals es una app Android de mascotas virtuales flotantes que viven sobre la pantalla mediante una superposición (overlay).  
+ScreenPets es una app Android de mascotas virtuales flotantes que viven sobre la pantalla mediante una superposición (overlay).  
 Cada mascota tiene lógica de movimiento propia, animaciones, interacción táctil y progreso persistente.
 
 ### Características principales
@@ -18,12 +18,11 @@ Cada mascota tiene lógica de movimiento propia, animaciones, interacción táct
 - Sistema de interacción táctil (tap, arrastre y reacción).
 - Álbum de tesoros con persistencia local (Room + `SharedPreferences`).
 - Progreso de mascota (XP, minutos activos, interacciones y eventos).
-- Integración opcional con `AccessibilityService` para movimientos avanzados en launcher.
 
 ### Stack técnico
 
 - Kotlin
-- `compileSdk 36`, `targetSdk 35`, `minSdk 26`
+- `compileSdk 36`, `targetSdk 36`, `minSdk 26`
 - Room
 - Coroutines
 - Foreground Service + Overlay (`SYSTEM_ALERT_WINDOW`)
@@ -31,10 +30,10 @@ Cada mascota tiene lógica de movimiento propia, animaciones, interacción táct
 
 ### Estructura del proyecto
 
-- `app/src/main/java/com/pixelpals/app/`: Activities, `PetService`, `PetView`, progreso y flujo principal.
-- `app/src/main/java/com/pixelpals/app/behavior/`: lógica por mascota (`Bloop`, `NubeMichi`, `Ginger`, `Jelly`, `Duck`, etc.).
-- `app/src/main/java/com/pixelpals/app/database/`: entidades Room y DAOs del álbum de tesoros.
-- `app/src/main/java/com/pixelpals/app/launcher/`: soporte de accesibilidad para plataformas del launcher.
+- `app/src/main/java/com/screenpets/app/`: Activities, `PetService`, `PetView`, progreso y flujo principal.
+- `app/src/main/java/com/screenpets/app/behavior/`: lógica por mascota (`Bloop`, `NubeMichi`, `Ginger`, `Jelly`, `Duck`, etc.).
+- `app/src/main/java/com/screenpets/app/database/`: entidades Room y DAOs del álbum de tesoros.
+- `app/src/main/java/com/screenpets/app/launcher/`: utilidades de movimiento y soporte auxiliar del launcher.
 - `app/src/main/res/`: recursos visuales, drawables y layouts.
 
 ### Versiones publicadas (referencia)
@@ -84,8 +83,6 @@ Salidas típicas:
 
 - `SYSTEM_ALERT_WINDOW`: necesario para mostrar la mascota flotante.
 - `POST_NOTIFICATIONS`: para notificaciones (Android 13+).
-- `BIND_ACCESSIBILITY_SERVICE` (opcional): usado para funciones avanzadas de movimiento en launcher.
-
 La app no está diseñada para capturar contraseñas, texto sensible ni contenido privado de otras apps.
 
 ### Google Play Submission Notes (ES)
@@ -97,10 +94,6 @@ Texto recomendado para la ficha o formulario de revisión:
 - Este permiso se usa exclusivamente para dibujar la mascota y sus animaciones sobre otras apps.
 - No se utiliza para leer contenido de otras apps, capturar texto ni interactuar con contraseñas.
 
-**Uso de accesibilidad (si está habilitado)**
-- El servicio de accesibilidad es opcional y se usa solo para detectar posiciones de iconos del launcher y mejorar trayectorias de movimiento.
-- No se lee ni se almacena contenido sensible del usuario.
-
 **Declaración de privacidad**
 - No se venden datos personales.
 - El usuario puede desactivar permisos en cualquier momento desde Ajustes.
@@ -108,14 +101,14 @@ Texto recomendado para la ficha o formulario de revisión:
 
 ### Estado del proyecto
 
-V1 estable; versiones recientes alineadas con **Google Play** (`targetSdk 35`, documentación y política de privacidad).  
+V1 estable; versiones recientes alineadas con **Google Play** (`targetSdk 36`, documentación y política de privacidad).
 Mejoras incrementales en V1.1+.
 
 ---
 
 ## English
 
-PixelPals is an Android virtual pet app that displays floating pets on top of other apps using an overlay.  
+ScreenPets is an Android virtual pet app that displays floating pets on top of other apps using an overlay.  
 Each pet has its own movement logic, animation set, touch interactions, and persistent progression.
 
 ### Main features
@@ -125,12 +118,11 @@ Each pet has its own movement logic, animation set, touch interactions, and pers
 - Touch interactions (tap, drag, and reaction states).
 - Treasure album with local persistence (Room + `SharedPreferences`).
 - Pet progression (XP, active minutes, interactions, and events).
-- Optional `AccessibilityService` integration for advanced launcher-based movement.
 
 ### Tech stack
 
 - Kotlin
-- `compileSdk 36`, `targetSdk 35`, `minSdk 26`
+- `compileSdk 36`, `targetSdk 36`, `minSdk 26`
 - Room
 - Coroutines
 - Foreground Service + Overlay (`SYSTEM_ALERT_WINDOW`)
@@ -138,10 +130,10 @@ Each pet has its own movement logic, animation set, touch interactions, and pers
 
 ### Project structure
 
-- `app/src/main/java/com/pixelpals/app/`: Activities, `PetService`, `PetView`, progress, and main flow.
-- `app/src/main/java/com/pixelpals/app/behavior/`: per-pet behavior logic (`Bloop`, `NubeMichi`, `Ginger`, `Jelly`, `Duck`, etc.).
-- `app/src/main/java/com/pixelpals/app/database/`: Room entities and DAOs for treasure album.
-- `app/src/main/java/com/pixelpals/app/launcher/`: accessibility support for launcher platform detection.
+- `app/src/main/java/com/screenpets/app/`: Activities, `PetService`, `PetView`, progress, and main flow.
+- `app/src/main/java/com/screenpets/app/behavior/`: per-pet behavior logic (`Bloop`, `NubeMichi`, `Ginger`, `Jelly`, `Duck`, etc.).
+- `app/src/main/java/com/screenpets/app/database/`: Room entities and DAOs for treasure album.
+- `app/src/main/java/com/screenpets/app/launcher/`: launcher helpers and auxiliary movement support.
 - `app/src/main/res/`: visual resources, drawables, and layouts.
 
 ### Published versions (reference)
@@ -189,7 +181,7 @@ Typical outputs:
 
 ### Google Play (AAB)
 
-Current Play policy requires **minimum target API 35**; this project uses `targetSdk 35`.
+Current Play policy requires **minimum target API 36**; this project uses `targetSdk 36`.
 
 - Build: `./gradlew :app:bundleRelease`
 - Unsigned output is usually `app-release.aab` in the folder above.
@@ -201,8 +193,6 @@ Current Play policy requires **minimum target API 35**; this project uses `targe
 
 - `SYSTEM_ALERT_WINDOW`: required to render floating pets.
 - `POST_NOTIFICATIONS`: notifications support (Android 13+).
-- `BIND_ACCESSIBILITY_SERVICE` (optional): used for advanced launcher movement features.
-
 The app is not intended to capture passwords, sensitive text, or private content from other apps.
 
 ### Google Play Submission Notes (EN)
@@ -214,10 +204,6 @@ Suggested wording for store listing or review forms:
 - This permission is used strictly to render the pet and its animations.
 - It is not used to read other apps' content, capture text, or interact with passwords.
 
-**Accessibility usage (if enabled)**
-- Accessibility Service is optional and only used to detect launcher icon positions for improved movement trajectories.
-- No sensitive user content is read or stored.
-
 **Privacy statement**
 - No personal data is sold.
 - Users can revoke permissions at any time in system settings.
@@ -225,5 +211,5 @@ Suggested wording for store listing or review forms:
 
 ### Project status
 
-V1 stable; recent releases aligned with **Google Play** (`targetSdk 35`, docs and privacy policy).  
+V1 stable; recent releases aligned with **Google Play** (`targetSdk 36`, docs and privacy policy).
 Incremental improvements in V1.1+.

@@ -1,11 +1,7 @@
 package com.pixelpals.app.launcher
 
-import android.accessibilityservice.AccessibilityService
-import android.content.ComponentName
 import android.content.Context
-import android.content.Intent
 import android.graphics.Rect
-import android.provider.Settings
 
 object LauncherPlatformRepository {
     private const val PREFS_NAME = "pixelpals_launcher_platforms"
@@ -53,20 +49,5 @@ object LauncherPlatformRepository {
                     y = top - standOffsetY
                 )
             }
-    }
-
-    fun isServiceEnabled(context: Context, serviceClass: Class<out AccessibilityService>): Boolean {
-        val enabledServices = Settings.Secure.getString(
-            context.contentResolver,
-            Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
-        ).orEmpty()
-        val expected = ComponentName(context, serviceClass).flattenToString()
-        return enabledServices.split(':').any { it.equals(expected, ignoreCase = true) }
-    }
-
-    fun buildAccessibilitySettingsIntent(): Intent {
-        return Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
     }
 }

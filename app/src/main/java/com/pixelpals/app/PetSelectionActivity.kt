@@ -2,18 +2,26 @@ package com.pixelpals.app
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.View
-import android.view.animation.AccelerateDecelerateInterpolator
-import android.view.animation.OvershootInterpolator
+import android.view.LayoutInflater
+import android.widget.Button
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
-import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import com.pixelpals.app.launcher.LauncherAccessibilityService
-import com.pixelpals.app.launcher.LauncherPlatformRepository
-import org.json.JSONObject
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.lifecycleScope
+import com.pixelpals.app.catalog.CatalogItemState
+import com.pixelpals.app.catalog.PetCatalogItem
+import com.pixelpals.app.status.CareAction
+import com.pixelpals.app.status.PetMood
+import com.pixelpals.app.status.PetDashboardActivity
+import com.pixelpals.app.store.StoreActivity
+import kotlinx.coroutines.launch
 
 /**
  * PetSelectionActivity — Pantalla de selección de mascota.
@@ -27,164 +35,236 @@ class PetSelectionActivity : AppCompatActivity() {
         const val EXTRA_PET_TYPE = "pet_type"
     }
 
-    private lateinit var cardBloop: LinearLayout
-    private lateinit var cardNubeMichi: LinearLayout
-    private lateinit var cardJelly: LinearLayout
-    private lateinit var cardCorgi: LinearLayout
-    private lateinit var cardGinger: LinearLayout
-    private lateinit var cardPatito: LinearLayout
-    private lateinit var cardDiablillo: LinearLayout
-
-    private var selectedType: PetType? = null
-    private val allCards = mutableListOf<LinearLayout>()
     private var isLaunching = false
     private lateinit var selectedPetStore: SelectedPetStore
-
-    private fun debugLog(runId: String, hypothesisId: String, location: String, message: String, data: JSONObject) {
-        // #region agent log
-        val payload = JSONObject().apply {
-            put("sessionId", "a40953")
-            put("runId", runId)
-            put("hypothesisId", hypothesisId)
-            put("location", location)
-            put("message", message)
-            put("data", data)
-            put("timestamp", System.currentTimeMillis())
-        }
-        Log.i("AGENT_DEBUG", payload.toString())
-        // #endregion
-    }
+    private val repository by lazy { AppServices.repository(this) }
+    private val analytics by lazy { AppServices.analytics(this) }
+    private lateinit var catalogContainer: LinearLayout
+    private lateinit var txtCurrentMood: TextView
+    private lateinit var txtCatalogSummary: TextView
+    private lateinit var txtSelectionHint: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setTitle(R.string.choose_your_pet)
+        edgeToEdge()
         setContentView(R.layout.activity_pet_selection)
         selectedPetStore = SelectedPetStore(this)
+        catalogContainer = findViewById(R.id.catalogContainer)
+        txtCurrentMood = findViewById(R.id.txtCurrentMood)
+        txtCatalogSummary = findViewById(R.id.txtCatalogSummary)
+        txtSelectionHint = findViewById(R.id.txtSelectionHint)
+        applySystemBarsInsets(findViewById(R.id.selectionScroll))
 
-        bindViews()
-        setupCards()
-        animateEntrance()
-    }
-
-    private fun bindViews() {
-        cardBloop = findViewById(R.id.cardBloop)
-        cardNubeMichi = findViewById(R.id.cardNubeMichi)
-        cardJelly = findViewById(R.id.cardJelly)
-        cardCorgi = findViewById(R.id.cardCorgi)
-        cardGinger = findViewById(R.id.cardGinger)
-        cardPatito = findViewById(R.id.cardPatito)
-        cardDiablillo = findViewById(R.id.cardDiablillo)
-        allCards.addAll(listOf(cardBloop, cardNubeMichi, cardJelly, cardCorgi, cardGinger, cardPatito, cardDiablillo))
-    }
-
-    private fun setupCards() {
-        val petTypes = listOf(
-            cardBloop to PetType.BLOOP,
-            cardNubeMichi to PetType.NUBE_MICHI,
-            cardJelly to PetType.JELLY,
-            cardCorgi to PetType.CORGI,
-            cardGinger to PetType.GINGER,
-            cardPatito to PetType.PATITO,
-            cardDiablillo to PetType.DIABLILLO
-        )
-
-        petTypes.forEach { (card, type) ->
-            card.setOnClickListener {
-                selectPet(card, type)
-            }
+        findViewById<Button>(R.id.btnOpenStore).setOnClickListener {
+            startActivity(Intent(this, StoreActivity::class.java))
+        }
+        findViewById<Button>(R.id.btnOpenDashboard).setOnClickListener {
+            startActivity(Intent(this, PetDashboardActivity::class.java))
         }
     }
 
-    private fun selectPet(selectedCard: LinearLayout, type: PetType) {
+    override fun onResume() {
+        super.onResume()
+        lifecycleScope.launch { renderCatalog() }
+    }
+
+    private suspend fun renderCatalog() {
+        runCatching {
+            val selected = selectedPetStore.load()
+            val snapshot = repository.getStatusSnapshot(selected)
+            val items = repository.getCatalog(selected).sortedWith(
+                compareBy<PetCatalogItem> {
+                    when (it.state) {
+                        CatalogItemState.SELECTED -> 0
+                        CatalogItemState.OWNED -> 1
+                        CatalogItemState.LOCKED -> 2
+                    }
+                }.thenBy { it.displayName }
+            )
+            val selectedCount = items.count { it.state == CatalogItemState.SELECTED }
+            val ownedCount = items.count { it.state == CatalogItemState.OWNED }
+            val lockedCount = items.count { it.state == CatalogItemState.LOCKED }
+
+            txtCurrentMood.text = getString(
+                R.string.selection_current_pet_format,
+                selected.displayName,
+                moodLabel(snapshot.mood),
+                snapshot.bond
+            )
+            txtCurrentMood.setTextColor(ContextCompat.getColor(this, R.color.text_primary))
+            txtCatalogSummary.text = getString(
+                R.string.selection_catalog_summary_format,
+                selectedCount,
+                ownedCount,
+                lockedCount
+            )
+            txtCatalogSummary.setTextColor(ContextCompat.getColor(this, R.color.status_info_fg))
+            txtSelectionHint.text = getString(
+                R.string.selection_hint_format,
+                careActionLabel(snapshot.dominantSuggestion),
+                snapshot.careStreakDays
+            )
+            txtSelectionHint.setTextColor(ContextCompat.getColor(this, R.color.text_secondary))
+            catalogContainer.removeAllViews()
+            items.forEach { item ->
+                catalogContainer.addView(buildCatalogCard(item))
+            }
+
+            analytics.track(
+                "selection_opened",
+                mapOf("selected_pet" to selected.name.lowercase(), "catalog_size" to items.size.toString())
+            )
+        }.onFailure {
+            txtCurrentMood.text = getString(R.string.selection_error)
+            txtCatalogSummary.text = getString(R.string.selection_error)
+            txtSelectionHint.text = getString(R.string.selection_error)
+            txtCurrentMood.setTextColor(ContextCompat.getColor(this, R.color.red_error))
+            txtCatalogSummary.setTextColor(ContextCompat.getColor(this, R.color.red_error))
+            txtSelectionHint.setTextColor(ContextCompat.getColor(this, R.color.red_error))
+            catalogContainer.removeAllViews()
+            catalogContainer.addView(
+                TextView(this).apply {
+                    text = getString(R.string.selection_error)
+                    setTextColor(ContextCompat.getColor(this@PetSelectionActivity, R.color.red_error))
+                    setPadding(0, 24, 0, 0)
+                }
+            )
+        }
+    }
+
+    private fun buildCatalogCard(item: PetCatalogItem): LinearLayout {
+        val card = LayoutInflater.from(this)
+            .inflate(R.layout.item_pet_catalog, catalogContainer, false) as LinearLayout
+        val image = card.findViewById<android.widget.ImageView>(R.id.imgPetPreview)
+        val name = card.findViewById<TextView>(R.id.txtPetName)
+        val desc = card.findViewById<TextView>(R.id.txtPetDesc)
+        val badge = card.findViewById<TextView>(R.id.txtPetBadge)
+        val state = card.findViewById<TextView>(R.id.txtPetState)
+        val action = card.findViewById<Button>(R.id.btnPetAction)
+
+        image.setImageResource(item.previewResId)
+        name.text = item.displayName
+        desc.text = item.description.replace('\n', ' ')
+        badge.text = if (item.isPremium) {
+            getString(R.string.selection_premium_badge)
+        } else {
+            getString(R.string.selection_base_badge)
+        }
+        state.text = when (item.state) {
+            CatalogItemState.LOCKED -> getString(R.string.selection_locked_state)
+            CatalogItemState.OWNED -> getString(R.string.selection_owned_state)
+            CatalogItemState.SELECTED -> getString(R.string.selection_selected_state)
+        }
+        action.text = when (item.state) {
+            CatalogItemState.LOCKED -> getString(R.string.selection_unlock_button)
+            CatalogItemState.OWNED -> getString(R.string.selection_choose_button)
+            CatalogItemState.SELECTED -> getString(R.string.selection_selected_button)
+        }
+        if (item.state == CatalogItemState.SELECTED) {
+            card.setBackgroundResource(R.drawable.bg_card_pet_selected)
+        }
+        val accessibleState = when (item.state) {
+            CatalogItemState.LOCKED -> getString(R.string.selection_locked_state)
+            CatalogItemState.OWNED -> getString(R.string.selection_owned_state)
+            CatalogItemState.SELECTED -> getString(R.string.selection_selected_state)
+        }
+        card.contentDescription = getString(
+            R.string.selection_item_content_description,
+            item.displayName,
+            accessibleState,
+            desc.text.toString()
+        )
+        image.contentDescription = card.contentDescription
+        action.isEnabled = item.state != CatalogItemState.SELECTED
+        action.alpha = if (item.state == CatalogItemState.SELECTED) 0.72f else 1f
+        action.setOnClickListener {
+            when (item.state) {
+                CatalogItemState.LOCKED -> startActivity(Intent(this, StoreActivity::class.java))
+                CatalogItemState.OWNED -> item.petType?.let { launchSelectedPet(it) }
+                CatalogItemState.SELECTED -> Unit
+            }
+        }
+        card.setOnClickListener(null)
+        card.isClickable = false
+        card.isFocusable = false
+        return card
+    }
+
+    private fun launchSelectedPet(type: PetType) {
         if (isLaunching) return
         isLaunching = true
-        selectedType = type
         selectedPetStore.save(type)
-        debugLog(
-            runId = "post-fix",
-            hypothesisId = "H3",
-            location = "PetSelectionActivity.kt:selectPet",
-            message = "Selección de mascota y launch bloqueado a un solo intento",
-            data = JSONObject().apply {
-                put("selectedType", type.name)
-            }
+        analytics.track(
+            "pet_selected",
+            mapOf("pet_id" to type.name.lowercase(), "display_name" to type.displayName)
         )
-
-        // ── Visual selection feedback ──
-        allCards.forEach { card ->
-            card.isEnabled = false
-            if (card == selectedCard) {
-                card.setBackgroundResource(R.drawable.bg_card_pet_selected)
-                card.animate()
-                    .scaleX(1.05f)
-                    .scaleY(1.05f)
-                    .setDuration(200)
-                    .setInterpolator(OvershootInterpolator())
-                    .start()
-            } else {
-                card.setBackgroundResource(R.drawable.bg_card_pet)
-                card.animate()
-                    .scaleX(0.95f)
-                    .scaleY(0.95f)
-                    .setDuration(200)
-                    .start()
-            }
-        }
-
-        // ── Launch pet after a brief delay ──
-        selectedCard.postDelayed({
-            launchPet(type)
-        }, 400)
+        launchPet(type)
     }
 
     private fun launchPet(type: PetType) {
-        debugLog(
-            runId = "post-fix",
-            hypothesisId = "H3",
-            location = "PetSelectionActivity.kt:launchPet",
-            message = "Lanzando servicio de mascota",
-            data = JSONObject().apply {
-                put("type", type.name)
-                put("launchLocked", isLaunching)
-            }
-        )
         val serviceIntent = Intent(this, PetService::class.java).apply {
             putExtra(EXTRA_PET_TYPE, type.name)
         }
         ContextCompat.startForegroundService(this, serviceIntent)
 
-        if (type == PetType.GINGER &&
-            !LauncherPlatformRepository.isServiceEnabled(this, LauncherAccessibilityService::class.java)
-        ) {
-            Toast.makeText(
-                this,
-                "Activa Accesibilidad para que Ginger salte sobre tus apps reales.",
-                Toast.LENGTH_LONG
-            ).show()
-        }
-
         Toast.makeText(
             this,
-            "¡${type.displayName} está explorando! 🐾",
+            getString(R.string.selection_launching_pet_format, type.displayName),
             Toast.LENGTH_SHORT
         ).show()
 
         finish()
     }
 
-    private fun animateEntrance() {
-        val title = findViewById<TextView>(R.id.titleSelect)
-        val views = listOf(title) + allCards
-
-        views.forEachIndexed { index, view ->
-            view.alpha = 0f
-            view.translationY = 50f
-            view.animate()
-                .alpha(1f)
-                .translationY(0f)
-                .setDuration(400)
-                .setStartDelay((index * 100).toLong())
-                .setInterpolator(AccelerateDecelerateInterpolator())
-                .start()
+    private fun edgeToEdge() {
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            isAppearanceLightStatusBars = true
+            isAppearanceLightNavigationBars = true
         }
+    }
+
+    private fun applySystemBarsInsets(view: ScrollView) {
+        val initialLeft = view.paddingLeft
+        val initialTop = view.paddingTop
+        val initialRight = view.paddingRight
+        val initialBottom = view.paddingBottom
+        ViewCompat.setOnApplyWindowInsetsListener(view) { v, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(
+                initialLeft + bars.left,
+                initialTop + bars.top,
+                initialRight + bars.right,
+                initialBottom + bars.bottom
+            )
+            insets
+        }
+        ViewCompat.requestApplyInsets(view)
+    }
+
+    private fun moodLabel(mood: PetMood): String {
+        return getString(
+            when (mood) {
+                PetMood.HAPPY -> R.string.mood_happy
+                PetMood.SLEEPY -> R.string.mood_sleepy
+                PetMood.HUNGRY -> R.string.mood_hungry
+                PetMood.DIRTY -> R.string.mood_dirty
+                PetMood.BORED -> R.string.mood_bored
+                PetMood.EXCITED -> R.string.mood_excited
+            }
+        )
+    }
+
+    private fun careActionLabel(action: CareAction): String {
+        return getString(
+            when (action) {
+                CareAction.FEED -> R.string.action_feed
+                CareAction.CLEAN -> R.string.action_clean
+                CareAction.PLAY -> R.string.action_play
+                CareAction.REST -> R.string.action_rest
+                CareAction.CHECK_IN -> R.string.action_check_in
+            }
+        )
     }
 }

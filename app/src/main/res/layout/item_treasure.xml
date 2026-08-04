@@ -7,15 +7,17 @@
     android:elevation="4dp"
     android:gravity="center_vertical"
     android:orientation="horizontal"
-    android:padding="16dp">
+    android:padding="16dp"
+    android:minHeight="96dp">
 
     <TextView
         android:id="@+id/tvEmoji"
         android:layout_width="64dp"
         android:layout_height="64dp"
-        android:background="#20FFFFFF"
+        android:background="@drawable/bg_status_info"
         android:gravity="center"
-        android:text="💎"
+        android:text="@string/treasure_placeholder_emoji"
+        android:textColor="@color/text_primary"
         android:textSize="32sp" />
 
     <LinearLayout
@@ -29,8 +31,8 @@
             android:id="@+id/tvCount"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Encontrado: x12"
-            android:textColor="#FFFFFF"
+            android:text="@string/treasure_count_format"
+            android:textColor="@color/text_primary"
             android:textSize="18sp"
             android:textStyle="bold" />
 
@@ -39,8 +41,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="Última vez: Hoy"
-            android:textColor="#AAAAAA"
+            android:text="@string/treasure_last_found_format"
+            android:textColor="@color/text_secondary"
             android:textSize="14sp" />
     </LinearLayout>
 

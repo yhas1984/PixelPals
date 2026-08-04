@@ -8,11 +8,11 @@ Ultima actualizacion: 2026-03-27
 ## English
 
 ### 1. Overview
-PixelPals (also referred to as ScreenPets) is a virtual pet app for Android.  
+ScreenPets is a virtual pet app for Android.  
 This policy explains what data is processed, why permissions are requested, and how users can control those permissions.
 
 ### 2. Data Collection
-PixelPals is designed to work with local device data and settings.
+ScreenPets is designed to work with local device data and settings.
 
 - We do not sell personal data.
 - We do not read messages, passwords, or private text from other apps.
@@ -24,7 +24,7 @@ The app stores gameplay and app state locally on the device, such as:
 - selected pet
 - treasure album progress
 - interaction and activity counters
-- optional launcher platform points for movement features
+- optional local movement metadata
 
 This data is used only to provide app functionality.
 
@@ -37,12 +37,8 @@ Without this permission, the floating overlay feature is unavailable or limited.
 #### Notifications (`POST_NOTIFICATIONS`)
 Used to provide app notifications on Android 13+ when applicable.
 
-#### Accessibility Service (`BIND_ACCESSIBILITY_SERVICE`) - Optional
-Used only for advanced movement behavior (for example, launcher icon position detection for jumps).  
-Not used to read passwords, typed text, or private messages.
-
 ### 5. Foreground Service
-PixelPals uses a foreground service to keep the virtual pet active while overlay mode is enabled.
+ScreenPets uses a foreground service to keep the virtual pet active while overlay mode is enabled.
 
 ### 6. Data Sharing
 We do not share personal user data with third parties for sale or profiling.
@@ -69,11 +65,11 @@ For privacy questions, contact the developer through the public repository or su
 ## Espanol
 
 ### 1. Resumen
-PixelPals (tambien llamado ScreenPets) es una app de mascotas virtuales para Android.  
+ScreenPets es una app de mascotas virtuales para Android.  
 Esta politica explica que datos se procesan, por que se solicitan permisos y como el usuario puede controlarlos.
 
 ### 2. Recoleccion de datos
-PixelPals esta disenada para funcionar con datos y configuraciones locales del dispositivo.
+ScreenPets esta disenada para funcionar con datos y configuraciones locales del dispositivo.
 
 - No vendemos datos personales.
 - No leemos mensajes, contrasenas ni texto privado de otras apps.
@@ -85,7 +81,7 @@ La app guarda estado de juego y configuracion localmente en el dispositivo, por 
 - mascota seleccionada
 - progreso del album de tesoros
 - contadores de actividad e interacciones
-- puntos de plataforma del launcher (opcional) para funciones de movimiento
+- metadatos locales opcionales para funciones de movimiento
 
 Estos datos se usan solo para proveer funcionalidad de la app.
 
@@ -98,12 +94,8 @@ Sin este permiso, la funcionalidad de superposicion no estara disponible o sera 
 #### Notificaciones (`POST_NOTIFICATIONS`)
 Se usa para notificaciones de la app en Android 13+ cuando corresponda.
 
-#### Servicio de accesibilidad (`BIND_ACCESSIBILITY_SERVICE`) - Opcional
-Se usa solo para comportamiento avanzado de movimiento (por ejemplo, deteccion de iconos del launcher para saltos).  
-No se usa para leer contrasenas, texto escrito ni mensajes privados.
-
 ### 5. Servicio en primer plano
-PixelPals usa un servicio en primer plano para mantener activa la mascota virtual cuando el modo overlay esta habilitado.
+ScreenPets usa un servicio en primer plano para mantener activa la mascota virtual cuando el modo overlay esta habilitado.
 
 ### 6. Comparticion de datos
 No compartimos datos personales con terceros para venta o perfilado.
