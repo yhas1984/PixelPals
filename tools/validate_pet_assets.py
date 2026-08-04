@@ -12,11 +12,11 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 DRAWABLES = ROOT / "app/src/main/res/drawable-nodpi"
-BEHAVIORS = ROOT / "app/src/main/java/com/pixelpals/app/behavior"
+BEHAVIORS = ROOT / "app/src/main/java/com/pixelpals/app/feature/overlay/behavior"
 
 RASTER_PETS = {
     "bloop": ("BloopBehavior.kt", "fantasma", [1, 2, 3, 4, 5, 7, 8]),
-    "nube_michi": ("NubeMichiBehavior.kt", "gato", list(range(8))),
+    "nube_michi": ("NubeMichiBehavior.kt", "gato", list(range(11))),
     "jelly": ("JellyBehavior.kt", "jelly", list(range(8))),
     "corgi": ("CorgiBehavior.kt", "corgi", list(range(14))),
     "patito": ("DuckBehavior.kt", "patito", list(range(10))),
