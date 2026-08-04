@@ -253,4 +253,6 @@
     <string name="store_error_not_enough_coins">Not enough coins</string>
     <string name="store_error_bond_required">Bond level too low</string>
     <string name="store_error_generic">Purchase could not be completed</string>
+    <string name="store_tab_pets">Pets</string>
+    <string name="pet_unlocked_toast">%1$s unlocked!</string>
 </resources>

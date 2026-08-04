@@ -251,4 +251,6 @@
         <item quantity="other">Quedan %1$d.</item>
     </plurals>
     <string name="treasure_consume_none_left">No quedan más.</string>
+    <string name="store_tab_pets">Mascotas</string>
+    <string name="pet_unlocked_toast">¡%1$s desbloqueado!</string>
 </resources>
