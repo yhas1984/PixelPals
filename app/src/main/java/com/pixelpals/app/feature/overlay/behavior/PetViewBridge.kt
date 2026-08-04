@@ -47,6 +47,14 @@ interface PetViewBridge {
     val screenHeight: Int
     val petSpriteSize: Int
     val groundY: Int
+
+    /**
+     * Fracción (negativa, desde el centro del view) donde está la cabeza del pet.
+     * Ej: -0.2 → la cabeza está a 20% del petSpriteSize por encima del centro.
+     * Lo calcula el behavior a partir del bbox del frame o del pivot del atlas.
+     */
+    val headAnchorYRatio: Float
+
     val petStatus: PetStatusSnapshot
     val petPersonality: PetPersonality
     val equippedAccessory: AccessoryCatalogItem?

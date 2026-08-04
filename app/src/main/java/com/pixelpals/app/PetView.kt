@@ -93,6 +93,8 @@ class PetView(
     override fun activeModifiers(): List<com.pixelpals.app.data.catalog.PetModifier> {
         return equippedAccessory?.modifiers ?: emptyList()
     }
+    override val headAnchorYRatio: Float
+        get() = behavior?.headAnchorYRatio() ?: -0.20f
     private var treasureEffectScaleX = 1f
     private var treasureEffectScaleY = 1f
     private var treasureEffectOffsetX = 0f
@@ -408,6 +410,8 @@ class PetView(
         val accessory = equippedAccessory ?: return
         if (accessory.slot != slot) return
 
+        val headY = height / 2f + renderOffsetY + headAnchorYRatio * petSpriteSize
+
         // Pase 1: si el accesorio tiene sprite BEHIND (alas, jetpack), dibujar detrás.
         // Pase 3: si es FRONT (gorros, gafas), dibujar encima.
         // El fallback emoji se dibuja siempre (los offsets del catálogo ya ubican el slot).
@@ -428,16 +432,29 @@ class PetView(
                 dt = lastFrameDelta,
                 flapping = isFlapping(),
                 facingRight = renderScaleX >= 0f,
+                headAnchorYRatio = headAnchorYRatio,
+                petRotation = renderRotation,
                 paint = accessoryPaint,
             )
             return
         }
 
         // Fallback: emoji (accesorios sin sprite aún).
+        // Los offsets del catálogo están pensados desde el centro del view;
+        // compensamos el headAnchor para conservar la posición original.
         accessoryPaint.textSize = petSpriteSize * accessory.scale
         val cx = width / 2f + renderOffsetX + (accessory.offsetXRatio * petSpriteSize * if (renderScaleX >= 0f) 1f else -1f)
-        val cy = height / 2f + renderOffsetY + (accessory.offsetYRatio * petSpriteSize)
+        val cy = headY + ((accessory.offsetYRatio - headAnchorYRatio) * petSpriteSize)
+        canvas.save()
+        if (renderRotation != 0f) {
+            canvas.rotate(
+                Math.toDegrees(renderRotation.toDouble()).toFloat(),
+                width / 2f + renderOffsetX,
+                cy,
+            )
+        }
         canvas.drawText(accessory.emoji, cx, cy, accessoryPaint)
+        canvas.restore()
     }
 
     /** Las alas/gadgets aletean en salto o cuando el pet se mueve rápido. */

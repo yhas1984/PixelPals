@@ -43,8 +43,11 @@ class AccessorySpriteRenderer(context: Context) {
     }
 
     /**
-     * Dibuja el accesorio centrado en (petCenterX, petCenterY) — el centro del sprite del pet.
+     * Dibuja el accesorio anclado a la cabeza del pet.
      *
+     * @param headAnchorYRatio fracción negativa del petSpriteSize donde está la
+     *   cabeza del pet desde el centro del view (ver PetViewBridge).
+     * @param petRotation rotación actual del pet (rad) para sincronizar el accesorio.
      * @param flapping si true, intenta reproducir el clip "flap" (alas/gadgets activos).
      * @param facingRight si false, voltea horizontalmente el accesorio.
      */
@@ -57,6 +60,8 @@ class AccessorySpriteRenderer(context: Context) {
         dt: Float,
         flapping: Boolean,
         facingRight: Boolean,
+        headAnchorYRatio: Float,
+        petRotation: Float,
         paint: Paint,
     ) {
         val spec = accessory.sprite ?: return
@@ -80,18 +85,20 @@ class AccessorySpriteRenderer(context: Context) {
             (row + 1) * spec.frameHeight,
         )
 
-        // El frame del atlas se dibuja centrado en el ancla.
+        // El ancla se calcula desde la CABEZA del pet (no del centro del view).
         val anchorScale = spec.scale * petSpriteSize / spec.frameWidth
+        val headY = petCenterY + headAnchorYRatio * petSpriteSize
         val anchorX = petCenterX + spec.anchor.xRatio * petSpriteSize
-        val anchorY = petCenterY + spec.anchor.yRatio * petSpriteSize
+        val anchorY = headY + spec.anchor.yRatio * petSpriteSize
 
         val halfW = spec.frameWidth * anchorScale / 2f
         val halfH = spec.frameHeight * anchorScale / 2f
         val dstRect = RectF(anchorX - halfW, anchorY - halfH, anchorX + halfW, anchorY + halfH)
 
         canvas.save()
+        // Rotación y flip alrededor del ancla: el accesorio sigue al pet.
+        if (petRotation != 0f) canvas.rotate(Math.toDegrees(petRotation.toDouble()).toFloat(), anchorX, anchorY)
         if (!facingRight) {
-            // Volteo horizontal alrededor del eje del ancla.
             canvas.scale(-1f, 1f, anchorX, anchorY)
         }
         val previousFilter = paint.isFilterBitmap

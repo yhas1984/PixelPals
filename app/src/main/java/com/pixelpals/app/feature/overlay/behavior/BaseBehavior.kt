@@ -30,7 +30,10 @@ abstract class BaseBehavior(
 
     protected var time: Float = 0f
     protected var interactionTimer: Float = 0f 
-    
+
+    // Fracción negativa (desde el centro del view) donde está la cabeza del pet.
+    protected var headRatio: Float = DEFAULT_HEAD_RATIO
+
     // Lista que soporta frames nulos para no perder el orden de los índices
     protected val frames = mutableListOf<Bitmap?>()
     protected val spriteFrameRects = mutableListOf<Rect>()
@@ -55,6 +58,38 @@ abstract class BaseBehavior(
     private var carryY: Float = 0f
 
     abstract val resourceIds: List<Int>
+
+    /**
+     * Calcula dónde está la cabeza del pet a partir del bbox del frame de reposo.
+     * La cabeza se estima en el 25% superior del contenido visible del bitmap.
+     */
+    private fun computeHeadRatioFromBitmap(bitmap: Bitmap?): Float {
+        if (bitmap == null || bitmap.isRecycled) return DEFAULT_HEAD_RATIO
+        val b = bitmap
+        var top = b.height
+        var bottom = 0
+        val step = 4
+        for (y in 0 until b.height step step) {
+            for (x in 0 until b.width step step) {
+                val alpha = (b.getPixel(x, y) ushr 24) and 0xFF
+                if (alpha > 40) {
+                    if (y < top) top = y
+                    if (y > bottom) bottom = y
+                }
+            }
+        }
+        if (bottom <= top) return DEFAULT_HEAD_RATIO
+        val headY = top + (bottom - top) * 0.25f
+        return (headY - b.height / 2f) / b.height
+    }
+
+    /** Calcula el ratio desde el pivot del atlas (la base del pet). */
+    private fun computeHeadRatioFromPivot(spec: PetAtlasSpec): Float {
+        val pivotY = spec.pivot?.y ?: (spec.frameHeight * 0.8f).toInt()
+        // El contenido del sprite va de 0 a pivotY (base). La cabeza ≈ 28% de ese alto.
+        val headY = pivotY * 0.28f
+        return (headY - spec.frameHeight / 2f) / spec.frameHeight
+    }
 
     protected fun loadFramesAsync() {
         val startedAt = System.currentTimeMillis()
@@ -110,6 +145,7 @@ abstract class BaseBehavior(
             }
             frames.clear()
             frames.addAll(tmp)
+            headRatio = computeHeadRatioFromBitmap(frames.firstOrNull { it != null })
 
             bridge.invalidate()
         }
@@ -180,6 +216,7 @@ abstract class BaseBehavior(
                 spriteFrameRects.addAll(buildFrameRects(spec))
                 spriteBleedInsetPx = spec.renderHints.recommendedBleedInsetPx.coerceAtLeast(0)
                 spriteFilterBitmap = spec.renderHints.filterBitmap
+                headRatio = computeHeadRatioFromPivot(spec)
             }
             isLoading = loadedSheet == null || spec == null
 
@@ -378,8 +415,9 @@ abstract class BaseBehavior(
         applyMovement(dt)
     }
 
-    override fun onBatteryStatusChanged(percent: Int, isCharging: Boolean) {
-        val key = if (isCharging) {
+    override fun headAnchorYRatio(): Float = headRatio
+
+    override fun onBatteryStatusChanged(percent: Int, isCharging: Boolean) {        val key = if (isCharging) {
             "charging"
         } else if (percent <= LOW_BATTERY_THRESHOLD) {
             "low_$percent"
@@ -531,6 +569,9 @@ abstract class BaseBehavior(
     private companion object {
         const val LOW_BATTERY_THRESHOLD = 20
         const val ENVIRONMENT_REACTION_COOLDOWN_MS = 8L * 60L * 1000L
+
+        /** Valor por defecto de la cabeza (si no se puede medir): ~20% sobre el centro. */
+        const val DEFAULT_HEAD_RATIO = -0.20f
 
         /** Cache de frames escalados por (drawableResId, petSpriteSize). */
         val FRAME_CACHE = java.util.concurrent.ConcurrentHashMap<Long, Bitmap>()
