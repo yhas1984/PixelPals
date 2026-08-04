@@ -45,6 +45,8 @@ abstract class BaseBehavior(
     protected var targetX = 0f
     protected var targetY = 0f
     protected var decisionTimer = 0f
+    private var lastBatteryStateKey = ""
+    private var lastEnvironmentReactionAt = 0L
 
     // Acumuladores de movimiento sub-píxel para que, incluso con velocidades bajas,
     // el movimiento se vuelva perceptible (evita que (vel * dt).toInt() quede en 0).
@@ -322,6 +324,46 @@ abstract class BaseBehavior(
         applyMovement(dt)
     }
 
+    override fun onBatteryStatusChanged(percent: Int, isCharging: Boolean) {
+        val key = if (isCharging) {
+            "charging"
+        } else if (percent <= LOW_BATTERY_THRESHOLD) {
+            "low_$percent"
+        } else {
+            "ok"
+        }
+        if (key == lastBatteryStateKey) return
+        lastBatteryStateKey = key
+        when {
+            isCharging -> maybeShowEnvironmentBubble("⚡")
+            percent <= LOW_BATTERY_THRESHOLD -> maybeShowEnvironmentBubble("🔋")
+        }
+    }
+
+    override fun onAirplaneModeChanged(isAirplane: Boolean) {
+        if (isAirplane) maybeShowEnvironmentBubble("✈️")
+    }
+
+    override fun onKeyboardVisibilityChanged(visible: Boolean, height: Int) {
+        if (!visible) return
+        val params = bridge.getWindowParams() ?: return
+        val minY = 50
+        val maxY = (bridge.screenHeight - height - bridge.petSpriteSize - 100).coerceAtLeast(minY)
+        if (params.y > maxY) {
+            params.y = maxY
+            bridge.updateWindowLayout(params)
+        }
+        bridge.showBubble("🤫")
+    }
+
+    protected fun maybeShowEnvironmentBubble(emoji: String) {
+        val now = System.currentTimeMillis()
+        if (now - lastEnvironmentReactionAt < ENVIRONMENT_REACTION_COOLDOWN_MS) return
+        lastEnvironmentReactionAt = now
+        bridge.showBubble(emoji)
+        bridge.playHaptic(20)
+    }
+
     override fun onInteract() {
         bridge.state = PetState.INTERACTING
         interactionTimer = 0f 
@@ -426,5 +468,10 @@ abstract class BaseBehavior(
         frames.clear()
         spriteSheetBitmap?.recycle()
         spriteSheetBitmap = null
+    }
+
+    private companion object {
+        const val LOW_BATTERY_THRESHOLD = 20
+        const val ENVIRONMENT_REACTION_COOLDOWN_MS = 8L * 60L * 1000L
     }
 }

@@ -19,6 +19,7 @@ import android.os.Build
 import android.util.DisplayMetrics
 import android.view.Gravity
 import android.view.View
+import android.view.WindowInsets
 import android.view.WindowManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -86,6 +87,7 @@ class PetService : Service() {
     private val homeCheckRunnable = object : Runnable {
         override fun run() {
             if (isViewAttached) {
+                refreshKeyboardVisibility()
                 val hadUsageAccess = DesktopForegroundHelper.hasUsageAccess(this@PetService)
                 refreshPetVisibilityForForeground()
                 val nextInterval = if (hadUsageAccess) {
@@ -98,6 +100,20 @@ class PetService : Service() {
                 homeCheckHandler.postDelayed(this, HOME_POLL_INTERVAL_SLOW_MS)
             }
         }
+    }
+
+    private var lastImeVisible: Boolean? = null
+
+    private fun refreshKeyboardVisibility() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return
+        val wm = windowManager ?: return
+        val metrics = runCatching { wm.currentWindowMetrics }.getOrNull() ?: return
+        val insets = metrics.windowInsets
+        val visible = insets.isVisible(WindowInsets.Type.ime())
+        if (visible == lastImeVisible) return
+        lastImeVisible = visible
+        val height = insets.getInsets(WindowInsets.Type.ime()).bottom
+        petView?.onKeyboardChanged(visible, height)
     }
 
     override fun onCreate() {

@@ -46,6 +46,7 @@ class PetView(
     private var activeSecondsAccumulator = 0f
     private var ambientBubbleCooldown = 12f
     private var lastFrameTimeNanos = 0L
+    private var lastTimeWindowKey = ""
 
     private val motionEngine = MotionEngine()
     private val touchSlop = ViewConfiguration.get(context).scaledTouchSlop.toFloat()
@@ -325,6 +326,7 @@ class PetView(
                 else -> 18f
             }
         }
+        maybeShowTimeGreeting()
         when (state) {
             PetState.IDLE -> behavior?.updateIdle(dt)
             PetState.DRAGGING -> behavior?.updateDrag(dt)
@@ -388,6 +390,23 @@ class PetView(
     private fun maybeShowAmbientMoodBubble() {
         val bubble = ambientBubbleOptions().randomOrNull()
         bubble?.let { showBubble(it) }
+    }
+
+    private fun maybeShowTimeGreeting() {
+        if (bubbleText != null || state != PetState.IDLE) return
+        val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
+        val key = when {
+            hour in 6..11 -> "morning"
+            hour >= 22 || hour <= 4 -> "night"
+            else -> "day"
+        }
+        if (key == lastTimeWindowKey) return
+        lastTimeWindowKey = key
+        when (key) {
+            "morning" -> showBubble("☀️")
+            "night" -> showBubble("🌙")
+            else -> Unit
+        }
     }
 
     private fun welcomeBubble(): String {
