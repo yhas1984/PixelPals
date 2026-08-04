@@ -1,4 +1,4 @@
-package com.pixelpals.app.behavior
+package com.pixelpals.app.feature.overlay.behavior
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -9,11 +9,11 @@ import android.view.View
 import android.view.WindowManager
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import com.pixelpals.app.PetProgress
-import com.pixelpals.app.PetState
-import com.pixelpals.app.PetType
-import com.pixelpals.app.catalog.AccessoryCatalogItem
-import com.pixelpals.app.motion.DefaultPetRandom
+import com.pixelpals.app.data.repository.PetProgress
+import com.pixelpals.app.core.domain.PetState
+import com.pixelpals.app.core.domain.PetType
+import com.pixelpals.app.data.catalog.AccessoryCatalogItem
+import com.pixelpals.app.core.motion.DefaultPetRandom
 import com.pixelpals.app.status.CareAction
 import com.pixelpals.app.status.PetMood
 import com.pixelpals.app.status.PetPersonality

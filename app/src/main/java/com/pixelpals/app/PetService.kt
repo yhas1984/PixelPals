@@ -7,6 +7,7 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.BroadcastReceiver
 import android.content.Context
+import com.pixelpals.app.data.prefs.SelectedPetStore
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.PixelFormat
@@ -14,6 +15,7 @@ import android.graphics.Rect
 import android.os.BatteryManager
 import android.os.Handler
 import android.os.IBinder
+import com.pixelpals.app.core.domain.PetType
 import android.os.Looper
 import android.os.Build
 import android.util.DisplayMetrics
@@ -42,8 +44,8 @@ class PetService : Service() {
         private const val EXTRA_REFRESH_MESSAGE = "REFRESH_MESSAGE"
         private const val EXTRA_REFRESH_CELEBRATE = "REFRESH_CELEBRATE"
         private const val PET_SIZE_DP = 80
-        private const val HOME_POLL_INTERVAL_MS = 2000L
-        private const val HOME_POLL_INTERVAL_SLOW_MS = 30_000L
+        private const val HOME_POLL_INTERVAL_MS = 15_000L
+        private const val HOME_POLL_INTERVAL_SLOW_MS = 60_000L
 
         fun requestPetRefresh(context: Context, message: String? = null, celebrate: Boolean = false) {
             if (!isRunning) return

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">ScreenPets</string>
+    <string name="app_name">PixelPals</string>
     <string name="subtitle">Your virtual pet companion ✨</string>
 
     <!-- Shared / Edge-to-edge -->
@@ -12,10 +12,10 @@
     <string name="permissions_optional_label">Optional for desktop mode</string>
     <string name="launch_ready">Ready to launch</string>
     <string name="launch_disabled_reason_both">Grant overlay and notifications to continue.</string>
-    <string name="launch_disabled_reason_overlay">Overlay lets ScreenPets float above other apps.</string>
+    <string name="launch_disabled_reason_overlay">Overlay lets PixelPals float above other apps.</string>
     <string name="launch_disabled_reason_notification">Notifications keep pet controls reachable on Android 13+.</string>
     <string name="launch_disabled_reason_optional">Usage access is only needed for the desktop-only mode.</string>
-    <string name="usage_optional_note">Optional. Only needed if you want ScreenPets to hide on other apps or behave like a desktop-only companion.</string>
+    <string name="usage_optional_note">Optional. Only needed if you want PixelPals to hide on other apps or behave like a desktop-only companion.</string>
 
     <!-- Permissions -->
     <string name="overlay_title">Screen Overlay</string>
@@ -26,7 +26,7 @@
     <string name="permission_granted">✓ Granted</string>
     <string name="grant_permission">Grant Permission</string>
     <string name="usage_title">Home screen only</string>
-    <string name="usage_desc">Hides the pet while other apps are open (not on top of Chrome, games, etc.). Grant “Usage access” for ScreenPets in the next screen.</string>
+    <string name="usage_desc">Hides the pet while other apps are open (not on top of Chrome, games, etc.). Grant “Usage access” for PixelPals in the next screen.</string>
     <string name="usage_icon_desc">Usage access permission icon</string>
 
     <!-- Actions -->
@@ -48,9 +48,9 @@
     <string name="diablillo_desc">The Mischievous Imp\nHe-he!</string>
 
     <!-- Notification -->
-    <string name="notif_channel_name">ScreenPets Pet</string>
+    <string name="notif_channel_name">PixelPals Pet</string>
     <string name="notif_channel_desc">Keeps your virtual pet alive on screen</string>
-    <string name="notif_active_title">ScreenPets Active</string>
+    <string name="notif_active_title">PixelPals Active</string>
     <string name="notif_active_subtitle">Tap to care for your companion</string>
     <string name="fgs_special_use_subtype" translatable="false">User-controlled floating virtual pet overlay</string>
 
@@ -175,7 +175,6 @@
     </plurals>
     <string name="store_premium_pets">Premium characters</string>
     <string name="store_accessories">Accessories and cosmetics</string>
-    <string name="store_preview_price">Preview</string>
     <string name="store_locked_state">Available to unlock</string>
     <string name="store_owned_state">Already yours</string>
     <string name="store_selected_state">Currently selected</string>
@@ -208,4 +207,46 @@
         <item quantity="other">%1$d left.</item>
     </plurals>
     <string name="treasure_consume_none_left">No more left.</string>
+
+    <!-- Store V1.5: tabs -->
+    <string name="store_tab_coins">Coins</string>
+    <string name="store_tab_accessories">Accessories</string>
+    <string name="store_tab_packs">Packs</string>
+
+    <!-- Store V1.5: coin packs -->
+    <string name="coins_pack_small_title">Starter Pack</string>
+    <string name="coins_pack_small_subtitle">100 soft coins</string>
+    <string name="coins_pack_medium_title">Sweet Pack</string>
+    <string name="coins_pack_medium_subtitle">350 soft coins</string>
+    <string name="coins_pack_large_title">Mega Pack</string>
+    <string name="coins_pack_large_subtitle">1000 soft coins</string>
+    <string name="coins_pack_mega_title">Giga Pack</string>
+    <string name="coins_pack_mega_subtitle">2500 soft coins + 5%% bonus</string>
+    <string name="coins_pack_best_value">Best value</string>
+    <string name="coins_purchase_success">+%1$d coins added!</string>
+    <string name="coins_wallet_format">💰 %1$d coins</string>
+
+    <!-- Store V1.5: premium packs -->
+    <string name="pack_celestial_title">Celestial Pack</string>
+    <string name="pack_celestial_subtitle">Halo + Celestial Wings + 100 coins</string>
+    <string name="pack_demonic_title">Demonic Pack</string>
+    <string name="pack_demonic_subtitle">Crown + Demonic Wings + 100 coins</string>
+    <string name="pack_adventure_title">Adventure Pack</string>
+    <string name="pack_adventure_subtitle">Jetpack + Pilot Glasses + 100 coins</string>
+
+    <!-- Store V1.5: actions -->
+    <string name="store_buy_with_real_money">Buy</string>
+    <string name="store_buy_with_coins">Buy with %1$d coins</string>
+    <string name="store_restore_v15">Restore purchases</string>
+    <string name="store_filter_all">All</string>
+    <string name="store_filter_slot_head">Heads</string>
+    <string name="store_filter_slot_face">Faces</string>
+    <string name="store_filter_slot_back">Wings</string>
+    <string name="store_filter_slot_gadget">Gadgets</string>
+    <string name="store_filter_slot_body">Bodies</string>
+
+    <!-- V1.5 additions -->
+    <string name="store_owned_hint_default">no accessory</string>
+    <string name="store_buy_with_coins_button">Buy with %1$d coins</string>
+    <string name="store_preview_price">—</string>
 </resources>

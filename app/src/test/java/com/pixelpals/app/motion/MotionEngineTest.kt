@@ -1,4 +1,4 @@
-package com.pixelpals.app.motion
+package com.pixelpals.app.core.motion
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue

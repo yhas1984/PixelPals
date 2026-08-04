@@ -1,9 +1,9 @@
 package com.pixelpals.app.debug
 
-import com.pixelpals.app.motion.MokiMode
-import com.pixelpals.app.motion.MokiMotionController
-import com.pixelpals.app.motion.MokiPose
-import com.pixelpals.app.motion.MokiSurface
+import com.pixelpals.app.core.motion.MokiMode
+import com.pixelpals.app.core.motion.MokiMotionController
+import com.pixelpals.app.core.motion.MokiPose
+import com.pixelpals.app.core.motion.MokiSurface
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

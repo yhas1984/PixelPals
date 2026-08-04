@@ -4,17 +4,31 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.*
 import android.os.Build
-import android.util.DisplayMetrics
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.util.DisplayMetrics
+import android.util.Log
 import android.view.Choreographer
 import android.view.MotionEvent
-import android.view.View
 import android.view.VelocityTracker
+import android.view.View
 import android.view.ViewConfiguration
 import android.view.WindowManager
 import androidx.core.content.ContextCompat
+import com.pixelpals.app.core.analytics.AnalyticsTracker
+import com.pixelpals.app.core.domain.PetState
+import com.pixelpals.app.core.domain.PetType
+import com.pixelpals.app.core.motion.MotionEngine
+import com.pixelpals.app.core.services.AppServices
+import com.pixelpals.app.data.catalog.AccessoryCatalogItem
+import com.pixelpals.app.data.repository.PetProgress
+import com.pixelpals.app.data.repository.PixelPalsRepository
+import com.pixelpals.app.feature.overlay.behavior.*
+import com.pixelpals.app.status.CareAction
+import com.pixelpals.app.status.PetMood
+import com.pixelpals.app.status.PetPersonality
+import com.pixelpals.app.status.PetStatusSnapshot
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -22,14 +36,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlin.math.*
 import kotlin.random.Random
-import android.util.Log
-import com.pixelpals.app.behavior.*
-import com.pixelpals.app.motion.MotionEngine
-import com.pixelpals.app.catalog.AccessoryCatalogItem
-import com.pixelpals.app.status.CareAction
-import com.pixelpals.app.status.PetMood
-import com.pixelpals.app.status.PetPersonality
-import com.pixelpals.app.status.PetStatusSnapshot
 
 @SuppressLint("ViewConstructor")
 class PetView(
@@ -40,8 +46,8 @@ class PetView(
     private val petType: PetType
 ) : View(context), PetViewBridge {
     private val progress = PetProgress(context)
-    private val repository = AppServices.repository(context)
-    private val analytics = AppServices.analytics(context)
+    private val repository: PixelPalsRepository = AppServices.repository(context)
+    private val analytics: AnalyticsTracker = AppServices.analytics(context)
     private val uiScope = CoroutineScope(Dispatchers.Main + Job())
     private var activeSecondsAccumulator = 0f
     private var ambientBubbleCooldown = 12f
@@ -78,6 +84,9 @@ class PetView(
     )
     override val petPersonality: PetPersonality = repository.getPersonality(petType)
     override var equippedAccessory: AccessoryCatalogItem? = null
+    override fun activeModifiers(): List<com.pixelpals.app.data.catalog.PetModifier> {
+        return equippedAccessory?.modifiers ?: emptyList()
+    }
     private var treasureEffectScaleX = 1f
     private var treasureEffectScaleY = 1f
     private var treasureEffectOffsetX = 0f
@@ -203,7 +212,7 @@ class PetView(
                     "bond" to petStatus.bond.toString()
                 )
             )
-            progress.maybeAwardTreasureFromInteraction()?.let { treasure ->
+            repository.maybeAwardTreasureFromInteraction(petType)?.let { treasure ->
                 showBubble(treasure)
             } ?: run {
                 if (Random.nextFloat() < 0.45f) {
@@ -240,10 +249,6 @@ class PetView(
         isAnimating = false
         lastFrameTimeNanos = 0L
         behavior?.pause()
-    }
-
-    override fun setProgress(progress: PetProgress) {
-        // Actualmente PetView mantiene su propio progreso persistente.
     }
 
     override fun consumeTreasure(emoji: String) {
@@ -298,14 +303,14 @@ class PetView(
     }
 
     private fun update(dt: Float) {
-        refreshScreenMetrics()
+        // No-op: screen metrics are cached at attach/config-change time (see refreshScreenMetrics).
         activeSecondsAccumulator += dt
         while (activeSecondsAccumulator >= 60f) {
             progress.trackMinute()
             activeSecondsAccumulator -= 60f
             uiScope.launch {
                 petStatus = repository.recordActiveMinute(petType)
-                progress.maybeAwardTreasureFromActiveMinute()?.let { treasure ->
+                repository.maybeAwardTreasureFromActiveMinute(petType)?.let { treasure ->
                     showBubble(treasure)
                 }
             }
@@ -361,8 +366,17 @@ class PetView(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
+        // Pase 1: accesorios de capa BACK / GADGET (alas detrás del cuerpo).
+        drawAccessorySlot(canvas, com.pixelpals.app.data.catalog.AccessorySlot.BACK)
+        drawAccessorySlot(canvas, com.pixelpals.app.data.catalog.AccessorySlot.GADGET)
+
+        // Pase 2: sprite base del pet.
         behavior?.onDraw(canvas, (width / 2).toFloat(), (height / 2).toFloat())
-        drawAccessory(canvas)
+
+        // Pase 3: accesorios de capa HEAD / FACE / BODY (encima del cuerpo).
+        drawAccessorySlot(canvas, com.pixelpals.app.data.catalog.AccessorySlot.HEAD)
+        drawAccessorySlot(canvas, com.pixelpals.app.data.catalog.AccessorySlot.FACE)
+        drawAccessorySlot(canvas, com.pixelpals.app.data.catalog.AccessorySlot.BODY)
 
         // Dibuja el bubble encima del pet.
         val text = bubbleText ?: return
@@ -382,8 +396,9 @@ class PetView(
         canvas.drawText(text, cx, cy, bubblePaint)
     }
 
-    private fun drawAccessory(canvas: Canvas) {
+    private fun drawAccessorySlot(canvas: Canvas, slot: com.pixelpals.app.data.catalog.AccessorySlot) {
         val accessory = equippedAccessory ?: return
+        if (accessory.slot != slot) return
         accessoryPaint.textSize = petSpriteSize * accessory.scale
         val cx = width / 2f + renderOffsetX + (accessory.offsetXRatio * petSpriteSize * if (renderScaleX >= 0f) 1f else -1f)
         val cy = height / 2f + renderOffsetY + (accessory.offsetYRatio * petSpriteSize)
@@ -557,11 +572,21 @@ class PetView(
         return super.onTouchEvent(event)
     }
 
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        refreshScreenMetrics()
+    }
+
     override fun onDetachedFromWindow() {
         recycleVelocityTracker()
         behavior?.destroy()
         uiScope.cancel()
         super.onDetachedFromWindow()
+    }
+
+    override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+        super.onConfigurationChanged(newConfig)
+        refreshScreenMetrics()
     }
 
     private fun recycleVelocityTracker() {

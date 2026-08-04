@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">ScreenPets</string>
+    <string name="app_name">PixelPals</string>
     <string name="subtitle">Tu compañero mascota virtual ✨</string>
 
     <!-- Común / Edge-to-edge -->
@@ -12,10 +12,10 @@
     <string name="permissions_optional_label">Opcional para modo escritorio</string>
     <string name="launch_ready">Listo para lanzar</string>
     <string name="launch_disabled_reason_both">Concede superposición y notificaciones para continuar.</string>
-    <string name="launch_disabled_reason_overlay">La superposición permite que ScreenPets flote sobre otras apps.</string>
+    <string name="launch_disabled_reason_overlay">La superposición permite que PixelPals flote sobre otras apps.</string>
     <string name="launch_disabled_reason_notification">Las notificaciones mantienen los controles accesibles en Android 13+.</string>
     <string name="launch_disabled_reason_optional">El acceso de uso solo se necesita para el modo escritorio.</string>
-    <string name="usage_optional_note">Opcional. Solo hace falta si quieres que ScreenPets se oculte en otras apps o funcione como compañero de escritorio.</string>
+    <string name="usage_optional_note">Opcional. Solo hace falta si quieres que PixelPals se oculte en otras apps o funcione como compañero de escritorio.</string>
 
     <!-- Permisos -->
     <string name="overlay_title">Superposición en pantalla</string>
@@ -26,7 +26,7 @@
     <string name="permission_granted">✓ Concedido</string>
     <string name="grant_permission">Conceder Permiso</string>
     <string name="usage_title">Solo en el escritorio</string>
-    <string name="usage_desc">Oculta la mascota cuando abras otras apps (no tapa Chrome, juegos, etc.). Concede “Acceso de uso” a ScreenPets en la pantalla siguiente.</string>
+    <string name="usage_desc">Oculta la mascota cuando abras otras apps (no tapa Chrome, juegos, etc.). Concede “Acceso de uso” a PixelPals en la pantalla siguiente.</string>
     <string name="usage_icon_desc">Icono de acceso de uso</string>
 
     <!-- Acciones -->
@@ -48,9 +48,9 @@
     <string name="diablillo_desc">El Diablillo Travieso\n¡Ji-ji!</string>
 
     <!-- Notificación -->
-    <string name="notif_channel_name">ScreenPets Mascota</string>
+    <string name="notif_channel_name">PixelPals Mascota</string>
     <string name="notif_channel_desc">Mantiene a tu mascota virtual viva en la pantalla</string>
-    <string name="notif_active_title">ScreenPets Activo</string>
+    <string name="notif_active_title">PixelPals Activo</string>
     <string name="notif_active_subtitle">Toca para cuidar a tu compañero</string>
 
     <!-- Accesibilidad -->

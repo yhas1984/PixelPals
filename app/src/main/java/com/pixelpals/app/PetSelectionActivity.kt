@@ -15,12 +15,18 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
-import com.pixelpals.app.catalog.CatalogItemState
-import com.pixelpals.app.catalog.PetCatalogItem
+import com.pixelpals.app.R
+import com.pixelpals.app.core.analytics.AnalyticsTracker
+import com.pixelpals.app.core.services.AppServices
+import com.pixelpals.app.core.domain.PetType
+import com.pixelpals.app.data.catalog.CatalogItemState
+import com.pixelpals.app.data.catalog.PetCatalogItem
+import com.pixelpals.app.data.prefs.SelectedPetStore
+import com.pixelpals.app.data.repository.PixelPalsRepository
 import com.pixelpals.app.status.CareAction
 import com.pixelpals.app.status.PetMood
 import com.pixelpals.app.status.PetDashboardActivity
-import com.pixelpals.app.store.StoreActivity
+import com.pixelpals.app.feature.store.StoreActivity
 import kotlinx.coroutines.launch
 
 /**
@@ -37,8 +43,8 @@ class PetSelectionActivity : AppCompatActivity() {
 
     private var isLaunching = false
     private lateinit var selectedPetStore: SelectedPetStore
-    private val repository by lazy { AppServices.repository(this) }
-    private val analytics by lazy { AppServices.analytics(this) }
+    private val repository: PixelPalsRepository by lazy { AppServices.repository(this) }
+    private val analytics: AnalyticsTracker by lazy { AppServices.analytics(this) }
     private lateinit var catalogContainer: LinearLayout
     private lateinit var txtCurrentMood: TextView
     private lateinit var txtCatalogSummary: TextView
