@@ -46,9 +46,6 @@ interface PetBehavior {
     /** Reset state */
     fun reset()
 
-    /** Fracción negativa (desde el centro del view) donde está la cabeza del pet. */
-    fun headAnchorYRatio(): Float = -0.20f
-
     // --- Lifecycle and Events ---
     fun resume() {}
     fun pause() {}

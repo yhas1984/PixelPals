@@ -73,7 +73,7 @@ class AngelBehavior(
         if (flapClock >= FLAP_INTERVAL_SECONDS) {
             flapClock %= FLAP_INTERVAL_SECONDS
             if (positionY > flightTargetY - bridge.petSpriteSize * 0.08f) {
-                velocityY -= bridge.petSpriteSize * 0.12f * wingJumpFactor()
+                velocityY -= bridge.petSpriteSize * 0.12f
             }
         }
         steer(dt, accelerationRatio = 0.78f, damping = 1.55f, maxSpeedRatio = 0.52f)
@@ -87,7 +87,7 @@ class AngelBehavior(
 
     private fun updateGlide(dt: Float) {
         // Con alas equipadas, el ángel planea más tiempo (desciende más lento).
-        velocityY += bridge.petSpriteSize * 0.035f * dt * wingAirTimeFactor()
+        velocityY += bridge.petSpriteSize * 0.035f * dt
         steer(dt, accelerationRatio = 0.24f, damping = 1.15f, maxSpeedRatio = 0.40f)
         bridge.currentFrame = FRAME_GLIDE_START + ((time / GLIDE_FRAME_SECONDS).toInt() % 2)
         applyUprightAttitude(maxTilt = 6f)

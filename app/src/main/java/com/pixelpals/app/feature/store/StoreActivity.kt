@@ -1,15 +1,10 @@
 package com.pixelpals.app.feature.store
 
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.widget.Button
-import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -17,18 +12,12 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.google.android.material.tabs.TabLayoutMediator
-import com.pixelpals.app.R
 import com.pixelpals.app.PetService
+import com.pixelpals.app.R
 import com.pixelpals.app.core.analytics.AnalyticsTracker
 import com.pixelpals.app.core.domain.PetType
 import com.pixelpals.app.core.services.AppServices
-import com.pixelpals.app.data.catalog.AccessoryCatalog
-import com.pixelpals.app.data.catalog.AccessoryCatalogItem
-import com.pixelpals.app.data.catalog.AccessoryPurchaseResult
-import com.pixelpals.app.data.catalog.AccessorySlot
 import com.pixelpals.app.data.catalog.CoinProduct
-import com.pixelpals.app.data.catalog.PetCatalogItem
-import com.pixelpals.app.data.catalog.PremiumPack
 import com.pixelpals.app.data.prefs.SelectedPetStore
 import com.pixelpals.app.data.repository.PixelPalsRepository
 import com.pixelpals.app.feature.store.billing.BillingRepository
@@ -59,9 +48,7 @@ class StoreActivity : AppCompatActivity() {
             TabLayoutMediator(tabs, pager) { tab, position ->
                 tab.text = when (position) {
                     0 -> getString(R.string.store_tab_pets)
-                    1 -> getString(R.string.store_tab_coins)
-                    2 -> getString(R.string.store_tab_accessories)
-                    else -> getString(R.string.store_tab_packs)
+                    else -> getString(R.string.store_tab_coins)
                 }
             }.attach()
         }
@@ -77,16 +64,17 @@ class StoreActivity : AppCompatActivity() {
         if (isStoreCreated) refreshHeader()
     }
 
-    private fun refreshHeader() {
-        findViewById<TextView>(R.id.txtStoreSubtitle).text = getString(R.string.store_subtitle_format, selectedPet.displayName)
+    /** Refresca el header (usado por las tabs tras cambios). */
+    fun refreshStoreHeader() = refreshHeader()
+
+    private fun refreshHeader() {        findViewById<TextView>(R.id.txtStoreSubtitle).text = getString(R.string.store_subtitle_format, selectedPet.displayName)
         lifecycleScope.launch {
             val balance = repository.getCoinBalance(selectedPet)
-            val equipped = repository.getEquippedAccessory(selectedPet)
             findViewById<TextView>(R.id.txtStoreWallet).text = getString(R.string.coins_wallet_format, balance)
             findViewById<TextView>(R.id.txtStoreHighlight).text = getString(
                 R.string.store_featured_message_format,
                 selectedPet.displayName,
-                equipped?.displayName ?: getString(R.string.store_owned_hint_default),
+                getString(R.string.store_owned_hint_default),
             )
         }
     }
@@ -103,61 +91,6 @@ class StoreActivity : AppCompatActivity() {
                         getString(R.string.coins_purchase_success, coinProduct.coinAmount),
                         Toast.LENGTH_SHORT
                     ).show()
-                    refreshHeader()
-                }
-            }
-        }
-    }
-
-    /** Notifica al PetService que el accesorio equipado cambió para refrescar el overlay. */
-    fun notifyAccessoryChanged() {
-        PetService.requestPetRefresh(this, message = null, celebrate = true)
-    }
-
-    /** Refresca el header (wallet, equipped, etc.) — usado tras compras. */
-    fun refreshStoreHeader() = refreshHeader()
-
-    /** Quita el accesorio del pet activo. */
-    fun unequipCurrent() {
-        lifecycleScope.launch {
-            repository.equipAccessory(selectedPet, null)
-            notifyAccessoryChanged()
-        }
-    }
-
-    /** Muestra un toast con el motivo de compra fallida. */
-    fun showPurchaseError(result: com.pixelpals.app.data.catalog.AccessoryPurchaseResult) {
-        val message = when (result) {
-            com.pixelpals.app.data.catalog.AccessoryPurchaseResult.NOT_ENOUGH_COINS ->
-                getString(R.string.store_error_not_enough_coins)
-            com.pixelpals.app.data.catalog.AccessoryPurchaseResult.BOND_REQUIRED ->
-                getString(R.string.store_error_bond_required)
-            else -> getString(R.string.store_error_generic)
-        }
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
-    }
-
-    /** Compra un pack premium (accesorios + monedas) */
-    fun purchasePremiumPack(pack: PremiumPack) {
-        billing.launchPurchase(this, pack.productId) { success ->
-            if (success) {
-                lifecycleScope.launch {
-                    val autoEquipped = repository.grantPremiumPack(
-                        pack = pack,
-                        petType = selectedPet,
-                        source = "billing",
-                    )
-                    analytics.track(
-                        "premium_pack_purchased",
-                        mapOf("product_id" to pack.productId, "auto_equipped" to (autoEquipped ?: "none"))
-                    )
-                    val msg = if (autoEquipped != null) {
-                        "Pack comprado. Equipado: ${autoEquipped}"
-                    } else {
-                        getString(R.string.coins_purchase_success, pack.bonusCoins)
-                    }
-                    Toast.makeText(this@StoreActivity, msg, Toast.LENGTH_SHORT).show()
-                    if (autoEquipped != null) notifyAccessoryChanged()
                     refreshHeader()
                 }
             }
@@ -182,14 +115,12 @@ class StoreActivity : AppCompatActivity() {
     }
 
     private class StorePagerAdapter(activity: AppCompatActivity) : FragmentStateAdapter(activity) {
-        override fun getItemCount(): Int = 4
+        override fun getItemCount(): Int = 2
 
         override fun createFragment(position: Int): androidx.fragment.app.Fragment {
             return when (position) {
                 0 -> PetsTabFragment()
-                1 -> CoinsTabFragment()
-                2 -> AccessoriesTabFragment()
-                else -> PacksTabFragment()
+                else -> CoinsTabFragment()
             }
         }
     }

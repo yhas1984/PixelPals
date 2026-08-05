@@ -51,39 +51,3 @@ data class CoinProduct(
 /**
  * Pack premium que agrupa varios accesorios temáticos + monedas bonus.
  */
-data class PremiumPack(
-    val productId: String,
-    val displayName: String,
-    val subtitle: String,
-    val accessoryIds: List<String>,
-    val bonusCoins: Int,
-) {
-    companion object {
-        val CATALOG: List<PremiumPack> = listOf(
-            PremiumPack(
-                productId = "pack_celestial",
-                displayName = "Celestial Pack",
-                subtitle = "Halo + Celestial Wings + 100 coins",
-                accessoryIds = listOf("halo_glow", "celestial_wings"),
-                bonusCoins = 100,
-            ),
-            PremiumPack(
-                productId = "pack_demonic",
-                displayName = "Demonic Pack",
-                subtitle = "Crown + Demonic Wings + 100 coins",
-                accessoryIds = listOf("royal_crown", "demonic_wings"),
-                bonusCoins = 100,
-            ),
-            PremiumPack(
-                productId = "pack_adventure",
-                displayName = "Adventure Pack",
-                subtitle = "Jetpack + Pilot Glasses + 100 coins",
-                accessoryIds = listOf("duck_jetpack", "pilot_glasses"),
-                bonusCoins = 100,
-            ),
-        )
-
-        fun findByProductId(productId: String): PremiumPack? =
-            CATALOG.firstOrNull { it.productId == productId }
-    }
-}

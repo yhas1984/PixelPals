@@ -79,7 +79,7 @@ class JellyBehavior(
         hopTargetX = (hopStartX + if (moveRight) horizontalDistance else -horizontalDistance)
             .coerceIn(minX, maxX)
         hopTargetY = floorY
-        hopHeight = bridge.petSpriteSize * (0.55f + random.nextFloat() * 0.35f) * wingJumpFactor()
+        hopHeight = bridge.petSpriteSize * (0.55f + random.nextFloat() * 0.35f)
 
         mode = JellyMode.PREPARE_HOP
         modeTimer = 0f
@@ -187,7 +187,7 @@ class JellyBehavior(
         hopTargetX = (hopStartX + velocityX * 0.09f).coerceIn(0f, maxX)
         hopTargetY = floorY()
         hopHeight = (bridge.petSpriteSize * 0.7f + abs(velocityY) * 0.025f)
-            .coerceAtMost(bridge.petSpriteSize * 1.8f) * wingJumpFactor()
+            .coerceAtMost(bridge.petSpriteSize * 1.8f)
         mode = JellyMode.HOPPING
         modeTimer = 0f
         bridge.state = PetState.IDLE

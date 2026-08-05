@@ -3,8 +3,6 @@ package com.pixelpals.app.feature.overlay.behavior
 import android.graphics.ColorFilter
 import android.view.WindowManager
 import com.pixelpals.app.core.domain.PetState
-import com.pixelpals.app.data.catalog.AccessoryCatalogItem
-import com.pixelpals.app.data.catalog.PetModifier
 import com.pixelpals.app.status.CareAction
 import com.pixelpals.app.status.PetPersonality
 import com.pixelpals.app.status.PetStatusSnapshot
@@ -47,26 +45,8 @@ interface PetViewBridge {
     val screenHeight: Int
     val petSpriteSize: Int
     val groundY: Int
-
-    /**
-     * Fracción (negativa, desde el centro del view) donde está la cabeza del pet.
-     * Ej: -0.2 → la cabeza está a 20% del petSpriteSize por encima del centro.
-     * Lo calcula el behavior a partir del bbox del frame o del pivot del atlas.
-     */
-    val headAnchorYRatio: Float
-
     val petStatus: PetStatusSnapshot
     val petPersonality: PetPersonality
-    val equippedAccessory: AccessoryCatalogItem?
-
-    /** Lista de modificadores del accesorio equipado (velocidad, partículas, etc.). */
-    fun activeModifiers(): List<PetModifier>
-
-    /**
-     * Nombres de los frames del outfit activo (cargados desde assets),
-     * o null si no hay outfit. El outfit REEMPLAZA los frames del pet.
-     */
-    val outfitFrameAssets: List<String>?
 
     // Window position (absolute screen coordinates)
     var windowX: Int

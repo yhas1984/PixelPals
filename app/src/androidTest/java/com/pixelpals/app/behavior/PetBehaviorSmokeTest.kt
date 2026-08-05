@@ -12,7 +12,6 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.pixelpals.app.data.repository.PetProgress
 import com.pixelpals.app.core.domain.PetState
 import com.pixelpals.app.core.domain.PetType
-import com.pixelpals.app.data.catalog.AccessoryCatalogItem
 import com.pixelpals.app.core.motion.DefaultPetRandom
 import com.pixelpals.app.status.CareAction
 import com.pixelpals.app.status.PetMood
@@ -159,10 +158,6 @@ class PetBehaviorSmokeTest {
             PetType.DIABLILLO -> PetPersonality.CHAOTIC
             PetType.MOKI -> PetPersonality.CURIOUS
         }
-        override val equippedAccessory: AccessoryCatalogItem? = null
-        override val headAnchorYRatio: Float = -0.20f
-        override fun activeModifiers(): List<com.pixelpals.app.data.catalog.PetModifier> = emptyList()
-        override val outfitFrameAssets: List<String>? = null
         override var windowX: Int = params.x
         override var windowY: Int = params.y
 

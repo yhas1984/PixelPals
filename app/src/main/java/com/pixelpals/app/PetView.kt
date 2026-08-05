@@ -21,7 +21,6 @@ import com.pixelpals.app.core.domain.PetState
 import com.pixelpals.app.core.domain.PetType
 import com.pixelpals.app.core.motion.MotionEngine
 import com.pixelpals.app.core.services.AppServices
-import com.pixelpals.app.data.catalog.AccessoryCatalogItem
 import com.pixelpals.app.data.repository.PetProgress
 import com.pixelpals.app.data.repository.PixelPalsRepository
 import com.pixelpals.app.feature.overlay.behavior.*
@@ -55,11 +54,6 @@ class PetView(
     private var lastTimeWindowKey = ""
 
     private val motionEngine = MotionEngine()
-    private var accessorySpriteRendererInitialized = false
-    private val accessorySpriteRenderer by lazy {
-        accessorySpriteRendererInitialized = true
-        com.pixelpals.app.feature.overlay.behavior.AccessorySpriteRenderer(context)
-    }
     private var lastFrameDelta = 0f
     private val touchSlop = ViewConfiguration.get(context).scaledTouchSlop.toFloat()
     private val minimumFlingVelocity = ViewConfiguration.get(context).scaledMinimumFlingVelocity.toFloat()
@@ -89,20 +83,6 @@ class PetView(
         memoriesUnlocked = 0
     )
     override val petPersonality: PetPersonality = repository.getPersonality(petType)
-    override var equippedAccessory: AccessoryCatalogItem? = null
-    override fun activeModifiers(): List<com.pixelpals.app.data.catalog.PetModifier> {
-        return equippedAccessory?.modifiers ?: emptyList()
-    }
-    override val headAnchorYRatio: Float
-        get() = behavior?.headAnchorYRatio() ?: -0.20f
-
-    /** Outfit activo: sus frames reemplazan los del pet (cargados desde assets). */
-    override val outfitFrameAssets: List<String>?
-        get() {
-            val outfitId = repository.getActiveOutfit(petType.name.lowercase()) ?: return null
-            val outfit = com.pixelpals.app.data.catalog.OutfitCatalog.findById(context, outfitId) ?: return null
-            return outfit.frames.map { "outfits/${outfit.id}/$it" }
-        }
     private var treasureEffectScaleX = 1f
     private var treasureEffectScaleY = 1f
     private var treasureEffectOffsetX = 0f
@@ -145,12 +125,6 @@ class PetView(
         textAlign = Paint.Align.CENTER
         textSize = petSpriteSize.toFloat() * 0.24f
     }
-    private val accessoryPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.WHITE
-        textAlign = Paint.Align.CENTER
-        textSize = petSpriteSize.toFloat() * 0.24f
-        setShadowLayer(8f, 0f, 4f, Color.BLACK)
-    }
 
     override val groundY: Int
         get() = screenHeight - petSpriteSize -
@@ -170,7 +144,6 @@ class PetView(
     init {
         uiScope.launch {
             petStatus = repository.getStatusSnapshot(petType)
-            equippedAccessory = repository.getEquippedAccessory(petType)
             showBubble(welcomeBubble())
             invalidate()
         }
@@ -284,13 +257,6 @@ class PetView(
     fun refreshFromRepository(message: String?, celebrate: Boolean) {
         uiScope.launch {
             petStatus = repository.getStatusSnapshot(petType)
-            equippedAccessory = repository.getEquippedAccessory(petType)
-            // Si el outfit cambió, recrear el behavior para recargar los frames.
-            val newOutfitId = repository.getActiveOutfit(petType.name.lowercase())
-            if (newOutfitId != currentOutfitId) {
-                currentOutfitId = newOutfitId
-                recreateBehavior()
-            }
             if (!message.isNullOrBlank()) showBubble(message)
             if (celebrate) {
                 treasureReactionTimer = treasureReactionDuration
@@ -300,18 +266,9 @@ class PetView(
         }
     }
 
-    /** Cambia el outfit activo (null = ninguno) y recarga los frames del pet. */
-    private var currentOutfitId: String? = repository.getActiveOutfit(petType.name.lowercase())
-
-    private fun recreateBehavior() {
-        behaviorLazy?.destroy()
-        behaviorLazy = null
-    }
-
     override fun recordCareAction(action: CareAction) {
         uiScope.launch {
             petStatus = repository.applyCareAction(petType, action)
-            equippedAccessory = repository.getEquippedAccessory(petType)
             showBubble(
                 careActionBubble(action)
             )
@@ -403,17 +360,8 @@ class PetView(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        // Pase 1: accesorios de capa BACK / GADGET (alas detrás del cuerpo).
-        drawAccessorySlot(canvas, com.pixelpals.app.data.catalog.AccessorySlot.BACK)
-        drawAccessorySlot(canvas, com.pixelpals.app.data.catalog.AccessorySlot.GADGET)
-
-        // Pase 2: sprite base del pet.
+        // Sprite base del pet.
         behavior?.onDraw(canvas, (width / 2).toFloat(), (height / 2).toFloat())
-
-        // Pase 3: accesorios de capa HEAD / FACE / BODY (encima del cuerpo).
-        drawAccessorySlot(canvas, com.pixelpals.app.data.catalog.AccessorySlot.HEAD)
-        drawAccessorySlot(canvas, com.pixelpals.app.data.catalog.AccessorySlot.FACE)
-        drawAccessorySlot(canvas, com.pixelpals.app.data.catalog.AccessorySlot.BODY)
 
         // Dibuja el bubble encima del pet.
         val text = bubbleText ?: return
@@ -431,63 +379,6 @@ class PetView(
 
         canvas.drawText(text, cx, cy, bubbleStrokePaint)
         canvas.drawText(text, cx, cy, bubblePaint)
-    }
-
-    private fun drawAccessorySlot(canvas: Canvas, slot: com.pixelpals.app.data.catalog.AccessorySlot) {
-        val accessory = equippedAccessory ?: return
-        if (accessory.slot != slot) return
-
-        val headY = height / 2f + renderOffsetY + headAnchorYRatio * petSpriteSize
-
-        // Pase 1: si el accesorio tiene sprite BEHIND (alas, jetpack), dibujar detrás.
-        // Pase 3: si es FRONT (gorros, gafas), dibujar encima.
-        // El fallback emoji se dibuja siempre (los offsets del catálogo ya ubican el slot).
-        val sprite = accessory.sprite
-        if (sprite != null) {
-            val isBehind = sprite.zLayer == com.pixelpals.app.data.catalog.SpriteZLayer.BEHIND
-            val isFrontPass = slot == com.pixelpals.app.data.catalog.AccessorySlot.HEAD ||
-                slot == com.pixelpals.app.data.catalog.AccessorySlot.FACE ||
-                slot == com.pixelpals.app.data.catalog.AccessorySlot.BODY
-            if (isBehind == isFrontPass) return
-
-            accessorySpriteRenderer.draw(
-                canvas = canvas,
-                accessory = accessory,
-                petCenterX = width / 2f + renderOffsetX,
-                petCenterY = height / 2f + renderOffsetY,
-                petSpriteSize = petSpriteSize,
-                dt = lastFrameDelta,
-                flapping = isFlapping(),
-                facingRight = renderScaleX >= 0f,
-                headAnchorYRatio = headAnchorYRatio,
-                petRotation = renderRotation,
-                paint = accessoryPaint,
-            )
-            return
-        }
-
-        // Fallback: emoji (accesorios sin sprite aún).
-        // Los offsets del catálogo están pensados desde el centro del view;
-        // compensamos el headAnchor para conservar la posición original.
-        accessoryPaint.textSize = petSpriteSize * accessory.scale
-        val cx = width / 2f + renderOffsetX + (accessory.offsetXRatio * petSpriteSize * if (renderScaleX >= 0f) 1f else -1f)
-        val cy = headY + ((accessory.offsetYRatio - headAnchorYRatio) * petSpriteSize)
-        canvas.save()
-        if (renderRotation != 0f) {
-            canvas.rotate(
-                Math.toDegrees(renderRotation.toDouble()).toFloat(),
-                width / 2f + renderOffsetX,
-                cy,
-            )
-        }
-        canvas.drawText(accessory.emoji, cx, cy, accessoryPaint)
-        canvas.restore()
-    }
-
-    /** Las alas/gadgets aletean en salto o cuando el pet se mueve rápido. */
-    private fun isFlapping(): Boolean {
-        if (state == PetState.JUMPING || state == PetState.FALLING) return true
-        return kotlin.math.abs(velocityX) > petSpriteSize * 0.35f
     }
 
     private fun maybeShowAmbientMoodBubble() {
@@ -665,7 +556,6 @@ class PetView(
     override fun onDetachedFromWindow() {
         recycleVelocityTracker()
         behavior?.destroy()
-        if (accessorySpriteRendererInitialized) accessorySpriteRenderer.clear()
         uiScope.cancel()
         super.onDetachedFromWindow()
     }

@@ -15,17 +15,21 @@
 
         <TextView
             android:id="@+id/txtCoinPackTitle"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
             android:textColor="@color/text_primary"
             android:textSize="17sp"
             android:textStyle="bold" />
 
         <TextView
             android:id="@+id/txtCoinPackSubtitle"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
+            android:ellipsize="end"
+            android:maxLines="1"
             android:textColor="@color/text_secondary"
             android:textSize="13sp" />
 
@@ -37,7 +41,7 @@
             android:background="@drawable/bg_card"
             android:paddingHorizontal="8dp"
             android:paddingVertical="2dp"
-            android:textColor="@color/dark_bg_deep"
+            android:textColor="@color/golden_accent"
             android:textSize="11sp"
             android:textStyle="bold"
             android:visibility="gone" />

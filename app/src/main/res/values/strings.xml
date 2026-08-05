@@ -76,8 +76,7 @@
     <string name="selection_locked_state">Locked</string>
     <string name="selection_owned_state">Owned</string>
     <string name="selection_selected_state">Selected</string>
-    <string name="selection_unlock_button">Unlock</string>
-    <string name="selection_choose_button">Choose</string>
+        <string name="selection_choose_button">Choose</string>
     <string name="selection_selected_button">Selected</string>
     <string name="selection_launching_pet_format">%1$s is heading out to play! 🐾</string>
     <string name="selection_item_content_description">%1$s, %2$s. %3$s</string>
@@ -106,7 +105,7 @@
     <string name="bond_stage_close">Close companions</string>
     <string name="bond_stage_inseparable">Inseparable</string>
     <string name="bond_stage_soulmates">Soulmates</string>
-    <string name="bond_goal_accessory">unlock their first accessory</string>
+    <string name="bond_goal_accessory">receive your first cuddles</string>
     <string name="bond_goal_routine">save “Favorite routine”</string>
     <string name="bond_goal_strong">build a strong bond</string>
     <string name="dashboard_care_reward">💛 +%1$d bond · 🪙 +%2$d</string>
@@ -158,7 +157,6 @@
     <string name="store_purchase_success">It looks great! Accessory unlocked and equipped.</string>
     <string name="store_not_enough_coins">Complete daily care to earn the missing coins.</string>
     <string name="store_bond_required">Share more moments to reach the required bond.</string>
-    <string name="store_accessory_unavailable">This accessory is not available for this pet.</string>
     <string name="store_equipped_bubble">I love it! %1$s</string>
     <string name="store_unequipped_bubble">Look saved ✨</string>
     <string name="store_loading">Loading the store…</string>
@@ -178,13 +176,10 @@
     <string name="store_locked_state">Available to unlock</string>
     <string name="store_owned_state">Already yours</string>
     <string name="store_selected_state">Currently selected</string>
-    <string name="store_equipped_state">Currently equipped</string>
-    <string name="store_buy_button">Buy</string>
+        <string name="store_buy_button">Buy</string>
     <string name="store_select_button">Select</string>
     <string name="store_selected_button">Selected</string>
-    <string name="store_equip_button">Equip</string>
-    <string name="store_unequip_button">Unequip</string>
-    <string name="store_item_content_description">%1$s, %2$s, %3$s.</string>
+            <string name="store_item_content_description">%1$s, %2$s, %3$s.</string>
     <string name="store_owned_hint">Owned items can be selected without another purchase.</string>
     <string name="store_premium_hint">Premium unlock</string>
     <string name="store_offer_emoji">🐾</string>
@@ -210,9 +205,7 @@
 
     <!-- Store V1.5: tabs -->
     <string name="store_tab_coins">Coins</string>
-    <string name="store_tab_accessories">Accessories</string>
-    <string name="store_tab_packs">Packs</string>
-
+        
     <!-- Store V1.5: coin packs -->
     <string name="coins_pack_small_title">Starter Pack</string>
     <string name="coins_pack_small_subtitle">100 soft coins</string>
@@ -227,33 +220,16 @@
     <string name="coins_wallet_format">💰 %1$d coins</string>
 
     <!-- Store V1.5: premium packs -->
-    <string name="pack_celestial_title">Celestial Pack</string>
-    <string name="pack_celestial_subtitle">Halo + Celestial Wings + 100 coins</string>
-    <string name="pack_demonic_title">Demonic Pack</string>
-    <string name="pack_demonic_subtitle">Crown + Demonic Wings + 100 coins</string>
-    <string name="pack_adventure_title">Adventure Pack</string>
-    <string name="pack_adventure_subtitle">Jetpack + Pilot Glasses + 100 coins</string>
-
+                        
     <!-- Store V1.5: actions -->
     <string name="store_buy_with_real_money">Buy</string>
-    <string name="store_buy_with_coins">Buy with %1$d coins</string>
-    <string name="store_restore_v15">Restore purchases</string>
-    <string name="store_filter_all">All</string>
-    <string name="store_filter_slot_head">Heads</string>
-    <string name="store_filter_slot_face">Faces</string>
-    <string name="store_filter_slot_back">Wings</string>
-    <string name="store_filter_slot_gadget">Gadgets</string>
-    <string name="store_filter_slot_body">Bodies</string>
-
+        <string name="store_restore_v15">Restore purchases</string>
+                        
     <!-- V1.5 additions -->
-    <string name="store_owned_hint_default">no accessory</string>
-    <string name="store_buy_with_coins_button">Buy with %1$d coins</string>
-    <string name="store_preview_price">—</string>
+            <string name="store_preview_price">—</string>
 
-    <string name="store_error_not_enough_coins">Not enough coins</string>
-    <string name="store_error_bond_required">Bond level too low</string>
-    <string name="store_error_generic">Purchase could not be completed</string>
-    <string name="store_tab_pets">Pets</string>
+                <string name="store_tab_pets">Pets</string>
     <string name="pet_unlocked_toast">%1$s unlocked!</string>
-    <string name="store_item_icon">Accessory preview</string>
+        <string name="selection_unlock_button">Unlock</string>
+    <string name="store_owned_hint_default">no accessory</string>
 </resources>

@@ -3,14 +3,10 @@ package com.pixelpals.app.data.repository
 import android.content.Context
 import com.pixelpals.app.BuildConfig
 import com.pixelpals.app.core.domain.PetType
-import com.pixelpals.app.data.catalog.AccessoryCatalog
-import com.pixelpals.app.data.catalog.AccessoryCatalogItem
-import com.pixelpals.app.data.catalog.AccessoryPurchaseResult
 import com.pixelpals.app.data.catalog.CatalogItemState
 import com.pixelpals.app.data.catalog.PetCatalogItem
 import com.pixelpals.app.database.AppDatabase
 import com.pixelpals.app.database.DailyTaskStateEntity
-import com.pixelpals.app.database.EquippedAccessoryEntity
 import com.pixelpals.app.database.OwnedProductEntity
 import com.pixelpals.app.database.PetBondEntity
 import com.pixelpals.app.database.PetStatusEntity
@@ -30,28 +26,11 @@ import kotlin.math.min
 class PixelPalsRepository(context: Context) {
     private val appContext: Context = context.applicationContext
     private val db = AppDatabase.getDatabase(appContext)
-    private val outfitPrefs = appContext.getSharedPreferences("pixelpals_outfits", Context.MODE_PRIVATE)
 
     private val premiumPetProductIds = mapOf(
         PetType.ANGEL to "pet_angel_premium",
         PetType.DIABLILLO to "pet_diablillo_premium"
     )
-
-    private val accessoryCatalog = AccessoryCatalog
-
-    private fun accessories(): List<AccessoryCatalogItem> =
-        AccessoryCatalog.all(appContext)
-
-    /** Outfit activo por petId ("" = ninguno). El outfit reemplaza los frames del pet. */
-    fun getActiveOutfit(petId: String): String? =
-        outfitPrefs.getString(petId, null)?.takeIf { it.isNotBlank() }
-
-    /** Activa (outfitId != null) o quita (null) el outfit de un pet. */
-    fun setActiveOutfit(petId: String, outfitId: String?) {
-        outfitPrefs.edit().apply {
-            if (outfitId == null) remove(petId) else putString(petId, outfitId)
-        }.apply()
-    }
 
     suspend fun getStatusSnapshot(petType: PetType): PetStatusSnapshot {
         return getStatusSnapshot(petIdOf(petType))
@@ -225,61 +204,6 @@ class PixelPalsRepository(context: Context) {
         }
     }
 
-    suspend fun getAccessoryCatalog(petType: PetType): List<AccessoryCatalogItem> {
-        val petId = petIdOf(petType)
-        return accessories().filter { petId in it.supportedPetIds }
-    }
-
-    suspend fun getEquippedAccessory(petType: PetType): AccessoryCatalogItem? {
-        val equipped = db.equippedAccessoryDao().getByPetId(petIdOf(petType)) ?: return null
-        return accessories().firstOrNull { it.id == equipped.accessoryId }
-    }
-
-    suspend fun equipAccessory(petType: PetType, accessoryId: String?): Boolean {
-        val petId = petIdOf(petType)
-        if (accessoryId == null) {
-            db.equippedAccessoryDao().clearForPet(petId)
-            return true
-        }
-        val accessory = accessories().firstOrNull { it.id == accessoryId } ?: return false
-        if (petId !in accessory.supportedPetIds || !isProductOwned(accessory.productId)) return false
-        db.equippedAccessoryDao().upsert(EquippedAccessoryEntity(petId = petId, accessoryId = accessoryId))
-        return true
-    }
-
-    suspend fun purchaseAccessoryWithCoins(
-        petType: PetType,
-        accessoryId: String,
-    ): AccessoryPurchaseResult {
-        val petId = petIdOf(petType)
-        val accessory = accessories().firstOrNull { it.id == accessoryId }
-            ?: return AccessoryPurchaseResult.NOT_AVAILABLE
-        val price = accessory.coinPrice ?: return AccessoryPurchaseResult.NOT_AVAILABLE
-        if (petId !in accessory.supportedPetIds) return AccessoryPurchaseResult.NOT_AVAILABLE
-        return db.withTransaction {
-            if (db.ownedProductDao().getByProductId(accessory.productId)?.let(::isEligibleEntitlement) == true) {
-                return@withTransaction AccessoryPurchaseResult.ALREADY_OWNED
-            }
-            val bond = ensureBondEntity(petId)
-            if (bond.bondPoints < accessory.bondRequired) {
-                return@withTransaction AccessoryPurchaseResult.BOND_REQUIRED
-            }
-            if (bond.softCurrency < price) {
-                return@withTransaction AccessoryPurchaseResult.NOT_ENOUGH_COINS
-            }
-            db.petBondDao().upsert(bond.copy(softCurrency = bond.softCurrency - price))
-            db.ownedProductDao().upsert(
-                OwnedProductEntity(
-                    productId = accessory.productId,
-                    productType = "accessory",
-                    source = "soft_currency",
-                    purchasedAt = System.currentTimeMillis(),
-                )
-            )
-            AccessoryPurchaseResult.PURCHASED
-        }
-    }
-
     suspend fun grantOwnedProduct(productId: String, source: String) {
         val productType = when {
             productId.startsWith("acc_") -> "accessory"
@@ -310,44 +234,6 @@ class PixelPalsRepository(context: Context) {
         val petId = petType?.let { petIdOf(it) } ?: "wallet"
         val bond = ensureBondEntity(petId)
         db.petBondDao().upsert(bond.copy(softCurrency = bond.softCurrency + amount))
-    }
-
-    /**
-     * Otorga un pack premium (accesorios + monedas). Cada accesorio del pack queda como owned.
-     * Si [autoEquipFirst] es true y el pet activo soporta el primer accesorio del pack, lo equipa.
-     * Devuelve el id del accesorio auto-equipado (o null si nada).
-     */
-    suspend fun grantPremiumPack(
-        pack: com.pixelpals.app.data.catalog.PremiumPack,
-        petType: PetType?,
-        source: String,
-        autoEquipFirst: Boolean = true,
-    ): String? = db.withTransaction {
-        grantOwnedProduct(pack.productId, source)
-        pack.accessoryIds.forEach { accId -> grantOwnedProduct(accId, source) }
-        if (pack.bonusCoins > 0) {
-            val petId = petType?.let { petIdOf(it) } ?: "wallet"
-            val bond = ensureBondEntity(petId)
-            db.petBondDao().upsert(bond.copy(softCurrency = bond.softCurrency + pack.bonusCoins))
-        }
-        // Auto-equip del primer accesorio compatible con el pet activo
-        if (autoEquipFirst && petType != null) {
-            val petId = petIdOf(petType)
-            val catalog = AccessoryCatalog.all(appContext)
-            val firstCompatible = pack.accessoryIds.firstOrNull { accId ->
-                catalog.firstOrNull { it.id == accId }?.let { acc -> petId in acc.supportedPetIds } == true
-            }
-            if (firstCompatible != null) {
-                db.equippedAccessoryDao().upsert(
-                    com.pixelpals.app.database.EquippedAccessoryEntity(
-                        petId = petId,
-                        accessoryId = firstCompatible,
-                        equippedAt = System.currentTimeMillis(),
-                    )
-                )
-            }
-            firstCompatible
-        } else null
     }
 
     /**
@@ -575,15 +461,6 @@ class PixelPalsRepository(context: Context) {
             PetType.DIABLILLO -> "Incluye reacciones traviesas, energía alta y efectos más caóticos."
             else -> "Incluye personalidad, presencia y estilo únicos."
         }
-    }
-
-    fun accessoryHook(accessory: AccessoryCatalogItem): String {
-        return "${accessory.packLabel} • ideal para momentos ${if (accessory.id.contains("cozy")) "cozy" else "especiales"}."
-    }
-
-    fun featuredStoreMessage(petType: PetType, equippedAccessory: AccessoryCatalogItem?): String {
-        val equippedText = equippedAccessory?.displayName ?: "ningún accesorio"
-        return "Tu compi actual es ${petType.displayName} y lleva $equippedText. Esta semana destacan los packs con más personalidad visual."
     }
 
     private fun isEligibleEntitlement(product: OwnedProductEntity): Boolean {

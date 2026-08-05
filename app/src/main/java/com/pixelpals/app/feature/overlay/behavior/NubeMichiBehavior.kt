@@ -65,11 +65,8 @@ class NubeMichiBehavior(
 
     /** Banda celeste donde flota la nube: 18%–42% de la pantalla. */
     private fun refreshCloudBand() {
-        val lift = accessoryWingLift()
-        val topRatio = if (lift != null) 0.10f else 0.18f
-        val bottomRatio = if (lift != null) 0.55f else 0.42f
-        bandMinY = (bridge.screenHeight * topRatio).toInt()
-        bandMaxY = (bridge.screenHeight * bottomRatio).toInt().coerceAtLeast(bandMinY)
+        bandMinY = (bridge.screenHeight * 0.18f).toInt()
+        bandMaxY = (bridge.screenHeight * 0.42f).toInt().coerceAtLeast(bandMinY)
     }
 
     private fun clampToBand(y: Int): Int = y.coerceIn(bandMinY, bandMaxY)
@@ -117,7 +114,7 @@ class NubeMichiBehavior(
                         mode = Mode.WIND_GUST
                         stateTimer = 0f
                         gustTimer = 1.8f + random.nextFloat() * 1.4f
-                        driftSpeedX = getBaseSpeed() * accessorySpeedMultiplier() *
+                        driftSpeedX = getBaseSpeed() *
                             if (random.nextBoolean()) 1f else -1f
                     }
                     // Y a veces despierta y se pone a derivar.
@@ -143,7 +140,7 @@ class NubeMichiBehavior(
                     stateTimer = 0f
                     // Deriva en la banda celeste.
                     walkDirection = if (random.nextBoolean()) 1f else -1f
-                    driftSpeedX = walkDirection * getBaseSpeed() * 0.62f * accessorySpeedMultiplier()
+                    driftSpeedX = walkDirection * getBaseSpeed() * 0.62f
                 }
             }
 

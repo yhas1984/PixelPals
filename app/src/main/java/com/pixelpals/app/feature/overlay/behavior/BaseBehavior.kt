@@ -12,7 +12,6 @@ import android.util.Log
 import android.view.View
 import com.pixelpals.app.core.domain.PetState
 import com.pixelpals.app.core.motion.PetRandom
-import com.pixelpals.app.data.catalog.PetModifier
 import com.pixelpals.app.status.PetMood
 import org.json.JSONObject
 import kotlinx.coroutines.*
@@ -30,9 +29,6 @@ abstract class BaseBehavior(
 
     protected var time: Float = 0f
     protected var interactionTimer: Float = 0f 
-
-    // Fracción negativa (desde el centro del view) donde está la cabeza del pet.
-    protected var headRatio: Float = DEFAULT_HEAD_RATIO
 
     // Lista que soporta frames nulos para no perder el orden de los índices
     protected val frames = mutableListOf<Bitmap?>()
@@ -59,51 +55,11 @@ abstract class BaseBehavior(
 
     abstract val resourceIds: List<Int>
 
-    /**
-     * Calcula dónde está la cabeza del pet a partir del bbox del frame de reposo.
-     * La cabeza se estima en el 25% superior del contenido visible del bitmap.
-     */
-    private fun computeHeadRatioFromBitmap(bitmap: Bitmap?): Float {
-        if (bitmap == null || bitmap.isRecycled) return DEFAULT_HEAD_RATIO
-        val b = bitmap
-        var top = b.height
-        var bottom = 0
-        val step = 4
-        for (y in 0 until b.height step step) {
-            for (x in 0 until b.width step step) {
-                val alpha = (b.getPixel(x, y) ushr 24) and 0xFF
-                if (alpha > 40) {
-                    if (y < top) top = y
-                    if (y > bottom) bottom = y
-                }
-            }
-        }
-        if (bottom <= top) return DEFAULT_HEAD_RATIO
-        val headY = top + (bottom - top) * 0.25f
-        return (headY - b.height / 2f) / b.height
-    }
-
-    /** Calcula el ratio desde el pivot del atlas (la base del pet). */
-    private fun computeHeadRatioFromPivot(spec: PetAtlasSpec): Float {
-        val pivotY = spec.pivot?.y ?: (spec.frameHeight * 0.8f).toInt()
-        // El contenido del sprite va de 0 a pivotY (base). La cabeza ≈ 28% de ese alto.
-        val headY = pivotY * 0.28f
-        return (headY - spec.frameHeight / 2f) / spec.frameHeight
-    }
-
     protected fun loadFramesAsync() {
         val startedAt = System.currentTimeMillis()
         scope.launch {
             val context = (bridge as View).context
             val spriteSize = bridge.petSpriteSize
-
-            // Si hay un outfit activo, sus frames reemplazan los del pet (desde assets).
-            val outfitAssets: List<String>? = bridge.outfitFrameAssets
-            val ids = if (outfitAssets != null) {
-                listOf<Int>().plus(0..outfitAssets.lastIndex).toList()
-            } else {
-                resourceIds
-            }
 
             val decodeOne: (Int) -> Bitmap? = { id ->
                 if (id == 0) null
@@ -126,31 +82,7 @@ abstract class BaseBehavior(
                 }
             }
 
-            // Decodificador para frames de outfit (assets, con cache propio)
-            val decodeOutfitOne: (Int) -> Bitmap? = { index ->
-                val path = outfitAssets?.getOrNull(index)
-                if (path == null) {
-                    null
-                } else {
-                    try {
-                        val key = "outfit:$path:$spriteSize"
-                        val cached = OUTFIT_FRAME_CACHE[key]
-                        if (cached != null) {
-                            cached
-                        } else {
-                            val b = context.assets.open(path).use { BitmapFactory.decodeStream(it) }
-                            val scaled = b?.let {
-                                Bitmap.createScaledBitmap(it, spriteSize, spriteSize, true)
-                            }
-                            if (scaled != null && b !== scaled) b.recycle()
-                            if (scaled != null) OUTFIT_FRAME_CACHE[key] = scaled
-                            scaled
-                        }
-                    } catch (_: Exception) { null }
-                }
-            }
-
-            val total = ids.size
+            val total = resourceIds.size
             // Para mascotas con pocos frames (ej. Bloop 0..8) cargamos todo de golpe para que
             // las transiciones (incluida la transparencia) no ocurran con frames aun nulos.
             val initialCount = if (total <= 9) total else minOf(8, total)
@@ -158,9 +90,7 @@ abstract class BaseBehavior(
 
             // 1) Carga inicial para que el pet no se vea "en blanco" mientras decodifica todo.
             val initialElapsed = withContext(Dispatchers.IO) {
-                val loaded = ids.take(initialCount).mapIndexed { i, id ->
-                    if (outfitAssets != null) decodeOutfitOne(i) else decodeOne(id)
-                }
+                val loaded = resourceIds.take(initialCount).map { id -> decodeOne(id) }
                 loaded to (System.currentTimeMillis() - startedAt)
             }
             for (i in 0 until initialCount) tmp[i] = initialElapsed.first[i]
@@ -172,12 +102,11 @@ abstract class BaseBehavior(
             // 2) Carga completa en background.
             withContext(Dispatchers.IO) {
                 for (idx in initialCount until total) {
-                    tmp[idx] = if (outfitAssets != null) decodeOutfitOne(idx) else decodeOne(ids[idx])
+                    tmp[idx] = decodeOne(resourceIds[idx])
                 }
             }
             frames.clear()
             frames.addAll(tmp)
-            headRatio = computeHeadRatioFromBitmap(frames.firstOrNull { it != null })
 
             bridge.invalidate()
         }
@@ -248,7 +177,6 @@ abstract class BaseBehavior(
                 spriteFrameRects.addAll(buildFrameRects(spec))
                 spriteBleedInsetPx = spec.renderHints.recommendedBleedInsetPx.coerceAtLeast(0)
                 spriteFilterBitmap = spec.renderHints.filterBitmap
-                headRatio = computeHeadRatioFromPivot(spec)
             }
             isLoading = loadedSheet == null || spec == null
 
@@ -292,7 +220,7 @@ abstract class BaseBehavior(
             val dist = kotlin.math.sqrt(dx*dx + dy*dy)
 
             if (dist > 10) {
-                val speed = getBaseSpeed() * accessorySpeedMultiplier()
+                val speed = getBaseSpeed()
                 velX = (dx / dist) * speed
                 velY = (dy / dist) * speed
             }
@@ -302,33 +230,6 @@ abstract class BaseBehavior(
     }
 
     protected open fun getBaseSpeed(): Float = 100f
-
-    /** Modificador de velocidad aplicado por el accesorio equipado (default 1.0 = neutral). */
-    protected fun accessorySpeedMultiplier(): Float {
-        val speedBoost = bridge.activeModifiers().firstOrNull { it is PetModifier.SpeedBoost } as? PetModifier.SpeedBoost
-        return speedBoost?.multiplier ?: 1f
-    }
-
-    /** Modificador de vuelo (alas/jetpack) aplicado por el accesorio equipado. */
-    protected fun accessoryWingLift(): PetModifier.WingLift? {
-        return bridge.activeModifiers().firstOrNull { it is PetModifier.WingLift } as? PetModifier.WingLift
-    }
-
-    /**
-     * Factor de reducción de gravedad al caer con alas equipadas.
-     * 1.0 = caída normal; 0.75 = cae 25% más lento (airTimeMultiplier).
-     */
-    protected fun wingAirTimeFactor(): Float {
-        return 1f - (accessoryWingLift()?.airTimeMultiplier ?: 0f)
-    }
-
-    /**
-     * Factor de altura de salto con alas equipadas.
-     * 1.0 = salto normal; 1.15 = salta 15% más alto.
-     */
-    protected fun wingJumpFactor(): Float {
-        return 1f + (accessoryWingLift()?.liftMultiplier ?: 0f)
-    }
 
     protected fun currentMood(): PetMood = bridge.petStatus.mood
 
@@ -346,7 +247,7 @@ abstract class BaseBehavior(
     protected fun applyMovement(dt: Float) {
         val params = bridge.getWindowParams() ?: return
 
-        val adjustedDt = dt * moodSpeedMultiplier() * accessorySpeedMultiplier()
+        val adjustedDt = dt * moodSpeedMultiplier()
         carryX += velX * adjustedDt
         carryY += velY * adjustedDt
 
@@ -430,26 +331,16 @@ abstract class BaseBehavior(
 
     override fun updateJumping(dt: Float) {
         time += dt
-        // Con alas equipadas, el pet se mantiene "colgado" un instante y aletea.
-        val lift = accessoryWingLift()
-        if (lift != null) {
-            bridge.animScaleY = 1.2f * wingJumpFactor()
-            bridge.animScaleX = 0.8f / wingJumpFactor()
-            bridge.animOffsetY = -sin(time * 9f) * 3f
-            bridge.animRotation = sin(time * 7f) * 4f
-        } else {
-            bridge.animScaleY = 1.2f
-            bridge.animScaleX = 0.8f
-        }
+        bridge.animScaleY = 1.2f
+        bridge.animScaleX = 0.8f
     }
 
     override fun updateAutonomous(dt: Float) {
         applyMovement(dt)
     }
 
-    override fun headAnchorYRatio(): Float = headRatio
-
-    override fun onBatteryStatusChanged(percent: Int, isCharging: Boolean) {        val key = if (isCharging) {
+    override fun onBatteryStatusChanged(percent: Int, isCharging: Boolean) {
+        val key = if (isCharging) {
             "charging"
         } else if (percent <= LOW_BATTERY_THRESHOLD) {
             "low_$percent"
@@ -586,14 +477,10 @@ abstract class BaseBehavior(
 
     override fun destroy() {
         scope.cancel()
-        // Los frames cacheados (FRAME_CACHE / OUTFIT_FRAME_CACHE) son compartidos
-        // entre instancias de pet: no se reciclan aquí, los reutiliza la siguiente
-        // mascota (evita re-decodificar).
+        // Los frames cacheados (FRAME_CACHE) son compartidos entre instancias de pet:
+        // no se reciclan aquí, los reutiliza la siguiente mascota (evita re-decodificar).
         frames.filterNotNull().distinct().forEach { bitmap ->
-            if (!FRAME_CACHE.containsValue(bitmap) &&
-                !OUTFIT_FRAME_CACHE.containsValue(bitmap) &&
-                !bitmap.isRecycled
-            ) {
+            if (!FRAME_CACHE.containsValue(bitmap) && !bitmap.isRecycled) {
                 bitmap.recycle()
             }
         }
@@ -608,14 +495,8 @@ abstract class BaseBehavior(
         const val LOW_BATTERY_THRESHOLD = 20
         const val ENVIRONMENT_REACTION_COOLDOWN_MS = 8L * 60L * 1000L
 
-        /** Valor por defecto de la cabeza (si no se puede medir): ~20% sobre el centro. */
-        const val DEFAULT_HEAD_RATIO = -0.20f
-
         /** Cache de frames escalados por (drawableResId, petSpriteSize). */
         val FRAME_CACHE = java.util.concurrent.ConcurrentHashMap<Long, Bitmap>()
-
-        /** Cache de frames de outfits (clave "outfit:<path>:<size>"). */
-        val OUTFIT_FRAME_CACHE = java.util.concurrent.ConcurrentHashMap<String, Bitmap>()
 
         /** Cache de atlases decodificados por ruta de asset. */
         val ATLAS_CACHE = java.util.concurrent.ConcurrentHashMap<String, Bitmap>()

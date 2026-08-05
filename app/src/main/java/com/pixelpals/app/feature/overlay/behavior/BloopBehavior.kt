@@ -71,13 +71,12 @@ class BloopBehavior(bridge: PetViewBridge, override val random: PetRandom) : Bas
         val minY = 50
         val maxY = (bridge.screenHeight - bridge.petSpriteSize - 100).coerceAtLeast(minY)
         val softMargin = bridge.petSpriteSize * 0.9f
-        val boost = accessorySpeedMultiplier()
-        if (params.x < minX + softMargin) velX = maxOf(abs(velX), 70f * boost)
-        if (params.x > maxX - softMargin) velX = -maxOf(abs(velX), 70f * boost)
-        if (params.y < minY + softMargin) velY = maxOf(abs(velY), 58f * boost)
-        if (params.y > maxY - softMargin) velY = -maxOf(abs(velY), 58f * boost)
-        params.x = (params.x + (velX * dt * boost).roundToInt()).coerceIn(minX, maxX)
-        params.y = (params.y + (velY * dt * boost).roundToInt()).coerceIn(minY, maxY)
+        if (params.x < minX + softMargin) velX = maxOf(abs(velX), 70f)
+        if (params.x > maxX - softMargin) velX = -maxOf(abs(velX), 70f)
+        if (params.y < minY + softMargin) velY = maxOf(abs(velY), 58f)
+        if (params.y > maxY - softMargin) velY = -maxOf(abs(velY), 58f)
+        params.x = (params.x + (velX * dt).roundToInt()).coerceIn(minX, maxX)
+        params.y = (params.y + (velY * dt).roundToInt()).coerceIn(minY, maxY)
         bridge.updateWindowLayout(params)
     }
 

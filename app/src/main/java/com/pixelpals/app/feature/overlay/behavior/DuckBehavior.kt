@@ -224,7 +224,7 @@ class DuckBehavior(
 
         val flyDistanceX = bridge.petSpriteSize * (1.4f + random.nextFloat() * 1.4f)
         // Con jetpack/alas, el patito vuela más alto en cada batida.
-        val flyDistanceY = bridge.petSpriteSize * (0.35f + random.nextFloat() * 0.18f) * wingJumpFactor()
+        val flyDistanceY = bridge.petSpriteSize * (0.35f + random.nextFloat() * 0.18f)
         val goRight = if (flyStartX < bridge.screenWidth * 0.5f) random.nextFloat() > 0.2f else random.nextFloat() > 0.8f
         facingDir = if (goRight) 1f else -1f
 

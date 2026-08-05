@@ -75,8 +75,7 @@
     <string name="selection_locked_state">Bloqueado</string>
     <string name="selection_owned_state">Disponible</string>
     <string name="selection_selected_state">Seleccionado</string>
-    <string name="selection_unlock_button">Desbloquear</string>
-    <string name="selection_choose_button">Elegir</string>
+        <string name="selection_choose_button">Elegir</string>
     <string name="selection_selected_button">Seleccionado</string>
     <string name="selection_launching_pet_format">¡%1$s está saliendo a jugar! 🐾</string>
     <string name="selection_item_content_description">%1$s, %2$s. %3$s</string>
@@ -105,7 +104,7 @@
     <string name="bond_stage_close">Compañeros cercanos</string>
     <string name="bond_stage_inseparable">Inseparables</string>
     <string name="bond_stage_soulmates">Almas gemelas</string>
-    <string name="bond_goal_accessory">desbloquear su primer accesorio</string>
+    <string name="bond_goal_accessory">recibir sus primeros mimos</string>
     <string name="bond_goal_routine">guardar “Rutina favorita”</string>
     <string name="bond_goal_strong">crear un vínculo fuerte</string>
     <string name="dashboard_care_reward">💛 +%1$d vínculo · 🪙 +%2$d</string>
@@ -157,7 +156,6 @@
     <string name="store_purchase_success">¡Le queda genial! Accesorio desbloqueado y equipado.</string>
     <string name="store_not_enough_coins">Completa cuidados diarios para ganar las monedas que faltan.</string>
     <string name="store_bond_required">Sigan compartiendo momentos para alcanzar el vínculo necesario.</string>
-    <string name="store_accessory_unavailable">Este accesorio no está disponible para esta mascota.</string>
     <string name="store_equipped_bubble">¡Me encanta! %1$s</string>
     <string name="store_unequipped_bubble">Look guardado ✨</string>
     <string name="store_loading">Cargando la tienda…</string>
@@ -179,22 +177,17 @@
     <string name="store_locked_state">Disponible para desbloquear</string>
     <string name="store_owned_state">Ya es tuyo</string>
     <string name="store_selected_state">Seleccionado actualmente</string>
-    <string name="store_equipped_state">Equipado ahora mismo</string>
-    <string name="store_buy_button">Comprar</string>
+        <string name="store_buy_button">Comprar</string>
     <string name="store_select_button">Usar</string>
     <string name="store_selected_button">Seleccionado</string>
-    <string name="store_equip_button">Equipar</string>
-    <string name="store_unequip_button">Quitar</string>
-    <string name="store_item_content_description">%1$s, %2$s, %3$s.</string>
+            <string name="store_item_content_description">%1$s, %2$s, %3$s.</string>
     <string name="store_owned_hint">Los elementos disponibles pueden seleccionarse sin comprar de nuevo.</string>
     <string name="store_premium_hint">Desbloqueo premium</string>
     <string name="store_offer_emoji">🐾</string>
 
     <!-- Tienda V1.5: tabs -->
     <string name="store_tab_coins">Monedas</string>
-    <string name="store_tab_accessories">Accesorios</string>
-    <string name="store_tab_packs">Packs</string>
-
+        
     <!-- Tienda V1.5: packs de monedas -->
     <string name="coins_pack_small_title">Pack Inicio</string>
     <string name="coins_pack_small_subtitle">100 monedas</string>
@@ -209,29 +202,11 @@
     <string name="coins_wallet_format">💰 %1$d monedas</string>
 
     <!-- Tienda V1.5: packs premium -->
-    <string name="pack_celestial_title">Pack Celestial</string>
-    <string name="pack_celestial_subtitle">Halo + Alas Celestiales + 100 monedas</string>
-    <string name="pack_demonic_title">Pack Demoníaco</string>
-    <string name="pack_demonic_subtitle">Corona + Alas Demoníacas + 100 monedas</string>
-    <string name="pack_adventure_title">Pack Aventura</string>
-    <string name="pack_adventure_subtitle">Jetpack + Gafas de Piloto + 100 monedas</string>
-
+                        
     <!-- Tienda V1.5: acciones -->
     <string name="store_buy_with_real_money">Comprar</string>
-    <string name="store_buy_with_coins">Comprar con %1$d monedas</string>
-    <string name="store_restore_v15">Restaurar compras</string>
-    <string name="store_filter_all">Todos</string>
-    <string name="store_filter_slot_head">Sombreros</string>
-    <string name="store_filter_slot_face">Gafas</string>
-    <string name="store_filter_slot_back">Alas</string>
-    <string name="store_filter_slot_gadget">Gadgets</string>
-    <string name="store_filter_slot_body">Cuerpo</string>
-    <string name="store_buy_with_coins_button">Comprar con %1$d monedas</string>
-    <string name="store_owned_hint_default">sin accesorio</string>
-    <string name="store_error_not_enough_coins">No tienes suficientes monedas</string>
-    <string name="store_error_bond_required">Nivel de vínculo insuficiente</string>
-    <string name="store_error_generic">No se pudo completar la compra</string>
-
+        <string name="store_restore_v15">Restaurar compras</string>
+                                            
     <!-- Álbum de tesoros -->
     <string name="treasure_album_title">Álbum de tesoros</string>
     <string name="treasure_album_subtitle">Sorpresas recogidas, ordenadas por la última que encontraste.</string>
@@ -253,5 +228,6 @@
     <string name="treasure_consume_none_left">No quedan más.</string>
     <string name="store_tab_pets">Mascotas</string>
     <string name="pet_unlocked_toast">¡%1$s desbloqueado!</string>
-    <string name="store_item_icon">Vista previa del accesorio</string>
+        <string name="selection_unlock_button">Desbloquear</string>
+    <string name="store_owned_hint_default">sin accesorio</string>
 </resources>
