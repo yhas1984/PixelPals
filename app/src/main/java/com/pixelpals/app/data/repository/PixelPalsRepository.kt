@@ -30,6 +30,7 @@ import kotlin.math.min
 class PixelPalsRepository(context: Context) {
     private val appContext: Context = context.applicationContext
     private val db = AppDatabase.getDatabase(appContext)
+    private val outfitPrefs = appContext.getSharedPreferences("pixelpals_outfits", Context.MODE_PRIVATE)
 
     private val premiumPetProductIds = mapOf(
         PetType.ANGEL to "pet_angel_premium",
@@ -40,6 +41,17 @@ class PixelPalsRepository(context: Context) {
 
     private fun accessories(): List<AccessoryCatalogItem> =
         AccessoryCatalog.all(appContext)
+
+    /** Outfit activo por petId ("" = ninguno). El outfit reemplaza los frames del pet. */
+    fun getActiveOutfit(petId: String): String? =
+        outfitPrefs.getString(petId, null)?.takeIf { it.isNotBlank() }
+
+    /** Activa (outfitId != null) o quita (null) el outfit de un pet. */
+    fun setActiveOutfit(petId: String, outfitId: String?) {
+        outfitPrefs.edit().apply {
+            if (outfitId == null) remove(petId) else putString(petId, outfitId)
+        }.apply()
+    }
 
     suspend fun getStatusSnapshot(petType: PetType): PetStatusSnapshot {
         return getStatusSnapshot(petIdOf(petType))

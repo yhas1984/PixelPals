@@ -95,6 +95,14 @@ class PetView(
     }
     override val headAnchorYRatio: Float
         get() = behavior?.headAnchorYRatio() ?: -0.20f
+
+    /** Outfit activo: sus frames reemplazan los del pet (cargados desde assets). */
+    override val outfitFrameAssets: List<String>?
+        get() {
+            val outfitId = repository.getActiveOutfit(petType.name.lowercase()) ?: return null
+            val outfit = com.pixelpals.app.data.catalog.OutfitCatalog.findById(context, outfitId) ?: return null
+            return outfit.frames.map { "outfits/${outfit.id}/$it" }
+        }
     private var treasureEffectScaleX = 1f
     private var treasureEffectScaleY = 1f
     private var treasureEffectOffsetX = 0f
@@ -150,9 +158,14 @@ class PetView(
 
     private var keyboardHeightPx = 0
 
-    private val behavior: PetBehavior? by lazy {
-        PetBehaviorFactory.create(petType, this)
-    }
+    private var behaviorLazy: PetBehavior? = null
+    private val behavior: PetBehavior?
+        get() {
+            if (behaviorLazy == null) {
+                behaviorLazy = PetBehaviorFactory.create(petType, this)
+            }
+            return behaviorLazy
+        }
 
     init {
         uiScope.launch {
@@ -272,6 +285,12 @@ class PetView(
         uiScope.launch {
             petStatus = repository.getStatusSnapshot(petType)
             equippedAccessory = repository.getEquippedAccessory(petType)
+            // Si el outfit cambió, recrear el behavior para recargar los frames.
+            val newOutfitId = repository.getActiveOutfit(petType.name.lowercase())
+            if (newOutfitId != currentOutfitId) {
+                currentOutfitId = newOutfitId
+                recreateBehavior()
+            }
             if (!message.isNullOrBlank()) showBubble(message)
             if (celebrate) {
                 treasureReactionTimer = treasureReactionDuration
@@ -279,6 +298,14 @@ class PetView(
             }
             invalidate()
         }
+    }
+
+    /** Cambia el outfit activo (null = ninguno) y recarga los frames del pet. */
+    private var currentOutfitId: String? = repository.getActiveOutfit(petType.name.lowercase())
+
+    private fun recreateBehavior() {
+        behaviorLazy?.destroy()
+        behaviorLazy = null
     }
 
     override fun recordCareAction(action: CareAction) {

@@ -62,6 +62,12 @@ interface PetViewBridge {
     /** Lista de modificadores del accesorio equipado (velocidad, partículas, etc.). */
     fun activeModifiers(): List<PetModifier>
 
+    /**
+     * Nombres de los frames del outfit activo (cargados desde assets),
+     * o null si no hay outfit. El outfit REEMPLAZA los frames del pet.
+     */
+    val outfitFrameAssets: List<String>?
+
     // Window position (absolute screen coordinates)
     var windowX: Int
     var windowY: Int

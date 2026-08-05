@@ -60,11 +60,41 @@ class AccessoriesTabFragment : Fragment() {
 
             root.removeAllViews()
             val inflater = layoutInflater
+            val activeOutfitId = repository.getActiveOutfit(petId)
+            com.pixelpals.app.data.catalog.OutfitCatalog.forPet(requireContext(), petId).forEach { outfit ->
+                root.addView(buildOutfitCard(inflater, outfit, activeOutfitId))
+            }
             accessories.forEach { acc ->
                 val owned = repository.isProductOwned(acc.productId)
                 root.addView(buildCard(inflater, acc, balance, equippedId, owned))
             }
         }
+    }
+
+    private fun buildOutfitCard(
+        inflater: LayoutInflater,
+        outfit: com.pixelpals.app.data.catalog.PetOutfit,
+        activeOutfitId: String?,
+    ): View {
+        val card = inflater.inflate(R.layout.item_accessory_v15, root, false)
+        card.findViewById<TextView>(R.id.txtAccEmoji).text = "🤵"
+        card.findViewById<TextView>(R.id.txtAccTitle).text = outfit.displayName
+        card.findViewById<TextView>(R.id.txtAccSubtitle).text = outfit.description
+        card.findViewById<TextView>(R.id.txtAccSlot).text = "OUTFIT"
+
+        val isActive = activeOutfitId == outfit.id
+        val btn = card.findViewById<Button>(R.id.btnAccAction)
+        btn.text = getString(if (isActive) R.string.store_unequip_button else R.string.store_equip_button)
+        btn.setOnClickListener {
+            if (isActive) {
+                repository.setActiveOutfit(petId, null)
+            } else {
+                repository.setActiveOutfit(petId, outfit.id)
+            }
+            (requireActivity() as? StoreActivity)?.notifyAccessoryChanged()
+            renderAccessories()
+        }
+        return card
     }
 
     private fun buildCard(

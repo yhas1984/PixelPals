@@ -160,7 +160,9 @@ class PetBehaviorSmokeTest {
             PetType.MOKI -> PetPersonality.CURIOUS
         }
         override val equippedAccessory: AccessoryCatalogItem? = null
+        override val headAnchorYRatio: Float = -0.20f
         override fun activeModifiers(): List<com.pixelpals.app.data.catalog.PetModifier> = emptyList()
+        override val outfitFrameAssets: List<String>? = null
         override var windowX: Int = params.x
         override var windowY: Int = params.y
 

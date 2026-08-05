@@ -97,12 +97,18 @@ abstract class BaseBehavior(
             val context = (bridge as View).context
             val spriteSize = bridge.petSpriteSize
 
+            // Si hay un outfit activo, sus frames reemplazan los del pet (desde assets).
+            val outfitAssets: List<String>? = bridge.outfitFrameAssets
+            val ids = if (outfitAssets != null) {
+                listOf<Int>().plus(0..outfitAssets.lastIndex).toList()
+            } else {
+                resourceIds
+            }
+
             val decodeOne: (Int) -> Bitmap? = { id ->
                 if (id == 0) null
                 else {
                     try {
-                        // Cache estático por (drawable, tamaño): al cambiar de pet no
-                        // re-decodificamos ni re-escalamos frames ya vistos.
                         val key = cacheKey(id, spriteSize)
                         val cached = FRAME_CACHE[key]
                         if (cached != null) {
@@ -120,7 +126,31 @@ abstract class BaseBehavior(
                 }
             }
 
-            val total = resourceIds.size
+            // Decodificador para frames de outfit (assets, con cache propio)
+            val decodeOutfitOne: (Int) -> Bitmap? = { index ->
+                val path = outfitAssets?.getOrNull(index)
+                if (path == null) {
+                    null
+                } else {
+                    try {
+                        val key = "outfit:$path:$spriteSize"
+                        val cached = OUTFIT_FRAME_CACHE[key]
+                        if (cached != null) {
+                            cached
+                        } else {
+                            val b = context.assets.open(path).use { BitmapFactory.decodeStream(it) }
+                            val scaled = b?.let {
+                                Bitmap.createScaledBitmap(it, spriteSize, spriteSize, true)
+                            }
+                            if (scaled != null && b !== scaled) b.recycle()
+                            if (scaled != null) OUTFIT_FRAME_CACHE[key] = scaled
+                            scaled
+                        }
+                    } catch (_: Exception) { null }
+                }
+            }
+
+            val total = ids.size
             // Para mascotas con pocos frames (ej. Bloop 0..8) cargamos todo de golpe para que
             // las transiciones (incluida la transparencia) no ocurran con frames aun nulos.
             val initialCount = if (total <= 9) total else minOf(8, total)
@@ -128,7 +158,9 @@ abstract class BaseBehavior(
 
             // 1) Carga inicial para que el pet no se vea "en blanco" mientras decodifica todo.
             val initialElapsed = withContext(Dispatchers.IO) {
-                val loaded = resourceIds.take(initialCount).map { id -> decodeOne(id) }
+                val loaded = ids.take(initialCount).mapIndexed { i, id ->
+                    if (outfitAssets != null) decodeOutfitOne(i) else decodeOne(id)
+                }
                 loaded to (System.currentTimeMillis() - startedAt)
             }
             for (i in 0 until initialCount) tmp[i] = initialElapsed.first[i]
@@ -140,7 +172,7 @@ abstract class BaseBehavior(
             // 2) Carga completa en background.
             withContext(Dispatchers.IO) {
                 for (idx in initialCount until total) {
-                    tmp[idx] = decodeOne(resourceIds[idx])
+                    tmp[idx] = if (outfitAssets != null) decodeOutfitOne(idx) else decodeOne(ids[idx])
                 }
             }
             frames.clear()
@@ -554,10 +586,16 @@ abstract class BaseBehavior(
 
     override fun destroy() {
         scope.cancel()
-        // Los frames cacheados (FRAME_CACHE) son compartidos entre instancias de pet:
-        // no se reciclan aquí, los reutiliza la siguiente mascota (evita re-decodificar).
+        // Los frames cacheados (FRAME_CACHE / OUTFIT_FRAME_CACHE) son compartidos
+        // entre instancias de pet: no se reciclan aquí, los reutiliza la siguiente
+        // mascota (evita re-decodificar).
         frames.filterNotNull().distinct().forEach { bitmap ->
-            if (!FRAME_CACHE.containsValue(bitmap) && !bitmap.isRecycled) bitmap.recycle()
+            if (!FRAME_CACHE.containsValue(bitmap) &&
+                !OUTFIT_FRAME_CACHE.containsValue(bitmap) &&
+                !bitmap.isRecycled
+            ) {
+                bitmap.recycle()
+            }
         }
         frames.clear()
         if (spriteSheetBitmap != null && !ATLAS_CACHE.containsValue(spriteSheetBitmap)) {
@@ -575,6 +613,9 @@ abstract class BaseBehavior(
 
         /** Cache de frames escalados por (drawableResId, petSpriteSize). */
         val FRAME_CACHE = java.util.concurrent.ConcurrentHashMap<Long, Bitmap>()
+
+        /** Cache de frames de outfits (clave "outfit:<path>:<size>"). */
+        val OUTFIT_FRAME_CACHE = java.util.concurrent.ConcurrentHashMap<String, Bitmap>()
 
         /** Cache de atlases decodificados por ruta de asset. */
         val ATLAS_CACHE = java.util.concurrent.ConcurrentHashMap<String, Bitmap>()
