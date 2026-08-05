@@ -69,9 +69,12 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         updatePermissionUI()
-        if (PetService.isRunning) {
+        // Si el usuario ya tiene el overlay concedido, arranca el servicio con el
+        // pet seleccionado para que aparezca al abrir la app (aunque el proceso
+        // hubiera sido terminado por el sistema).
+        if (Settings.canDrawOverlays(this)) {
             try {
-                startService(Intent(this, PetService::class.java))
+                ContextCompat.startForegroundService(this, Intent(this, PetService::class.java))
             } catch (_: Exception) {}
         }
     }

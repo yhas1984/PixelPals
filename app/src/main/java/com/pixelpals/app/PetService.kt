@@ -58,7 +58,8 @@ class PetService : Service() {
         }
 
         fun requestPetChange(context: Context, petType: PetType) {
-            if (!isRunning) return
+            // Sin guard isRunning: si el servicio está detenido, este intent lo
+            // arranca y onStartCommand aplica el pet type.
             val intent = Intent(context, PetService::class.java).apply {
                 putExtra(PetSelectionActivity.EXTRA_PET_TYPE, petType.name)
             }

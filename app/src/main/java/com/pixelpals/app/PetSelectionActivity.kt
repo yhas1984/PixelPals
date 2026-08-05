@@ -182,13 +182,15 @@ class PetSelectionActivity : AppCompatActivity() {
             desc.text.toString()
         )
         image.contentDescription = card.contentDescription
-        action.isEnabled = item.state != CatalogItemState.SELECTED
-        action.alpha = if (item.state == CatalogItemState.SELECTED) 0.72f else 1f
+        // El pet seleccionado también debe poder relanzarse (si el servicio fue
+        // terminado por el sistema, "Usar" lo vuelve a arrancar).
+        action.isEnabled = true
+        action.alpha = 1f
         action.setOnClickListener {
             when (item.state) {
                 CatalogItemState.LOCKED -> startActivity(Intent(this, StoreActivity::class.java))
                 CatalogItemState.OWNED -> item.petType?.let { launchSelectedPet(it) }
-                CatalogItemState.SELECTED -> Unit
+                CatalogItemState.SELECTED -> item.petType?.let { launchSelectedPet(it) }
             }
         }
         card.setOnClickListener(null)

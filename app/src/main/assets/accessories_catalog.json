@@ -982,7 +982,29 @@
         "gadget",
         "premium",
         "ninja"
-      ]
+      ],
+      "sprite": {
+        "atlasPath": "accessories/ninja_mask/ninja_mask.png",
+        "frameWidth": 384,
+        "frameHeight": 384,
+        "columns": 1,
+        "rows": 1,
+        "clips": {
+          "idle": {
+            "frames": [
+              0
+            ],
+            "frameDurationMs": 150,
+            "loop": true
+          }
+        },
+        "anchor": {
+          "xRatio": 0.0,
+          "yRatio": -0.08
+        },
+        "zLayer": "FRONT",
+        "scale": 0.55
+      }
     },
     {
       "id": "shield_back",
@@ -1130,7 +1152,29 @@
         "cosmetic",
         "premium",
         "space"
-      ]
+      ],
+      "sprite": {
+        "atlasPath": "accessories/alien_antennas/alien_antennas.png",
+        "frameWidth": 384,
+        "frameHeight": 384,
+        "columns": 1,
+        "rows": 1,
+        "clips": {
+          "idle": {
+            "frames": [
+              0
+            ],
+            "frameDurationMs": 150,
+            "loop": true
+          }
+        },
+        "anchor": {
+          "xRatio": 0.0,
+          "yRatio": -0.3
+        },
+        "zLayer": "FRONT",
+        "scale": 0.55
+      }
     },
     {
       "id": "ufo_jetpack",
@@ -1284,7 +1328,29 @@
         "cosmetic",
         "premium",
         "pirate"
-      ]
+      ],
+      "sprite": {
+        "atlasPath": "accessories/eye_patch/eye_patch.png",
+        "frameWidth": 384,
+        "frameHeight": 384,
+        "columns": 1,
+        "rows": 1,
+        "clips": {
+          "idle": {
+            "frames": [
+              0
+            ],
+            "frameDurationMs": 150,
+            "loop": true
+          }
+        },
+        "anchor": {
+          "xRatio": 0.0,
+          "yRatio": -0.06
+        },
+        "zLayer": "FRONT",
+        "scale": 0.48
+      }
     },
     {
       "id": "treasure_chest",
@@ -1643,7 +1709,29 @@
       "tags": [
         "cosmetic",
         "fancy"
-      ]
+      ],
+      "sprite": {
+        "atlasPath": "accessories/monocle/monocle.png",
+        "frameWidth": 384,
+        "frameHeight": 384,
+        "columns": 1,
+        "rows": 1,
+        "clips": {
+          "idle": {
+            "frames": [
+              0
+            ],
+            "frameDurationMs": 150,
+            "loop": true
+          }
+        },
+        "anchor": {
+          "xRatio": 0.05,
+          "yRatio": -0.05
+        },
+        "zLayer": "FRONT",
+        "scale": 0.5
+      }
     },
     {
       "id": "mustache",
@@ -1672,7 +1760,29 @@
       "tags": [
         "cosmetic",
         "fun"
-      ]
+      ],
+      "sprite": {
+        "atlasPath": "accessories/mustache/mustache.png",
+        "frameWidth": 384,
+        "frameHeight": 384,
+        "columns": 1,
+        "rows": 1,
+        "clips": {
+          "idle": {
+            "frames": [
+              0
+            ],
+            "frameDurationMs": 150,
+            "loop": true
+          }
+        },
+        "anchor": {
+          "xRatio": 0.0,
+          "yRatio": 0.05
+        },
+        "zLayer": "FRONT",
+        "scale": 0.5
+      }
     },
     {
       "id": "sword",

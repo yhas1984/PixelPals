@@ -345,6 +345,91 @@ def demonic_wings_frames() -> list[Image.Image]:
 
 
 # --------------------------------------------------------------------------
+# Frames para accesorios que antes usaban emojis de CARA (se veían como una
+# cabeza encima del pet). Ahora dibujan el accesorio real.
+# --------------------------------------------------------------------------
+
+def alien_antennas() -> Image.Image:
+    """Dos antenas verdes arqueadas con puntas brillantes (slot HEAD)."""
+    img = new_canvas()
+    d = ImageDraw.Draw(img)
+    # Vástagos curvos
+    d.arc([80, 100, 250, 240], 200, 320, fill=color("green"), width=16)
+    d.arc([250, 100, 420, 240], 220, 340, fill=color("green"), width=16)
+    # Puntas brillantes
+    d.ellipse([118, 78, 150, 110], fill=color("green_light"))
+    d.ellipse([288, 78, 320, 110], fill=color("green_light"))
+    # Lucecitas
+    d.ellipse([122, 82, 146, 106], fill=color("cyan", 220))
+    d.ellipse([292, 82, 316, 106], fill=color("cyan", 220))
+    return img
+
+
+def ninja_mask() -> Image.Image:
+    """Máscara ninja negra ancha con rendijas de ojos (slot FACE)."""
+    img = new_canvas()
+    d = ImageDraw.Draw(img)
+    # Máscara: rectángulo ancho que cubre los ojos
+    d.rounded_rectangle([60, 100, 424, 220], radius=18, fill=color("black"))
+    # Brillo superior
+    d.rounded_rectangle([70, 105, 414, 130], radius=10, fill=color("metal_dark"))
+    # Rendijas de ojos (rojas)
+    d.rounded_rectangle([120, 150, 200, 170], radius=6, fill=color("red"))
+    d.rounded_rectangle([250, 150, 330, 170], radius=6, fill=color("red"))
+    # Cola de la máscara (cinta)
+    d.polygon([(60, 190), (30, 240), (70, 230), (50, 260), (90, 220)], fill=color("black"))
+    return img
+
+
+def monocle() -> Image.Image:
+    """Monóculo: lente redonda con marco dorado y cadena (slot FACE)."""
+    img = new_canvas()
+    d = ImageDraw.Draw(img)
+    # Lente
+    d.ellipse([120, 100, 280, 260], outline=color("gold"), width=14)
+    d.ellipse([140, 120, 260, 240], fill=color("blue_light", 120))
+    # Reflejo
+    d.ellipse([150, 130, 190, 170], fill=color("white", 140))
+    # Cadena
+    d.line([280, 180, 360, 280], fill=color("gold"), width=8)
+    return img
+
+
+def mustache() -> Image.Image:
+    """Bigote pixel-art marrón con dos lóbulos (slot FACE)."""
+    img = new_canvas()
+    d = ImageDraw.Draw(img)
+    # Lóbulo izquierdo
+    d.polygon(
+        [(140, 180), (250, 170), (220, 230), (160, 235), (140, 180)],
+        fill=color("brown"),
+    )
+    # Lóbulo derecho (espejo)
+    d.polygon(
+        [(260, 170), (370, 180), (350, 235), (290, 230), (260, 170)],
+        fill=color("brown"),
+    )
+    # Centro
+    d.ellipse([235, 170, 275, 205], fill=color("brown"))
+    # Reflejo
+    d.line([160, 185, 230, 180], fill=color("brown", 200), width=6)
+    d.line([280, 180, 350, 185], fill=color("brown", 200), width=6)
+    return img
+
+
+def eye_patch() -> Image.Image:
+    """Parche pirata: disco negro con cuerda (slot FACE)."""
+    img = new_canvas()
+    d = ImageDraw.Draw(img)
+    # Disco
+    d.ellipse([140, 110, 300, 270], fill=color("black"))
+    d.ellipse([150, 120, 290, 260], fill=color("metal_dark"))
+    # Cuerda (horizontal, cruzando la cara)
+    d.line([20, 190, 440, 190], fill=color("black"), width=10)
+    return img
+
+
+# --------------------------------------------------------------------------
 # Entry point
 # --------------------------------------------------------------------------
 
@@ -365,6 +450,12 @@ SINGLE_FRAME = {
     "astronaut_helmet": (helmet_astronaut, {"xRatio": 0.0, "yRatio": -0.2}, "FRONT", 0.55),
     "lightning_bolt": (bolt_lightning, {"xRatio": 0.3, "yRatio": -0.05}, "FRONT", 0.45),
     "shield_back": (shield_back, {"xRatio": 0.0, "yRatio": 0.05}, "BEHIND", 0.5),
+    # Accesorios que antes usaban emojis de cara — ahora con sprite real
+    "alien_antennas": (alien_antennas, {"xRatio": 0.0, "yRatio": -0.30}, "FRONT", 0.55),
+    "ninja_mask": (ninja_mask, {"xRatio": 0.0, "yRatio": -0.08}, "FRONT", 0.55),
+    "monocle": (monocle, {"xRatio": 0.05, "yRatio": -0.05}, "FRONT", 0.50),
+    "mustache": (mustache, {"xRatio": 0.0, "yRatio": 0.05}, "FRONT", 0.50),
+    "eye_patch": (eye_patch, {"xRatio": 0.0, "yRatio": -0.06}, "FRONT", 0.48),
 }
 
 
