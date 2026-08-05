@@ -118,13 +118,13 @@ def draw_wing(canvas: ImageDraw, cx: float, cy: float, angle_deg: float, main: t
 
 
 def wings_frames(main: str, dark: str) -> list[Image.Image]:
-    """4 frames of a wing flapping up-down."""
+    """4 frames of a wing flapping up-down (pivot centered to stay in canvas)."""
     frames = []
     for angle in (-35, -15, 8, 30):
         img = new_canvas()
         d = ImageDraw.Draw(img)
-        # Mirror: wing pivot at the pet's shoulder, extending to the right.
-        draw_wing(d, 210, 210, angle, color(main), color(dark))
+        # Pivot centrado (192, 240) para que las plumas queden dentro del canvas.
+        draw_wing(d, 170, 240, angle, color(main), color(dark))
         frames.append(img)
     return frames
 
@@ -238,8 +238,8 @@ def helmet_viking() -> Image.Image:
     d = ImageDraw.Draw(img)
     d.arc([120, 140, 350, 280], 180, 360, fill=color("metal"), width=30)
     d.rectangle([120, 195, 350, 240], fill=color("metal"))
-    # Horns (fitted inside canvas)
-    d.arc([0, 100, 160, 220], 100, 200, fill=color("brown"), width=20)
+    # Horns (centered, inside canvas)
+    d.arc([70, 100, 230, 220], 100, 200, fill=color("brown"), width=20)
     d.arc([214, 100, 374, 220], -20, 80, fill=color("brown"), width=20)
     return img
 
@@ -353,15 +353,15 @@ def alien_antennas() -> Image.Image:
     """Dos antenas verdes arqueadas con puntas brillantes (slot HEAD)."""
     img = new_canvas()
     d = ImageDraw.Draw(img)
-    # Vástagos curvos
-    d.arc([80, 100, 250, 240], 200, 320, fill=color("green"), width=16)
-    d.arc([250, 100, 420, 240], 220, 340, fill=color("green"), width=16)
+    # Vástagos curvos (centrados, dentro del canvas)
+    d.arc([80, 100, 240, 240], 200, 320, fill=color("green"), width=16)
+    d.arc([144, 100, 304, 240], 220, 340, fill=color("green"), width=16)
     # Puntas brillantes
-    d.ellipse([118, 78, 150, 110], fill=color("green_light"))
-    d.ellipse([288, 78, 320, 110], fill=color("green_light"))
+    d.ellipse([108, 78, 140, 110], fill=color("green_light"))
+    d.ellipse([244, 78, 276, 110], fill=color("green_light"))
     # Lucecitas
-    d.ellipse([122, 82, 146, 106], fill=color("cyan", 220))
-    d.ellipse([292, 82, 316, 106], fill=color("cyan", 220))
+    d.ellipse([112, 82, 136, 106], fill=color("cyan", 220))
+    d.ellipse([248, 82, 272, 106], fill=color("cyan", 220))
     return img
 
 
@@ -369,15 +369,15 @@ def ninja_mask() -> Image.Image:
     """Máscara ninja negra ancha con rendijas de ojos (slot FACE)."""
     img = new_canvas()
     d = ImageDraw.Draw(img)
-    # Máscara: rectángulo ancho que cubre los ojos
-    d.rounded_rectangle([60, 100, 424, 220], radius=18, fill=color("black"))
+    # Máscara: rectángulo ancho que cubre los ojos (dentro del canvas)
+    d.rounded_rectangle([30, 100, 354, 220], radius=18, fill=color("black"))
     # Brillo superior
-    d.rounded_rectangle([70, 105, 414, 130], radius=10, fill=color("metal_dark"))
+    d.rounded_rectangle([40, 105, 344, 130], radius=10, fill=color("metal_dark"))
     # Rendijas de ojos (rojas)
-    d.rounded_rectangle([120, 150, 200, 170], radius=6, fill=color("red"))
-    d.rounded_rectangle([250, 150, 330, 170], radius=6, fill=color("red"))
-    # Cola de la máscara (cinta)
-    d.polygon([(60, 190), (30, 240), (70, 230), (50, 260), (90, 220)], fill=color("black"))
+    d.rounded_rectangle([100, 150, 170, 170], radius=6, fill=color("red"))
+    d.rounded_rectangle([210, 150, 280, 170], radius=6, fill=color("red"))
+    # Cola de la máscara (cinta, a la derecha)
+    d.polygon([(340, 190), (370, 230), (330, 220), (350, 260), (300, 210)], fill=color("black"))
     return img
 
 
@@ -421,11 +421,11 @@ def eye_patch() -> Image.Image:
     """Parche pirata: disco negro con cuerda (slot FACE)."""
     img = new_canvas()
     d = ImageDraw.Draw(img)
-    # Disco
-    d.ellipse([140, 110, 300, 270], fill=color("black"))
-    d.ellipse([150, 120, 290, 260], fill=color("metal_dark"))
-    # Cuerda (horizontal, cruzando la cara)
-    d.line([20, 190, 440, 190], fill=color("black"), width=10)
+    # Disco (centrado)
+    d.ellipse([140, 110, 280, 250], fill=color("black"))
+    d.ellipse([148, 118, 272, 242], fill=color("metal_dark"))
+    # Cuerda (horizontal, dentro del canvas)
+    d.line([40, 180, 360, 180], fill=color("black"), width=10)
     return img
 
 
