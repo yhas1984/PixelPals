@@ -70,7 +70,7 @@
       "displayName": "Varita Mágica",
       "description": "Una varita que orbita a tu lado.",
       "productId": "cos_float_wand",
-      "effect": { "type": "float", "emoji": "🪄", "xRatio": 0.85, "yRatio": -0.15, "bobAmplitude": 0.1, "bobSpeed": 1.8 },
+      "effect": { "type": "float", "emoji": "🪄", "xRatio": 0.8, "yRatio": -0.15, "bobAmplitude": 0.1, "bobSpeed": 1.8 },
       "coinPrice": 100
     },
     {
@@ -78,7 +78,7 @@
       "displayName": "Paraguas",
       "description": "Un paraguas flotante para días lluviosos.",
       "productId": "cos_float_umbrella",
-      "effect": { "type": "float", "emoji": "☂️", "xRatio": 0.9, "yRatio": -0.4, "bobAmplitude": 0.06, "bobSpeed": 1.4 },
+      "effect": { "type": "float", "emoji": "☂️", "xRatio": 0.75, "yRatio": -0.4, "bobAmplitude": 0.06, "bobSpeed": 1.4 },
       "coinPrice": 80
     }
   ]

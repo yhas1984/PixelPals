@@ -175,12 +175,43 @@ class PetView(
         }
     }
 
-    override fun getWindowParams(): WindowManager.LayoutParams? = layoutParams as? WindowManager.LayoutParams
-    
+    /**
+     * Offset entre la esquina del view real (2x el sprite) y la esquina lógica
+     * del sprite. Los behaviors posicionan la esquina del sprite; el view real
+     * se traslada -inset para que el sprite quede centrado con margen para
+     * los cosméticos (aura/floats) alrededor.
+     */
+    private val cosmeticInset: Int
+        get() = ((width - petSpriteSize) / 2).coerceAtLeast(0)
+
+    /** Copia los params con coordenadas LÓGICAS (esquina del sprite en pantalla). */
+    override fun getWindowParams(): WindowManager.LayoutParams? {
+        val real = layoutParams as? WindowManager.LayoutParams ?: return null
+        val copy = WindowManager.LayoutParams(
+            real.width, real.height, real.type, real.flags, real.format
+        ).apply {
+            gravity = real.gravity
+            softInputMode = real.softInputMode
+            x = real.x + cosmeticInset
+            y = real.y + cosmeticInset
+        }
+        return copy
+    }
+
     override fun updateWindowLayout(params: WindowManager.LayoutParams) {
         try {
+            // params llega en coordenadas lógicas (esquina del sprite en pantalla).
+            // El view real (2x el sprite, centrado) se posiciona -inset.
+            val real = WindowManager.LayoutParams(
+                params.width, params.height, params.type, params.flags, params.format
+            ).apply {
+                gravity = params.gravity
+                softInputMode = params.softInputMode
+                x = params.x - cosmeticInset
+                y = params.y - cosmeticInset
+            }
             val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-            wm.updateViewLayout(this, params)
+            wm.updateViewLayout(this, real)
             windowX = params.x
             windowY = params.y
         } catch (e: Exception) {
@@ -291,28 +322,33 @@ class PetView(
     private fun drawCosmetic(canvas: Canvas) {
         val effect = equippedCosmetic?.effect as? com.pixelpals.app.data.catalog.CosmeticEffect
             ?: return
-        val cx = width / 2f
-        val cy = height / 2f
+        // Siguen la posición y escala del pet (saltos, vuelo, inflado) pero NO su
+        // rotación: corona/paraguas flotan "arriba" en pantalla, no giran con él.
+        val cx = width / 2f + renderOffsetX
+        val cy = height / 2f + renderOffsetY
+        val scale = renderScaleX.coerceAtLeast(0.4f)
         when (effect) {
             is com.pixelpals.app.data.catalog.CosmeticEffect.TintEffect -> Unit
             is com.pixelpals.app.data.catalog.CosmeticEffect.AuraEffect -> {
-                cosmeticPaint.textSize = petSpriteSize.toFloat() * effect.sizeRatio
-                cosmeticPaint.alpha = 200
+                cosmeticPaint.textSize = petSpriteSize.toFloat() * effect.sizeRatio * scale
+                cosmeticPaint.alpha = (200 * (animAlpha.coerceIn(0f, 1f))).toInt()
+                val fm = cosmeticPaint.fontMetrics
+                val radius = petSpriteSize.toFloat() * effect.radiusRatio * scale
                 for (i in 0 until effect.count) {
                     val angle = cosmeticClock * effect.speed + (2f * PI.toFloat() * i) / effect.count
-                    val r = petSpriteSize.toFloat() * effect.radiusRatio
-                    val x = cx + cos(angle) * r
-                    val y = cy + sin(angle) * r
-                    canvas.drawText(effect.emoji, x, y, cosmeticPaint)
+                    val x = cx + cos(angle) * radius
+                    val y = cy + sin(angle) * radius
+                    canvas.drawText(effect.emoji, x, y - (fm.ascent + fm.descent) / 2f, cosmeticPaint)
                 }
             }
             is com.pixelpals.app.data.catalog.CosmeticEffect.FloatEffect -> {
-                cosmeticPaint.textSize = petSpriteSize.toFloat() * effect.sizeRatio
-                cosmeticPaint.alpha = 255
-                val bob = sin(cosmeticClock * effect.bobSpeed) * effect.bobAmplitude
-                val x = cx + petSpriteSize.toFloat() * effect.xRatio
-                val y = cy + petSpriteSize.toFloat() * (effect.yRatio + bob)
-                canvas.drawText(effect.emoji, x, y, cosmeticPaint)
+                cosmeticPaint.textSize = petSpriteSize.toFloat() * effect.sizeRatio * scale
+                cosmeticPaint.alpha = (255 * (animAlpha.coerceIn(0f, 1f))).toInt()
+                val fm = cosmeticPaint.fontMetrics
+                val bob = sin(cosmeticClock * effect.bobSpeed) * effect.bobAmplitude * scale
+                val x = cx + petSpriteSize.toFloat() * effect.xRatio * scale
+                val y = cy + petSpriteSize.toFloat() * (effect.yRatio + bob) * scale
+                canvas.drawText(effect.emoji, x, y - (fm.ascent + fm.descent) / 2f, cosmeticPaint)
             }
         }
     }
@@ -536,6 +572,13 @@ class PetView(
 
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
+                // El view es 2x el sprite (espacio para cosméticos): solo capturamos
+                // toques cerca del sprite para no bloquear la app de debajo.
+                val dx = event.x - width / 2f
+                val dy = event.y - height / 2f
+                val touchRadius = petSpriteSize * 0.55f
+                if (dx * dx + dy * dy > touchRadius * touchRadius) return false
+
                 if (behavior?.onTouchDown(event.rawX, event.rawY) == true) return true
 
                 velocityTracker?.recycle()
@@ -559,9 +602,9 @@ class PetView(
                         ) >= touchSlop
                     }
                     params.x = (initialX + (event.rawX - initialTouchX).toInt())
-                        .coerceIn(0, (screenWidth - params.width).coerceAtLeast(0))
+                        .coerceIn(0, (screenWidth - petSpriteSize).coerceAtLeast(0))
                     params.y = (initialY + (event.rawY - initialTouchY).toInt())
-                        .coerceIn(0, (screenHeight - params.height).coerceAtLeast(0))
+                        .coerceIn(0, (screenHeight - petSpriteSize).coerceAtLeast(0))
                     updateWindowLayout(params)
                 }
                 return true

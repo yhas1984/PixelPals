@@ -126,7 +126,7 @@ class PetService : Service() {
             // Re-afirma la posición tras cerrar el teclado por si el sistema re-layout la ventana.
             val view = petView ?: return
             val params = view.getWindowParams() ?: return
-            runCatching { wm.updateViewLayout(view, params) }
+            runCatching { view.updateWindowLayout(params) }
         }
     }
 
@@ -202,7 +202,9 @@ class PetService : Service() {
 
         val metrics = getDisplayMetrics()
         val petSize = (PET_SIZE_DP * resources.displayMetrics.density).toInt()
-        val viewSize = (petSize * 1.4f).toInt()
+        // View 2x el pet: da espacio al aura (radio 0.85x) y a los floats (0.9x)
+        // sin que se corten en el borde.
+        val viewSize = (petSize * 2.0f).toInt()
 
         petView = PetView(this, metrics.widthPixels, metrics.heightPixels, petSize, currentPetType)
 

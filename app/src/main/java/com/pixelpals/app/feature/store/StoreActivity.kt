@@ -72,10 +72,14 @@ class StoreActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val balance = repository.getCoinBalance(selectedPet)
             findViewById<TextView>(R.id.txtStoreWallet).text = getString(R.string.coins_wallet_format, balance)
+            val equippedId = repository.getEquippedCosmetic(selectedPet.name.lowercase())
+            val equippedName = equippedId?.let { id ->
+                com.pixelpals.app.data.catalog.CosmeticCatalog.findById(this@StoreActivity, id)?.displayName
+            }
             findViewById<TextView>(R.id.txtStoreHighlight).text = getString(
                 R.string.store_featured_message_format,
                 selectedPet.displayName,
-                getString(R.string.store_owned_hint_default),
+                equippedName ?: getString(R.string.store_owned_hint_default),
             )
         }
     }
