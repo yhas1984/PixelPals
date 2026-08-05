@@ -69,6 +69,7 @@ class PetView(
     override var animRotation = 0f
     override var animAlpha = 1f
     override var animColorFilter: ColorFilter? = null
+    override var cosmeticColorFilter: ColorFilter? = null
     override var petStatus: PetStatusSnapshot = PetStatusSnapshot(
         petId = petType.name.lowercase(),
         health = 92,
@@ -83,6 +84,11 @@ class PetView(
         memoriesUnlocked = 0
     )
     override val petPersonality: PetPersonality = repository.getPersonality(petType)
+
+    /** Cosmético equipado de este pet (efectos que envuelven, sin alineación). */
+    private var equippedCosmetic: com.pixelpals.app.data.catalog.Cosmetic? = null
+    private var cosmeticClock = 0f
+
     private var treasureEffectScaleX = 1f
     private var treasureEffectScaleY = 1f
     private var treasureEffectOffsetX = 0f
@@ -126,6 +132,10 @@ class PetView(
         textSize = petSpriteSize.toFloat() * 0.24f
     }
 
+    private val cosmeticPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        textAlign = Paint.Align.CENTER
+    }
+
     override val groundY: Int
         get() = screenHeight - petSpriteSize -
             (56f * resources.displayMetrics.density).roundToInt() - keyboardHeightPx
@@ -144,6 +154,7 @@ class PetView(
     init {
         uiScope.launch {
             petStatus = repository.getStatusSnapshot(petType)
+            reloadCosmetic()
             showBubble(welcomeBubble())
             invalidate()
         }
@@ -257,12 +268,52 @@ class PetView(
     fun refreshFromRepository(message: String?, celebrate: Boolean) {
         uiScope.launch {
             petStatus = repository.getStatusSnapshot(petType)
+            reloadCosmetic()
             if (!message.isNullOrBlank()) showBubble(message)
             if (celebrate) {
                 treasureReactionTimer = treasureReactionDuration
                 playHaptic(35)
             }
             invalidate()
+        }
+    }
+
+    private fun reloadCosmetic() {
+        val equippedId = repository.getEquippedCosmetic(petType.name.lowercase())
+        equippedCosmetic = equippedId?.let { id ->
+            com.pixelpals.app.data.catalog.CosmeticCatalog.findById(context, id)
+        }
+        val tint = (equippedCosmetic?.effect as? com.pixelpals.app.data.catalog.CosmeticEffect.TintEffect)
+        cosmeticColorFilter = tint?.let { android.graphics.ColorMatrixColorFilter(it.toColorMatrix()) }
+    }
+
+    /** Dibuja aura y float (objetos que envuelven al pet, sin alineación al cuerpo). */
+    private fun drawCosmetic(canvas: Canvas) {
+        val effect = equippedCosmetic?.effect as? com.pixelpals.app.data.catalog.CosmeticEffect
+            ?: return
+        val cx = width / 2f
+        val cy = height / 2f
+        when (effect) {
+            is com.pixelpals.app.data.catalog.CosmeticEffect.TintEffect -> Unit
+            is com.pixelpals.app.data.catalog.CosmeticEffect.AuraEffect -> {
+                cosmeticPaint.textSize = petSpriteSize.toFloat() * effect.sizeRatio
+                cosmeticPaint.alpha = 200
+                for (i in 0 until effect.count) {
+                    val angle = cosmeticClock * effect.speed + (2f * PI.toFloat() * i) / effect.count
+                    val r = petSpriteSize.toFloat() * effect.radiusRatio
+                    val x = cx + cos(angle) * r
+                    val y = cy + sin(angle) * r
+                    canvas.drawText(effect.emoji, x, y, cosmeticPaint)
+                }
+            }
+            is com.pixelpals.app.data.catalog.CosmeticEffect.FloatEffect -> {
+                cosmeticPaint.textSize = petSpriteSize.toFloat() * effect.sizeRatio
+                cosmeticPaint.alpha = 255
+                val bob = sin(cosmeticClock * effect.bobSpeed) * effect.bobAmplitude
+                val x = cx + petSpriteSize.toFloat() * effect.xRatio
+                val y = cy + petSpriteSize.toFloat() * (effect.yRatio + bob)
+                canvas.drawText(effect.emoji, x, y, cosmeticPaint)
+            }
         }
     }
 
@@ -298,6 +349,7 @@ class PetView(
 
     private fun update(dt: Float) {
         // No-op: screen metrics are cached at attach/config-change time (see refreshScreenMetrics).
+        cosmeticClock += dt
         activeSecondsAccumulator += dt
         while (activeSecondsAccumulator >= 60f) {
             progress.trackMinute()
@@ -362,6 +414,8 @@ class PetView(
         super.onDraw(canvas)
         // Sprite base del pet.
         behavior?.onDraw(canvas, (width / 2).toFloat(), (height / 2).toFloat())
+
+        drawCosmetic(canvas)
 
         // Dibuja el bubble encima del pet.
         val text = bubbleText ?: return

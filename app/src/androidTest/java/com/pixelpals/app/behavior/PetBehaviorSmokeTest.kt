@@ -122,6 +122,7 @@ class PetBehaviorSmokeTest {
         override var animRotation: Float = 0f
         override var animAlpha: Float = 1f
         override var animColorFilter: ColorFilter? = null
+        override var cosmeticColorFilter: ColorFilter? = null
         override val renderScaleX: Float get() = animScaleX
         override val renderScaleY: Float get() = animScaleY
         override val renderOffsetX: Float get() = animOffsetX

@@ -1,0 +1,85 @@
+{
+  "version": 1,
+  "cosmetics": [
+    {
+      "id": "tint_golden",
+      "displayName": "Brillo Dorado",
+      "description": "Tu pet resplandece con un aura dorada.",
+      "productId": "cos_tint_golden",
+      "effect": { "type": "tint", "redScale": 1.25, "greenScale": 1.05, "blueScale": 0.65 },
+      "coinPrice": 40
+    },
+    {
+      "id": "tint_rose",
+      "displayName": "Tono Rosa",
+      "description": "Un suave tinte rosado para los románticos.",
+      "productId": "cos_tint_rose",
+      "effect": { "type": "tint", "redScale": 1.2, "greenScale": 0.85, "blueScale": 0.95 },
+      "coinPrice": 40
+    },
+    {
+      "id": "tint_emerald",
+      "displayName": "Tono Esmeralda",
+      "description": "Un verde esmeralda misterioso.",
+      "productId": "cos_tint_emerald",
+      "effect": { "type": "tint", "redScale": 0.7, "greenScale": 1.2, "blueScale": 0.9 },
+      "coinPrice": 40
+    },
+    {
+      "id": "tint_ghost",
+      "displayName": "Fantasma Pálido",
+      "description": "Un aspecto espectral y desaturado.",
+      "productId": "cos_tint_ghost",
+      "effect": { "type": "tint", "saturation": 0.35 },
+      "coinPrice": 40
+    },
+    {
+      "id": "aura_stars",
+      "displayName": "Aura Estelar",
+      "description": "Estrellitas que orbitan alrededor de tu pet.",
+      "productId": "cos_aura_stars",
+      "effect": { "type": "aura", "emoji": "✨", "count": 6, "radiusRatio": 0.85, "speed": 1.6 },
+      "coinPrice": 60
+    },
+    {
+      "id": "aura_fire",
+      "displayName": "Fuego Infernal",
+      "description": "Llamas que rodean a tu pet travieso.",
+      "productId": "cos_aura_fire",
+      "effect": { "type": "aura", "emoji": "🔥", "count": 5, "radiusRatio": 0.8, "speed": 2.0 },
+      "coinPrice": 80
+    },
+    {
+      "id": "aura_bubbles",
+      "displayName": "Burbujas Dulces",
+      "description": "Burbujas alegres flotando alrededor.",
+      "productId": "cos_aura_bubbles",
+      "effect": { "type": "aura", "emoji": "🫧", "count": 7, "radiusRatio": 0.9, "speed": 1.2 },
+      "coinPrice": 60
+    },
+    {
+      "id": "float_crown",
+      "displayName": "Corona Flotante",
+      "description": "Una corona que flota sobre tu pet.",
+      "productId": "cos_float_crown",
+      "effect": { "type": "float", "emoji": "👑", "xRatio": 0.0, "yRatio": -0.6, "bobAmplitude": 0.08, "bobSpeed": 2.2 },
+      "coinPrice": 100
+    },
+    {
+      "id": "float_wand",
+      "displayName": "Varita Mágica",
+      "description": "Una varita que orbita a tu lado.",
+      "productId": "cos_float_wand",
+      "effect": { "type": "float", "emoji": "🪄", "xRatio": 0.85, "yRatio": -0.15, "bobAmplitude": 0.1, "bobSpeed": 1.8 },
+      "coinPrice": 100
+    },
+    {
+      "id": "float_umbrella",
+      "displayName": "Paraguas",
+      "description": "Un paraguas flotante para días lluviosos.",
+      "productId": "cos_float_umbrella",
+      "effect": { "type": "float", "emoji": "☂️", "xRatio": 0.9, "yRatio": -0.4, "bobAmplitude": 0.06, "bobSpeed": 1.4 },
+      "coinPrice": 80
+    }
+  ]
+}

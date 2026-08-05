@@ -21,6 +21,9 @@ interface PetViewBridge {
     var animRotation: Float
     var animAlpha: Float
     var animColorFilter: ColorFilter?
+
+    /** Filtro de color del cosmético equipado (tint) — persiste entre resets. */
+    var cosmeticColorFilter: ColorFilter?
     val renderScaleX: Float
     val renderScaleY: Float
     val renderOffsetX: Float

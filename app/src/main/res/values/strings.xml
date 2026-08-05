@@ -232,4 +232,11 @@
     <string name="pet_unlocked_toast">%1$s unlocked!</string>
         <string name="selection_unlock_button">Unlock</string>
     <string name="store_owned_hint_default">no accessory</string>
+
+    <!-- Cosmetics (V1.6) -->
+    <string name="store_tab_cosmetics">Cosmetics</string>
+    <string name="store_buy_with_coins">Buy</string>
+    <string name="store_equip_button">Equip</string>
+    <string name="store_equipped_button">Equipped</string>
+    <string name="cosmetic_unlocked_toast">%1$s unlocked!</string>
 </resources>

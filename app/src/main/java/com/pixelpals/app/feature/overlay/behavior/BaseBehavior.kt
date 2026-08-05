@@ -402,7 +402,7 @@ abstract class BaseBehavior(
             else -> 1f
         }
         paint.alpha = (bridge.animAlpha.coerceIn(0f, 1f) * moodAlphaMultiplier * 255).toInt()
-        paint.colorFilter = bridge.animColorFilter ?: moodColorFilter()
+        paint.colorFilter = bridge.animColorFilter ?: bridge.cosmeticColorFilter ?: moodColorFilter()
 
         val frameIdx = bridge.currentFrame.coerceAtLeast(0)
         val bitmap = if (frames.isNotEmpty()) {

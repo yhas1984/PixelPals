@@ -26,11 +26,48 @@ import kotlin.math.min
 class PixelPalsRepository(context: Context) {
     private val appContext: Context = context.applicationContext
     private val db = AppDatabase.getDatabase(appContext)
+    private val cosmeticPrefs = appContext.getSharedPreferences("pixelpals_cosmetics", Context.MODE_PRIVATE)
 
     private val premiumPetProductIds = mapOf(
         PetType.ANGEL to "pet_angel_premium",
         PetType.DIABLILLO to "pet_diablillo_premium"
     )
+
+    /** Cosmético equipado por petId (null = ninguno). */
+    fun getEquippedCosmetic(petId: String): String? =
+        cosmeticPrefs.getString(petId, null)?.takeIf { it.isNotBlank() }
+
+    /** Equipa (cosmeticId) o quita (null) el cosmético de un pet. */
+    fun setEquippedCosmetic(petId: String, cosmeticId: String?) {
+        cosmeticPrefs.edit().apply {
+            if (cosmeticId == null) remove(petId) else putString(petId, cosmeticId)
+        }.apply()
+    }
+
+    /** true si el cosmético (por productId) ya fue comprado. */
+    suspend fun isCosmeticOwned(productId: String): Boolean =
+        db.ownedProductDao().getByProductId(productId) != null
+
+    /** Compra un cosmético con monedas blandas. Devuelve true si se completó. */
+    suspend fun purchaseCosmeticWithCoins(petId: String, cosmeticId: String): Boolean {
+        val cosmetic = com.pixelpals.app.data.catalog.CosmeticCatalog.findById(appContext, cosmeticId)
+            ?: return false
+        val price = cosmetic.coinPrice ?: return false
+        return db.withTransaction {
+            val bond = ensureBondEntity(petId)
+            if (bond.softCurrency < price) return@withTransaction false
+            db.petBondDao().upsert(bond.copy(softCurrency = bond.softCurrency - price))
+            db.ownedProductDao().upsert(
+                com.pixelpals.app.database.OwnedProductEntity(
+                    productId = cosmetic.productId,
+                    productType = "cosmetic",
+                    source = "soft_currency",
+                    purchasedAt = System.currentTimeMillis(),
+                )
+            )
+            true
+        }
+    }
 
     suspend fun getStatusSnapshot(petType: PetType): PetStatusSnapshot {
         return getStatusSnapshot(petIdOf(petType))

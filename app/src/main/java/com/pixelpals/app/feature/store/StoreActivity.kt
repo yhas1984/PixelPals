@@ -48,6 +48,7 @@ class StoreActivity : AppCompatActivity() {
             TabLayoutMediator(tabs, pager) { tab, position ->
                 tab.text = when (position) {
                     0 -> getString(R.string.store_tab_pets)
+                    1 -> getString(R.string.store_tab_cosmetics)
                     else -> getString(R.string.store_tab_coins)
                 }
             }.attach()
@@ -115,11 +116,12 @@ class StoreActivity : AppCompatActivity() {
     }
 
     private class StorePagerAdapter(activity: AppCompatActivity) : FragmentStateAdapter(activity) {
-        override fun getItemCount(): Int = 2
+        override fun getItemCount(): Int = 3
 
         override fun createFragment(position: Int): androidx.fragment.app.Fragment {
             return when (position) {
                 0 -> PetsTabFragment()
+                1 -> CosmeticsTabFragment()
                 else -> CoinsTabFragment()
             }
         }

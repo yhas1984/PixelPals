@@ -230,4 +230,11 @@
     <string name="pet_unlocked_toast">¡%1$s desbloqueado!</string>
         <string name="selection_unlock_button">Desbloquear</string>
     <string name="store_owned_hint_default">sin accesorio</string>
+
+    <!-- Cosmetics (V1.6) -->
+    <string name="store_tab_cosmetics">Cosméticos</string>
+    <string name="store_buy_with_coins">Comprar</string>
+    <string name="store_equip_button">Equipar</string>
+    <string name="store_equipped_button">Equipado</string>
+    <string name="cosmetic_unlocked_toast">¡%1$s desbloqueado!</string>
 </resources>
