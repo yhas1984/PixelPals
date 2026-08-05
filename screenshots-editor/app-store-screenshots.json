@@ -1,0 +1,416 @@
+{
+  "schemaVersion": 2,
+  "appName": "PixelPals",
+  "themeId": "ocean-fresh",
+  "connectedCanvas": true,
+  "locales": [
+    "en"
+  ],
+  "locale": "en",
+  "device": "android",
+  "orientation": "portrait",
+  "appIcon": "/app-icon.png",
+  "slidesByDevice": {
+    "iphone": [],
+    "android": [
+      {
+        "id": "s_pxlpals_01",
+        "layout": "hero",
+        "label": {
+          "en": "MEET YOUR NEW FRIEND"
+        },
+        "headline": {
+          "en": "A pet that\nlives on\nyour screen"
+        },
+        "screenshot": "/screenshots/android/phone/en/01.png",
+        "inverted": true,
+        "transforms": {
+          "device": {
+            "x": 176,
+            "y": 1010,
+            "width": 728,
+            "height": 1577,
+            "rotation": 0,
+            "zIndex": 3
+          }
+        }
+      },
+      {
+        "id": "s_pxlpals_02",
+        "layout": "device-top",
+        "label": {
+          "en": "CHOOSE YOUR COMPANION"
+        },
+        "headline": {
+          "en": "Eight pals,\none is yours"
+        },
+        "screenshot": "/screenshots/android/phone/en/06.png",
+        "transforms": {
+          "device": {
+            "x": 140,
+            "y": 300,
+            "width": 800,
+            "height": 1733,
+            "rotation": 0,
+            "zIndex": 3
+          }
+        }
+      },
+      {
+        "id": "s_pxlpals_03",
+        "layout": "device-bottom",
+        "label": {
+          "en": "CARE & GROW"
+        },
+        "headline": {
+          "en": "Every day\nyou grow closer"
+        },
+        "screenshot": "/screenshots/android/phone/en/07.png",
+        "transforms": {
+          "device": {
+            "x": 140,
+            "y": 900,
+            "width": 800,
+            "height": 1733,
+            "rotation": 0,
+            "zIndex": 3
+          }
+        }
+      },
+      {
+        "id": "s_pxlpals_04",
+        "layout": "device-top",
+        "label": {
+          "en": "MAKE IT UNIQUE"
+        },
+        "headline": {
+          "en": "Make them\nall your own"
+        },
+        "screenshot": "/screenshots/android/phone/en/03.png",
+        "inverted": true,
+        "transforms": {
+          "device": {
+            "x": 140,
+            "y": 300,
+            "width": 800,
+            "height": 1733,
+            "rotation": 0,
+            "zIndex": 3
+          }
+        }
+      },
+      {
+        "id": "s_pxlpals_05",
+        "layout": "two-devices",
+        "label": {
+          "en": "UNLOCK THE CREW"
+        },
+        "headline": {
+          "en": "Every friend\nhas a story"
+        },
+        "screenshot": "/screenshots/android/phone/en/04.png",
+        "screenshotSecondary": "/screenshots/android/phone/en/05.png",
+        "transforms": {
+          "device": {
+            "x": 60,
+            "y": 950,
+            "width": 560,
+            "height": 1213,
+            "rotation": -6,
+            "zIndex": 3
+          },
+          "deviceSecondary": {
+            "x": 540,
+            "y": 1020,
+            "width": 500,
+            "height": 1083,
+            "rotation": 7,
+            "zIndex": 2
+          }
+        }
+      },
+      {
+        "id": "s_pxlpals_06",
+        "layout": "device-bottom",
+        "label": {
+          "en": "ALWAYS WITH YOU"
+        },
+        "headline": {
+          "en": "Walks on top\nof every app"
+        },
+        "screenshot": "/screenshots/android/phone/en/08.png",
+        "transforms": {
+          "device": {
+            "x": 176,
+            "y": 950,
+            "width": 728,
+            "height": 1577,
+            "rotation": 0,
+            "zIndex": 3
+          }
+        }
+      },
+      {
+        "id": "s_pxlpals_07",
+        "layout": "device-bottom",
+        "label": {
+          "en": "READY FOR ADVENTURE"
+        },
+        "headline": {
+          "en": "Your pet,\nanywhere you go"
+        },
+        "screenshot": "/screenshots/android/phone/en/01.png",
+        "transforms": {
+          "device": {
+            "x": 176,
+            "y": 950,
+            "width": 728,
+            "height": 1577,
+            "rotation": 0,
+            "zIndex": 3
+          }
+        }
+      }
+    ],
+    "ipad": [],
+    "android-7": [
+      {
+        "id": "s_pxlpals_t7_1",
+        "layout": "device-bottom",
+        "label": {
+          "en": "MEET YOUR NEW FRIEND"
+        },
+        "headline": {
+          "en": "A pet that\nlives on\nyour screen"
+        },
+        "screenshot": "/screenshots/android/phone/en/01.png",
+        "transforms": {
+          "device": {
+            "x": 240,
+            "y": 900,
+            "width": 720,
+            "height": 1560,
+            "rotation": 0,
+            "zIndex": 3
+          }
+        }
+      },
+      {
+        "id": "s_pxlpals_t7_2",
+        "layout": "device-top",
+        "label": {
+          "en": "CARE & GROW"
+        },
+        "headline": {
+          "en": "Every day\nyou grow closer"
+        },
+        "screenshot": "/screenshots/android/phone/en/07.png",
+        "transforms": {
+          "device": {
+            "x": 240,
+            "y": 300,
+            "width": 720,
+            "height": 1560,
+            "rotation": 0,
+            "zIndex": 3
+          }
+        }
+      },
+      {
+        "id": "s_pxlpals_t7_3",
+        "layout": "device-bottom",
+        "label": {
+          "en": "MAKE IT UNIQUE"
+        },
+        "headline": {
+          "en": "Make them\nall your own"
+        },
+        "screenshot": "/screenshots/android/phone/en/03.png",
+        "inverted": true,
+        "transforms": {
+          "device": {
+            "x": 240,
+            "y": 900,
+            "width": 720,
+            "height": 1560,
+            "rotation": 0,
+            "zIndex": 3
+          }
+        }
+      },
+      {
+        "id": "s_pxlpals_t7_4",
+        "layout": "device-top",
+        "label": {
+          "en": "UNLOCK THE CREW"
+        },
+        "headline": {
+          "en": "Every friend\nhas a story"
+        },
+        "screenshot": "/screenshots/android/phone/en/04.png",
+        "transforms": {
+          "device": {
+            "x": 240,
+            "y": 300,
+            "width": 720,
+            "height": 1560,
+            "rotation": 0,
+            "zIndex": 3
+          }
+        }
+      },
+      {
+        "id": "s_pxlpals_t7_5",
+        "layout": "no-device",
+        "label": {
+          "en": "ALWAYS WITH YOU"
+        },
+        "headline": {
+          "en": "Walks on top\nof every app"
+        },
+        "screenshot": "/screenshots/android/phone/en/08.png",
+        "transforms": {
+          "caption": {
+            "x": 100,
+            "y": 150,
+            "width": 1000,
+            "height": 900,
+            "rotation": 0,
+            "zIndex": 1
+          }
+        }
+      }
+    ],
+    "android-10": [
+      {
+        "id": "s_pxlpals_t10_1",
+        "layout": "device-bottom",
+        "label": {
+          "en": "MEET YOUR NEW FRIEND"
+        },
+        "headline": {
+          "en": "A pet that\nlives on\nyour screen"
+        },
+        "screenshot": "/screenshots/android/phone/en/01.png",
+        "transforms": {
+          "device": {
+            "x": 400,
+            "y": 1300,
+            "width": 800,
+            "height": 1733,
+            "rotation": 0,
+            "zIndex": 3
+          }
+        }
+      },
+      {
+        "id": "s_pxlpals_t10_2",
+        "layout": "device-top",
+        "label": {
+          "en": "CARE & GROW"
+        },
+        "headline": {
+          "en": "Every day\nyou grow closer"
+        },
+        "screenshot": "/screenshots/android/phone/en/07.png",
+        "transforms": {
+          "device": {
+            "x": 400,
+            "y": 500,
+            "width": 800,
+            "height": 1733,
+            "rotation": 0,
+            "zIndex": 3
+          }
+        }
+      },
+      {
+        "id": "s_pxlpals_t10_3",
+        "layout": "device-bottom",
+        "label": {
+          "en": "MAKE IT UNIQUE"
+        },
+        "headline": {
+          "en": "Make them\nall your own"
+        },
+        "screenshot": "/screenshots/android/phone/en/03.png",
+        "inverted": true,
+        "transforms": {
+          "device": {
+            "x": 400,
+            "y": 1300,
+            "width": 800,
+            "height": 1733,
+            "rotation": 0,
+            "zIndex": 3
+          }
+        }
+      },
+      {
+        "id": "s_pxlpals_t10_4",
+        "layout": "device-top",
+        "label": {
+          "en": "UNLOCK THE CREW"
+        },
+        "headline": {
+          "en": "Every friend\nhas a story"
+        },
+        "screenshot": "/screenshots/android/phone/en/04.png",
+        "transforms": {
+          "device": {
+            "x": 400,
+            "y": 500,
+            "width": 800,
+            "height": 1733,
+            "rotation": 0,
+            "zIndex": 3
+          }
+        }
+      },
+      {
+        "id": "s_pxlpals_t10_5",
+        "layout": "no-device",
+        "label": {
+          "en": "ALWAYS WITH YOU"
+        },
+        "headline": {
+          "en": "Walks on top\nof every app"
+        },
+        "screenshot": "/screenshots/android/phone/en/08.png",
+        "transforms": {
+          "caption": {
+            "x": 150,
+            "y": 200,
+            "width": 1300,
+            "height": 1100,
+            "rotation": 0,
+            "zIndex": 1
+          }
+        }
+      }
+    ],
+    "feature-graphic": [
+      {
+        "id": "s_pxlpals_fg_1",
+        "layout": "feature-graphic",
+        "label": {
+          "en": "PIXELPALS"
+        },
+        "headline": {
+          "en": "A pet that lives\non your screen"
+        },
+        "screenshot": "/screenshots/android/phone/en/01.png",
+        "transforms": {
+          "device": {
+            "x": 640,
+            "y": 60,
+            "width": 240,
+            "height": 520,
+            "rotation": 0,
+            "zIndex": 3
+          }
+        }
+      }
+    ]
+  }
+}

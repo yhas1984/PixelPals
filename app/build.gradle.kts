@@ -26,9 +26,25 @@ android {
         applicationId = "com.pixelpals.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 7
-        versionName = "1.4.0"
+        versionCode = 8
+        versionName = "1.5.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        create("release") {
+            val ksFile = System.getenv("PIXELPALS_KEYSTORE_FILE")
+                ?: project.findProperty("pixelpals.ks.file") as String?
+            if (!ksFile.isNullOrBlank()) {
+                storeFile = file(ksFile)
+                storePassword = System.getenv("PIXELPALS_KEYSTORE_PASSWORD")
+                    ?: project.findProperty("pixelpals.ks.password") as String?
+                keyAlias = System.getenv("PIXELPALS_KEYSTORE_ALIAS")
+                    ?: project.findProperty("pixelpals.ks.alias") as String?
+                keyPassword = System.getenv("PIXELPALS_KEY_PASSWORD")
+                    ?: project.findProperty("pixelpals.key.password") as String?
+            }
+        }
     }
 
     buildTypes {
@@ -39,6 +55,7 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
