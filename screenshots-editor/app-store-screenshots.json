@@ -26,10 +26,10 @@
         "inverted": true,
         "transforms": {
           "device": {
-            "x": 176,
-            "y": 1010,
-            "width": 728,
-            "height": 1577,
+            "x": 215,
+            "y": 470,
+            "width": 650,
+            "height": 1408,
             "rotation": 0,
             "zIndex": 3
           }
@@ -47,10 +47,10 @@
         "screenshot": "/screenshots/android/phone/en/06.png",
         "transforms": {
           "device": {
-            "x": 140,
-            "y": 300,
-            "width": 800,
-            "height": 1733,
+            "x": 230,
+            "y": 160,
+            "width": 620,
+            "height": 1343,
             "rotation": 0,
             "zIndex": 3
           }
@@ -68,10 +68,10 @@
         "screenshot": "/screenshots/android/phone/en/07.png",
         "transforms": {
           "device": {
-            "x": 140,
-            "y": 900,
-            "width": 800,
-            "height": 1733,
+            "x": 200,
+            "y": 400,
+            "width": 679,
+            "height": 1471,
             "rotation": 0,
             "zIndex": 3
           }
@@ -90,10 +90,10 @@
         "inverted": true,
         "transforms": {
           "device": {
-            "x": 140,
-            "y": 300,
-            "width": 800,
-            "height": 1733,
+            "x": 230,
+            "y": 160,
+            "width": 620,
+            "height": 1343,
             "rotation": 0,
             "zIndex": 3
           }
@@ -112,20 +112,20 @@
         "screenshotSecondary": "/screenshots/android/phone/en/05.png",
         "transforms": {
           "device": {
-            "x": 60,
-            "y": 950,
-            "width": 560,
-            "height": 1213,
-            "rotation": -6,
+            "x": 70,
+            "y": 700,
+            "width": 540,
+            "height": 1170,
+            "rotation": 0,
             "zIndex": 3
           },
           "deviceSecondary": {
-            "x": 540,
-            "y": 1020,
-            "width": 500,
-            "height": 1083,
-            "rotation": 7,
-            "zIndex": 2
+            "x": 550,
+            "y": 790,
+            "width": 480,
+            "height": 1040,
+            "rotation": 0,
+            "zIndex": 3
           }
         }
       },
@@ -141,10 +141,10 @@
         "screenshot": "/screenshots/android/phone/en/08.png",
         "transforms": {
           "device": {
-            "x": 176,
-            "y": 950,
-            "width": 728,
-            "height": 1577,
+            "x": 200,
+            "y": 400,
+            "width": 679,
+            "height": 1471,
             "rotation": 0,
             "zIndex": 3
           }
@@ -162,10 +162,10 @@
         "screenshot": "/screenshots/android/phone/en/01.png",
         "transforms": {
           "device": {
-            "x": 176,
-            "y": 950,
-            "width": 728,
-            "height": 1577,
+            "x": 200,
+            "y": 400,
+            "width": 679,
+            "height": 1471,
             "rotation": 0,
             "zIndex": 3
           }
@@ -186,10 +186,10 @@
         "screenshot": "/screenshots/android/phone/en/01.png",
         "transforms": {
           "device": {
-            "x": 240,
-            "y": 900,
-            "width": 720,
-            "height": 1560,
+            "x": 250,
+            "y": 500,
+            "width": 700,
+            "height": 1120,
             "rotation": 0,
             "zIndex": 3
           }
@@ -207,10 +207,10 @@
         "screenshot": "/screenshots/android/phone/en/07.png",
         "transforms": {
           "device": {
-            "x": 240,
-            "y": 300,
-            "width": 720,
-            "height": 1560,
+            "x": 250,
+            "y": 160,
+            "width": 700,
+            "height": 1120,
             "rotation": 0,
             "zIndex": 3
           }
@@ -229,10 +229,10 @@
         "inverted": true,
         "transforms": {
           "device": {
-            "x": 240,
-            "y": 900,
-            "width": 720,
-            "height": 1560,
+            "x": 250,
+            "y": 500,
+            "width": 700,
+            "height": 1120,
             "rotation": 0,
             "zIndex": 3
           }
@@ -250,10 +250,10 @@
         "screenshot": "/screenshots/android/phone/en/04.png",
         "transforms": {
           "device": {
-            "x": 240,
-            "y": 300,
-            "width": 720,
-            "height": 1560,
+            "x": 250,
+            "y": 160,
+            "width": 700,
+            "height": 1120,
             "rotation": 0,
             "zIndex": 3
           }
@@ -261,7 +261,7 @@
       },
       {
         "id": "s_pxlpals_t7_5",
-        "layout": "no-device",
+        "layout": "device-bottom",
         "label": {
           "en": "ALWAYS WITH YOU"
         },
@@ -270,13 +270,13 @@
         },
         "screenshot": "/screenshots/android/phone/en/08.png",
         "transforms": {
-          "caption": {
-            "x": 100,
-            "y": 150,
-            "width": 1000,
-            "height": 900,
+          "device": {
+            "x": 250,
+            "y": 500,
+            "width": 700,
+            "height": 1120,
             "rotation": 0,
-            "zIndex": 1
+            "zIndex": 3
           }
         }
       }
@@ -294,10 +294,10 @@
         "screenshot": "/screenshots/android/phone/en/01.png",
         "transforms": {
           "device": {
-            "x": 400,
-            "y": 1300,
-            "width": 800,
-            "height": 1733,
+            "x": 350,
+            "y": 800,
+            "width": 900,
+            "height": 1440,
             "rotation": 0,
             "zIndex": 3
           }
@@ -315,10 +315,10 @@
         "screenshot": "/screenshots/android/phone/en/07.png",
         "transforms": {
           "device": {
-            "x": 400,
-            "y": 500,
-            "width": 800,
-            "height": 1733,
+            "x": 350,
+            "y": 200,
+            "width": 900,
+            "height": 1440,
             "rotation": 0,
             "zIndex": 3
           }
@@ -337,10 +337,10 @@
         "inverted": true,
         "transforms": {
           "device": {
-            "x": 400,
-            "y": 1300,
-            "width": 800,
-            "height": 1733,
+            "x": 350,
+            "y": 800,
+            "width": 900,
+            "height": 1440,
             "rotation": 0,
             "zIndex": 3
           }
@@ -358,10 +358,10 @@
         "screenshot": "/screenshots/android/phone/en/04.png",
         "transforms": {
           "device": {
-            "x": 400,
-            "y": 500,
-            "width": 800,
-            "height": 1733,
+            "x": 350,
+            "y": 200,
+            "width": 900,
+            "height": 1440,
             "rotation": 0,
             "zIndex": 3
           }
@@ -369,7 +369,7 @@
       },
       {
         "id": "s_pxlpals_t10_5",
-        "layout": "no-device",
+        "layout": "device-bottom",
         "label": {
           "en": "ALWAYS WITH YOU"
         },
@@ -378,13 +378,13 @@
         },
         "screenshot": "/screenshots/android/phone/en/08.png",
         "transforms": {
-          "caption": {
-            "x": 150,
-            "y": 200,
-            "width": 1300,
-            "height": 1100,
+          "device": {
+            "x": 350,
+            "y": 800,
+            "width": 900,
+            "height": 1440,
             "rotation": 0,
-            "zIndex": 1
+            "zIndex": 3
           }
         }
       }
@@ -402,10 +402,10 @@
         "screenshot": "/screenshots/android/phone/en/01.png",
         "transforms": {
           "device": {
-            "x": 640,
-            "y": 60,
-            "width": 240,
-            "height": 520,
+            "x": 660,
+            "y": 30,
+            "width": 200,
+            "height": 433,
             "rotation": 0,
             "zIndex": 3
           }
