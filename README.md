@@ -1,4 +1,4 @@
-# ScreenPets
+# PixelPals
 
 [Español](#español) | [English](#english)
 
@@ -8,7 +8,7 @@ Privacy Policy / Politica de Privacidad: [PRIVACY_POLICY.md](PRIVACY_POLICY.md)
 
 ## Español
 
-ScreenPets es una app Android de mascotas virtuales flotantes que viven sobre la pantalla mediante una superposición (overlay).  
+PixelPals es una app Android de mascotas virtuales flotantes que viven sobre la pantalla mediante una superposición (overlay).  
 Cada mascota tiene lógica de movimiento propia, animaciones, interacción táctil y progreso persistente.
 
 ### Características principales
@@ -30,10 +30,10 @@ Cada mascota tiene lógica de movimiento propia, animaciones, interacción táct
 
 ### Estructura del proyecto
 
-- `app/src/main/java/com/screenpets/app/`: Activities, `PetService`, `PetView`, progreso y flujo principal.
-- `app/src/main/java/com/screenpets/app/behavior/`: lógica por mascota (`Bloop`, `NubeMichi`, `Ginger`, `Jelly`, `Duck`, etc.).
-- `app/src/main/java/com/screenpets/app/database/`: entidades Room y DAOs del álbum de tesoros.
-- `app/src/main/java/com/screenpets/app/launcher/`: utilidades de movimiento y soporte auxiliar del launcher.
+- `app/src/main/java/com/PixelPals/app/`: Activities, `PetService`, `PetView`, progreso y flujo principal.
+- `app/src/main/java/com/PixelPals/app/behavior/`: lógica por mascota (`Bloop`, `NubeMichi`, `Ginger`, `Jelly`, `Duck`, etc.).
+- `app/src/main/java/com/PixelPals/app/database/`: entidades Room y DAOs del álbum de tesoros.
+- `app/src/main/java/com/PixelPals/app/launcher/`: utilidades de movimiento y soporte auxiliar del launcher.
 - `app/src/main/res/`: recursos visuales, drawables y layouts.
 
 ### Versiones publicadas (referencia)
@@ -108,7 +108,7 @@ Mejoras incrementales en V1.1+.
 
 ## English
 
-ScreenPets is an Android virtual pet app that displays floating pets on top of other apps using an overlay.  
+PixelPals is an Android virtual pet app that displays floating pets on top of other apps using an overlay.  
 Each pet has its own movement logic, animation set, touch interactions, and persistent progression.
 
 ### Main features
@@ -130,10 +130,10 @@ Each pet has its own movement logic, animation set, touch interactions, and pers
 
 ### Project structure
 
-- `app/src/main/java/com/screenpets/app/`: Activities, `PetService`, `PetView`, progress, and main flow.
-- `app/src/main/java/com/screenpets/app/behavior/`: per-pet behavior logic (`Bloop`, `NubeMichi`, `Ginger`, `Jelly`, `Duck`, etc.).
-- `app/src/main/java/com/screenpets/app/database/`: Room entities and DAOs for treasure album.
-- `app/src/main/java/com/screenpets/app/launcher/`: launcher helpers and auxiliary movement support.
+- `app/src/main/java/com/PixelPals/app/`: Activities, `PetService`, `PetView`, progress, and main flow.
+- `app/src/main/java/com/PixelPals/app/behavior/`: per-pet behavior logic (`Bloop`, `NubeMichi`, `Ginger`, `Jelly`, `Duck`, etc.).
+- `app/src/main/java/com/PixelPals/app/database/`: Room entities and DAOs for treasure album.
+- `app/src/main/java/com/PixelPals/app/launcher/`: launcher helpers and auxiliary movement support.
 - `app/src/main/res/`: visual resources, drawables, and layouts.
 
 ### Published versions (reference)
