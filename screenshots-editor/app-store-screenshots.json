@@ -22,18 +22,26 @@
         "headline": {
           "en": "A pet that\nlives on\nyour screen"
         },
-        "screenshot": "/screenshots/android/phone/en/01.png",
-        "inverted": true,
+        "screenshot": "/screenshots/android/phone/en/06.png",
         "transforms": {
+          "caption": {
+            "x": 86,
+            "y": 80,
+            "width": 907,
+            "height": 430,
+            "rotation": 0,
+            "zIndex": 4
+          },
           "device": {
-            "x": 215,
-            "y": 470,
-            "width": 650,
-            "height": 1408,
+            "x": 240,
+            "y": 560,
+            "width": 600,
+            "height": 1300,
             "rotation": 0,
             "zIndex": 3
           }
-        }
+        },
+        "inverted": true
       },
       {
         "id": "s_pxlpals_02",
@@ -44,13 +52,21 @@
         "headline": {
           "en": "Eight pals,\none is yours"
         },
-        "screenshot": "/screenshots/android/phone/en/06.png",
+        "screenshot": "/screenshots/android/phone/en/04.png",
         "transforms": {
+          "caption": {
+            "x": 86,
+            "y": 1420,
+            "width": 907,
+            "height": 420,
+            "rotation": 0,
+            "zIndex": 4
+          },
           "device": {
-            "x": 230,
-            "y": 160,
-            "width": 620,
-            "height": 1343,
+            "x": 270,
+            "y": 150,
+            "width": 540,
+            "height": 1170,
             "rotation": 0,
             "zIndex": 3
           }
@@ -60,18 +76,26 @@
         "id": "s_pxlpals_03",
         "layout": "device-bottom",
         "label": {
-          "en": "CARE & GROW"
+          "en": "MAKE IT UNIQUE"
         },
         "headline": {
-          "en": "Every day\nyou grow closer"
+          "en": "Make them\nall your own"
         },
-        "screenshot": "/screenshots/android/phone/en/07.png",
+        "screenshot": "/screenshots/android/phone/en/03.png",
         "transforms": {
+          "caption": {
+            "x": 86,
+            "y": 90,
+            "width": 907,
+            "height": 400,
+            "rotation": 0,
+            "zIndex": 4
+          },
           "device": {
-            "x": 200,
-            "y": 400,
-            "width": 679,
-            "height": 1471,
+            "x": 240,
+            "y": 540,
+            "width": 600,
+            "height": 1300,
             "rotation": 0,
             "zIndex": 3
           }
@@ -81,23 +105,31 @@
         "id": "s_pxlpals_04",
         "layout": "device-top",
         "label": {
-          "en": "MAKE IT UNIQUE"
+          "en": "CARE & GROW"
         },
         "headline": {
-          "en": "Make them\nall your own"
+          "en": "Every day\nyou grow closer"
         },
-        "screenshot": "/screenshots/android/phone/en/03.png",
-        "inverted": true,
+        "screenshot": "/screenshots/android/phone/en/07.png",
         "transforms": {
+          "caption": {
+            "x": 86,
+            "y": 1420,
+            "width": 907,
+            "height": 420,
+            "rotation": 0,
+            "zIndex": 4
+          },
           "device": {
-            "x": 230,
-            "y": 160,
-            "width": 620,
-            "height": 1343,
+            "x": 270,
+            "y": 150,
+            "width": 540,
+            "height": 1170,
             "rotation": 0,
             "zIndex": 3
           }
-        }
+        },
+        "inverted": true
       },
       {
         "id": "s_pxlpals_05",
@@ -108,26 +140,34 @@
         "headline": {
           "en": "Every friend\nhas a story"
         },
-        "screenshot": "/screenshots/android/phone/en/04.png",
-        "screenshotSecondary": "/screenshots/android/phone/en/05.png",
+        "screenshot": "/screenshots/android/phone/en/05.png",
         "transforms": {
-          "device": {
-            "x": 70,
-            "y": 700,
-            "width": 540,
-            "height": 1170,
+          "caption": {
+            "x": 86,
+            "y": 90,
+            "width": 907,
+            "height": 380,
             "rotation": 0,
+            "zIndex": 4
+          },
+          "device": {
+            "x": 60,
+            "y": 850,
+            "width": 480,
+            "height": 1040,
+            "rotation": -5,
             "zIndex": 3
           },
           "deviceSecondary": {
-            "x": 550,
-            "y": 790,
-            "width": 480,
-            "height": 1040,
-            "rotation": 0,
-            "zIndex": 3
+            "x": 560,
+            "y": 930,
+            "width": 430,
+            "height": 932,
+            "rotation": 6,
+            "zIndex": 2
           }
-        }
+        },
+        "screenshotSecondary": "/screenshots/android/phone/en/06.png"
       },
       {
         "id": "s_pxlpals_06",
@@ -140,11 +180,19 @@
         },
         "screenshot": "/screenshots/android/phone/en/08.png",
         "transforms": {
+          "caption": {
+            "x": 86,
+            "y": 90,
+            "width": 907,
+            "height": 400,
+            "rotation": 0,
+            "zIndex": 4
+          },
           "device": {
-            "x": 200,
-            "y": 400,
-            "width": 679,
-            "height": 1471,
+            "x": 240,
+            "y": 540,
+            "width": 600,
+            "height": 1300,
             "rotation": 0,
             "zIndex": 3
           }
@@ -152,24 +200,25 @@
       },
       {
         "id": "s_pxlpals_07",
-        "layout": "device-bottom",
+        "layout": "no-device",
         "label": {
-          "en": "READY FOR ADVENTURE"
+          "en": "YOUR PET, YOUR RULES"
         },
         "headline": {
-          "en": "Your pet,\nanywhere you go"
+          "en": "Feed them\nPlay with them\nDress them up"
         },
-        "screenshot": "/screenshots/android/phone/en/01.png",
+        "screenshot": "",
         "transforms": {
-          "device": {
-            "x": 200,
-            "y": 400,
-            "width": 679,
-            "height": 1471,
+          "caption": {
+            "x": 86,
+            "y": 500,
+            "width": 907,
+            "height": 800,
             "rotation": 0,
-            "zIndex": 3
+            "zIndex": 4
           }
-        }
+        },
+        "inverted": true
       }
     ],
     "ipad": [],
@@ -183,13 +232,21 @@
         "headline": {
           "en": "A pet that\nlives on\nyour screen"
         },
-        "screenshot": "/screenshots/android/phone/en/01.png",
+        "screenshot": "/screenshots/android/phone/en/06.png",
         "transforms": {
+          "caption": {
+            "x": 96,
+            "y": 80,
+            "width": 1008,
+            "height": 380,
+            "rotation": 0,
+            "zIndex": 4
+          },
           "device": {
-            "x": 250,
+            "x": 260,
             "y": 500,
-            "width": 700,
-            "height": 1120,
+            "width": 680,
+            "height": 1088,
             "rotation": 0,
             "zIndex": 3
           }
@@ -199,18 +256,26 @@
         "id": "s_pxlpals_t7_2",
         "layout": "device-top",
         "label": {
-          "en": "CARE & GROW"
+          "en": "EIGHT PALS, ONE IS YOURS"
         },
         "headline": {
-          "en": "Every day\nyou grow closer"
+          "en": "Choose your\ncompanion"
         },
-        "screenshot": "/screenshots/android/phone/en/07.png",
+        "screenshot": "/screenshots/android/phone/en/04.png",
         "transforms": {
+          "caption": {
+            "x": 96,
+            "y": 1400,
+            "width": 1008,
+            "height": 440,
+            "rotation": 0,
+            "zIndex": 4
+          },
           "device": {
-            "x": 250,
-            "y": 160,
-            "width": 700,
-            "height": 1120,
+            "x": 290,
+            "y": 150,
+            "width": 620,
+            "height": 992,
             "rotation": 0,
             "zIndex": 3
           }
@@ -226,13 +291,20 @@
           "en": "Make them\nall your own"
         },
         "screenshot": "/screenshots/android/phone/en/03.png",
-        "inverted": true,
         "transforms": {
+          "caption": {
+            "x": 96,
+            "y": 80,
+            "width": 1008,
+            "height": 380,
+            "rotation": 0,
+            "zIndex": 4
+          },
           "device": {
-            "x": 250,
+            "x": 260,
             "y": 500,
-            "width": 700,
-            "height": 1120,
+            "width": 680,
+            "height": 1088,
             "rotation": 0,
             "zIndex": 3
           }
@@ -242,18 +314,26 @@
         "id": "s_pxlpals_t7_4",
         "layout": "device-top",
         "label": {
-          "en": "UNLOCK THE CREW"
+          "en": "CARE & GROW"
         },
         "headline": {
-          "en": "Every friend\nhas a story"
+          "en": "Every day\nyou grow closer"
         },
-        "screenshot": "/screenshots/android/phone/en/04.png",
+        "screenshot": "/screenshots/android/phone/en/07.png",
         "transforms": {
+          "caption": {
+            "x": 96,
+            "y": 1400,
+            "width": 1008,
+            "height": 440,
+            "rotation": 0,
+            "zIndex": 4
+          },
           "device": {
-            "x": 250,
-            "y": 160,
-            "width": 700,
-            "height": 1120,
+            "x": 290,
+            "y": 150,
+            "width": 620,
+            "height": 992,
             "rotation": 0,
             "zIndex": 3
           }
@@ -270,11 +350,19 @@
         },
         "screenshot": "/screenshots/android/phone/en/08.png",
         "transforms": {
+          "caption": {
+            "x": 96,
+            "y": 80,
+            "width": 1008,
+            "height": 380,
+            "rotation": 0,
+            "zIndex": 4
+          },
           "device": {
-            "x": 250,
+            "x": 260,
             "y": 500,
-            "width": 700,
-            "height": 1120,
+            "width": 680,
+            "height": 1088,
             "rotation": 0,
             "zIndex": 3
           }
@@ -291,13 +379,21 @@
         "headline": {
           "en": "A pet that\nlives on\nyour screen"
         },
-        "screenshot": "/screenshots/android/phone/en/01.png",
+        "screenshot": "/screenshots/android/phone/en/06.png",
         "transforms": {
+          "caption": {
+            "x": 128,
+            "y": 100,
+            "width": 1344,
+            "height": 500,
+            "rotation": 0,
+            "zIndex": 4
+          },
           "device": {
-            "x": 350,
-            "y": 800,
-            "width": 900,
-            "height": 1440,
+            "x": 360,
+            "y": 700,
+            "width": 880,
+            "height": 1408,
             "rotation": 0,
             "zIndex": 3
           }
@@ -307,18 +403,26 @@
         "id": "s_pxlpals_t10_2",
         "layout": "device-top",
         "label": {
-          "en": "CARE & GROW"
+          "en": "EIGHT PALS, ONE IS YOURS"
         },
         "headline": {
-          "en": "Every day\nyou grow closer"
+          "en": "Choose your\ncompanion"
         },
-        "screenshot": "/screenshots/android/phone/en/07.png",
+        "screenshot": "/screenshots/android/phone/en/04.png",
         "transforms": {
+          "caption": {
+            "x": 128,
+            "y": 1860,
+            "width": 1344,
+            "height": 560,
+            "rotation": 0,
+            "zIndex": 4
+          },
           "device": {
-            "x": 350,
+            "x": 400,
             "y": 200,
-            "width": 900,
-            "height": 1440,
+            "width": 800,
+            "height": 1280,
             "rotation": 0,
             "zIndex": 3
           }
@@ -334,13 +438,20 @@
           "en": "Make them\nall your own"
         },
         "screenshot": "/screenshots/android/phone/en/03.png",
-        "inverted": true,
         "transforms": {
+          "caption": {
+            "x": 128,
+            "y": 100,
+            "width": 1344,
+            "height": 500,
+            "rotation": 0,
+            "zIndex": 4
+          },
           "device": {
-            "x": 350,
-            "y": 800,
-            "width": 900,
-            "height": 1440,
+            "x": 360,
+            "y": 700,
+            "width": 880,
+            "height": 1408,
             "rotation": 0,
             "zIndex": 3
           }
@@ -350,18 +461,26 @@
         "id": "s_pxlpals_t10_4",
         "layout": "device-top",
         "label": {
-          "en": "UNLOCK THE CREW"
+          "en": "CARE & GROW"
         },
         "headline": {
-          "en": "Every friend\nhas a story"
+          "en": "Every day\nyou grow closer"
         },
-        "screenshot": "/screenshots/android/phone/en/04.png",
+        "screenshot": "/screenshots/android/phone/en/07.png",
         "transforms": {
+          "caption": {
+            "x": 128,
+            "y": 1860,
+            "width": 1344,
+            "height": 560,
+            "rotation": 0,
+            "zIndex": 4
+          },
           "device": {
-            "x": 350,
+            "x": 400,
             "y": 200,
-            "width": 900,
-            "height": 1440,
+            "width": 800,
+            "height": 1280,
             "rotation": 0,
             "zIndex": 3
           }
@@ -378,11 +497,19 @@
         },
         "screenshot": "/screenshots/android/phone/en/08.png",
         "transforms": {
+          "caption": {
+            "x": 128,
+            "y": 100,
+            "width": 1344,
+            "height": 500,
+            "rotation": 0,
+            "zIndex": 4
+          },
           "device": {
-            "x": 350,
-            "y": 800,
-            "width": 900,
-            "height": 1440,
+            "x": 360,
+            "y": 700,
+            "width": 880,
+            "height": 1408,
             "rotation": 0,
             "zIndex": 3
           }
@@ -397,7 +524,7 @@
           "en": "PIXELPALS"
         },
         "headline": {
-          "en": "A pet that lives\non your screen"
+          "en": "A pet that\nlives on\nyour screen"
         },
         "screenshot": "/screenshots/android/phone/en/01.png",
         "transforms": {
