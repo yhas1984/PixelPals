@@ -113,7 +113,7 @@ class DuckBehavior(
                 bridge.animOffsetY = abs(sin(time * 8.5f)) * 2f
                 bridge.animRotation = facingDir * sin(time * 6f) * 1.5f
 
-                if (random.nextFloat() < 0.0014f) {
+                if (random.nextFloat() < 0.0004f) {
                     mode = DuckMode.QUACK
                     modeTimer = 0f
                 } else if (t >= 1f) startSwim()
@@ -206,7 +206,7 @@ class DuckBehavior(
             }
         }
 
-        if (random.nextFloat() < 0.0018f) {
+        if (random.nextFloat() < 0.0004f) {
             bridge.showBubble("cuac")
         }
     }

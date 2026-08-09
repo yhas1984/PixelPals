@@ -28,7 +28,7 @@ class BloopBehavior(bridge: PetViewBridge, override val random: PetRandom) : Bas
     private enum class Mode { FLOAT_VISIBLE, DISAPPEAR, ALERT, ESCAPING }
     private var mode = Mode.FLOAT_VISIBLE
 
-    private var disappearCountdown = 5f
+    private var disappearCountdown = 8f
     private var disappearRemaining = 0f
 
     private var alertRemaining = 0f
@@ -137,11 +137,10 @@ class BloopBehavior(bridge: PetViewBridge, override val random: PetRandom) : Bas
                     bridge.animAlpha = 1f
                     bridge.currentFrame = 0
                     decisionTimer = 0f
-                    // Ciclo: transparente 1s y vuelve a flotar 4s => cada 5s inicia otra desaparición
-                    disappearCountdown = 4f
+                    // Ciclo: transparente 1s y vuelve a flotar 7s => cada 8s inicia otra desaparición
+                    disappearCountdown = 7f
                     // Lockout tras reaparecer para que no salte alerta inmediatamente
                     alertCooldown = maxOf(alertCooldown, 4.5f)
-                    bridge.showBubble("...")
                 }
             }
 

@@ -82,7 +82,7 @@ class ImpBehavior(bridge: PetViewBridge, override val random: PetRandom) : BaseB
         velY = -getBaseSpeed()
         bridge.animRotation = if (isRight) -90f else 90f
         bridge.animScaleX = if (isRight) 1f else -1f 
-        bridge.showBubble("😈攀")
+        bridge.showBubble("😈")
     }
 
     private fun updateClimbing(dt: Float) {
