@@ -19,3 +19,6 @@ venv/
 # Python
 __pycache__/
 *.pyc
+
+# Planes y notas locales del agente
+/.hermes/

@@ -14,6 +14,7 @@ import android.view.MotionEvent
 import android.view.VelocityTracker
 import android.view.View
 import android.view.ViewConfiguration
+import android.view.WindowInsets
 import android.view.WindowManager
 import androidx.core.content.ContextCompat
 import com.pixelpals.app.core.analytics.AnalyticsTracker
@@ -85,6 +86,62 @@ class PetView(
     )
     override val petPersonality: PetPersonality = repository.getPersonality(petType)
 
+    /**
+     * Normaliza el tamaño visible de todos los pets al de Moki (referencia):
+     * cada sprite ocupa un % distinto del alto de su frame (Moki perch 80%,
+     * Corgi idle 81%, Jelly idle 62%...), así que sin esto se ven de tamaños
+     * distintos en pantalla. Factor = occMoki / occIdleDelPet (0.802 / occ).
+     * Solo afecta al DIBUJO. Ocupaciones medidas con bbox de alfa (PIL).
+     */
+    override val spriteScale: Float = when (petType) {
+        PetType.MOKI -> 1.000f          // referencia: idle perch 0.802
+        PetType.CORGI -> 0.996f         // idle REST corgi_6 0.805 -> 0.802
+        PetType.JELLY -> 1.302f         // idle jelly_0 0.616 -> 0.802
+        PetType.BLOOP -> 1.112f         // idle fantasma_1 0.721 -> 0.802
+        PetType.NUBE_MICHI -> 1.149f    // idle gato_0 0.698 -> 0.802
+        PetType.ANGEL -> 0.875f         // hover/prayer (celda sheet) 0.917 -> 0.802
+        PetType.GINGER -> 0.875f        // sit/groom (celda sheet) 0.917 -> 0.802
+        PetType.DIABLILLO -> 0.929f     // idle 0.863 -> 0.802
+        PetType.PATITO -> 1.317f        // ciclo idle 0.36-0.60 (irregular por diseño)
+    }
+
+    /**
+     * Fracción de contenido del frame IDLE de cada pet (medida con bbox de alfa).
+     * Referencia para la normalización por frame: ningún frame se dibuja más alto
+     * que el idle (los estiramientos se comprimen; las posturas bajas se mantienen).
+     */
+    override val spriteIdleContentFraction: Float = when (petType) {
+        PetType.MOKI -> 0.8021f         // perch (idx 0)
+        PetType.CORGI -> 0.8047f        // REST (idx 6)
+        PetType.JELLY -> 0.6159f        // idle blob (idx 0)
+        PetType.BLOOP -> 0.7214f        // flotando (idx 0)
+        PetType.NUBE_MICHI -> 0.6979f   // flotando (idx 0)
+        PetType.ANGEL -> 0.9167f        // hover (idx 0)
+        PetType.GINGER -> 0.9167f       // sit (idx 0)
+        PetType.DIABLILLO -> 0.875f     // idle (idx 0)
+        PetType.PATITO -> 0.5951f       // ciclo natación (idx 0)
+    }
+
+    /**
+     * Fracción de contenido (alto) de cada frame, índice = frame del pet.
+     * Medidas PIL sobre los assets actuales (ver tools/normalize_frames.py).
+     * Se usa junto a [spriteIdleContentFraction] para que los frames de animación
+     * "estirados" (jelly al interactuar, patito frames 4/9, corgi caminando) no se
+     * dibujen más altos que el idle. Las posturas bajas (squash, sniff, dormir,
+     * gatear) se mantienen a su tamaño natural.
+     */
+    override val spriteFrameContentFractions: FloatArray = when (petType) {
+        PetType.CORGI -> floatArrayOf(0.7018f, 0.7018f, 0.6693f, 0.4818f, 0.737f, 0.7096f, 0.8047f, 0.8047f, 0.7943f, 0.5807f, 0.8099f, 0.8542f, 0.7956f, 0.8281f)
+        PetType.JELLY -> floatArrayOf(0.6159f, 0.3581f, 0.4661f, 0.6797f, 0.6276f, 0.6263f, 0.9219f, 0.9232f)
+        PetType.BLOOP -> floatArrayOf(0.7214f, 0.7083f, 0.6016f, 0.8451f, 0.7227f, 0.7227f, 0.6758f)
+        PetType.NUBE_MICHI -> floatArrayOf(0.6979f, 0.6576f, 0.7083f, 0.7578f, 0.444f, 0.7685f, 0.526f, 0.5339f, 0.4661f, 0.5638f, 0.4896f)
+        PetType.PATITO -> floatArrayOf(0.5951f, 0.5846f, 0.4609f, 0.3594f, 0.7982f, 0.6419f, 0.7031f, 0.681f, 0.6823f, 0.7982f)
+        PetType.DIABLILLO -> floatArrayOf(0.875f, 0.8568f, 0.875f, 0.8607f, 0.862f, 0.8529f, 0.8503f, 0.8646f, 0.8646f, 0.8672f)
+        PetType.MOKI -> floatArrayOf(0.8021f, 0.8021f, 0.8021f, 0.8021f, 0.4401f, 0.4193f, 0.4167f, 0.4271f, 0.362f, 0.5651f, 0.7292f, 0.7292f, 0.8021f, 0.4583f, 0.3281f, 0.3411f, 0.8021f, 0.4427f, 0.8021f, 0.3568f)
+        PetType.ANGEL -> floatArrayOf(0.9167f, 0.9167f, 0.9167f, 0.7891f, 0.9167f, 0.9167f, 0.7266f, 0.8802f, 0.9167f, 0.9167f, 0.9167f, 0.9167f, 0.9167f, 0.8724f, 0.9167f, 0.9167f)
+        PetType.GINGER -> floatArrayOf(0.9167f, 0.9167f, 0.5703f, 0.6484f, 0.6536f, 0.6615f, 0.6667f, 0.6615f, 0.2682f, 0.3229f, 0.2812f, 0.3542f, 0.4531f, 0.4245f, 0.6432f, 0.5365f)
+    }
+
     /** Cosmético equipado de este pet (efectos que envuelven, sin alineación). */
     private var equippedCosmetic: com.pixelpals.app.data.catalog.Cosmetic? = null
     private var cosmeticClock = 0f
@@ -103,6 +160,9 @@ class PetView(
     override var velocityY = 0f
     override var windowX: Int = 0
     override var windowY: Int = 0
+
+    override var topSystemInsetPx: Int = 0
+    override var bottomSystemInsetPx: Int = 0
 
     // Emoji bubble (emoticons de avisos/interacción).
     private var bubbleText: String? = null
@@ -576,7 +636,7 @@ class PetView(
                 // toques cerca del sprite para no bloquear la app de debajo.
                 val dx = event.x - width / 2f
                 val dy = event.y - height / 2f
-                val touchRadius = petSpriteSize * 0.55f
+                val touchRadius = petSpriteSize * spriteScale * 0.55f
                 if (dx * dx + dy * dy > touchRadius * touchRadius) return false
 
                 if (behavior?.onTouchDown(event.rawX, event.rawY) == true) return true
@@ -678,14 +738,19 @@ class PetView(
     private fun refreshScreenMetrics() {
         val wm = context.getSystemService(Context.WINDOW_SERVICE) as? WindowManager ?: return
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            val bounds = wm.currentWindowMetrics.bounds
-            screenWidth = bounds.width()
-            screenHeight = bounds.height()
+            val metrics = wm.currentWindowMetrics
+            screenWidth = metrics.bounds.width()
+            screenHeight = metrics.bounds.height()
+            val bars = metrics.windowInsets.getInsets(WindowInsets.Type.systemBars())
+            topSystemInsetPx = bars.top
+            bottomSystemInsetPx = bars.bottom
         } else {
             @Suppress("DEPRECATION")
             val metrics = DisplayMetrics().also { wm.defaultDisplay.getMetrics(it) }
             screenWidth = metrics.widthPixels
             screenHeight = metrics.heightPixels
+            topSystemInsetPx = 0
+            bottomSystemInsetPx = 0
         }
     }
 }

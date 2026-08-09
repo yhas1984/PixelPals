@@ -423,10 +423,25 @@ abstract class BaseBehavior(
         canvas.translate(cx + bridge.renderOffsetX, cy + bridge.renderOffsetY)
         canvas.rotate(bridge.renderRotation)
         canvas.scale(bridge.renderScaleX, bridge.renderScaleY)
+        // Tamaño de DIBUJO normalizado (todos los pets visibles al tamaño de Moki).
+        // Normalización por frame: los frames "estirados" (contenido más alto que
+        // el idle) se comprimen al alto del idle; los bajos (squash, sniff, dormir,
+        // gatear) se mantienen a su tamaño natural. Así ningún frame se dibuja más
+        // alto que la referencia y las posturas bajas siguen leyéndose como bajas.
+        val frameFrac = if (frameIdx >= 0 && frameIdx < bridge.spriteFrameContentFractions.size) {
+            bridge.spriteFrameContentFractions[frameIdx]
+        } else {
+            0f
+        }
+        val frameScale = if (frameFrac > 0f && bridge.spriteIdleContentFraction > 0f) {
+            (bridge.spriteIdleContentFraction / frameFrac).coerceAtMost(1f)
+        } else {
+            1f
+        }
+        val halfSize = bridge.petSpriteSize * bridge.spriteScale * frameScale / 2f
         when {
-            bitmap != null -> canvas.drawBitmap(bitmap, -bitmap.width / 2f, -bitmap.height / 2f, paint)
+            bitmap != null -> canvas.drawBitmap(bitmap, null, RectF(-halfSize, -halfSize, halfSize, halfSize), paint)
             spriteSheet != null && srcRect != null -> {
-                val halfSize = bridge.petSpriteSize / 2f
                 val dstRect = RectF(-halfSize, -halfSize, halfSize, halfSize)
                 val bleedInset = spriteBleedInsetPx.coerceAtLeast(0)
                 val insetSrcRect = Rect(

@@ -134,6 +134,9 @@ class PetBehaviorSmokeTest {
         override val screenWidth: Int = 1_080
         override val screenHeight: Int = 2_400
         override val petSpriteSize: Int = 80
+        override val spriteScale: Float = 1f
+        override val spriteIdleContentFraction: Float = 1f
+        override val spriteFrameContentFractions: FloatArray = floatArrayOf(1f)
         override val groundY: Int = screenHeight - petSpriteSize
         override val petStatus = PetStatusSnapshot(
             petId = petType.name.lowercase(),
