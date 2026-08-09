@@ -239,4 +239,5 @@
     <string name="store_equip_button">Equip</string>
     <string name="store_equipped_button">Equipped</string>
     <string name="cosmetic_unlocked_toast">%1$s unlocked!</string>
+    <string name="cosmetic_price_format">🪙 %1$d coins</string>
 </resources>

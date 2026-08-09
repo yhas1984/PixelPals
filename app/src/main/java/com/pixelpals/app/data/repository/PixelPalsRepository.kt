@@ -27,6 +27,10 @@ class PixelPalsRepository(context: Context) {
     private val appContext: Context = context.applicationContext
     private val db = AppDatabase.getDatabase(appContext)
     private val cosmeticPrefs = appContext.getSharedPreferences("pixelpals_cosmetics", Context.MODE_PRIVATE)
+    private val coinPrefs = appContext.getSharedPreferences("pixelpals_coins", Context.MODE_PRIVATE)
+
+    /** Monedero GLOBAL: las monedas son del jugador, no del pet (v1.6+). */
+    private val walletId = "wallet"
 
     private val premiumPetProductIds = mapOf(
         PetType.ANGEL to "pet_angel_premium",
@@ -48,15 +52,16 @@ class PixelPalsRepository(context: Context) {
     suspend fun isCosmeticOwned(productId: String): Boolean =
         db.ownedProductDao().getByProductId(productId) != null
 
-    /** Compra un cosmético con monedas blandas. Devuelve true si se completó. */
+    /** Compra un cosmético con monedas del MONEDERO GLOBAL. Devuelve true si se completó. */
     suspend fun purchaseCosmeticWithCoins(petId: String, cosmeticId: String): Boolean {
+        ensureWalletMigrated()
         val cosmetic = com.pixelpals.app.data.catalog.CosmeticCatalog.findById(appContext, cosmeticId)
             ?: return false
         val price = cosmetic.coinPrice ?: return false
         return db.withTransaction {
-            val bond = ensureBondEntity(petId)
-            if (bond.softCurrency < price) return@withTransaction false
-            db.petBondDao().upsert(bond.copy(softCurrency = bond.softCurrency - price))
+            val wallet = ensureBondEntity(walletId)
+            if (wallet.softCurrency < price) return@withTransaction false
+            db.petBondDao().upsert(wallet.copy(softCurrency = wallet.softCurrency - price))
             db.ownedProductDao().upsert(
                 com.pixelpals.app.database.OwnedProductEntity(
                     productId = cosmetic.productId,
@@ -267,30 +272,51 @@ class PixelPalsRepository(context: Context) {
     }
 
     /**
-     * Otorga monedas al pet activo. Si [petType] es null, se suman al "wallet global" del primer pet.
+     * Otorga monedas al MONEDERO GLOBAL (las monedas son del jugador, no del pet).
+     * El parámetro [petType] se conserva por compatibilidad de llamadas.
      */
     suspend fun grantCoins(petType: PetType?, amount: Int) {
-        val petId = petType?.let { petIdOf(it) } ?: "wallet"
-        val bond = ensureBondEntity(petId)
+        ensureWalletMigrated()
+        val bond = ensureBondEntity(walletId)
         db.petBondDao().upsert(bond.copy(softCurrency = bond.softCurrency + amount))
     }
 
     /**
-     * Compra un pack de monedas (IAP real).
+     * Compra un pack de monedas (IAP real): las monedas van al monedero global.
      */
     suspend fun grantCoinPack(coinProduct: com.pixelpals.app.data.catalog.CoinProduct, petType: PetType?, source: String) {
+        ensureWalletMigrated()
         db.withTransaction {
             grantOwnedProduct(coinProduct.productId, source)
-            val petId = petType?.let { petIdOf(it) } ?: "wallet"
-            val bond = ensureBondEntity(petId)
+            val bond = ensureBondEntity(walletId)
             db.petBondDao().upsert(bond.copy(softCurrency = bond.softCurrency + coinProduct.coinAmount))
         }
     }
 
-    /** Lee el balance de monedas del pet. */
+    /** Lee el balance del MONEDERO GLOBAL. */
     suspend fun getCoinBalance(petType: PetType?): Int {
-        val petId = petType?.let { petIdOf(it) } ?: "wallet"
-        return ensureBondEntity(petId).softCurrency
+        ensureWalletMigrated()
+        return ensureBondEntity(walletId).softCurrency
+    }
+
+    /**
+     * Fusión ÚNICA (v1.6): las monedas guardadas por pet (bug anterior) se
+     * suman al monedero global y los saldos por pet se ponen a 0.
+     * Idempotente vía flag en preferencias.
+     */
+    private suspend fun ensureWalletMigrated() {
+        val key = "coins_wallet_migrated_v1"
+        if (coinPrefs.getBoolean(key, false)) return
+        db.withTransaction {
+            val bonds = db.petBondDao().getAll()
+            val total = bonds.filter { it.petId != walletId }.sumOf { it.softCurrency }
+            bonds.filter { it.petId != walletId && it.softCurrency > 0 }.forEach {
+                db.petBondDao().upsert(it.copy(softCurrency = 0))
+            }
+            val wallet = db.petBondDao().getByPetId(walletId) ?: PetBondEntity(petId = walletId)
+            db.petBondDao().upsert(wallet.copy(softCurrency = wallet.softCurrency + total))
+        }
+        coinPrefs.edit().putBoolean(key, true).apply()
     }
 
     fun getPersonality(petType: PetType): PetPersonality {
@@ -342,12 +368,15 @@ class PixelPalsRepository(context: Context) {
         }
         db.petBondDao().upsert(
             bond.copy(
-                softCurrency = bond.softCurrency + reward,
                 careStreakDays = streak,
                 lastCheckInDay = if (taskId == "check_in") dayKey else bond.lastCheckInDay,
                 lastDailyCompletionDay = lastCompletionDay
             )
         )
+        // La recompensa en monedas va al MONEDERO GLOBAL (v1.6+).
+        ensureWalletMigrated()
+        val wallet = ensureBondEntity(walletId)
+        db.petBondDao().upsert(wallet.copy(softCurrency = wallet.softCurrency + reward))
     }
 
     private suspend fun applyMutation(

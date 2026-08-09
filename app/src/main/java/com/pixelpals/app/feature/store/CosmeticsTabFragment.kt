@@ -77,9 +77,16 @@ class CosmeticsTabFragment : Fragment() {
         card.findViewById<TextView>(R.id.txtCosmeticTitle).text = cosmetic.displayName
         card.findViewById<TextView>(R.id.txtCosmeticSubtitle).text = cosmetic.description
 
+        val priceText = card.findViewById<TextView>(R.id.txtCosmeticPrice)
         val btn = card.findViewById<Button>(R.id.btnCosmeticAction)
         val owned = cosmetic.productId in ownedIds
         val isEquipped = equippedId == cosmetic.id
+        // Precio visible solo si aún no se ha comprado.
+        priceText.text = if (!owned && !isEquipped && cosmetic.coinPrice != null) {
+            getString(R.string.cosmetic_price_format, cosmetic.coinPrice)
+        } else {
+            ""
+        }
         btn.text = when {
             isEquipped -> getString(R.string.store_equipped_button)
             owned -> getString(R.string.store_equip_button)
