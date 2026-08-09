@@ -109,7 +109,7 @@ class PixelPalsRepository(context: Context) {
             ) {
                 return@withTransaction getStatusSnapshot(petId)
             }
-            val snapshot = applyMutation(petId) {
+            applyMutation(petId) {
                 copy(
                     energy = (energy + 2).coerceAtMost(100),
                     hunger = (hunger - 1).coerceAtLeast(0),
@@ -126,7 +126,9 @@ class PixelPalsRepository(context: Context) {
                     )
                 )
             )
-            snapshot
+            // Re-leer tras el upsert: el snapshot de applyMutation se construyó con el
+            // bond ANTES del +3, y el bond debe reflejarse en lo que ve el usuario.
+            getStatusSnapshot(petId)
         }
     }
 

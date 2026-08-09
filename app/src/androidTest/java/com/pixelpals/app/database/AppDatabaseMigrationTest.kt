@@ -25,7 +25,12 @@ class AppDatabaseMigrationTest {
         createV1Database(dbName).close()
 
         val db = Room.databaseBuilder(context, AppDatabase::class.java, dbName)
-            .addMigrations(AppDatabase.MIGRATION_1_2)
+            .addMigrations(
+                AppDatabase.MIGRATION_1_2,
+                AppDatabase.MIGRATION_2_3,
+                AppDatabase.MIGRATION_3_4,
+                AppDatabase.MIGRATION_4_5,
+            )
             .build()
 
         try {
@@ -37,7 +42,8 @@ class AppDatabaseMigrationTest {
             assertEquals(1, queryCount(db.openHelper.writableDatabase, "pet_bond"))
             assertEquals(1, queryCount(db.openHelper.writableDatabase, "daily_task_state"))
             assertEquals(1, queryCount(db.openHelper.writableDatabase, "owned_product"))
-            assertEquals(1, queryCount(db.openHelper.writableDatabase, "equipped_accessory"))
+            // v4->v5 eliminó el sistema de accesorios (reemplazado por cosméticos en prefs).
+            assertEquals(0, queryCount(db.openHelper.writableDatabase, "equipped_accessory"))
         } finally {
             db.close()
             context.deleteDatabase(dbName)
@@ -51,7 +57,11 @@ class AppDatabaseMigrationTest {
         createV2Database(dbName).close()
 
         val db = Room.databaseBuilder(context, AppDatabase::class.java, dbName)
-            .addMigrations(AppDatabase.MIGRATION_2_3, AppDatabase.MIGRATION_3_4)
+            .addMigrations(
+                AppDatabase.MIGRATION_2_3,
+                AppDatabase.MIGRATION_3_4,
+                AppDatabase.MIGRATION_4_5,
+            )
             .build()
 
         try {
