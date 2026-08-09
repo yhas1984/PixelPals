@@ -214,13 +214,16 @@ class JellyBehavior(
         params.y = meltY.roundToInt()
         bridge.updateWindowLayout(params)
 
+        // Frames 6/7: poses de APLASTADO (slime plano al tocarlo). El canvas
+        // hace un squish suave para que el aplastado "respire" (sin llegar a
+        // deformar las caras nuevas).
         bridge.currentFrame = if (((interactionTimer / 0.22f).toInt() % 2) == 0) 6 else 7
         val wobble = abs(sin(interactionTimer * 4.1f))
-        bridge.animScaleY = 0.52f + wobble * 0.18f
-        bridge.animScaleX = 1.34f - wobble * 0.18f
-        bridge.animOffsetX = sin(interactionTimer * 6.4f) * 6f
-        bridge.animOffsetY = sin(interactionTimer * 4.8f) * 4f
-        bridge.animRotation = sin(interactionTimer * 2.8f) * 9f
+        bridge.animScaleY = 0.72f + wobble * 0.20f
+        bridge.animScaleX = 1.08f - wobble * 0.14f
+        bridge.animOffsetX = sin(interactionTimer * 6.4f) * 4f
+        bridge.animOffsetY = sin(interactionTimer * 4.8f) * 3f
+        bridge.animRotation = sin(interactionTimer * 2.8f) * 6f
 
         if (interactionTimer > 1.75f) {
             bridge.state = PetState.IDLE

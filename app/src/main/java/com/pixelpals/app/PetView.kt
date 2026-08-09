@@ -132,7 +132,7 @@ class PetView(
      */
     override val spriteFrameContentFractions: FloatArray = when (petType) {
         PetType.CORGI -> floatArrayOf(0.7018f, 0.7018f, 0.6693f, 0.4818f, 0.737f, 0.7096f, 0.8047f, 0.8047f, 0.7943f, 0.5807f, 0.8099f, 0.8542f, 0.7956f, 0.8281f)
-        PetType.JELLY -> floatArrayOf(0.6159f, 0.3581f, 0.4661f, 0.6797f, 0.6276f, 0.6263f, 0.9219f, 0.9232f)
+        PetType.JELLY -> floatArrayOf(0.6159f, 0.3581f, 0.4661f, 0.6797f, 0.6276f, 0.6263f, 0.388f, 0.3958f)  // 6/7 = aplastado
         PetType.BLOOP -> floatArrayOf(0.7214f, 0.7083f, 0.6016f, 0.8451f, 0.7227f, 0.7227f, 0.6758f)
         PetType.NUBE_MICHI -> floatArrayOf(0.6979f, 0.6576f, 0.7083f, 0.7578f, 0.444f, 0.7685f, 0.526f, 0.5339f, 0.4661f, 0.5638f, 0.4896f)
         PetType.PATITO -> floatArrayOf(0.5951f, 0.5846f, 0.4609f, 0.3594f, 0.7982f, 0.6419f, 0.7031f, 0.681f, 0.6823f, 0.7982f)
