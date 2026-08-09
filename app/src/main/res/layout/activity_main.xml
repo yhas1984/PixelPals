@@ -25,7 +25,7 @@
             android:text="@string/app_name"
             android:textSize="40sp"
             android:textStyle="bold"
-            android:textColor="@color/text_on_accent"
+            android:textColor="@color/text_primary"
             android:fontFamily="sans-serif-black"
             android:letterSpacing="0.05" />
 
@@ -35,7 +35,7 @@
             android:layout_height="wrap_content"
             android:text="@string/subtitle"
             android:textSize="16sp"
-            android:textColor="#E9F4FF"
+            android:textColor="@color/text_secondary"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="40dp"
             android:gravity="center" />
@@ -96,7 +96,7 @@
                     android:id="@+id/iconOverlay"
                     android:layout_width="36dp"
                     android:layout_height="36dp"
-                    android:src="@android:drawable/ic_menu_view"
+                    android:src="@drawable/ic_perm_overlay"
                     android:contentDescription="@string/overlay_icon_desc" />
 
                 <LinearLayout
@@ -168,7 +168,7 @@
                     android:id="@+id/iconNotification"
                     android:layout_width="36dp"
                     android:layout_height="36dp"
-                    android:src="@android:drawable/ic_popup_reminder"
+                    android:src="@drawable/ic_perm_notification"
                     android:contentDescription="@string/notification_icon_desc" />
 
                 <LinearLayout
@@ -240,7 +240,7 @@
                     android:id="@+id/iconUsage"
                     android:layout_width="36dp"
                     android:layout_height="36dp"
-                    android:src="@android:drawable/ic_menu_sort_by_size"
+                    android:src="@drawable/ic_perm_usage"
                     android:contentDescription="@string/usage_icon_desc" />
 
                 <LinearLayout
