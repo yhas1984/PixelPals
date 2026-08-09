@@ -44,6 +44,8 @@ class PetService : Service() {
         private const val EXTRA_REFRESH_MESSAGE = "REFRESH_MESSAGE"
         private const val EXTRA_REFRESH_CELEBRATE = "REFRESH_CELEBRATE"
         private const val PET_SIZE_DP = 80
+        /** Tope defensivo: el view (2x el sprite) nunca supera este % del ancho de pantalla. */
+        private const val MAX_VIEW_SIZE_RATIO = 0.40f
         private const val HOME_POLL_INTERVAL_MS = 4_000L
         private const val HOME_POLL_INTERVAL_SLOW_MS = 60_000L
 
@@ -205,6 +207,10 @@ class PetService : Service() {
         // View 2x el pet: da espacio al aura (radio 0.85x) y a los floats (0.9x)
         // sin que se corten en el borde.
         val viewSize = (petSize * 2.0f).toInt()
+        // Tope defensivo: si PET_SIZE_DP crece demasiado, el view (2x el sprite)
+        // taparía la app de debajo. Nunca superamos el 40% del ancho de pantalla.
+        val maxViewSize = (metrics.widthPixels * MAX_VIEW_SIZE_RATIO).toInt()
+        val safeViewSize = minOf(viewSize, maxViewSize)
 
         petView = PetView(this, metrics.widthPixels, metrics.heightPixels, petSize, currentPetType)
 
@@ -212,15 +218,15 @@ class PetService : Service() {
         // adjustNothing: el sistema no debe panear/insetar la ventana cuando abre el teclado;
         // la mascota se reposiciona por nuestra cuenta según el IME.
         val params = WindowManager.LayoutParams(
-            viewSize,
-            viewSize,
+            safeViewSize,
+            safeViewSize,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             baseOverlayFlags,
             PixelFormat.TRANSPARENT
         ).apply {
             gravity = Gravity.TOP or Gravity.START
             softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING
-            x = metrics.widthPixels / 2 - viewSize / 2
+            x = metrics.widthPixels / 2 - safeViewSize / 2
             y = metrics.heightPixels / 3
         }
         try {
