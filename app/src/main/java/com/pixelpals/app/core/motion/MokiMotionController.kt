@@ -34,7 +34,8 @@ internal data class MokiPose(
 
 internal class MokiMotionController(
     private val density: Float,
-    private val topClearanceDp: Float = DEFAULT_EDGE_MARGIN_DP,
+    /** Clearance superior ADICIONAL (dp) para UIs con header (solo preview debug). */
+    private val topClearanceDp: Float = 0f,
 ) {
     var mode: MokiMode = MokiMode.PERCH
         private set
@@ -77,7 +78,7 @@ internal class MokiMotionController(
         val edgeMargin: Float = DEFAULT_EDGE_MARGIN_DP * density
         trackLeft = contactOffset + edgeMargin
         trackRight = viewportWidth - contactOffset - edgeMargin
-        trackTop = topSystemInset + contactOffset + topClearanceDp * density
+        trackTop = topSystemInset + contactOffset + topClearanceDp * density + TOP_CLEARANCE_DP * density
         trackBottom = viewportHeight - bottomSystemInset - contactOffset - edgeMargin
         if (mode !in setOf(MokiMode.DRAGGING, MokiMode.FLING, MokiMode.LANDING)) {
             setAnchoredPosition()
@@ -320,5 +321,7 @@ internal class MokiMotionController(
         const val MIN_FLING_SPEED: Float = 220f
         const val MAX_FLING_SPEED: Float = 1_400f
         const val DEFAULT_EDGE_MARGIN_DP: Float = 18f
+        /** Margen extra sobre el inset superior: el camaleón se pega al borde visible. */
+        const val TOP_CLEARANCE_DP: Float = 12f
     }
 }

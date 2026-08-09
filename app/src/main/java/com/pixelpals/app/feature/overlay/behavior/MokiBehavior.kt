@@ -13,7 +13,7 @@ class MokiBehavior(
     override val random: PetRandom,
 ) : BaseBehavior(bridge, random) {
     override val resourceIds: List<Int> = emptyList()
-    private val controller: MokiMotionController = MokiMotionController(density = (bridge as View).resources.displayMetrics.density, topClearanceDp = 88f)
+    private val controller: MokiMotionController = MokiMotionController(density = (bridge as View).resources.displayMetrics.density)
     private var pose: MokiPose = controller.getPose()
 
     init {
@@ -22,7 +22,13 @@ class MokiBehavior(
 
     override fun updateIdle(dt: Float) {
         if (isLoading || spriteSheetBitmap == null || spriteFrameRects.isEmpty()) return
-        controller.updateViewport(bridge.screenWidth, bridge.screenHeight, bridge.petSpriteSize.toFloat(), topSystemInset = 0, bottomSystemInset = 0)
+        controller.updateViewport(
+            bridge.screenWidth,
+            bridge.screenHeight,
+            bridge.petSpriteSize.toFloat(),
+            topSystemInset = bridge.topSystemInsetPx,
+            bottomSystemInset = bridge.bottomSystemInsetPx,
+        )
         pose = controller.update(dt)
         syncPoseToBridge()
         bridge.state = if (pose.mode == com.pixelpals.app.core.motion.MokiMode.TONGUE) PetState.INTERACTING else PetState.IDLE
@@ -74,10 +80,10 @@ class MokiBehavior(
             bridge.screenWidth,
             bridge.screenHeight,
             bridge.petSpriteSize.toFloat(),
-            topSystemInset = 0,
-            bottomSystemInset = 0
+            topSystemInset = bridge.topSystemInsetPx,
+            bottomSystemInset = bridge.bottomSystemInsetPx,
         )
-        val halfViewSize: Float = bridge.petSpriteSize * 0.7f
+        val halfViewSize: Float = bridge.petSpriteSize * 0.5f
         val centerX: Float = params.x + halfViewSize
         val centerY: Float = params.y + halfViewSize
         if (controller.mode != MokiMode.DRAGGING) {
@@ -96,9 +102,15 @@ class MokiBehavior(
         bridge.animScaleY = 1f
         bridge.animOffsetX = 0f
         bridge.animOffsetY = 0f
-        val halfViewSize: Int = (bridge.petSpriteSize * 0.7f).toInt()
-        params.x = (pose.x - halfViewSize).toInt().coerceIn(0, (bridge.screenWidth - params.width).coerceAtLeast(0))
-        params.y = (pose.y - halfViewSize).toInt().coerceIn(0, (bridge.screenHeight - params.height).coerceAtLeast(0))
+        // El controller trabaja con el CENTRO del sprite; el view (2x el sprite)
+        // se traduce a coordenadas lógicas de la esquina del sprite en PetView.
+        // Clamp contra el sprite (no contra el view 2x) para poder llegar a los
+        // bordes reales de la pantalla en cualquier resolución.
+        val halfSpriteSize: Int = (bridge.petSpriteSize * 0.5f).toInt()
+        params.x = (pose.x - halfSpriteSize).toInt()
+            .coerceIn(0, (bridge.screenWidth - bridge.petSpriteSize).coerceAtLeast(0))
+        params.y = (pose.y - halfSpriteSize).toInt()
+            .coerceIn(0, (bridge.screenHeight - bridge.petSpriteSize).coerceAtLeast(0))
         bridge.updateWindowLayout(params)
     }
 }
