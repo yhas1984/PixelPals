@@ -10,6 +10,8 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import android.view.View
+import android.view.ViewGroup
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -148,6 +150,7 @@ class PetSelectionActivity : AppCompatActivity() {
         val badge = card.findViewById<TextView>(R.id.txtPetBadge)
         val state = card.findViewById<TextView>(R.id.txtPetState)
         val action = card.findViewById<Button>(R.id.btnPetAction)
+        val price = card.findViewById<TextView>(R.id.txtPetPrice)
 
         image.setImageResource(item.previewResId)
         name.text = item.displayName
@@ -161,6 +164,12 @@ class PetSelectionActivity : AppCompatActivity() {
             CatalogItemState.LOCKED -> getString(R.string.selection_locked_state)
             CatalogItemState.OWNED -> getString(R.string.selection_owned_state)
             CatalogItemState.SELECTED -> getString(R.string.selection_selected_state)
+        }
+        if (item.state == CatalogItemState.LOCKED && item.coinPrice != null) {
+            price.text = getString(R.string.cosmetic_price_format, item.coinPrice)
+            price.visibility = View.VISIBLE
+        } else {
+            price.visibility = View.GONE
         }
         action.text = when (item.state) {
             CatalogItemState.LOCKED -> getString(R.string.selection_unlock_button)

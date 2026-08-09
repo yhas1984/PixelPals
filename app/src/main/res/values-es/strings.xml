@@ -238,4 +238,8 @@
     <string name="store_equipped_button">Equipado</string>
     <string name="cosmetic_unlocked_toast">¡%1$s desbloqueado!</string>
     <string name="cosmetic_price_format">🪙 %1$d monedas</string>
+
+    <!-- Premium pets with coins (V1.7) -->
+    <string name="store_buy_pet_with_coins">Desbloquear por 🪙 %1$d</string>
+    <string name="store_insufficient_coins">¡Monedas insuficientes!</string>
 </resources>

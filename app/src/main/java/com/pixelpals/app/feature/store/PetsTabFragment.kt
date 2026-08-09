@@ -19,7 +19,6 @@ import com.pixelpals.app.data.catalog.CatalogItemState
 import com.pixelpals.app.data.catalog.PetCatalogItem
 import com.pixelpals.app.data.prefs.SelectedPetStore
 import com.pixelpals.app.data.repository.PixelPalsRepository
-import com.pixelpals.app.feature.store.billing.BillingRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -31,7 +30,6 @@ class PetsTabFragment : Fragment() {
 
     private val repository: PixelPalsRepository by lazy { AppServices.repository(requireContext()) }
     private val analytics: AnalyticsTracker by lazy { AppServices.analytics(requireContext()) }
-    private val billing: BillingRepository by lazy { AppServices.billingRepository(requireContext()) }
     private val selectedPetStore by lazy { SelectedPetStore(requireContext()) }
 
     private lateinit var root: LinearLayout
@@ -82,9 +80,17 @@ class PetsTabFragment : Fragment() {
         }
         card.findViewById<TextView>(R.id.txtPetState).text = stateText
 
+        val priceTv = card.findViewById<TextView>(R.id.txtPetPrice)
+        if (item.state == CatalogItemState.LOCKED && item.coinPrice != null) {
+            priceTv.text = getString(R.string.cosmetic_price_format, item.coinPrice)
+            priceTv.visibility = View.VISIBLE
+        } else {
+            priceTv.visibility = View.GONE
+        }
+
         val btn = card.findViewById<Button>(R.id.btnPetAction)
         btn.text = when (item.state) {
-            CatalogItemState.LOCKED -> getString(R.string.store_buy_with_real_money)
+            CatalogItemState.LOCKED -> getString(R.string.store_buy_pet_with_coins, item.coinPrice ?: 0)
             CatalogItemState.OWNED -> getString(R.string.store_select_button)
             CatalogItemState.SELECTED -> getString(R.string.store_selected_button)
         }
@@ -100,18 +106,23 @@ class PetsTabFragment : Fragment() {
     }
 
     private fun buyPremiumPet(item: PetCatalogItem) {
-        val productId = item.productId ?: return
-        billing.launchPurchase(requireActivity(), productId) { success ->
-            if (success) {
-                lifecycleScope.launch {
-                    analytics.track("premium_pet_purchased", mapOf("pet_id" to (item.petType?.name ?: "")))
-                    android.widget.Toast.makeText(
-                        requireContext(),
-                        getString(R.string.pet_unlocked_toast, item.displayName),
-                        android.widget.Toast.LENGTH_SHORT
-                    ).show()
-                    renderPets()
-                }
+        // TODO: todo se compra con monedas; las monedas se compran con dinero real.
+        lifecycleScope.launch {
+            val ok = repository.purchasePetWithCoins(item.petType!!)
+            if (ok) {
+                analytics.track("premium_pet_purchased_coins", mapOf("pet_id" to (item.petType?.name ?: "")))
+                android.widget.Toast.makeText(
+                    requireContext(),
+                    getString(R.string.pet_unlocked_toast, item.displayName),
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+                renderPets()
+            } else {
+                android.widget.Toast.makeText(
+                    requireContext(),
+                    getString(R.string.store_insufficient_coins),
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
             }
         }
     }

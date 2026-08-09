@@ -18,5 +18,6 @@ data class PetCatalogItem(
     val productId: String?,
     val isPremium: Boolean,
     val state: CatalogItemState,
-    val badge: String? = null
+    val badge: String? = null,
+    val coinPrice: Int? = null
 )

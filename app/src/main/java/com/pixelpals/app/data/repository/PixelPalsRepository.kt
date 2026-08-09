@@ -37,6 +37,12 @@ class PixelPalsRepository(context: Context) {
         PetType.DIABLILLO to "pet_diablillo_premium"
     )
 
+    /** Precio en monedas del monedero GLOBAL para desbloquear cada pet premium (null = solo IAP). */
+    private val premiumPetCoinPrices = mapOf(
+        PetType.ANGEL to 400,
+        PetType.DIABLILLO to 350
+    )
+
     /** Cosmético equipado por petId (null = ninguno). */
     fun getEquippedCosmetic(petId: String): String? =
         cosmeticPrefs.getString(petId, null)?.takeIf { it.isNotBlank() }
@@ -239,6 +245,7 @@ class PixelPalsRepository(context: Context) {
                 productId = productId,
                 isPremium = productId != null,
                 state = state,
+                coinPrice = premiumPetCoinPrices[petType],
                 badge = when {
                     productId != null -> "Premium"
                     petType == selectedType -> "Compi actual"
@@ -269,6 +276,31 @@ class PixelPalsRepository(context: Context) {
 
     suspend fun isProductOwned(productId: String): Boolean {
         return db.ownedProductDao().getByProductId(productId)?.let(::isEligibleEntitlement) == true
+    }
+
+    /**
+     * Compra un pet premium con monedas del MONEDERO GLOBAL.
+     * Devuelve true si se completó (tenía monedas y el pet no estaba desbloqueado).
+     */
+    suspend fun purchasePetWithCoins(petType: PetType): Boolean {
+        ensureWalletMigrated()
+        val productId = premiumPetProductIds[petType] ?: return false
+        val price = premiumPetCoinPrices[petType] ?: return false
+        if (isProductOwned(productId)) return false
+        return db.withTransaction {
+            val wallet = ensureBondEntity(walletId)
+            if (wallet.softCurrency < price) return@withTransaction false
+            db.petBondDao().upsert(wallet.copy(softCurrency = wallet.softCurrency - price))
+            db.ownedProductDao().upsert(
+                OwnedProductEntity(
+                    productId = productId,
+                    productType = "pet",
+                    source = "soft_currency",
+                    purchasedAt = System.currentTimeMillis(),
+                )
+            )
+            true
+        }
     }
 
     /**

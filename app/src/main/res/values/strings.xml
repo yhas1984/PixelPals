@@ -240,4 +240,8 @@
     <string name="store_equipped_button">Equipped</string>
     <string name="cosmetic_unlocked_toast">%1$s unlocked!</string>
     <string name="cosmetic_price_format">🪙 %1$d coins</string>
+
+    <!-- Premium pets with coins (V1.7) -->
+    <string name="store_buy_pet_with_coins">Unlock for 🪙 %1$d</string>
+    <string name="store_insufficient_coins">Not enough coins!</string>
 </resources>
