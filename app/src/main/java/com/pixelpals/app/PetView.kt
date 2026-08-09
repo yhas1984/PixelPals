@@ -402,12 +402,22 @@ class PetView(
                 }
             }
             is com.pixelpals.app.data.catalog.CosmeticEffect.FloatEffect -> {
-                cosmeticPaint.textSize = petSpriteSize.toFloat() * effect.sizeRatio * scale
+                val scaleX = renderScaleX.coerceAtLeast(0.4f)
+                val scaleY = renderScaleY.coerceAtLeast(0.4f)
+                cosmeticPaint.textSize = petSpriteSize.toFloat() * effect.sizeRatio * scaleX
                 cosmeticPaint.alpha = (255 * (animAlpha.coerceIn(0f, 1f))).toInt()
                 val fm = cosmeticPaint.fontMetrics
-                val bob = sin(cosmeticClock * effect.bobSpeed) * effect.bobAmplitude * scale
-                val x = cx + petSpriteSize.toFloat() * effect.xRatio * scale
-                val y = cy + petSpriteSize.toFloat() * (effect.yRatio + bob) * scale
+                val bob = sin(cosmeticClock * effect.bobSpeed) * effect.bobAmplitude * scaleY
+                // Posición: el eje X sigue el squash horizontal y el eje Y el vertical,
+                // para que corona/varita/paraguas acompañen al pet al aplastarse/saltar.
+                var x = cx + petSpriteSize.toFloat() * effect.xRatio * scaleX
+                var y = cy + petSpriteSize.toFloat() * (effect.yRatio + bob) * scaleY
+                // Clamp dentro del view (el view puede ser menor que 2x el sprite por
+                // el tope defensivo MAX_VIEW_SIZE_RATIO): el emoji nunca se recorta.
+                val marginX = cosmeticPaint.textSize * 0.55f
+                val marginY = cosmeticPaint.textSize * 0.6f
+                x = x.coerceIn(marginX, width - marginX)
+                y = y.coerceIn(marginY, height - marginY)
                 canvas.drawText(effect.emoji, x, y - (fm.ascent + fm.descent) / 2f, cosmeticPaint)
             }
         }
