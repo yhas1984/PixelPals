@@ -19,6 +19,12 @@ class MentaBehavior(
     override val random: PetRandom,
 ) : BaseBehavior(bridge, random) {
 
+    private companion object {
+        // Una fase corporal por esta distancia real. Con velocidad de 38 px/s,
+        // la onda y la ventana avanzan físicamente al mismo ritmo.
+        const val WAVE_DISTANCE_PX = 42f
+    }
+
     override val resourceIds: List<Int> = emptyList()
 
     private enum class Mode { SLITHER, CLIMB, COIL, HAPPY, TOUCH, SLEEP }
@@ -117,19 +123,8 @@ class MentaBehavior(
         params.y = y.roundToInt()
         bridge.updateWindowLayout(params)
 
-        // Deslizamiento suave: el cuerpo ondula lentamente, sin tirones
-        bridge.animOffsetX = sin(time * 2.2f) * 4f
-        bridge.animOffsetY = sin(time * 1.6f) * 2f
-        bridge.animRotation = 0f   // siempre de frente, sin golpeteos de cabeza
-        // Cada dirección tiene sus propias poses dibujadas: no espejar la
-        // serpiente, porque el atlas ya coloca la cabeza delante del cuerpo.
-        bridge.animScaleX = 1f
-        bridge.animScaleY = 1f + sin(time * 2.0f) * 0.02f
-
-        // La onda viaja sincronizada con el avance: cada pose corresponde a
-        // una fracción real del trayecto, no a un reloj independiente.
-        // La onda avanza por distancia real, no por un reloj independiente:
-        // cabeza y contoneo tienen la misma velocidad física.
+        // La onda se deriva ÚNICAMENTE de los píxeles recorridos: posición,
+        // frame y deformación nunca usan relojes distintos.
         val distance = kotlin.math.sqrt(
             (cruiseTargetX - startX) * (cruiseTargetX - startX) +
                 (cruiseTargetY - startY) * (cruiseTargetY - startY)
@@ -137,9 +132,15 @@ class MentaBehavior(
         val travelled = distance * t
         // Dos fases por dirección, repetidas según los píxeles recorridos.
         // right = 4-5; left = 6-7.
-        val wave = (travelled / 42f).toInt() % 2
+        val wave = (travelled / WAVE_DISTANCE_PX).toInt() % 2
         val poseBase = if (facingRight) 4 else 6
         bridge.currentFrame = poseBase + wave
+        val bodyPhase = (travelled / WAVE_DISTANCE_PX) * kotlin.math.PI.toFloat()
+        bridge.animOffsetX = sin(bodyPhase) * 3f
+        bridge.animOffsetY = sin(bodyPhase * 0.5f) * 1.5f
+        bridge.animRotation = 0f   // siempre de frente, sin golpeteos de cabeza
+        bridge.animScaleX = 1f
+        bridge.animScaleY = 1f + sin(bodyPhase) * 0.015f
 
         if (random.nextFloat() < 0.00025f) {
             mode = Mode.HAPPY
@@ -176,15 +177,16 @@ class MentaBehavior(
         val movingDown = cruiseTargetY > startY
         val distance = kotlin.math.abs(cruiseTargetY - startY)
         val travelled = distance * t
-        val wave = (travelled / 42f).toInt() and 1
+        val wave = (travelled / WAVE_DISTANCE_PX).toInt() and 1
         // El atlas tiene dos grupos dibujados: up = 8-9, down = 10-11.
         // No se voltea la imagen: cada pose conserva la cara y la cabeza líder.
         bridge.currentFrame = (if (movingDown) 10 else 8) + wave
+        val bodyPhase = (travelled / WAVE_DISTANCE_PX) * kotlin.math.PI.toFloat()
         bridge.animRotation = 0f
         bridge.animScaleX = 1f
         bridge.animScaleY = 1f
-        bridge.animOffsetX = sin(time * 1.8f) * 2f
-        bridge.animOffsetY = sin(time * 1.4f) * 1.5f
+        bridge.animOffsetX = sin(bodyPhase) * 2f
+        bridge.animOffsetY = sin(bodyPhase * 0.5f) * 1.5f
     }
 
     private fun updateCoil(dt: Float) {
