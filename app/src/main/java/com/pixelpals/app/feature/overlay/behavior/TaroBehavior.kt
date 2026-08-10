@@ -174,7 +174,6 @@ class TaroBehavior(
             mode = Mode.HIDE
             modeTimer = 0f
             modeDuration = 2.2f + random.nextFloat() * 1.5f
-            reset()
         }
     }
 
