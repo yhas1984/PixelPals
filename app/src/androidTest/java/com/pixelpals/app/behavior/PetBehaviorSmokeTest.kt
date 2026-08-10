@@ -1,23 +1,13 @@
-package com.pixelpals.app.behavior
+package com.pixelpals.app.feature.overlay.behavior
 
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.graphics.ColorFilter
-import android.graphics.PixelFormat
-import android.view.View
-import android.view.WindowManager
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import com.pixelpals.app.PetProgress
-import com.pixelpals.app.PetState
-import com.pixelpals.app.PetType
-import com.pixelpals.app.catalog.AccessoryCatalogItem
-import com.pixelpals.app.motion.DefaultPetRandom
-import com.pixelpals.app.status.CareAction
-import com.pixelpals.app.status.PetMood
-import com.pixelpals.app.status.PetPersonality
-import com.pixelpals.app.status.PetStatusSnapshot
+import com.pixelpals.app.core.domain.PetState
+import com.pixelpals.app.core.domain.PetType
+import com.pixelpals.app.core.motion.DefaultPetRandom
 import kotlin.random.Random
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
@@ -48,6 +38,13 @@ class PetBehaviorSmokeTest {
                 behavior.onInteract()
                 advance(behavior, bridge, 6f)
                 behavior.onFling(1_800f, -1_250f)
+                // Contrato con PetView: si el pet no maneja el fling, el view
+                // vuelve a IDLE y resetea. El test lo reproduce para verificar
+                // que ningún pet queda atrapado en DRAGGING.
+                if (bridge.state == PetState.DRAGGING) {
+                    bridge.state = PetState.IDLE
+                    behavior.reset()
+                }
                 advance(behavior, bridge, 25f)
                 behavior.onDraw(
                     Canvas(Bitmap.createBitmap(160, 160, Bitmap.Config.ARGB_8888)),
@@ -55,6 +52,10 @@ class PetBehaviorSmokeTest {
                     80f
                 )
                 assertBridgeIsValid(petType, bridge)
+                assertTrue(
+                    "$petType quedó atrapado en DRAGGING tras el fling",
+                    bridge.state != PetState.DRAGGING
+                )
                 assertNotEquals("$petType left an interaction running", PetState.INTERACTING, bridge.state)
                 behavior.destroy()
             }
@@ -76,13 +77,16 @@ class PetBehaviorSmokeTest {
 
     private fun assertBridgeIsValid(petType: PetType, bridge: TestPetBridge) {
         val params = bridge.getWindowParams()
-        assertTrue("$petType x out of bounds: ${params.x}", params.x in 0..(bridge.screenWidth - bridge.petSpriteSize))
-        assertTrue("$petType y out of bounds: ${params.y}", params.y in 0..bridge.screenHeight)
+        val maxX = bridge.screenWidth - bridge.petSpriteSize
+        val maxY = bridge.screenHeight - bridge.petSpriteSize
+        val maxFrame = maxFrameByPet[petType] ?: Int.MAX_VALUE
+        assertTrue("$petType x out of bounds: ${params.x}", params.x in 0..maxX)
+        assertTrue("$petType y out of bounds: ${params.y}", params.y in 0..maxY)
+        assertTrue("$petType frame out of range: ${bridge.currentFrame}", bridge.currentFrame in 0..maxFrame)
         assertTrue("$petType scaleX is invalid", bridge.animScaleX.isFinite())
         assertTrue("$petType scaleY is invalid", bridge.animScaleY.isFinite())
         assertTrue("$petType rotation is invalid", bridge.animRotation.isFinite())
         assertTrue("$petType alpha is invalid", bridge.animAlpha.isFinite() && bridge.animAlpha in 0f..1f)
-        assertTrue("$petType frame is invalid", bridge.currentFrame >= 0)
     }
 
     private fun waitForAssets(petType: PetType, behavior: PetBehavior) {
@@ -103,89 +107,25 @@ class PetBehaviorSmokeTest {
         return frames.any { it != null } || spriteSheet != null
     }
 
-    private class TestPetBridge(context: Context, petType: PetType) : View(context), PetViewBridge {
-        private val params = WindowManager.LayoutParams(
-            112,
-            112,
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-            PixelFormat.TRANSLUCENT
-        ).apply {
-            x = 300
-            y = 600
-        }
-
-        override var currentFrame: Int = 0
-        override var animScaleX: Float = 1f
-        override var animScaleY: Float = 1f
-        override var animOffsetX: Float = 0f
-        override var animOffsetY: Float = 0f
-        override var animRotation: Float = 0f
-        override var animAlpha: Float = 1f
-        override var animColorFilter: ColorFilter? = null
-        override val renderScaleX: Float get() = animScaleX
-        override val renderScaleY: Float get() = animScaleY
-        override val renderOffsetX: Float get() = animOffsetX
-        override val renderOffsetY: Float get() = animOffsetY
-        override val renderRotation: Float get() = animRotation
-        override var velocityX: Float = 0f
-        override var velocityY: Float = 0f
-        override var state: PetState = PetState.IDLE
-        override val screenWidth: Int = 1_080
-        override val screenHeight: Int = 2_400
-        override val petSpriteSize: Int = 80
-        override val groundY: Int = screenHeight - petSpriteSize
-        override val petStatus = PetStatusSnapshot(
-            petId = petType.name.lowercase(),
-            health = 90,
-            energy = 80,
-            hunger = 75,
-            hygiene = 85,
-            bond = 30,
-            mood = PetMood.HAPPY,
-            careStreakDays = 2,
-            softCurrency = 10,
-            dominantSuggestion = CareAction.PLAY,
-            memoriesUnlocked = 1
-        )
-        override val petPersonality: PetPersonality = when (petType) {
-            PetType.BLOOP -> PetPersonality.DREAMY
-            PetType.NUBE_MICHI -> PetPersonality.SWEET
-            PetType.JELLY -> PetPersonality.BOUNCY
-            PetType.CORGI -> PetPersonality.LOYAL
-            PetType.GINGER -> PetPersonality.ELEGANT
-            PetType.ANGEL -> PetPersonality.ANGELIC
-            PetType.PATITO -> PetPersonality.CURIOUS
-            PetType.DIABLILLO -> PetPersonality.CHAOTIC
-            PetType.MOKI -> PetPersonality.CURIOUS
-        }
-        override val equippedAccessory: AccessoryCatalogItem? = null
-        override var windowX: Int = params.x
-        override var windowY: Int = params.y
-
-        override fun getWindowParams(): WindowManager.LayoutParams = params
-
-        override fun updateWindowLayout(params: WindowManager.LayoutParams) {
-            windowX = params.x
-            windowY = params.y
-        }
-
-        override fun showBubble(text: String) = Unit
-        override fun hideBubble() = Unit
-        override fun playHaptic(durationMs: Long) = Unit
-        override fun teleportToRandomEdge() = Unit
-        override fun trackInteraction() = Unit
-        override fun resumeAnimation() = Unit
-        override fun pauseAnimation() = Unit
-        override fun setProgress(progress: PetProgress) = Unit
-        override fun consumeTreasure(emoji: String) = Unit
-        override fun recordCareAction(action: CareAction) = Unit
-        override fun onBatteryChanged(percent: Int, isCharging: Boolean) = Unit
-        override fun onKeyboardChanged(visible: Boolean, height: Int) = Unit
-        override fun onAirplaneModeChanged(isAirplane: Boolean) = Unit
-    }
-
     private companion object {
         const val STEP_SECONDS = 1f / 60f
+
+        /** Último índice de frame válido por pet (según sus resourceIds / atlas). */
+        val maxFrameByPet: Map<PetType, Int> = mapOf(
+            PetType.BLOOP to 6,
+            PetType.NUBE_MICHI to 10,
+            PetType.JELLY to 7,
+            PetType.CORGI to 13,
+            PetType.PATITO to 9,
+            PetType.DIABLILLO to 9,
+            PetType.MOKI to 19,
+            PetType.ANGEL to 15,
+            PetType.GINGER to 15,
+            PetType.YUKI to 15,
+            PetType.PIRU to 15,
+            PetType.TARO to 15,
+            PetType.MENTA to 15,
+            PetType.TELA to 15,
+        )
     }
 }

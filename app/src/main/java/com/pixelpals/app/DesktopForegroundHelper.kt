@@ -16,7 +16,9 @@ import android.util.Log
  */
 object DesktopForegroundHelper {
     private const val TAG = "DesktopForegroundHelper"
-    private const val QUERY_WINDOW_MS = 180_000L
+    // Ventana mínima que cubre el intervalo de polling (4 s x 3): solo se
+    // necesita el ÚLTIMO evento RESUMED, no los 3 minutos completos.
+    private const val QUERY_WINDOW_MS = 15_000L
 
     @Suppress("DEPRECATION")
     fun hasUsageAccess(context: Context): Boolean {
@@ -45,9 +47,14 @@ object DesktopForegroundHelper {
     }
 
     /**
-     * Última app en primer plano mediante máquina de estados sobre el stream de eventos.
-     * Los pares resume/stop cancelan estados obsoletos; así un "resume" repetido de un
-     * overlay del sistema (p. ej. la pantalla asistente de ColorOS) no queda clavado.
+     * Última app en primer plano mediante el ÚLTIMO evento RESUMED.
+     *
+     * Fix v1.5.4: la máquina de estados anterior anulaba el foreground con
+     * PAUSED/STOPPED del paquete actual, dejando el estado "null" cuando el
+     * launcher se pausaba sin que otra activity RESUMED aún. `isLauncherForeground`
+     * interpretaba null como "mostrar pet", así que el pet aparecía sobre
+     * cualquier ventana. Ahora el último RESUMED gana: PAUSED/STOPPED no
+     * despejan el estado (no aportan info de qué app está en frente).
      */
     @Suppress("DEPRECATION")
     private fun queryLastForegroundPackage(context: Context): String? {
@@ -63,11 +70,6 @@ object DesktopForegroundHelper {
                 when (ev.eventType) {
                     UsageEvents.Event.MOVE_TO_FOREGROUND,
                     UsageEvents.Event.ACTIVITY_RESUMED -> current = ev.packageName
-                    UsageEvents.Event.MOVE_TO_BACKGROUND,
-                    UsageEvents.Event.ACTIVITY_PAUSED,
-                    UsageEvents.Event.ACTIVITY_STOPPED,
-                    EVENT_ACTIVITY_DESTROYED,
-                    EVENT_ACTIVITY_STOPPED_NEW -> if (ev.packageName == current) current = null
                 }
             }
             current
@@ -78,7 +80,7 @@ object DesktopForegroundHelper {
     }
 
     /**
-     * True si lo que el usuario ve como “frente” es el escritorio (lanzador por defecto).
+     * True si lo que el usuario ve como "frente" es el escritorio (lanzador por defecto).
      * Si el estado es desconocido, devuelve true (conservador: la mascota se muestra).
      */
     fun isLauncherForeground(context: Context): Boolean {
@@ -87,7 +89,4 @@ object DesktopForegroundHelper {
         val fg = queryLastForegroundPackage(context) ?: return true
         return fg == launcherPkg
     }
-
-    private const val EVENT_ACTIVITY_STOPPED_NEW = 23
-    private const val EVENT_ACTIVITY_DESTROYED = 13
 }

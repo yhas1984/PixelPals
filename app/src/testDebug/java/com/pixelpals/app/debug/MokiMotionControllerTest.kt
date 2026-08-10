@@ -1,9 +1,9 @@
 package com.pixelpals.app.debug
 
-import com.pixelpals.app.motion.MokiMode
-import com.pixelpals.app.motion.MokiMotionController
-import com.pixelpals.app.motion.MokiPose
-import com.pixelpals.app.motion.MokiSurface
+import com.pixelpals.app.core.motion.MokiMode
+import com.pixelpals.app.core.motion.MokiMotionController
+import com.pixelpals.app.core.motion.MokiPose
+import com.pixelpals.app.core.motion.MokiSurface
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -19,6 +19,45 @@ class MokiMotionControllerTest {
         assertEquals(MokiSurface.RIGHT, controller.surface)
         assertEquals(MokiMode.CRAWL, controller.mode)
         assertEquals(-90f, controller.getPose().rotationDegrees, 0.01f)
+    }
+
+    @Test
+    fun crawlVisitsAllFourEdgesInOrder(): Unit {
+        val controller: MokiMotionController = createController()
+        advance(controller, 2.1f) // PERCH -> CRAWL en BOTTOM
+        val visited = mutableListOf(MokiSurface.BOTTOM)
+        var guard = 0
+        while (guard < 2_000_000) {
+            guard++
+            val before: MokiSurface = controller.surface
+            controller.update(STEP_SECONDS)
+            if (controller.surface != before && controller.mode == MokiMode.CRAWL) {
+                if (visited.last() != controller.surface) visited += controller.surface
+                if (visited.containsAll(MokiSurface.entries)) break
+            }
+        }
+        assertTrue(
+            "Debe recorrer BOTTOM->RIGHT->TOP->LEFT, visitadas: $visited",
+            visited.containsAll(MokiSurface.entries)
+        )
+    }
+
+    @Test
+    fun viewportRespectsSystemInsets(): Unit {
+        val controller: MokiMotionController = MokiMotionController(density = 1f)
+        controller.updateViewport(1_080, 2_400, DRAW_SIZE, topSystemInset = 120, bottomSystemInset = 96)
+        advance(controller, 2.1f)
+        // En BOTTOM, el trackBottom debe quedar por encima del inset inferior.
+        val poseBottom: MokiPose = controller.getPose()
+        assertTrue("y en BOTTOM debe respetar inset inferior: ${poseBottom.y}", poseBottom.y <= 2_400 - 96)
+        // Forzar llegar al borde TOP: seguir hasta que la superficie sea TOP.
+        var guard = 0
+        while (controller.surface != MokiSurface.TOP && guard < 2_000_000) {
+            guard++
+            controller.update(STEP_SECONDS)
+        }
+        val poseTop: MokiPose = controller.getPose()
+        assertTrue("y en TOP debe respetar inset superior: ${poseTop.y}", poseTop.y >= 120)
     }
 
     @Test

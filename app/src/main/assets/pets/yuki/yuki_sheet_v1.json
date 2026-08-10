@@ -1,0 +1,41 @@
+{
+  "version": 2,
+  "petId": "yuki",
+  "atlasPath": "pets/yuki/yuki_sheet_v1.png",
+  "previewPath": "res://drawable-nodpi/pet_yuki.png",
+  "frameWidth": 256,
+  "frameHeight": 256,
+  "columns": 4,
+  "rows": 4,
+  "frameCount": 16,
+  "pivot": { "x": 128, "y": 128 },
+  "renderHints": { "innerTransparentPaddingPx": 8, "recommendedBleedInsetPx": 1, "filterBitmap": true },
+  "clips": [
+    { "id": "idle",  "frames": [0, 1, 2],         "loop": true,  "frameDurationMs": 380 },
+    { "id": "blink", "frames": [3],              "loop": false, "frameDurationMs": 220 },
+    { "id": "walk",  "frames": [4, 5],           "loop": true,  "frameDurationMs": 220 },
+    { "id": "jump",  "frames": [6, 7],           "loop": false, "frameDurationMs": 180 },
+    { "id": "happy", "frames": [8, 9, 10, 11],   "loop": true,  "frameDurationMs": 230 },
+    { "id": "melt",  "frames": [12, 13, 14],     "loop": false, "frameDurationMs": 320 },
+    { "id": "touch", "frames": [12, 13, 14],     "loop": false, "frameDurationMs": 300 },
+    { "id": "sleep", "frames": [15],             "loop": false, "frameDurationMs": 500 }
+  ],
+  "frames": [
+    { "index": 0,  "name": "idle_neutral",      "sourceHint": "idle" },
+    { "index": 1,  "name": "idle_sway_left",    "sourceHint": "idle" },
+    { "index": 2,  "name": "idle_sway_right",   "sourceHint": "idle" },
+    { "index": 3,  "name": "blink",             "sourceHint": "blink" },
+    { "index": 4,  "name": "walk_step_a",       "sourceHint": "walk" },
+    { "index": 5,  "name": "walk_step_b",       "sourceHint": "walk" },
+    { "index": 6,  "name": "jump_airborne",     "sourceHint": "jump" },
+    { "index": 7,  "name": "jump_landing",      "sourceHint": "jump" },
+    { "index": 8,  "name": "happy_arms_up",     "sourceHint": "happy" },
+    { "index": 9,  "name": "happy_wave",        "sourceHint": "happy" },
+    { "index": 10, "name": "happy_warm",        "sourceHint": "happy" },
+    { "index": 11, "name": "surprised",         "sourceHint": "happy" },
+    { "index": 12, "name": "melt_partial",      "sourceHint": "melt" },
+    { "index": 13, "name": "melt_pool",         "sourceHint": "melt" },
+    { "index": 14, "name": "melt_recover",      "sourceHint": "melt" },
+    { "index": 15, "name": "sleep",             "sourceHint": "sleep" }
+  ]
+}

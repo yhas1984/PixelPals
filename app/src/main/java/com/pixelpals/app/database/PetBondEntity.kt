@@ -10,7 +10,10 @@ data class PetBondEntity(
     val careStreakDays: Int = 0,
     val softCurrency: Int = 0,
     val memoriesUnlocked: Int = 0,
-    val firstSeenAt: Long = System.currentTimeMillis(),
+    val firstSeenAt: Long = 0L,
     val lastCheckInDay: String = "",
-    val lastDailyCompletionDay: String = ""
+    val lastDailyCompletionDay: String = "",
+    val lastTreasureInteractionMilestone: Int = 0,
+    val lastTreasureActiveMilestone: Int = 0,
+    val activeMinutes: Int = 0,
 )

@@ -1,0 +1,42 @@
+{
+  "version": 2,
+  "petId": "menta",
+  "atlasPath": "pets/menta/menta_sheet_v1.png",
+  "previewPath": "res://drawable-nodpi/pet_menta.png",
+  "frameWidth": 256,
+  "frameHeight": 256,
+  "columns": 4,
+  "rows": 4,
+  "frameCount": 16,
+  "pivot": { "x": 128, "y": 128 },
+  "renderHints": { "innerTransparentPaddingPx": 8, "recommendedBleedInsetPx": 1, "filterBitmap": true },
+  "clips": [
+    { "id": "idle",     "frames": [0, 1, 2],         "loop": true,  "frameDurationMs": 380 },
+    { "id": "blink",    "frames": [3],              "loop": false, "frameDurationMs": 220 },
+    { "id": "right",    "frames": [4, 5, 6, 7],     "loop": true,  "frameDurationMs": 180 },
+    { "id": "left",     "frames": [8, 9, 10, 11],   "loop": true,  "frameDurationMs": 180 },
+    { "id": "up",       "frames": [12, 13],         "loop": true,  "frameDurationMs": 220 },
+    { "id": "down",     "frames": [14, 15],         "loop": true,  "frameDurationMs": 220 },
+    { "id": "touch",    "frames": [1, 2, 3],        "loop": false, "frameDurationMs": 280 },
+    { "id": "happy",    "frames": [1, 2, 1],        "loop": true,  "frameDurationMs": 240 },
+    { "id": "sleep",    "frames": [0],              "loop": false, "frameDurationMs": 500 }
+  ],
+  "frames": [
+    { "index": 0,  "name": "idle_coil_neutral",  "sourceHint": "idle" },
+    { "index": 1,  "name": "idle_sway_left",     "sourceHint": "idle" },
+    { "index": 2,  "name": "idle_sway_right",    "sourceHint": "idle" },
+    { "index": 3,  "name": "blink",              "sourceHint": "blink" },
+    { "index": 4,  "name": "slither_right_phase_a", "sourceHint": "right" },
+    { "index": 5,  "name": "slither_right_phase_b", "sourceHint": "right" },
+    { "index": 6,  "name": "slither_right_phase_c", "sourceHint": "right" },
+    { "index": 7,  "name": "slither_right_phase_d", "sourceHint": "right" },
+    { "index": 8,  "name": "slither_left_phase_a",  "sourceHint": "left" },
+    { "index": 9,  "name": "slither_left_phase_b",  "sourceHint": "left" },
+    { "index": 10, "name": "slither_left_phase_c",  "sourceHint": "left" },
+    { "index": 11, "name": "slither_left_phase_d",  "sourceHint": "left" },
+    { "index": 12, "name": "climb_up_phase_a",       "sourceHint": "up" },
+    { "index": 13, "name": "climb_up_phase_b",       "sourceHint": "up" },
+    { "index": 14, "name": "descend_down_phase_a",   "sourceHint": "down" },
+    { "index": 15, "name": "descend_down_phase_b",   "sourceHint": "down" }
+  ]
+}

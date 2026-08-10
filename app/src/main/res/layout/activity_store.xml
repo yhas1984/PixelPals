@@ -1,140 +1,112 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/storeScroll"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/storeRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_gradient"
-    android:clipToPadding="false"
-    android:fillViewport="true"
-    android:paddingHorizontal="20dp"
-    android:paddingTop="0dp"
-    android:paddingBottom="28dp">
+    android:background="@drawable/bg_gradient">
 
-    <LinearLayout
+    <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingTop="44dp">
-
-        <TextView
-            android:id="@+id/txtStoreTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/store_title"
-            android:textColor="@color/text_on_accent"
-            android:textSize="32sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/txtStoreSubtitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:layout_marginBottom="16dp"
-            android:textColor="#E8F5FF"
-            android:textSize="14sp" />
-
-        <TextView
-            android:id="@+id/txtStoreHighlight"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:textColor="@color/text_on_accent"
-            android:textSize="15sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/txtStoreWallet"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:background="@drawable/bg_status_info"
-            android:padding="14dp"
-            android:textColor="@color/status_info_fg"
-            android:textSize="14sp"
-            android:textStyle="bold" />
+        android:background="@android:color/transparent"
+        app:elevation="0dp">
 
         <LinearLayout
-            android:id="@+id/cardStoreState"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:background="@drawable/bg_status_info"
             android:orientation="vertical"
-            android:padding="18dp">
+            android:paddingTop="44dp"
+            android:paddingHorizontal="20dp">
 
             <TextView
-                android:id="@+id/txtStoreStatus"
-                android:accessibilityLiveRegion="polite"
+                android:id="@+id/txtStoreTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@color/status_info_fg"
-                android:textSize="13sp"
+                android:text="@string/store_title"
+                android:textColor="@color/text_on_accent"
+                android:textSize="32sp"
                 android:textStyle="bold" />
 
-            <ProgressBar
-                android:id="@+id/progressStoreLoading"
-                style="?android:attr/progressBarStyleHorizontal"
-                android:layout_width="match_parent"
-                android:layout_height="8dp"
-                android:layout_marginTop="10dp"
-                android:indeterminate="true"
-                android:indeterminateTint="@color/coral_accent"
-                android:visibility="gone" />
-
-            <Button
-                android:id="@+id/btnStoreRetry"
+            <TextView
+                android:id="@+id/txtStoreSubtitle"
                 android:layout_width="wrap_content"
-                android:layout_height="48dp"
-                android:layout_marginTop="10dp"
-                android:backgroundTint="@color/coral_accent"
-                android:insetBottom="0dp"
-                android:insetTop="0dp"
-                android:text="@string/store_retry"
-                android:textAllCaps="false"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:layout_marginBottom="6dp"
+                android:textColor="#E8F5FF"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/txtStoreHighlight"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
                 android:textColor="@color/text_on_accent"
-                android:textStyle="bold"
-                android:visibility="gone" />
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/txtStoreWallet"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:background="@drawable/bg_card"
+                android:padding="12dp"
+                android:textColor="@color/text_primary"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.tabs.TabLayout
+                android:id="@+id/storeTabs"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@android:color/transparent"
+                app:tabIndicatorColor="@color/golden_accent"
+                app:tabSelectedTextColor="@color/golden_accent"
+                app:tabTextColor="@color/text_secondary" />
         </LinearLayout>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/storePager"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+
+    <LinearLayout
+        android:id="@+id/cardStoreState"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginBottom="20dp"
+        android:background="@drawable/bg_status_info"
+        android:orientation="horizontal"
+        android:padding="12dp">
+
+        <ProgressBar
+            android:id="@+id/progressStoreLoading"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/txtStoreStatus"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:textColor="@color/status_info_fg"
+            android:textSize="13sp" />
 
         <Button
-            android:id="@+id/btnRestorePurchases"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginBottom="16dp"
-            android:backgroundTint="@color/golden_accent"
-            android:text="@string/store_restore"
-            android:textAllCaps="false"
-            android:textColor="@color/text_primary"
-            android:minHeight="48dp" />
-
-        <TextView
+            android:id="@+id/btnStoreRetry"
+            style="?android:attr/buttonBarButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/store_premium_pets"
-            android:textColor="@color/text_on_accent"
-            android:textStyle="bold" />
-
-        <LinearLayout
-            android:id="@+id/premiumPetsContainer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:layout_marginBottom="18dp"
-            android:orientation="vertical" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/store_accessories"
-            android:textColor="@color/text_on_accent"
-            android:textStyle="bold" />
-
-        <LinearLayout
-            android:id="@+id/accessoriesContainer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:orientation="vertical" />
+            android:text="@string/selection_retry"
+            android:visibility="gone" />
     </LinearLayout>
-</ScrollView>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

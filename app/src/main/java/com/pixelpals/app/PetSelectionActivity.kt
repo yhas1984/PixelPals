@@ -10,17 +10,25 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import android.view.View
+import android.view.ViewGroup
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
-import com.pixelpals.app.catalog.CatalogItemState
-import com.pixelpals.app.catalog.PetCatalogItem
+import com.pixelpals.app.R
+import com.pixelpals.app.core.analytics.AnalyticsTracker
+import com.pixelpals.app.core.services.AppServices
+import com.pixelpals.app.core.domain.PetType
+import com.pixelpals.app.data.catalog.CatalogItemState
+import com.pixelpals.app.data.catalog.PetCatalogItem
+import com.pixelpals.app.data.prefs.SelectedPetStore
+import com.pixelpals.app.data.repository.PixelPalsRepository
 import com.pixelpals.app.status.CareAction
 import com.pixelpals.app.status.PetMood
 import com.pixelpals.app.status.PetDashboardActivity
-import com.pixelpals.app.store.StoreActivity
+import com.pixelpals.app.feature.store.StoreActivity
 import kotlinx.coroutines.launch
 
 /**
@@ -37,8 +45,8 @@ class PetSelectionActivity : AppCompatActivity() {
 
     private var isLaunching = false
     private lateinit var selectedPetStore: SelectedPetStore
-    private val repository by lazy { AppServices.repository(this) }
-    private val analytics by lazy { AppServices.analytics(this) }
+    private val repository: PixelPalsRepository by lazy { AppServices.repository(this) }
+    private val analytics: AnalyticsTracker by lazy { AppServices.analytics(this) }
     private lateinit var catalogContainer: LinearLayout
     private lateinit var txtCurrentMood: TextView
     private lateinit var txtCatalogSummary: TextView
@@ -142,6 +150,7 @@ class PetSelectionActivity : AppCompatActivity() {
         val badge = card.findViewById<TextView>(R.id.txtPetBadge)
         val state = card.findViewById<TextView>(R.id.txtPetState)
         val action = card.findViewById<Button>(R.id.btnPetAction)
+        val price = card.findViewById<TextView>(R.id.txtPetPrice)
 
         image.setImageResource(item.previewResId)
         name.text = item.displayName
@@ -155,6 +164,12 @@ class PetSelectionActivity : AppCompatActivity() {
             CatalogItemState.LOCKED -> getString(R.string.selection_locked_state)
             CatalogItemState.OWNED -> getString(R.string.selection_owned_state)
             CatalogItemState.SELECTED -> getString(R.string.selection_selected_state)
+        }
+        if (item.state == CatalogItemState.LOCKED && item.coinPrice != null) {
+            price.text = getString(R.string.cosmetic_price_format, item.coinPrice)
+            price.visibility = View.VISIBLE
+        } else {
+            price.visibility = View.GONE
         }
         action.text = when (item.state) {
             CatalogItemState.LOCKED -> getString(R.string.selection_unlock_button)
@@ -176,13 +191,15 @@ class PetSelectionActivity : AppCompatActivity() {
             desc.text.toString()
         )
         image.contentDescription = card.contentDescription
-        action.isEnabled = item.state != CatalogItemState.SELECTED
-        action.alpha = if (item.state == CatalogItemState.SELECTED) 0.72f else 1f
+        // El pet seleccionado también debe poder relanzarse (si el servicio fue
+        // terminado por el sistema, "Usar" lo vuelve a arrancar).
+        action.isEnabled = true
+        action.alpha = 1f
         action.setOnClickListener {
             when (item.state) {
                 CatalogItemState.LOCKED -> startActivity(Intent(this, StoreActivity::class.java))
                 CatalogItemState.OWNED -> item.petType?.let { launchSelectedPet(it) }
-                CatalogItemState.SELECTED -> Unit
+                CatalogItemState.SELECTED -> item.petType?.let { launchSelectedPet(it) }
             }
         }
         card.setOnClickListener(null)

@@ -18,10 +18,10 @@ import android.view.ViewConfiguration
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.pixelpals.app.R
-import com.pixelpals.app.behavior.PetAtlasSpec
-import com.pixelpals.app.motion.MotionEngine
-import com.pixelpals.app.motion.MokiMotionController
-import com.pixelpals.app.motion.MokiPose
+import com.pixelpals.app.feature.overlay.behavior.PetAtlasSpec
+import com.pixelpals.app.core.motion.MotionEngine
+import com.pixelpals.app.core.motion.MokiMotionController
+import com.pixelpals.app.core.motion.MokiPose
 import org.json.JSONObject
 import kotlin.math.hypot
 

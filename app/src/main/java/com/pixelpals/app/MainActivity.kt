@@ -16,9 +16,12 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import com.pixelpals.app.core.services.AppServices
+import com.pixelpals.app.core.analytics.AnalyticsTracker
 import com.pixelpals.app.databinding.ActivityMainBinding
+import com.pixelpals.app.feature.store.StoreActivity
+import com.pixelpals.app.feature.treasure.TreasureAlbumActivity
 import com.pixelpals.app.status.PetDashboardActivity
-import com.pixelpals.app.store.StoreActivity
 
 /**
  * MainActivity — Pantalla de Onboarding y Permisos
@@ -33,7 +36,7 @@ class MainActivity : AppCompatActivity() {
 
     // ── View Binding ──────────────────────────────────────────
     private lateinit var binding: ActivityMainBinding
-    private val analytics by lazy { AppServices.analytics(this) }
+    private val analytics: AnalyticsTracker by lazy { AppServices.analytics(this) }
 
     // ── Launchers ──────────────────────────────────────────────
     private val overlayPermissionLauncher = registerForActivityResult(
@@ -66,9 +69,12 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         updatePermissionUI()
-        if (PetService.isRunning) {
+        // Si el usuario ya tiene el overlay concedido, arranca el servicio con el
+        // pet seleccionado para que aparezca al abrir la app (aunque el proceso
+        // hubiera sido terminado por el sistema).
+        if (Settings.canDrawOverlays(this)) {
             try {
-                startService(Intent(this, PetService::class.java))
+                ContextCompat.startForegroundService(this, Intent(this, PetService::class.java))
             } catch (_: Exception) {}
         }
     }

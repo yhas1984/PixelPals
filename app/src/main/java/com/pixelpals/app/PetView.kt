@@ -4,17 +4,33 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.*
 import android.os.Build
-import android.util.DisplayMetrics
+import android.os.Handler
+import android.os.Looper
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
-import android.view.Choreographer
+import android.util.DisplayMetrics
+import android.util.Log
 import android.view.MotionEvent
-import android.view.View
 import android.view.VelocityTracker
+import android.view.View
 import android.view.ViewConfiguration
+import android.view.WindowInsets
 import android.view.WindowManager
 import androidx.core.content.ContextCompat
+import com.pixelpals.app.core.analytics.AnalyticsTracker
+import com.pixelpals.app.core.domain.PetState
+import com.pixelpals.app.core.domain.PetType
+import com.pixelpals.app.core.motion.MotionEngine
+import com.pixelpals.app.core.motion.PetBounds
+import com.pixelpals.app.core.services.AppServices
+import com.pixelpals.app.data.repository.PetProgress
+import com.pixelpals.app.data.repository.PixelPalsRepository
+import com.pixelpals.app.feature.overlay.behavior.*
+import com.pixelpals.app.status.CareAction
+import com.pixelpals.app.status.PetMood
+import com.pixelpals.app.status.PetPersonality
+import com.pixelpals.app.status.PetStatusSnapshot
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -22,14 +38,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlin.math.*
 import kotlin.random.Random
-import android.util.Log
-import com.pixelpals.app.behavior.*
-import com.pixelpals.app.motion.MotionEngine
-import com.pixelpals.app.catalog.AccessoryCatalogItem
-import com.pixelpals.app.status.CareAction
-import com.pixelpals.app.status.PetMood
-import com.pixelpals.app.status.PetPersonality
-import com.pixelpals.app.status.PetStatusSnapshot
 
 @SuppressLint("ViewConstructor")
 class PetView(
@@ -40,13 +48,14 @@ class PetView(
     private val petType: PetType
 ) : View(context), PetViewBridge {
     private val progress = PetProgress(context)
-    private val repository = AppServices.repository(context)
-    private val analytics = AppServices.analytics(context)
+    private val repository: PixelPalsRepository = AppServices.repository(context)
+    private val analytics: AnalyticsTracker = AppServices.analytics(context)
     private val uiScope = CoroutineScope(Dispatchers.Main + Job())
     private var activeSecondsAccumulator = 0f
     private var ambientBubbleCooldown = 12f
     private var lastFrameTimeNanos = 0L
     private var lastTimeWindowKey = ""
+    private var lastTimeGreetingCheckAt = 0L
 
     private val motionEngine = MotionEngine()
     private val touchSlop = ViewConfiguration.get(context).scaledTouchSlop.toFloat()
@@ -63,6 +72,7 @@ class PetView(
     override var animRotation = 0f
     override var animAlpha = 1f
     override var animColorFilter: ColorFilter? = null
+    override var cosmeticColorFilter: ColorFilter? = null
     override var petStatus: PetStatusSnapshot = PetStatusSnapshot(
         petId = petType.name.lowercase(),
         health = 92,
@@ -77,7 +87,82 @@ class PetView(
         memoriesUnlocked = 0
     )
     override val petPersonality: PetPersonality = repository.getPersonality(petType)
-    override var equippedAccessory: AccessoryCatalogItem? = null
+
+    /**
+     * Normaliza el tamaño visible de todos los pets al de Moki (referencia):
+     * cada sprite ocupa un % distinto del alto de su frame (Moki perch 80%,
+     * Corgi idle 81%, Jelly idle 62%...), así que sin esto se ven de tamaños
+     * distintos en pantalla. Factor = occMoki / occIdleDelPet (0.802 / occ).
+     * Solo afecta al DIBUJO. Ocupaciones medidas con bbox de alfa (PIL).
+     */
+    override val spriteScale: Float = when (petType) {
+        PetType.MOKI -> 1.000f          // referencia: idle perch 0.802
+        PetType.CORGI -> 0.996f         // idle REST corgi_6 0.805 -> 0.802
+        PetType.JELLY -> 1.302f         // idle jelly_0 0.616 -> 0.802
+        PetType.BLOOP -> 1.112f         // idle fantasma_1 0.721 -> 0.802
+        PetType.NUBE_MICHI -> 1.149f    // idle gato_0 0.698 -> 0.802
+        PetType.ANGEL -> 0.875f         // hover/prayer (celda sheet) 0.917 -> 0.802
+        PetType.GINGER -> 0.875f        // sit/groom (celda sheet) 0.917 -> 0.802
+        PetType.DIABLILLO -> 0.929f     // idle 0.863 -> 0.802
+        PetType.PATITO -> 1.317f        // ciclo idle 0.36-0.60 (irregular por diseño)
+        PetType.YUKI -> 0.901f          // idle alto Pixar opaco 0.891 -> 0.802
+        PetType.PIRU -> 0.881f          // idle pingüino Pixar 0.910 -> 0.802
+        PetType.TARO -> 0.929f          // idle tortuga (hoja nueva) 0.863 -> 0.802
+        PetType.MENTA -> 0.908f         // idle serpiente Pixar opaco 0.883 -> 0.802
+        PetType.TELA -> 0.880f          // idle araña Pixar 0.910 -> 0.802
+    }
+
+    /**
+     * Fracción de contenido del frame IDLE de cada pet (medida con bbox de alfa).
+     * Referencia para la normalización por frame: ningún frame se dibuja más alto
+     * que el idle (los estiramientos se comprimen; las posturas bajas se mantienen).
+     */
+    override val spriteIdleContentFraction: Float = when (petType) {
+        PetType.MOKI -> 0.8021f         // perch (idx 0)
+        PetType.CORGI -> 0.8047f        // REST (idx 6)
+        PetType.JELLY -> 0.6159f        // idle blob (idx 0)
+        PetType.BLOOP -> 0.7214f        // flotando (idx 0)
+        PetType.NUBE_MICHI -> 0.6979f   // flotando (idx 0)
+        PetType.ANGEL -> 0.9167f        // hover (idx 0)
+        PetType.GINGER -> 0.9167f       // sit (idx 0)
+        PetType.DIABLILLO -> 0.875f     // idle (idx 0)
+        PetType.PATITO -> 0.5951f       // ciclo natación (idx 0)
+        PetType.YUKI -> 0.8906f         // idle Pixar opaco (idx 0), atlas 3D premium
+        PetType.PIRU -> 0.9102f         // idle pingüino Pixar (idx 0), atlas 3D premium
+        PetType.TARO -> 0.8633f         // idle tortuga (idx 0), hoja nueva importada
+        PetType.MENTA -> 0.8828f         // idle serpiente Pixar (idx 0), atlas 3D premium
+        PetType.TELA -> 0.9102f         // idle araña Pixar (idx 0), atlas 3D premium
+    }
+
+    /**
+     * Fracción de contenido (alto) de cada frame, índice = frame del pet.
+     * Medidas PIL sobre los assets actuales (ver tools/normalize_frames.py).
+     * Se usa junto a [spriteIdleContentFraction] para que los frames de animación
+     * "estirados" (jelly al interactuar, patito frames 4/9, corgi caminando) no se
+     * dibujen más altos que el idle. Las posturas bajas (squash, sniff, dormir,
+     * gatear) se mantienen a su tamaño natural.
+     */
+    override val spriteFrameContentFractions: FloatArray = when (petType) {
+        PetType.CORGI -> floatArrayOf(0.7018f, 0.7018f, 0.6693f, 0.4818f, 0.737f, 0.7096f, 0.8047f, 0.8047f, 0.7943f, 0.5807f, 0.8099f, 0.8542f, 0.7956f, 0.8281f)
+        PetType.JELLY -> floatArrayOf(0.6159f, 0.3581f, 0.4661f, 0.6797f, 0.6276f, 0.6263f, 0.388f, 0.3958f)  // 6/7 = aplastado
+        PetType.BLOOP -> floatArrayOf(0.7214f, 0.7083f, 0.6016f, 0.8451f, 0.7227f, 0.7227f, 0.6758f)
+        PetType.NUBE_MICHI -> floatArrayOf(0.6979f, 0.6576f, 0.7083f, 0.7578f, 0.444f, 0.7685f, 0.526f, 0.5339f, 0.4661f, 0.5638f, 0.4896f)
+        PetType.PATITO -> floatArrayOf(0.5951f, 0.5846f, 0.4609f, 0.3594f, 0.7982f, 0.6419f, 0.7031f, 0.681f, 0.6823f, 0.7982f)
+        PetType.DIABLILLO -> floatArrayOf(0.875f, 0.8568f, 0.875f, 0.8607f, 0.862f, 0.8529f, 0.8503f, 0.8646f, 0.8646f, 0.8672f)
+        PetType.MOKI -> floatArrayOf(0.8021f, 0.8021f, 0.8021f, 0.8021f, 0.4401f, 0.4193f, 0.4167f, 0.4271f, 0.362f, 0.5651f, 0.7292f, 0.7292f, 0.8021f, 0.4583f, 0.3281f, 0.3411f, 0.8021f, 0.4427f, 0.8021f, 0.3568f)
+        PetType.ANGEL -> floatArrayOf(0.9167f, 0.9167f, 0.9167f, 0.7891f, 0.9167f, 0.9167f, 0.7266f, 0.8802f, 0.9167f, 0.9167f, 0.9167f, 0.9167f, 0.9167f, 0.8724f, 0.9167f, 0.9167f)
+        PetType.GINGER -> floatArrayOf(0.9167f, 0.9167f, 0.5703f, 0.6484f, 0.6536f, 0.6615f, 0.6667f, 0.6615f, 0.2682f, 0.3229f, 0.2812f, 0.3542f, 0.4531f, 0.4245f, 0.6432f, 0.5365f)
+        PetType.YUKI -> floatArrayOf(0.8906f, 0.8984f, 0.8789f, 0.8984f, 0.8281f, 0.8086f, 0.7461f, 0.7930f, 0.8008f, 0.8047f, 0.8008f, 0.8125f, 0.7422f, 0.7969f, 0.7773f, 0.8125f)
+        PetType.PIRU -> floatArrayOf(0.9102f, 0.9141f, 0.8945f, 0.9141f, 0.8711f, 0.8555f, 0.8086f, 0.8164f, 0.8320f, 0.8359f, 0.8633f, 0.8633f, 0.7383f, 0.6719f, 0.8164f, 0.8711f)
+        PetType.TARO -> floatArrayOf(0.8633f, 0.8594f, 0.8516f, 0.8125f, 0.8359f, 0.8477f, 0.6758f, 0.6484f, 0.9062f, 0.8789f, 0.8398f, 0.8711f, 0.7656f, 0.7578f, 0.7812f, 0.7656f)
+        PetType.MENTA -> floatArrayOf(0.8516f, 0.8516f, 0.8320f, 0.8242f, 0.4141f, 0.4102f, 0.4102f, 0.4141f, 0.4102f, 0.4219f, 0.4102f, 0.4102f, 0.8516f, 0.8516f, 0.8320f, 0.8438f)
+        PetType.TELA -> floatArrayOf(0.9102f, 0.9102f, 0.8945f, 0.8984f, 0.6875f, 0.7188f, 0.8164f, 0.7109f, 0.5469f, 0.7305f, 0.7422f, 0.7500f, 0.4648f, 0.5508f, 0.7578f, 0.6211f)
+    }
+
+    /** Cosmético equipado de este pet (efectos que envuelven, sin alineación). */
+    private var equippedCosmetic: com.pixelpals.app.data.catalog.Cosmetic? = null
+    private var cosmeticClock = 0f
+
     private var treasureEffectScaleX = 1f
     private var treasureEffectScaleY = 1f
     private var treasureEffectOffsetX = 0f
@@ -92,6 +177,9 @@ class PetView(
     override var velocityY = 0f
     override var windowX: Int = 0
     override var windowY: Int = 0
+
+    override var topSystemInsetPx: Int = 0
+    override var bottomSystemInsetPx: Int = 0
 
     // Emoji bubble (emoticons de avisos/interacción).
     private var bubbleText: String? = null
@@ -120,51 +208,125 @@ class PetView(
         textAlign = Paint.Align.CENTER
         textSize = petSpriteSize.toFloat() * 0.24f
     }
-    private val accessoryPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.WHITE
+
+    private val cosmeticPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         textAlign = Paint.Align.CENTER
-        textSize = petSpriteSize.toFloat() * 0.24f
-        setShadowLayer(8f, 0f, 4f, Color.BLACK)
     }
 
     override val groundY: Int
-        get() = screenHeight - petSpriteSize -
-            (56f * resources.displayMetrics.density).roundToInt() - keyboardHeightPx
+        get() = bounds.floor
+
+    override val bounds: PetBounds
+        get() = PetBounds.compute(
+            screenWidth,
+            screenHeight,
+            petSpriteSize,
+            topSystemInsetPx,
+            bottomSystemInsetPx,
+            keyboardHeightPx
+        )
 
     private var keyboardHeightPx = 0
 
-    private val behavior: PetBehavior? by lazy {
-        PetBehaviorFactory.create(petType, this)
-    }
+    private var behaviorLazy: PetBehavior? = null
+    private val behavior: PetBehavior?
+        get() {
+            if (behaviorLazy == null) {
+                behaviorLazy = PetBehaviorFactory.create(petType, this)
+            }
+            return behaviorLazy
+        }
 
     init {
         uiScope.launch {
             petStatus = repository.getStatusSnapshot(petType)
-            equippedAccessory = repository.getEquippedAccessory(petType)
+            reloadCosmetic()
             showBubble(welcomeBubble())
             invalidate()
         }
     }
 
     private var isAnimating = false
-    private val frameCallback = object : Choreographer.FrameCallback {
-        override fun doFrame(frameTimeNanos: Long) {
+    private val frameHandler = Handler(Looper.getMainLooper())
+    private val frameRunnable = object : Runnable {
+        override fun run() {
             if (!isAnimating) return
-            if (lastFrameTimeNanos != 0L && frameTimeNanos > lastFrameTimeNanos) {
-                val step = motionEngine.splitDelta((frameTimeNanos - lastFrameTimeNanos) / 1_000_000_000f)
+            val now = System.nanoTime()
+            if (lastFrameTimeNanos != 0L && now > lastFrameTimeNanos) {
+                val rawDt = (now - lastFrameTimeNanos) / 1_000_000_000f
+                val step = motionEngine.splitDelta(rawDt)
                 repeat(step.steps) { update(step.stepDt) }
             }
-            lastFrameTimeNanos = frameTimeNanos
-            Choreographer.getInstance().postFrameCallback(this)
+            lastFrameTimeNanos = now
+            val moved = windowX != lastWindowX || windowY != lastWindowY
+            lastWindowX = windowX
+            lastWindowY = windowY
+            invalidate()
+            frameHandler.postDelayed(this, nextFrameDelayMs(moved))
         }
     }
 
-    override fun getWindowParams(): WindowManager.LayoutParams? = layoutParams as? WindowManager.LayoutParams
-    
+    private var lastWindowX = 0
+    private var lastWindowY = 0
+
+    /**
+     * Frame pacing adaptativo para minimizar batería:
+     *   - 60 FPS si hay actividad visible (movimiento, estados, burbuja, tesoro),
+     *   - 30 FPS si solo anima un cosmético envolvente (aura/float),
+     *   - 12 FPS en idle profundo (la mascota está quieta y sin efectos).
+     */
+    private fun nextFrameDelayMs(wasMoving: Boolean): Long {
+        if (state != PetState.IDLE || bubbleTimer > 0f || treasureReactionTimer > 0f || wasMoving) {
+            return FRAME_INTERVAL_ACTIVE_MS
+        }
+        if (hasAnimatedCosmetic()) return FRAME_INTERVAL_COSMETIC_MS
+        return FRAME_INTERVAL_IDLE_MS
+    }
+
+    private fun hasAnimatedCosmetic(): Boolean {
+        val effect = equippedCosmetic?.effect
+        return effect is com.pixelpals.app.data.catalog.CosmeticEffect.AuraEffect ||
+            effect is com.pixelpals.app.data.catalog.CosmeticEffect.FloatEffect
+    }
+
+    /**
+     * Offset entre la esquina del view real (2x el sprite) y la esquina lógica
+     * del sprite. Los behaviors posicionan la esquina del sprite; el view real
+     * se traslada -inset para que el sprite quede centrado con margen para
+     * los cosméticos (aura/floats) alrededor.
+     */
+    private val cosmeticInset: Int
+        get() = ((width - petSpriteSize) / 2).coerceAtLeast(0)
+
+    /** Copia los params con coordenadas LÓGICAS (esquina del sprite en pantalla). */
+    override fun getWindowParams(): WindowManager.LayoutParams? {
+        val real = layoutParams as? WindowManager.LayoutParams ?: return null
+        val copy = WindowManager.LayoutParams(
+            real.width, real.height, real.type, real.flags, real.format
+        ).apply {
+            gravity = real.gravity
+            softInputMode = real.softInputMode
+            x = real.x + cosmeticInset
+            y = real.y + cosmeticInset
+        }
+        return copy
+    }
+
     override fun updateWindowLayout(params: WindowManager.LayoutParams) {
         try {
+            if (params.x == windowX && params.y == windowY) return
+            // params llega en coordenadas lógicas (esquina del sprite en pantalla).
+            // El view real (2x el sprite, centrado) se posiciona -inset.
+            val real = WindowManager.LayoutParams(
+                params.width, params.height, params.type, params.flags, params.format
+            ).apply {
+                gravity = params.gravity
+                softInputMode = params.softInputMode
+                x = params.x - cosmeticInset
+                y = params.y - cosmeticInset
+            }
             val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-            wm.updateViewLayout(this, params)
+            wm.updateViewLayout(this, real)
             windowX = params.x
             windowY = params.y
         } catch (e: Exception) {
@@ -186,8 +348,11 @@ class PetView(
 
     override fun teleportToRandomEdge() {
         val params = getWindowParams() ?: return
-        params.x = if (Random.nextBoolean()) 20 else screenWidth - petSpriteSize - 20
-        params.y = Random.nextInt(100, screenHeight - petSpriteSize - 200)
+        params.x = if (Random.nextBoolean()) bounds.left + 20 else bounds.right - 20
+        params.y = Random.nextInt(
+            bounds.top,
+            (bounds.floor - 100).coerceAtLeast(bounds.top + 1)
+        )
         updateWindowLayout(params)
     }
 
@@ -203,7 +368,7 @@ class PetView(
                     "bond" to petStatus.bond.toString()
                 )
             )
-            progress.maybeAwardTreasureFromInteraction()?.let { treasure ->
+            repository.maybeAwardTreasureFromInteraction(petType)?.let { treasure ->
                 showBubble(treasure)
             } ?: run {
                 if (Random.nextFloat() < 0.45f) {
@@ -231,19 +396,19 @@ class PetView(
         if (!isAnimating) {
             isAnimating = true
             lastFrameTimeNanos = 0L
-            Choreographer.getInstance().postFrameCallback(frameCallback)
+            motionEngine.resetAccumulator()
+            frameHandler.post(frameRunnable)
             behavior?.resume()
         }
     }
 
     override fun pauseAnimation() {
+        if (isAnimating) progress.flush()
         isAnimating = false
         lastFrameTimeNanos = 0L
+        motionEngine.resetAccumulator()
+        frameHandler.removeCallbacks(frameRunnable)
         behavior?.pause()
-    }
-
-    override fun setProgress(progress: PetProgress) {
-        // Actualmente PetView mantiene su propio progreso persistente.
     }
 
     override fun consumeTreasure(emoji: String) {
@@ -256,7 +421,7 @@ class PetView(
     fun refreshFromRepository(message: String?, celebrate: Boolean) {
         uiScope.launch {
             petStatus = repository.getStatusSnapshot(petType)
-            equippedAccessory = repository.getEquippedAccessory(petType)
+            reloadCosmetic()
             if (!message.isNullOrBlank()) showBubble(message)
             if (celebrate) {
                 treasureReactionTimer = treasureReactionDuration
@@ -266,10 +431,63 @@ class PetView(
         }
     }
 
+    private fun reloadCosmetic() {
+        val equippedId = repository.getEquippedCosmetic(petType.name.lowercase())
+        equippedCosmetic = equippedId?.let { id ->
+            com.pixelpals.app.data.catalog.CosmeticCatalog.findById(context, id)
+        }
+        val tint = (equippedCosmetic?.effect as? com.pixelpals.app.data.catalog.CosmeticEffect.TintEffect)
+        cosmeticColorFilter = tint?.let { android.graphics.ColorMatrixColorFilter(it.toColorMatrix()) }
+    }
+
+    /** Dibuja aura y float (objetos que envuelven al pet, sin alineación al cuerpo). */
+    private fun drawCosmetic(canvas: Canvas) {
+        val effect = equippedCosmetic?.effect as? com.pixelpals.app.data.catalog.CosmeticEffect
+            ?: return
+        // Siguen la posición y escala del pet (saltos, vuelo, inflado) pero NO su
+        // rotación: corona/paraguas flotan "arriba" en pantalla, no giran con él.
+        val cx = width / 2f + renderOffsetX
+        val cy = height / 2f + renderOffsetY
+        val scale = renderScaleX.coerceAtLeast(0.4f)
+        when (effect) {
+            is com.pixelpals.app.data.catalog.CosmeticEffect.TintEffect -> Unit
+            is com.pixelpals.app.data.catalog.CosmeticEffect.AuraEffect -> {
+                cosmeticPaint.textSize = petSpriteSize.toFloat() * effect.sizeRatio * scale
+                cosmeticPaint.alpha = (200 * (animAlpha.coerceIn(0f, 1f))).toInt()
+                val fm = cosmeticPaint.fontMetrics
+                val radius = petSpriteSize.toFloat() * effect.radiusRatio * scale
+                for (i in 0 until effect.count) {
+                    val angle = cosmeticClock * effect.speed + (2f * PI.toFloat() * i) / effect.count
+                    val x = cx + cos(angle) * radius
+                    val y = cy + sin(angle) * radius
+                    canvas.drawText(effect.emoji, x, y - (fm.ascent + fm.descent) / 2f, cosmeticPaint)
+                }
+            }
+            is com.pixelpals.app.data.catalog.CosmeticEffect.FloatEffect -> {
+                val scaleX = renderScaleX.coerceAtLeast(0.4f)
+                val scaleY = renderScaleY.coerceAtLeast(0.4f)
+                cosmeticPaint.textSize = petSpriteSize.toFloat() * effect.sizeRatio * scaleX
+                cosmeticPaint.alpha = (255 * (animAlpha.coerceIn(0f, 1f))).toInt()
+                val fm = cosmeticPaint.fontMetrics
+                val bob = sin(cosmeticClock * effect.bobSpeed) * effect.bobAmplitude * scaleY
+                // Posición: el eje X sigue el squash horizontal y el eje Y el vertical,
+                // para que corona/varita/paraguas acompañen al pet al aplastarse/saltar.
+                var x = cx + petSpriteSize.toFloat() * effect.xRatio * scaleX
+                var y = cy + petSpriteSize.toFloat() * (effect.yRatio + bob) * scaleY
+                // Clamp dentro del view (el view puede ser menor que 2x el sprite por
+                // el tope defensivo MAX_VIEW_SIZE_RATIO): el emoji nunca se recorta.
+                val marginX = cosmeticPaint.textSize * 0.55f
+                val marginY = cosmeticPaint.textSize * 0.6f
+                x = x.coerceIn(marginX, width - marginX)
+                y = y.coerceIn(marginY, height - marginY)
+                canvas.drawText(effect.emoji, x, y - (fm.ascent + fm.descent) / 2f, cosmeticPaint)
+            }
+        }
+    }
+
     override fun recordCareAction(action: CareAction) {
         uiScope.launch {
             petStatus = repository.applyCareAction(petType, action)
-            equippedAccessory = repository.getEquippedAccessory(petType)
             showBubble(
                 careActionBubble(action)
             )
@@ -298,14 +516,16 @@ class PetView(
     }
 
     private fun update(dt: Float) {
-        refreshScreenMetrics()
+        // No-op: screen metrics are cached at attach/config-change time (see refreshScreenMetrics).
+        cosmeticClock += dt
         activeSecondsAccumulator += dt
         while (activeSecondsAccumulator >= 60f) {
             progress.trackMinute()
+            progress.flush()
             activeSecondsAccumulator -= 60f
             uiScope.launch {
                 petStatus = repository.recordActiveMinute(petType)
-                progress.maybeAwardTreasureFromActiveMinute()?.let { treasure ->
+                repository.maybeAwardTreasureFromActiveMinute(petType)?.let { treasure ->
                     showBubble(treasure)
                 }
             }
@@ -355,14 +575,14 @@ class PetView(
             treasureEffectOffsetY = 0f
             treasureEffectRotation = 0f
         }
-
-        invalidate()
     }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
+        // Sprite base del pet.
         behavior?.onDraw(canvas, (width / 2).toFloat(), (height / 2).toFloat())
-        drawAccessory(canvas)
+
+        drawCosmetic(canvas)
 
         // Dibuja el bubble encima del pet.
         val text = bubbleText ?: return
@@ -382,14 +602,6 @@ class PetView(
         canvas.drawText(text, cx, cy, bubblePaint)
     }
 
-    private fun drawAccessory(canvas: Canvas) {
-        val accessory = equippedAccessory ?: return
-        accessoryPaint.textSize = petSpriteSize * accessory.scale
-        val cx = width / 2f + renderOffsetX + (accessory.offsetXRatio * petSpriteSize * if (renderScaleX >= 0f) 1f else -1f)
-        val cy = height / 2f + renderOffsetY + (accessory.offsetYRatio * petSpriteSize)
-        canvas.drawText(accessory.emoji, cx, cy, accessoryPaint)
-    }
-
     private fun maybeShowAmbientMoodBubble() {
         val bubble = ambientBubbleOptions().randomOrNull()
         bubble?.let { showBubble(it) }
@@ -397,6 +609,9 @@ class PetView(
 
     private fun maybeShowTimeGreeting() {
         if (bubbleText != null || state != PetState.IDLE) return
+        val now = System.currentTimeMillis()
+        if (now - lastTimeGreetingCheckAt < TIME_GREETING_CHECK_INTERVAL_MS) return
+        lastTimeGreetingCheckAt = now
         val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
         val key = when {
             hour in 6..11 -> "morning"
@@ -491,6 +706,13 @@ class PetView(
 
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
+                // El view es 2x el sprite (espacio para cosméticos): solo capturamos
+                // toques cerca del sprite para no bloquear la app de debajo.
+                val dx = event.x - width / 2f
+                val dy = event.y - height / 2f
+                val touchRadius = petSpriteSize * spriteScale * 0.55f
+                if (dx * dx + dy * dy > touchRadius * touchRadius) return false
+
                 if (behavior?.onTouchDown(event.rawX, event.rawY) == true) return true
 
                 velocityTracker?.recycle()
@@ -514,9 +736,12 @@ class PetView(
                         ) >= touchSlop
                     }
                     params.x = (initialX + (event.rawX - initialTouchX).toInt())
-                        .coerceIn(0, (screenWidth - params.width).coerceAtLeast(0))
+                        .coerceIn(0, (screenWidth - petSpriteSize).coerceAtLeast(0))
+                    val dragMinY = topSystemInsetPx + 50
+                    val dragMaxY = (screenHeight - bottomSystemInsetPx - petSpriteSize)
+                        .coerceAtLeast(dragMinY)
                     params.y = (initialY + (event.rawY - initialTouchY).toInt())
-                        .coerceIn(0, (screenHeight - params.height).coerceAtLeast(0))
+                        .coerceIn(dragMinY, dragMaxY)
                     updateWindowLayout(params)
                 }
                 return true
@@ -538,6 +763,13 @@ class PetView(
                             abs(flingVY) >= minimumFlingVelocity
                         if (isFling) {
                             behavior?.onFling(flingVX, flingVY)
+                            // Algunos pets no implementan onFling (Piru, Taro, Menta,
+                            // Tela, Yuki): sin este fallback quedarían atrapados en
+                            // PetState.DRAGGING para siempre (pose congelada).
+                            if (state == PetState.DRAGGING) {
+                                state = PetState.IDLE
+                                behavior?.reset()
+                            }
                         } else {
                             state = PetState.IDLE
                             behavior?.reset()
@@ -557,11 +789,22 @@ class PetView(
         return super.onTouchEvent(event)
     }
 
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        refreshScreenMetrics()
+    }
+
     override fun onDetachedFromWindow() {
         recycleVelocityTracker()
+        progress.flush()
         behavior?.destroy()
         uiScope.cancel()
         super.onDetachedFromWindow()
+    }
+
+    override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+        super.onConfigurationChanged(newConfig)
+        refreshScreenMetrics()
     }
 
     private fun recycleVelocityTracker() {
@@ -580,14 +823,26 @@ class PetView(
     private fun refreshScreenMetrics() {
         val wm = context.getSystemService(Context.WINDOW_SERVICE) as? WindowManager ?: return
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            val bounds = wm.currentWindowMetrics.bounds
-            screenWidth = bounds.width()
-            screenHeight = bounds.height()
+            val metrics = wm.currentWindowMetrics
+            screenWidth = metrics.bounds.width()
+            screenHeight = metrics.bounds.height()
+            val bars = metrics.windowInsets.getInsets(WindowInsets.Type.systemBars())
+            topSystemInsetPx = bars.top
+            bottomSystemInsetPx = bars.bottom
         } else {
             @Suppress("DEPRECATION")
             val metrics = DisplayMetrics().also { wm.defaultDisplay.getMetrics(it) }
             screenWidth = metrics.widthPixels
             screenHeight = metrics.heightPixels
+            topSystemInsetPx = 0
+            bottomSystemInsetPx = 0
         }
+    }
+
+    private companion object {
+        const val FRAME_INTERVAL_ACTIVE_MS = 16L
+        const val FRAME_INTERVAL_COSMETIC_MS = 33L
+        const val FRAME_INTERVAL_IDLE_MS = 83L
+        const val TIME_GREETING_CHECK_INTERVAL_MS = 60_000L
     }
 }

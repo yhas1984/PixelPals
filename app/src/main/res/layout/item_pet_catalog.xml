@@ -16,7 +16,9 @@
         android:id="@+id/imgPetPreview"
         android:layout_width="72dp"
         android:layout_height="72dp"
+        android:background="@drawable/bg_pet_avatar"
         android:contentDescription="@null"
+        android:padding="6dp"
         android:scaleType="fitCenter" />
 
     <LinearLayout
@@ -28,17 +30,21 @@
 
         <TextView
             android:id="@+id/txtPetName"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
             android:textColor="@color/text_primary"
             android:textSize="18sp"
             android:textStyle="bold" />
 
         <TextView
             android:id="@+id/txtPetDesc"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
+            android:ellipsize="end"
+            android:maxLines="2"
             android:textColor="@color/text_secondary"
             android:textSize="13sp" />
 
@@ -69,6 +75,17 @@
                 android:textColor="@color/text_secondary"
                 android:textSize="11sp"
                 android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/txtPetPrice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:maxLines="1"
+                android:textColor="@color/golden_accent"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
         </LinearLayout>
     </LinearLayout>
 

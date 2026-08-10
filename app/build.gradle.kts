@@ -26,9 +26,25 @@ android {
         applicationId = "com.pixelpals.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 7
-        versionName = "1.4.0"
+        versionCode = 8
+        versionName = "1.5.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        create("release") {
+            val ksFile = System.getenv("PIXELPALS_KEYSTORE_FILE")
+                ?: project.findProperty("pixelpals.ks.file") as String?
+            if (!ksFile.isNullOrBlank()) {
+                storeFile = file(ksFile)
+                storePassword = System.getenv("PIXELPALS_KEYSTORE_PASSWORD")
+                    ?: project.findProperty("pixelpals.ks.password") as String?
+                keyAlias = System.getenv("PIXELPALS_KEYSTORE_ALIAS")
+                    ?: project.findProperty("pixelpals.ks.alias") as String?
+                keyPassword = System.getenv("PIXELPALS_KEY_PASSWORD")
+                    ?: project.findProperty("pixelpals.key.password") as String?
+            }
+        }
     }
 
     buildTypes {
@@ -39,6 +55,7 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -53,6 +70,7 @@ android {
 
     testOptions {
         unitTests.isIncludeAndroidResources = true
+        unitTests.isReturnDefaultValues = true
     }
 
     packaging {
@@ -76,9 +94,6 @@ dependencies {
     implementation("com.google.android.material:material:1.14.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.11.0")
 
-    // Lottie for lightweight vector animations
-    implementation("com.airbnb.android:lottie:6.7.1")
-
     // ConstraintLayout
     implementation("androidx.constraintlayout:constraintlayout:2.2.2")
 
@@ -93,6 +108,7 @@ dependencies {
     testImplementation("androidx.test:core:1.7.0")
     testImplementation("androidx.test:runner:1.7.0")
     testImplementation("androidx.room:room-testing:$roomVersion")
+    testImplementation("org.json:json:20240303")
 
     androidTestImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test:core:1.7.0")

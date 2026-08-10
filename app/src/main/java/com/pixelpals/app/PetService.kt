@@ -7,6 +7,7 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.BroadcastReceiver
 import android.content.Context
+import com.pixelpals.app.data.prefs.SelectedPetStore
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.PixelFormat
@@ -14,6 +15,7 @@ import android.graphics.Rect
 import android.os.BatteryManager
 import android.os.Handler
 import android.os.IBinder
+import com.pixelpals.app.core.domain.PetType
 import android.os.Looper
 import android.os.Build
 import android.util.DisplayMetrics
@@ -42,8 +44,12 @@ class PetService : Service() {
         private const val EXTRA_REFRESH_MESSAGE = "REFRESH_MESSAGE"
         private const val EXTRA_REFRESH_CELEBRATE = "REFRESH_CELEBRATE"
         private const val PET_SIZE_DP = 80
-        private const val HOME_POLL_INTERVAL_MS = 2000L
-        private const val HOME_POLL_INTERVAL_SLOW_MS = 30_000L
+        /** Tope defensivo: el view (2x el sprite) nunca supera este % del ancho de pantalla. */
+        private const val MAX_VIEW_SIZE_RATIO = 0.40f
+        private const val HOME_POLL_INTERVAL_MS = 4_000L
+        private const val HOME_POLL_INTERVAL_SLOW_MS = 60_000L
+        /** La consulta de foreground (UsageEvents) se ejecuta cada N polls. */
+        private const val LAUNCHER_CHECK_EVERY_N_POLLS = 3
 
         fun requestPetRefresh(context: Context, message: String? = null, celebrate: Boolean = false) {
             if (!isRunning) return
@@ -56,7 +62,8 @@ class PetService : Service() {
         }
 
         fun requestPetChange(context: Context, petType: PetType) {
-            if (!isRunning) return
+            // Sin guard isRunning: si el servicio está detenido, este intent lo
+            // arranca y onStartCommand aplica el pet type.
             val intent = Intent(context, PetService::class.java).apply {
                 putExtra(PetSelectionActivity.EXTRA_PET_TYPE, petType.name)
             }
@@ -87,25 +94,25 @@ class PetService : Service() {
     private val homeCheckRunnable = object : Runnable {
         override fun run() {
             try {
-                if (isViewAttached) {
-                    refreshKeyboardVisibility()
-                    val hadUsageAccess = DesktopForegroundHelper.hasUsageAccess(this@PetService)
-                    refreshPetVisibilityForForeground()
-                    val nextInterval = if (hadUsageAccess) {
-                        HOME_POLL_INTERVAL_MS
-                    } else {
-                        HOME_POLL_INTERVAL_SLOW_MS
-                    }
-                    homeCheckHandler.postDelayed(this, nextInterval)
-                } else {
+                if (!isViewAttached) {
                     homeCheckHandler.postDelayed(this, HOME_POLL_INTERVAL_SLOW_MS)
+                    return
                 }
+                refreshKeyboardVisibility()
+                launcherCheckCounter++
+                if (launcherCheckCounter >= LAUNCHER_CHECK_EVERY_N_POLLS) {
+                    launcherCheckCounter = 0
+                    refreshPetVisibilityForForeground()
+                }
+                homeCheckHandler.postDelayed(this, HOME_POLL_INTERVAL_MS)
             } catch (e: Exception) {
                 Log.w(TAG, "Polling cycle failed; keeping service alive", e)
                 homeCheckHandler.postDelayed(this, HOME_POLL_INTERVAL_MS)
             }
         }
     }
+
+    private var launcherCheckCounter = 0
 
     private var lastImeVisible: Boolean? = null
 
@@ -123,7 +130,7 @@ class PetService : Service() {
             // Re-afirma la posición tras cerrar el teclado por si el sistema re-layout la ventana.
             val view = petView ?: return
             val params = view.getWindowParams() ?: return
-            runCatching { wm.updateViewLayout(view, params) }
+            runCatching { view.updateWindowLayout(params) }
         }
     }
 
@@ -199,7 +206,13 @@ class PetService : Service() {
 
         val metrics = getDisplayMetrics()
         val petSize = (PET_SIZE_DP * resources.displayMetrics.density).toInt()
-        val viewSize = (petSize * 1.4f).toInt()
+        // View 2x el pet: da espacio al aura (radio 0.85x) y a los floats (0.9x)
+        // sin que se corten en el borde.
+        val viewSize = (petSize * 2.0f).toInt()
+        // Tope defensivo: si PET_SIZE_DP crece demasiado, el view (2x el sprite)
+        // taparía la app de debajo. Nunca superamos el 40% del ancho de pantalla.
+        val maxViewSize = (metrics.widthPixels * MAX_VIEW_SIZE_RATIO).toInt()
+        val safeViewSize = minOf(viewSize, maxViewSize)
 
         petView = PetView(this, metrics.widthPixels, metrics.heightPixels, petSize, currentPetType)
 
@@ -207,15 +220,15 @@ class PetService : Service() {
         // adjustNothing: el sistema no debe panear/insetar la ventana cuando abre el teclado;
         // la mascota se reposiciona por nuestra cuenta según el IME.
         val params = WindowManager.LayoutParams(
-            viewSize,
-            viewSize,
+            safeViewSize,
+            safeViewSize,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             baseOverlayFlags,
             PixelFormat.TRANSPARENT
         ).apply {
             gravity = Gravity.TOP or Gravity.START
             softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING
-            x = metrics.widthPixels / 2 - viewSize / 2
+            x = metrics.widthPixels / 2 - safeViewSize / 2
             y = metrics.heightPixels / 3
         }
         try {
@@ -361,14 +374,6 @@ class PetService : Service() {
             .build()
     }
 
-    private fun updateNotification(isHidden: Boolean) {
-        try {
-            getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, buildNotification(isHidden))
-        } catch (_: Exception) {
-            Log.w(TAG, "Notification update failed")
-        }
-    }
-
     private fun registerBatteryReceiver() {
         if (batteryReceiver != null) return
         batteryReceiver = object : BroadcastReceiver() {
@@ -428,8 +433,6 @@ class PetService : Service() {
         if (!isForegroundStarted) {
             startForeground(NOTIFICATION_ID, buildNotification(false))
             isForegroundStarted = true
-        } else {
-            updateNotification(false)
         }
     }
 

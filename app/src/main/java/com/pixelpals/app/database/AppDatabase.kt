@@ -13,10 +13,9 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         PetStatusEntity::class,
         PetBondEntity::class,
         DailyTaskStateEntity::class,
-        OwnedProductEntity::class,
-        EquippedAccessoryEntity::class
+        OwnedProductEntity::class
     ],
-    version = 2,
+    version = 5,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -25,7 +24,6 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun petBondDao(): PetBondDao
     abstract fun dailyTaskStateDao(): DailyTaskStateDao
     abstract fun ownedProductDao(): OwnedProductDao
-    abstract fun equippedAccessoryDao(): EquippedAccessoryDao
 
     companion object {
         @Volatile
@@ -102,6 +100,35 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE `pet_bond` ADD COLUMN `lastTreasureInteractionMilestone` INTEGER NOT NULL DEFAULT 0"
+                )
+                db.execSQL(
+                    "ALTER TABLE `pet_bond` ADD COLUMN `lastTreasureActiveMilestone` INTEGER NOT NULL DEFAULT 0"
+                )
+            }
+        }
+
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE `pet_bond` ADD COLUMN `activeMinutes` INTEGER NOT NULL DEFAULT 0"
+                )
+            }
+        }
+
+        /**
+         * v4 → v5: el sistema de accesorios (tabla equipped_accessory) se
+         * eliminó por completo. Se descarta la tabla si existía.
+         */
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("DROP TABLE IF EXISTS `equipped_accessory`")
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -109,7 +136,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "pixelpals_database"
                 )
-                .addMigrations(MIGRATION_1_2)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                 .build()
                 INSTANCE = instance
                 instance

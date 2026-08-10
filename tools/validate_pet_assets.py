@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from pathlib import Path
 
 from PIL import Image
@@ -12,11 +13,11 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 DRAWABLES = ROOT / "app/src/main/res/drawable-nodpi"
-BEHAVIORS = ROOT / "app/src/main/java/com/pixelpals/app/behavior"
+BEHAVIORS = ROOT / "app/src/main/java/com/pixelpals/app/feature/overlay/behavior"
 
 RASTER_PETS = {
     "bloop": ("BloopBehavior.kt", "fantasma", [1, 2, 3, 4, 5, 7, 8]),
-    "nube_michi": ("NubeMichiBehavior.kt", "gato", list(range(8))),
+    "nube_michi": ("NubeMichiBehavior.kt", "gato", list(range(11))),
     "jelly": ("JellyBehavior.kt", "jelly", list(range(8))),
     "corgi": ("CorgiBehavior.kt", "corgi", list(range(14))),
     "patito": ("DuckBehavior.kt", "patito", list(range(10))),
@@ -27,6 +28,11 @@ ATLASES = {
     "ginger": ("GingerBehavior.kt", "pets/ginger/ginger_sheet_v2.json"),
     "angel": ("AngelBehavior.kt", "pets/angel/angel_sheet_v4.json"),
     "moki": ("MokiBehavior.kt", "pets/moki/moki_sheet_v1.json"),
+    "yuki": ("YukiBehavior.kt", "pets/yuki/yuki_sheet_v1.json"),
+    "piru": ("PiruBehavior.kt", "pets/piru/piru_sheet_v1.json"),
+    "taro": ("TaroBehavior.kt", "pets/taro/taro_sheet_v1.json"),
+    "menta": ("MentaBehavior.kt", "pets/menta/menta_sheet_v1.json"),
+    "tela": ("TelaBehavior.kt", "pets/tela/tela_sheet_v1.json"),
 }
 
 
@@ -78,6 +84,11 @@ def validate_atlas(name: str, behavior_name: str, spec_path: str) -> int:
     }
     if used != set(range(count)):
         raise ValueError(f"{name}: unused atlas frames {sorted(set(range(count)) - used)}")
+    clip_ids = {str(clip["id"]) for clip in spec["clips"]}
+    required = set(re.findall(r'spec\.clip\("([^"]+)"\)', behavior))
+    missing = required - clip_ids
+    if missing:
+        raise ValueError(f"{name}: behavior requires clips missing from JSON: {sorted(missing)}")
     for index in range(count):
         col, row = index % columns, index // columns
         cell = atlas.crop((col * width, row * height, (col + 1) * width, (row + 1) * height))

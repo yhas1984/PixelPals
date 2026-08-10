@@ -15,19 +15,20 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
-import com.pixelpals.app.AppServices
-import com.pixelpals.app.PetType
+import com.pixelpals.app.core.services.AppServices
+import com.pixelpals.app.core.domain.PetType
+import com.pixelpals.app.data.repository.PixelPalsRepository
 import com.pixelpals.app.PetService
 import com.pixelpals.app.R
-import com.pixelpals.app.SelectedPetStore
+import com.pixelpals.app.data.prefs.SelectedPetStore
 import com.pixelpals.app.status.PetMood
 import com.pixelpals.app.status.PetPersonality
-import com.pixelpals.app.store.StoreActivity
+import com.pixelpals.app.feature.store.StoreActivity
 import kotlinx.coroutines.launch
 
 class PetDashboardActivity : AppCompatActivity() {
     private lateinit var selectedPetStore: SelectedPetStore
-    private val repository by lazy { AppServices.repository(this) }
+    private val repository: PixelPalsRepository by lazy { AppServices.repository(this) }
     private val analytics by lazy { AppServices.analytics(this) }
 
     private lateinit var selectedPet: PetType
