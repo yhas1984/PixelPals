@@ -75,6 +75,7 @@ class PixelPalsRepository(context: Context) {
             ?: return false
         val price = cosmetic.coinPrice ?: return false
         return db.withTransaction {
+            if (db.ownedProductDao().getByProductId(cosmetic.productId) != null) return@withTransaction true
             val wallet = ensureBondEntity(walletId)
             if (wallet.softCurrency < price) return@withTransaction false
             db.petBondDao().upsert(wallet.copy(softCurrency = wallet.softCurrency - price))

@@ -36,6 +36,7 @@ class CosmeticsTabFragment : Fragment() {
 
     private lateinit var root: LinearLayout
     private var renderJob: Job? = null
+    private var purchaseInFlight = false
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -46,6 +47,13 @@ class CosmeticsTabFragment : Fragment() {
         root = scroll.findViewById(R.id.scrollContent)
         renderCosmetics()
         return scroll
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Al volver a la pestaña (p.ej. tras cambiar de mascota en PetsTab),
+        // re-renderiza con el pet seleccionado actual.
+        renderCosmetics()
     }
 
     private fun renderCosmetics() {
@@ -66,7 +74,7 @@ class CosmeticsTabFragment : Fragment() {
             grouped.forEach { (rank, items) ->
                 root.addView(buildCategoryHeader(inflater, categoryTitle(rank)))
                 items.forEach { cosmetic ->
-                    root.addView(buildCosmeticCard(inflater, cosmetic, petId, equippedId, ownedIds))
+                    root.addView(buildCosmeticCard(inflater, cosmetic, equippedId, ownedIds))
                 }
             }
         }
@@ -97,7 +105,6 @@ class CosmeticsTabFragment : Fragment() {
     private fun buildCosmeticCard(
         inflater: LayoutInflater,
         cosmetic: Cosmetic,
-        petId: String,
         equippedId: String?,
         ownedIds: Set<String>,
     ): View {
@@ -121,21 +128,26 @@ class CosmeticsTabFragment : Fragment() {
             owned -> getString(R.string.store_equip_button)
             else -> getString(R.string.store_buy_with_coins)
         }
-        btn.isEnabled = !isEquipped
+        btn.isEnabled = !isEquipped && !purchaseInFlight
         btn.setOnClickListener {
-            when {
-                isEquipped -> Unit
-                owned -> equipCosmetic(cosmetic, petId)
-                else -> buyCosmetic(cosmetic, petId)
-            }
+            // IMPORTANTE: se relee el pet seleccionado EN EL MOMENTO DEL CLIC.
+            // Capturarlo en el render dejaba un petId obsoleto (p.ej. corgi) si el
+            // usuario cambiaba de mascota en PetsTab con esta pestaña ya dibujada.
+            val petType = selectedPetStore.load()
+            if (repository.getEquippedCosmetic(petType.name.lowercase()) == cosmetic.id) return@setOnClickListener
+            if (owned) equipCosmetic(petType, cosmetic) else buyCosmetic(petType, cosmetic, btn)
         }
         return card
     }
 
-    private fun buyCosmetic(cosmetic: Cosmetic, petId: String) {
+    private fun buyCosmetic(petType: PetType, cosmetic: Cosmetic, btn: Button) {
         val price = cosmetic.coinPrice ?: return
+        if (purchaseInFlight) return
+        purchaseInFlight = true
+        btn.isEnabled = false
         lifecycleScope.launch {
-            val ok = repository.purchaseCosmeticWithCoins(petId, cosmetic.id)
+            val ok = repository.purchaseCosmeticWithCoins(petType.name.lowercase(), cosmetic.id)
+            purchaseInFlight = false
             if (ok) {
                 analytics.track(
                     "cosmetic_purchased",
@@ -146,21 +158,23 @@ class CosmeticsTabFragment : Fragment() {
                     getString(R.string.cosmetic_unlocked_toast, cosmetic.displayName),
                     Toast.LENGTH_SHORT
                 ).show()
-                equipCosmetic(cosmetic, petId)
+                equipCosmetic(petType, cosmetic)
             } else {
                 Toast.makeText(
                     requireContext(),
                     getString(R.string.store_not_enough_coins),
                     Toast.LENGTH_SHORT
                 ).show()
+                renderCosmetics()
             }
         }
     }
 
-    private fun equipCosmetic(cosmetic: Cosmetic, petId: String) {
+    private fun equipCosmetic(petType: PetType, cosmetic: Cosmetic) {
+        val petId = petType.name.lowercase()
         repository.setEquippedCosmetic(petId, cosmetic.id)
         analytics.track("cosmetic_equipped", mapOf("cosmetic_id" to cosmetic.id, "pet_id" to petId))
-        PetService.requestPetChange(requireContext(), PetType.valueOf(petId.uppercase()))
+        PetService.requestPetChange(requireContext(), petType)
         (activity as? StoreActivity)?.refreshStoreHeader()
         renderCosmetics()
     }

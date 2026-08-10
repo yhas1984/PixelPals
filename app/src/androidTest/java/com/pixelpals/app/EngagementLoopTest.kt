@@ -29,12 +29,15 @@ class EngagementLoopTest {
         repository.applyCareAction(PetType.CORGI, CareAction.CLEAN)
         repository.applyCareAction(PetType.CORGI, CareAction.PLAY)
         val beforeRepeatedCare = repository.getStatusSnapshot(PetType.CORGI)
+        // Las monedas van al MONEDERO GLOBAL (v1.6+), no a la fila del pet.
+        val walletBefore = repository.getCoinBalance(PetType.CORGI)
         repository.applyCareAction(PetType.CORGI, CareAction.FEED)
         val afterRepeatedCare = repository.getStatusSnapshot(PetType.CORGI)
+        val walletAfter = repository.getCoinBalance(PetType.CORGI)
 
-        assertEquals(40, beforeRepeatedCare.softCurrency)
+        assertEquals(40, walletBefore)
         assertEquals(24, beforeRepeatedCare.bond)
-        assertEquals(beforeRepeatedCare.softCurrency, afterRepeatedCare.softCurrency)
+        assertEquals(walletBefore, walletAfter)
         assertEquals(beforeRepeatedCare.bond, afterRepeatedCare.bond)
     }
 
