@@ -148,8 +148,19 @@ class YukiBehavior(
         bridge.animOffsetY = sin(time * 1.6f) * 2f
         bridge.animRotation = sin(time * 1.3f) * 1.2f
 
+        // Yuki no permanece inmóvil: de vez en cuando se anima solo, saluda
+        // y muestra una reacción breve como un personaje vivo.
+        if (modeTimer > 0.9f && random.nextFloat() < 0.0045f) {
+            mode = Mode.HAPPY
+            modeTimer = 0f
+            modeDuration = 1.4f + random.nextFloat() * 1.0f
+            bridge.showBubble(listOf("❄️", "brrr!", "☃️", "✨").random())
+            bridge.playHaptic(18)
+            return
+        }
+
         if (modeTimer >= modeDuration) {
-            mode = if (random.nextFloat() < 0.55f) Mode.WALK else Mode.IDLE
+            mode = if (random.nextFloat() < 0.72f) Mode.WALK else Mode.IDLE
             modeTimer = 0f
             if (mode == Mode.WALK) startWalk(resetTimer = false)
             else modeDuration = 2.0f + random.nextFloat() * 2.5f
@@ -222,6 +233,7 @@ class YukiBehavior(
 
     override fun onInteract() {
         super.onInteract()
+        bridge.showBubble(listOf("brrr!", "☃️", "¡frío!", "✨").random())
         mode = Mode.TOUCH
         modeDuration = 0.9f + random.nextFloat() * 0.6f
         modeTimer = 0f

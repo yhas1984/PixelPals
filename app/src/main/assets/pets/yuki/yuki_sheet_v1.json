@@ -17,6 +17,7 @@
     { "id": "jump",  "frames": [6, 7],           "loop": false, "frameDurationMs": 180 },
     { "id": "happy", "frames": [8, 9, 10, 11],   "loop": true,  "frameDurationMs": 230 },
     { "id": "melt",  "frames": [12, 13, 14],     "loop": false, "frameDurationMs": 320 },
+    { "id": "touch", "frames": [12, 13, 14],     "loop": false, "frameDurationMs": 300 },
     { "id": "sleep", "frames": [15],             "loop": false, "frameDurationMs": 500 }
   ],
   "frames": [
