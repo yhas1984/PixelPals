@@ -31,6 +31,8 @@ class YukiBehavior(
     private var walkTargetX = 0f
     private var walkDuration = 0f
     private var facingDir = 1f
+    private var dragClock = 0f
+    private var recoveringFromDrag = false
 
     private var batteryTempC: Float = -1f
     private var tempReadCooldown = 0f
@@ -101,6 +103,14 @@ class YukiBehavior(
             Mode.MELT -> updateMelt(step)
             Mode.TOUCH -> updateTouch(step)
             Mode.SLEEP -> updateSleep(step)
+        }
+        if (recoveringFromDrag) {
+            // Tras soltarlo recupera el equilibrio con un pequeño rebote,
+            // en vez de cambiar instantáneamente a una pose rígida.
+            val recovery = (modeTimer / modeDuration).coerceIn(0f, 1f)
+            bridge.animRotation = sin((1f - recovery) * PI.toFloat() * 3f) * 4f
+            bridge.animOffsetY = -abs(sin((1f - recovery) * PI.toFloat() * 2f)) * 3f
+            if (recovery >= 1f) recoveringFromDrag = false
         }
         syncWindowPosition()
     }
@@ -248,15 +258,18 @@ class YukiBehavior(
     }
 
     override fun updateDrag(dt: Float) {
-        // Al arrastrar, el muñeco de nieve mantiene pose idle (no se congela).
+        // Al arrastrarlo, Yuki se tambalea como un muñeco de nieve real:
+        // cambia de pose, inclina el cuerpo y rebota ligeramente en la mano.
         time += dt
+        dragClock += dt
         val spec = spriteSheetSpec ?: return
-        val clip = spec.clip("idle") ?: return
-        val idx = ((time / 0.24f).toInt() % clip.frames.size)
+        val clip = spec.clip("happy") ?: spec.clip("idle") ?: return
+        val idx = ((dragClock / 0.20f).toInt() % clip.frames.size)
         bridge.currentFrame = clip.frames[idx]
         bridge.animScaleX = facingScale(facingDir)
-        bridge.animScaleY = 1f
-        bridge.animRotation = 0f
+        bridge.animScaleY = 1f + sin(dragClock * 8f) * 0.035f
+        bridge.animOffsetY = -abs(sin(dragClock * 6f)) * 2.5f
+        bridge.animRotation = sin(dragClock * 7f) * 7f
     }
 
     override fun reset() {
@@ -264,8 +277,13 @@ class YukiBehavior(
         // Al soltar, reanuda su paseo al momento.
         modeTimer = 0f
         animClock = 0f
+        dragClock = 0f
+        recoveringFromDrag = true
         mode = Mode.WALK
+        modeDuration = 0.85f
         startWalk(resetTimer = false)
+        mode = Mode.HAPPY
+        bridge.showBubble("¡wooow!")
     }
 
     private fun syncWindowPosition() {
