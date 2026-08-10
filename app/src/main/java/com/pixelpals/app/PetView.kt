@@ -106,7 +106,7 @@ class PetView(
         PetType.YUKI -> 0.901f          // idle alto Pixar opaco 0.891 -> 0.802
         PetType.PIRU -> 0.892f          // idle pingüino Pixar 0.898 -> 0.802
         PetType.TARO -> 0.988f          // idle tortuga Pixar 0.812 -> 0.802
-        PetType.MENTA -> 0.908f         // idle serpiente Pixar 0.883 -> 0.802
+        PetType.MENTA -> 0.908f         // idle serpiente Pixar opaco 0.883 -> 0.802
         PetType.TELA -> 0.880f          // idle araña Pixar 0.910 -> 0.802
     }
 
@@ -153,7 +153,7 @@ class PetView(
         PetType.YUKI -> floatArrayOf(0.8906f, 0.8984f, 0.8789f, 0.8984f, 0.8281f, 0.8086f, 0.7461f, 0.7930f, 0.8008f, 0.8047f, 0.8008f, 0.8125f, 0.7422f, 0.7969f, 0.7773f, 0.8125f)
         PetType.PIRU -> floatArrayOf(0.8984f, 0.9062f, 0.8828f, 0.9102f, 0.8594f, 0.8438f, 0.7969f, 0.8047f, 0.8203f, 0.8242f, 0.8516f, 0.8516f, 0.7266f, 0.6602f, 0.8047f, 0.8594f)
         PetType.TARO -> floatArrayOf(0.8125f, 0.8125f, 0.8086f, 0.7656f, 0.9102f, 0.9102f, 0.8398f, 0.8633f, 0.9102f, 0.9102f, 0.9102f, 0.6797f, 0.6055f, 0.6328f, 0.6562f, 0.6797f)
-        PetType.MENTA -> floatArrayOf(0.8828f, 0.9062f, 0.8984f, 0.8672f, 0.8203f, 0.8164f, 0.8125f, 0.8203f, 0.6055f, 0.9375f, 0.5703f, 0.9375f, 0.5820f, 0.7344f, 0.5859f, 0.6992f)
+        PetType.MENTA -> floatArrayOf(0.8828f, 0.9062f, 0.8984f, 0.8672f, 0.4648f, 0.4609f, 0.4805f, 0.4727f, 0.8516f, 0.8516f, 0.8516f, 0.8516f, 0.4492f, 0.7812f, 0.5312f, 0.6992f)
         PetType.TELA -> floatArrayOf(0.9102f, 0.9102f, 0.8945f, 0.8984f, 0.6875f, 0.7188f, 0.8164f, 0.7109f, 0.5469f, 0.7305f, 0.7422f, 0.7500f, 0.4648f, 0.5508f, 0.7578f, 0.6211f)
     }
 

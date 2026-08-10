@@ -121,9 +121,9 @@ class MentaBehavior(
         bridge.animOffsetX = sin(time * 2.2f) * 4f
         bridge.animOffsetY = sin(time * 1.6f) * 2f
         bridge.animRotation = 0f   // siempre de frente, sin golpeteos de cabeza
-        // Las cuatro poses 4-7 son fases consecutivas de la onda. Se refleja
-        // solo para que la cabeza lidere hacia la izquierda; la cara es frontal.
-        bridge.animScaleX = if (facingRight) 1f else -1f
+        // Cada dirección tiene sus propias poses dibujadas: no espejar la
+        // serpiente, porque el atlas ya coloca la cabeza delante del cuerpo.
+        bridge.animScaleX = 1f
         bridge.animScaleY = 1f + sin(time * 2.0f) * 0.02f
 
         // La onda viaja sincronizada con el avance: cada pose corresponde a
@@ -135,10 +135,11 @@ class MentaBehavior(
                 (cruiseTargetY - startY) * (cruiseTargetY - startY)
         )
         val travelled = distance * t
-        // Cuatro fases completas repetidas durante el trayecto: el contoneo
-        // recorre todo el cuerpo mientras la cabeza avanza.
-        val wave = (travelled / 42f).toInt() % 4
-        bridge.currentFrame = 4 + wave
+        // Dos fases por dirección, repetidas según los píxeles recorridos.
+        // right = 4-5; left = 6-7.
+        val wave = (travelled / 42f).toInt() % 2
+        val poseBase = if (facingRight) 4 else 6
+        bridge.currentFrame = poseBase + wave
 
         if (random.nextFloat() < 0.00025f) {
             mode = Mode.HAPPY
@@ -176,13 +177,12 @@ class MentaBehavior(
         val distance = kotlin.math.abs(cruiseTargetY - startY)
         val travelled = distance * t
         val wave = (travelled / 42f).toInt() and 1
-        // La pose base de subida tiene la cabeza arriba. Para bajar se voltea
-        // verticalmente: la cabeza pasa inequívocamente al extremo inferior,
-        // que es el que lidera el desplazamiento descendente.
-        bridge.currentFrame = 8 + wave
+        // El atlas tiene dos grupos dibujados: up = 8-9, down = 10-11.
+        // No se voltea la imagen: cada pose conserva la cara y la cabeza líder.
+        bridge.currentFrame = (if (movingDown) 10 else 8) + wave
         bridge.animRotation = 0f
         bridge.animScaleX = 1f
-        bridge.animScaleY = if (movingDown) -1f else 1f
+        bridge.animScaleY = 1f
         bridge.animOffsetX = sin(time * 1.8f) * 2f
         bridge.animOffsetY = sin(time * 1.4f) * 1.5f
     }
