@@ -26,31 +26,31 @@
     },
     {
       "id": "walk",
-      "frames": [4, 5],
+      "frames": [4, 5, 6, 7],
       "loop": true,
-      "frameDurationMs": 200
+      "frameDurationMs": 180
     },
     {
       "id": "slide",
-      "frames": [4, 5, 4],
+      "frames": [8, 9, 8],
       "loop": true,
       "frameDurationMs": 170
     },
     {
       "id": "jump",
-      "frames": [6, 7],
+      "frames": [10, 11],
       "loop": false,
       "frameDurationMs": 170
     },
     {
       "id": "happy",
-      "frames": [8, 9, 10, 11],
+      "frames": [12, 13],
       "loop": false,
       "frameDurationMs": 230
     },
     {
       "id": "touch",
-      "frames": [12, 13, 14],
+      "frames": [14],
       "loop": false,
       "frameDurationMs": 240
     },
@@ -66,17 +66,17 @@
     { "index": 1, "name": "idle_wobble_left", "sourceHint": "idle_waddle" },
     { "index": 2, "name": "idle_wobble_right", "sourceHint": "idle_waddle" },
     { "index": 3, "name": "idle_blink", "sourceHint": "idle_waddle" },
-    { "index": 4, "name": "slide_belly", "sourceHint": "slide" },
-    { "index": 5, "name": "slide_glide", "sourceHint": "slide" },
-    { "index": 6, "name": "jump_hop", "sourceHint": "jump" },
-    { "index": 7, "name": "jump_airborne", "sourceHint": "jump" },
-    { "index": 8, "name": "happy_bounce", "sourceHint": "happy" },
-    { "index": 9, "name": "happy_wave", "sourceHint": "happy" },
-    { "index": 10, "name": "happy_shy", "sourceHint": "happy" },
-    { "index": 11, "name": "surprised", "sourceHint": "happy" },
-    { "index": 12, "name": "touch_squash", "sourceHint": "touch" },
-    { "index": 13, "name": "touch_wobble", "sourceHint": "touch" },
-    { "index": 14, "name": "touch_recover", "sourceHint": "touch" },
+    { "index": 4, "name": "waddle_left_step", "sourceHint": "walk" },
+    { "index": 5, "name": "waddle_right_step", "sourceHint": "walk" },
+    { "index": 6, "name": "waddle_center_bounce", "sourceHint": "walk" },
+    { "index": 7, "name": "waddle_next_stride", "sourceHint": "walk" },
+    { "index": 8, "name": "slide_belly_a", "sourceHint": "slide" },
+    { "index": 9, "name": "slide_belly_b", "sourceHint": "slide" },
+    { "index": 10, "name": "hop_takeoff", "sourceHint": "jump" },
+    { "index": 11, "name": "hop_landing", "sourceHint": "jump" },
+    { "index": 12, "name": "happy_flap_left", "sourceHint": "happy" },
+    { "index": 13, "name": "happy_flap_right", "sourceHint": "happy" },
+    { "index": 14, "name": "touch_shy_crouch", "sourceHint": "touch" },
     { "index": 15, "name": "sleep", "sourceHint": "sleep" }
   ]
 }
