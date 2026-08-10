@@ -135,6 +135,8 @@ class MentaBehavior(
                 (cruiseTargetY - startY) * (cruiseTargetY - startY)
         )
         val travelled = distance * t
+        // Cuatro fases completas repetidas durante el trayecto: el contoneo
+        // recorre todo el cuerpo mientras la cabeza avanza.
         val wave = (travelled / 42f).toInt() % 4
         bridge.currentFrame = 4 + wave
 

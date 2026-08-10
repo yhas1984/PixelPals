@@ -209,7 +209,7 @@ class TelaBehavior(
         bridge.updateWindowLayout(params)
 
         val spec = spriteSheetSpec ?: return
-        val clip = spec.clip("walk") ?: return
+        val clip = spec.clip("ceiling") ?: return
         val idx = ((animClock / 0.16f).toInt() % clip.frames.size)
         bridge.currentFrame = clip.frames[idx]
         // Patas arriba en el techo

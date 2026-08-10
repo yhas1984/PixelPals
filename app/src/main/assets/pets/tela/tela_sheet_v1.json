@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "petId": "tela",
   "atlasPath": "pets/tela/tela_sheet_v1.png",
   "previewPath": "res://drawable-nodpi/pet_tela.png",
@@ -8,69 +8,38 @@
   "columns": 4,
   "rows": 4,
   "frameCount": 16,
-  "pivot": {
-    "x": 128,
-    "y": 128
-  },
-  "renderHints": {
-    "innerTransparentPaddingPx": 8,
-    "recommendedBleedInsetPx": 1,
-    "filterBitmap": true
-  },
+  "pivot": { "x": 128, "y": 128 },
+  "renderHints": { "innerTransparentPaddingPx": 8, "recommendedBleedInsetPx": 1, "filterBitmap": true },
   "clips": [
-    {
-      "id": "idle",
-      "frames": [0, 1, 2, 3, 2, 1],
-      "loop": true,
-      "frameDurationMs": 260
-    },
-    {
-      "id": "walk",
-      "frames": [4, 5],
-      "loop": true,
-      "frameDurationMs": 160
-    },
-    {
-      "id": "climb",
-      "frames": [6, 7],
-      "loop": true,
-      "frameDurationMs": 190
-    },
-    {
-      "id": "happy",
-      "frames": [8, 9, 10, 11],
-      "loop": false,
-      "frameDurationMs": 230
-    },
-    {
-      "id": "touch",
-      "frames": [12, 13, 14],
-      "loop": false,
-      "frameDurationMs": 240
-    },
-    {
-      "id": "sleep",
-      "frames": [15],
-      "loop": false,
-      "frameDurationMs": 500
-    }
+    { "id": "idle",     "frames": [0, 1, 2],         "loop": true,  "frameDurationMs": 220 },
+    { "id": "blink",    "frames": [3],              "loop": false, "frameDurationMs": 180 },
+    { "id": "walk",     "frames": [4, 5],           "loop": true,  "frameDurationMs": 200 },
+    { "id": "climb",    "frames": [6],              "loop": false, "frameDurationMs": 200 },
+    { "id": "ceiling",  "frames": [7],              "loop": false, "frameDurationMs": 200 },
+    { "id": "hang",     "frames": [8, 9],           "loop": true,  "frameDurationMs": 320 },
+    { "id": "landed",   "frames": [10],             "loop": false, "frameDurationMs": 240 },
+    { "id": "surprise", "frames": [11],             "loop": false, "frameDurationMs": 280 },
+    { "id": "squash",   "frames": [12],             "loop": false, "frameDurationMs": 220 },
+    { "id": "webshoot", "frames": [13],             "loop": false, "frameDurationMs": 260 },
+    { "id": "recover",  "frames": [14],             "loop": false, "frameDurationMs": 220 },
+    { "id": "sleep",    "frames": [15],             "loop": false, "frameDurationMs": 500 }
   ],
   "frames": [
-    { "index": 0, "name": "idle_hang", "sourceHint": "idle_hanging" },
-    { "index": 1, "name": "idle_sway_left", "sourceHint": "idle_hanging" },
-    { "index": 2, "name": "idle_sway_right", "sourceHint": "idle_hanging" },
-    { "index": 3, "name": "idle_blink", "sourceHint": "idle_hanging" },
-    { "index": 4, "name": "walk_1", "sourceHint": "walk" },
-    { "index": 5, "name": "walk_2", "sourceHint": "walk" },
-    { "index": 6, "name": "climb_up", "sourceHint": "climb" },
-    { "index": 7, "name": "climb_higher", "sourceHint": "climb" },
-    { "index": 8, "name": "happy_bounce", "sourceHint": "happy" },
-    { "index": 9, "name": "happy_wave", "sourceHint": "happy" },
-    { "index": 10, "name": "happy_shy", "sourceHint": "happy" },
-    { "index": 11, "name": "surprised", "sourceHint": "happy" },
-    { "index": 12, "name": "touch_curl", "sourceHint": "touch" },
-    { "index": 13, "name": "touch_wobble", "sourceHint": "touch" },
-    { "index": 14, "name": "touch_recover", "sourceHint": "touch" },
-    { "index": 15, "name": "sleep_cocoon", "sourceHint": "sleep" }
+    { "index": 0,  "name": "idle_standing",      "sourceHint": "idle" },
+    { "index": 1,  "name": "idle_blink_pre",     "sourceHint": "idle" },
+    { "index": 2,  "name": "idle_sway_left",     "sourceHint": "idle" },
+    { "index": 3,  "name": "blink",              "sourceHint": "blink" },
+    { "index": 4,  "name": "walk_right",         "sourceHint": "walk" },
+    { "index": 5,  "name": "walk_left",          "sourceHint": "walk" },
+    { "index": 6,  "name": "climb_wall_right",   "sourceHint": "climb" },
+    { "index": 7,  "name": "ceiling_upsidedown", "sourceHint": "ceiling" },
+    { "index": 8,  "name": "hang_swing",         "sourceHint": "hang" },
+    { "index": 9,  "name": "hang_descend",       "sourceHint": "hang" },
+    { "index": 10, "name": "landed_floor",       "sourceHint": "landed" },
+    { "index": 11, "name": "surprised_legs_up",  "sourceHint": "surprise" },
+    { "index": 12, "name": "squashed_stepped",   "sourceHint": "squash" },
+    { "index": 13, "name": "web_shoot_spiderman", "sourceHint": "webshoot" },
+    { "index": 14, "name": "recover",            "sourceHint": "recover" },
+    { "index": 15, "name": "sleep_hanging",      "sourceHint": "sleep" }
   ]
 }

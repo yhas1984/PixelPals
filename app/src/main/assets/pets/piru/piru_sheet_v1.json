@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "petId": "piru",
   "atlasPath": "pets/piru/piru_sheet_v1.png",
   "previewPath": "res://drawable-nodpi/pet_piru.png",
@@ -8,75 +8,33 @@
   "columns": 4,
   "rows": 4,
   "frameCount": 16,
-  "pivot": {
-    "x": 128,
-    "y": 128
-  },
-  "renderHints": {
-    "innerTransparentPaddingPx": 8,
-    "recommendedBleedInsetPx": 1,
-    "filterBitmap": true
-  },
+  "pivot": { "x": 128, "y": 128 },
+  "renderHints": { "innerTransparentPaddingPx": 8, "recommendedBleedInsetPx": 1, "filterBitmap": true },
   "clips": [
-    {
-      "id": "idle",
-      "frames": [0, 1, 2, 3, 2, 1],
-      "loop": true,
-      "frameDurationMs": 240
-    },
-    {
-      "id": "walk",
-      "frames": [4, 5, 6, 7],
-      "loop": true,
-      "frameDurationMs": 180
-    },
-    {
-      "id": "slide",
-      "frames": [8, 9, 8],
-      "loop": true,
-      "frameDurationMs": 170
-    },
-    {
-      "id": "jump",
-      "frames": [10, 11],
-      "loop": false,
-      "frameDurationMs": 170
-    },
-    {
-      "id": "happy",
-      "frames": [12, 13],
-      "loop": false,
-      "frameDurationMs": 230
-    },
-    {
-      "id": "touch",
-      "frames": [14],
-      "loop": false,
-      "frameDurationMs": 240
-    },
-    {
-      "id": "sleep",
-      "frames": [15],
-      "loop": false,
-      "frameDurationMs": 500
-    }
+    { "id": "idle",   "frames": [0, 1, 2],         "loop": true,  "frameDurationMs": 220 },
+    { "id": "blink",  "frames": [3],              "loop": false, "frameDurationMs": 180 },
+    { "id": "walk",   "frames": [4, 5],           "loop": true,  "frameDurationMs": 200 },
+    { "id": "jump",   "frames": [6, 7],           "loop": false, "frameDurationMs": 180 },
+    { "id": "happy",  "frames": [8, 9, 10, 11],   "loop": true,  "frameDurationMs": 230 },
+    { "id": "slide",  "frames": [12, 13],         "loop": true,  "frameDurationMs": 200 },
+    { "id": "sleep",  "frames": [14, 15],         "loop": true,  "frameDurationMs": 350 }
   ],
   "frames": [
-    { "index": 0, "name": "idle_neutral", "sourceHint": "idle_waddle" },
-    { "index": 1, "name": "idle_wobble_left", "sourceHint": "idle_waddle" },
-    { "index": 2, "name": "idle_wobble_right", "sourceHint": "idle_waddle" },
-    { "index": 3, "name": "idle_blink", "sourceHint": "idle_waddle" },
-    { "index": 4, "name": "waddle_left_step", "sourceHint": "walk" },
-    { "index": 5, "name": "waddle_right_step", "sourceHint": "walk" },
-    { "index": 6, "name": "waddle_center_bounce", "sourceHint": "walk" },
-    { "index": 7, "name": "waddle_next_stride", "sourceHint": "walk" },
-    { "index": 8, "name": "slide_belly_a", "sourceHint": "slide" },
-    { "index": 9, "name": "slide_belly_b", "sourceHint": "slide" },
-    { "index": 10, "name": "hop_takeoff", "sourceHint": "jump" },
-    { "index": 11, "name": "hop_landing", "sourceHint": "jump" },
-    { "index": 12, "name": "happy_flap_left", "sourceHint": "happy" },
-    { "index": 13, "name": "happy_flap_right", "sourceHint": "happy" },
-    { "index": 14, "name": "touch_shy_crouch", "sourceHint": "touch" },
-    { "index": 15, "name": "sleep", "sourceHint": "sleep" }
+    { "index": 0,  "name": "idle_neutral",      "sourceHint": "idle" },
+    { "index": 1,  "name": "idle_sway_left",    "sourceHint": "idle" },
+    { "index": 2,  "name": "idle_sway_right",   "sourceHint": "idle" },
+    { "index": 3,  "name": "blink",             "sourceHint": "blink" },
+    { "index": 4,  "name": "walk_step_a",       "sourceHint": "walk" },
+    { "index": 5,  "name": "walk_step_b",       "sourceHint": "walk" },
+    { "index": 6,  "name": "jump_airborne",     "sourceHint": "jump" },
+    { "index": 7,  "name": "jump_landing",      "sourceHint": "jump" },
+    { "index": 8,  "name": "happy_wings_up",    "sourceHint": "happy" },
+    { "index": 9,  "name": "happy_waving",      "sourceHint": "happy" },
+    { "index": 10, "name": "happy_tilt",        "sourceHint": "happy" },
+    { "index": 11, "name": "surprised",         "sourceHint": "happy" },
+    { "index": 12, "name": "belly_slide_a",     "sourceHint": "slide" },
+    { "index": 13, "name": "belly_slide_b",     "sourceHint": "slide" },
+    { "index": 14, "name": "sleepy_yawn",       "sourceHint": "sleep" },
+    { "index": 15, "name": "sleep",             "sourceHint": "sleep" }
   ]
 }

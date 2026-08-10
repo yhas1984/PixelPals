@@ -103,11 +103,11 @@ class PetView(
         PetType.GINGER -> 0.875f        // sit/groom (celda sheet) 0.917 -> 0.802
         PetType.DIABLILLO -> 0.929f     // idle 0.863 -> 0.802
         PetType.PATITO -> 1.317f        // ciclo idle 0.36-0.60 (irregular por diseño)
-        PetType.YUKI -> 1.208f          // idle yuki_0 0.664 -> 0.802
-        PetType.PIRU -> 1.042f          // idle piru high 0.770 -> 0.802
-        PetType.TARO -> 1.316f          // idle taro_0 0.609 -> 0.802
-        PetType.MENTA -> 0.90f          // más pequeña: el usuario la veía muy grande (0.688 idle)
-        PetType.TELA -> 0.960f          // idle tela_0 0.836 -> 0.802
+        PetType.YUKI -> 0.920f          // idle alto Pixar 0.871 -> 0.802
+        PetType.PIRU -> 0.892f          // idle pingüino Pixar 0.898 -> 0.802
+        PetType.TARO -> 0.988f          // idle tortuga Pixar 0.812 -> 0.802
+        PetType.MENTA -> 0.908f         // idle serpiente Pixar 0.883 -> 0.802
+        PetType.TELA -> 0.880f          // idle araña Pixar 0.910 -> 0.802
     }
 
     /**
@@ -125,11 +125,11 @@ class PetView(
         PetType.GINGER -> 0.9167f       // sit (idx 0)
         PetType.DIABLILLO -> 0.875f     // idle (idx 0)
         PetType.PATITO -> 0.5951f       // ciclo natación (idx 0)
-        PetType.YUKI -> 0.6641f         // idle wobble (idx 0)
-        PetType.PIRU -> 0.7695f         // idle frontal alta calidad con pupilas (idx 0), atlas high
-        PetType.TARO -> 0.6094f         // idle peek (idx 0)
-        PetType.MENTA -> 0.8711f         // idle largo (idx 0), storyboard corporal v4
-        PetType.TELA -> 0.8359f         // idle colgando (idx 0)
+        PetType.YUKI -> 0.8711f         // idle Pixar (idx 0), atlas 3D premium
+        PetType.PIRU -> 0.8984f         // idle pingüino Pixar (idx 0), atlas 3D premium
+        PetType.TARO -> 0.8125f         // idle tortuga Pixar (idx 0), atlas 3D premium
+        PetType.MENTA -> 0.8828f         // idle serpiente Pixar (idx 0), atlas 3D premium
+        PetType.TELA -> 0.9102f         // idle araña Pixar (idx 0), atlas 3D premium
     }
 
     /**
@@ -150,11 +150,11 @@ class PetView(
         PetType.MOKI -> floatArrayOf(0.8021f, 0.8021f, 0.8021f, 0.8021f, 0.4401f, 0.4193f, 0.4167f, 0.4271f, 0.362f, 0.5651f, 0.7292f, 0.7292f, 0.8021f, 0.4583f, 0.3281f, 0.3411f, 0.8021f, 0.4427f, 0.8021f, 0.3568f)
         PetType.ANGEL -> floatArrayOf(0.9167f, 0.9167f, 0.9167f, 0.7891f, 0.9167f, 0.9167f, 0.7266f, 0.8802f, 0.9167f, 0.9167f, 0.9167f, 0.9167f, 0.9167f, 0.8724f, 0.9167f, 0.9167f)
         PetType.GINGER -> floatArrayOf(0.9167f, 0.9167f, 0.5703f, 0.6484f, 0.6536f, 0.6615f, 0.6667f, 0.6615f, 0.2682f, 0.3229f, 0.2812f, 0.3542f, 0.4531f, 0.4245f, 0.6432f, 0.5365f)
-        PetType.YUKI -> floatArrayOf(0.6641f, 0.6719f, 0.6641f, 0.6641f, 0.6797f, 0.6797f, 0.8672f, 0.8516f, 0.6602f, 0.6602f, 0.6602f, 0.6602f, 0.4883f, 0.4883f, 0.4805f, 0.5078f)
-        PetType.PIRU -> floatArrayOf(0.7695f, 0.7578f, 0.7539f, 0.7539f, 0.7617f, 0.7539f, 0.7500f, 0.7500f, 0.5234f, 0.5117f, 0.6328f, 0.6406f, 0.6953f, 0.7031f, 0.6719f, 0.5469f)
-        PetType.TARO -> floatArrayOf(0.6094f, 0.5781f, 0.6055f, 0.6055f, 0.5664f, 0.5664f, 0.5898f, 0.5664f, 0.6445f, 0.5664f, 0.5938f, 0.6641f, 0.4688f, 0.4688f, 0.4688f, 0.4688f)
-        PetType.MENTA -> floatArrayOf(0.8711f, 0.8828f, 0.8828f, 0.8320f, 0.3086f, 0.3164f, 0.2617f, 0.2852f, 0.3164f, 0.3125f, 0.8164f, 0.8125f, 0.8633f, 0.8672f, 0.6016f, 0.8789f)
-        PetType.TELA -> floatArrayOf(0.8359f, 0.8555f, 0.8281f, 0.8398f, 0.7969f, 0.8633f, 0.8203f, 0.8711f, 0.7969f, 0.7891f, 0.7891f, 0.8125f, 0.7461f, 0.7539f, 0.7695f, 0.8047f)
+        PetType.YUKI -> floatArrayOf(0.8711f, 0.8672f, 0.8555f, 0.8750f, 0.8203f, 0.7812f, 0.7227f, 0.7539f, 0.7773f, 0.7812f, 0.7695f, 0.7852f, 0.7109f, 0.7695f, 0.7344f, 0.7891f)
+        PetType.PIRU -> floatArrayOf(0.8984f, 0.9062f, 0.8828f, 0.9102f, 0.8594f, 0.8438f, 0.7969f, 0.8047f, 0.8203f, 0.8242f, 0.8516f, 0.8516f, 0.7266f, 0.6602f, 0.8047f, 0.8594f)
+        PetType.TARO -> floatArrayOf(0.8125f, 0.8125f, 0.8086f, 0.7656f, 0.9102f, 0.9102f, 0.8398f, 0.8633f, 0.9102f, 0.9102f, 0.9102f, 0.6797f, 0.6055f, 0.6328f, 0.6562f, 0.6797f)
+        PetType.MENTA -> floatArrayOf(0.8828f, 0.9062f, 0.8984f, 0.8672f, 0.8203f, 0.8164f, 0.8125f, 0.8203f, 0.6055f, 0.9375f, 0.5703f, 0.9375f, 0.5820f, 0.7344f, 0.5859f, 0.6992f)
+        PetType.TELA -> floatArrayOf(0.9102f, 0.9102f, 0.8945f, 0.8984f, 0.6875f, 0.7188f, 0.8164f, 0.7109f, 0.5469f, 0.7305f, 0.7422f, 0.7500f, 0.4648f, 0.5508f, 0.7578f, 0.6211f)
     }
 
     /** Cosmético equipado de este pet (efectos que envuelven, sin alineación). */
