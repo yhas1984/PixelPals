@@ -69,24 +69,25 @@ class TelaBehavior(
         val nearBottom = y >= maxY() - edge
         val roll = random.nextFloat()
 
-        // La araña recorre el PERÍMETRO: borde izq → techo → borde der → suelo → ...
+        // La araña es un animal de PERÍMETRO: cuelga de su hilo la mayor parte del
+        // tiempo, y cuando se mueve recorre borde → techo → borde → suelo.
         when {
+            // En el techo: se cuelga y se balancea, o cruza hacia el lado opuesto
             nearTop && !nearLeft && !nearRight -> {
-                // En el techo: cruza hacia el lado opuesto o baja por el borde más cercano
-                if (roll < 0.35f && (nearLeft || nearRight)) {
-                    // Ya en esquina: baja
-                    startMode(Mode.CLIMB, 1.4f + random.nextFloat() * 1.2f, x, y, x, maxY() - 20f)
+                if (roll < 0.45f) {
+                    // Colgarse y balancearse en el sitio (estado natural de la araña)
+                    startMode(Mode.HANG, 2.2f + random.nextFloat() * 2.2f, x, y, x, y)
                 } else {
                     val sideX = if (x < bridge.screenWidth / 2f) minX() else maxX()
                     startMode(Mode.CEILING, 1.8f + random.nextFloat() * 1.6f, x, y, sideX + (if (sideX == minX()) 20f else -20f), minY() + 10f)
                 }
             }
             nearLeft || nearRight -> {
-                // En un borde lateral: sube al techo o baja al suelo por el mismo borde
-                if (roll < 0.5f) {
-                    startMode(Mode.CLIMB, 1.3f + random.nextFloat() * 1.4f, x, y, x, minY() + 10f)
-                } else {
-                    startMode(Mode.CLIMB, 1.2f + random.nextFloat() * 1.3f, x, y, x, maxY() - 20f)
+                // En un borde lateral: cuelga un rato, o sube/baja por el mismo borde
+                when {
+                    roll < 0.40f -> startMode(Mode.HANG, 2.0f + random.nextFloat() * 2.0f, x, y, x, y)
+                    roll < 0.70f -> startMode(Mode.CLIMB, 1.3f + random.nextFloat() * 1.4f, x, y, x, minY() + 10f)
+                    else -> startMode(Mode.CLIMB, 1.2f + random.nextFloat() * 1.3f, x, y, x, maxY() - 20f)
                 }
             }
             nearBottom && !nearLeft && !nearRight -> {
@@ -95,9 +96,11 @@ class TelaBehavior(
                 startMode(Mode.CLIMB, 1.5f + random.nextFloat() * 1.3f, x, y, sideX + (if (sideX == minX()) 20f else -20f), maxY() - 20f)
             }
             else -> {
-                // En el aire (colgando de un hilo en el centro): sube al techo
-                // o se deja caer al suelo; NUNCA cruza el centro sin motivo.
-                if (roll < 0.55f) {
+                // En el aire (colgando de un hilo): se balancea un rato y luego
+                // sube al techo o se deja caer al suelo — nunca cruza el centro.
+                if (roll < 0.60f) {
+                    startMode(Mode.HANG, 2.0f + random.nextFloat() * 2.0f, x, y, x, y)
+                } else if (roll < 0.80f) {
                     startMode(Mode.CLIMB, 1.2f + random.nextFloat() * 1.2f, x, y, x, minY() + 10f)
                 } else {
                     startMode(Mode.CLIMB, 1.2f + random.nextFloat() * 1.2f, x, y, x, maxY() - 20f)
