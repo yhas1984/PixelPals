@@ -38,7 +38,8 @@ class PixelPalsRepository(context: Context) {
         PetType.YUKI to "pet_yuki_premium",
         PetType.PIRU to "pet_piru_premium",
         PetType.TARO to "pet_taro_premium",
-        PetType.MENTA to "pet_menta_premium"
+        PetType.MENTA to "pet_menta_premium",
+        PetType.TELA to "pet_tela_premium"
     )
 
     /** Precio en monedas del monedero GLOBAL para desbloquear cada pet premium (null = solo IAP). */
@@ -48,7 +49,8 @@ class PixelPalsRepository(context: Context) {
         PetType.YUKI to 500,
         PetType.PIRU to 500,
         PetType.TARO to 450,
-        PetType.MENTA to 450
+        PetType.MENTA to 450,
+        PetType.TELA to 550
     )
 
     /** Cosmético equipado por petId (null = ninguno). */
@@ -374,6 +376,7 @@ class PixelPalsRepository(context: Context) {
             PetType.PIRU -> PetPersonality.BOUNCY
             PetType.TARO -> PetPersonality.ELEGANT
             PetType.MENTA -> PetPersonality.DREAMY
+            PetType.TELA -> PetPersonality.CHAOTIC
         }
     }
 
@@ -594,6 +597,7 @@ class PixelPalsRepository(context: Context) {
             PetType.PIRU -> "piru"
             PetType.TARO -> "taro"
             PetType.MENTA -> "menta"
+            PetType.TELA -> "tela"
         }
     }
 

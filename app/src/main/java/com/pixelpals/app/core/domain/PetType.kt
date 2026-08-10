@@ -210,6 +210,21 @@ enum class PetType(
         movementStyle = MovementStyle.DRIFT_SLOW,
         idleStyle = IdleStyle.SINE_FLOAT,
         interactionStyle = InteractionStyle.FEATHER_FALL
+    ),
+
+    TELA(
+        displayName = "Tela",
+        description = "La Arañita Tejedora",
+        spriteResId = R.drawable.pet_tela,
+        gravity = 0.2f,           // Casi sin gravedad: trepa y cuelga
+        terminalVelocity = 6f,
+        bounceDamping = 0.1f,
+        agility = 1.6f,           // Ágil: trepa paredes y recorre el techo
+        boredomRate = 1.0f,
+        exploreInterval = 2200L,  // Siempre explorando
+        movementStyle = MovementStyle.CHAOTIC_ZOOM,
+        idleStyle = IdleStyle.LURK_IDLE,
+        interactionStyle = InteractionStyle.SQUISH_BOUNCE
     );
 }
 

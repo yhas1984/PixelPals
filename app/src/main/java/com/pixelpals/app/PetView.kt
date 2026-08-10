@@ -103,10 +103,11 @@ class PetView(
         PetType.GINGER -> 0.875f        // sit/groom (celda sheet) 0.917 -> 0.802
         PetType.DIABLILLO -> 0.929f     // idle 0.863 -> 0.802
         PetType.PATITO -> 1.317f        // ciclo idle 0.36-0.60 (irregular por diseño)
-        PetType.YUKI -> 1.122f          // idle yuki_0 0.715 -> 0.802
-        PetType.PIRU -> 1.081f          // idle piru_0 0.742 -> 0.802
-        PetType.TARO -> 1.275f          // idle taro_0 0.629 -> 0.802
-        PetType.MENTA -> 1.116f         // idle menta_0 0.719 -> 0.802
+        PetType.YUKI -> 1.208f          // idle yuki_0 0.664 -> 0.802
+        PetType.PIRU -> 1.208f          // idle piru_0 0.664 -> 0.802
+        PetType.TARO -> 1.316f          // idle taro_0 0.609 -> 0.802
+        PetType.MENTA -> 1.167f         // idle menta_0 0.688 -> 0.802
+        PetType.TELA -> 1.016f          // idle tela_0 0.789 -> 0.802
     }
 
     /**
@@ -124,10 +125,11 @@ class PetView(
         PetType.GINGER -> 0.9167f       // sit (idx 0)
         PetType.DIABLILLO -> 0.875f     // idle (idx 0)
         PetType.PATITO -> 0.5951f       // ciclo natación (idx 0)
-        PetType.YUKI -> 0.7148f         // idle wobble (idx 0)
-        PetType.PIRU -> 0.7422f         // idle waddle (idx 0)
-        PetType.TARO -> 0.6289f         // idle peek (idx 0)
-        PetType.MENTA -> 0.7188f        // idle coiled (idx 0)
+        PetType.YUKI -> 0.6641f         // idle wobble (idx 0)
+        PetType.PIRU -> 0.6641f         // idle waddle (idx 0)
+        PetType.TARO -> 0.6094f         // idle peek (idx 0)
+        PetType.MENTA -> 0.6875f        // idle coiled (idx 0)
+        PetType.TELA -> 0.7891f         // idle colgando (idx 0)
     }
 
     /**
@@ -148,10 +150,11 @@ class PetView(
         PetType.MOKI -> floatArrayOf(0.8021f, 0.8021f, 0.8021f, 0.8021f, 0.4401f, 0.4193f, 0.4167f, 0.4271f, 0.362f, 0.5651f, 0.7292f, 0.7292f, 0.8021f, 0.4583f, 0.3281f, 0.3411f, 0.8021f, 0.4427f, 0.8021f, 0.3568f)
         PetType.ANGEL -> floatArrayOf(0.9167f, 0.9167f, 0.9167f, 0.7891f, 0.9167f, 0.9167f, 0.7266f, 0.8802f, 0.9167f, 0.9167f, 0.9167f, 0.9167f, 0.9167f, 0.8724f, 0.9167f, 0.9167f)
         PetType.GINGER -> floatArrayOf(0.9167f, 0.9167f, 0.5703f, 0.6484f, 0.6536f, 0.6615f, 0.6667f, 0.6615f, 0.2682f, 0.3229f, 0.2812f, 0.3542f, 0.4531f, 0.4245f, 0.6432f, 0.5365f)
-        PetType.YUKI -> floatArrayOf(0.7148f, 0.7227f, 0.7148f, 0.7227f, 0.6406f, 0.8203f, 0.6133f, 0.5586f, 0.75f, 0.7031f, 0.7031f, 0.75f, 0.4258f, 0.6445f, 0.6367f, 0.6133f)
-        PetType.PIRU -> floatArrayOf(0.7422f, 0.75f, 0.7578f, 0.7539f, 0.4883f, 0.5f, 0.8359f, 0.793f, 0.7383f, 0.7305f, 0.7227f, 0.7266f, 0.457f, 0.5781f, 0.6094f, 0.6211f)
-        PetType.TARO -> floatArrayOf(0.6289f, 0.6211f, 0.6406f, 0.6562f, 0.5977f, 0.6016f, 0.6406f, 0.625f, 0.8008f, 0.7578f, 0.6445f, 0.6914f, 0.3438f, 0.4492f, 0.5508f, 0.5898f)
-        PetType.MENTA -> floatArrayOf(0.7188f, 0.7578f, 0.7578f, 0.7344f, 0.5469f, 0.5156f, 0.8672f, 0.5508f, 0.7305f, 0.7383f, 0.707f, 0.7773f, 0.4297f, 0.5586f, 0.7266f, 0.5898f)
+        PetType.YUKI -> floatArrayOf(0.6641f, 0.6719f, 0.6641f, 0.6641f, 0.6797f, 0.6797f, 0.8672f, 0.8516f, 0.6602f, 0.6602f, 0.6602f, 0.6602f, 0.4883f, 0.4883f, 0.4805f, 0.5078f)
+        PetType.PIRU -> floatArrayOf(0.6641f, 0.6797f, 0.6719f, 0.6602f, 0.4297f, 0.4453f, 0.7266f, 0.6797f, 0.6719f, 0.6328f, 0.6289f, 0.6328f, 0.3477f, 0.457f, 0.4922f, 0.4883f)
+        PetType.TARO -> floatArrayOf(0.6094f, 0.5781f, 0.6055f, 0.6055f, 0.5664f, 0.5664f, 0.5898f, 0.5664f, 0.6445f, 0.5664f, 0.5938f, 0.6641f, 0.4688f, 0.4688f, 0.4688f, 0.4688f)
+        PetType.MENTA -> floatArrayOf(0.6875f, 0.6641f, 0.6719f, 0.6797f, 0.5117f, 0.6328f, 0.9023f, 0.9023f, 0.7031f, 0.6641f, 0.6484f, 0.6758f, 0.3789f, 0.4805f, 0.4883f, 0.5078f)
+        PetType.TELA -> floatArrayOf(0.7891f, 0.8242f, 0.8242f, 0.8242f, 0.4609f, 0.4609f, 0.7852f, 0.7852f, 0.7383f, 0.6484f, 0.8008f, 0.7617f, 0.6797f, 0.6836f, 0.4727f, 0.7188f)
     }
 
     /** Cosmético equipado de este pet (efectos que envuelven, sin alineación). */

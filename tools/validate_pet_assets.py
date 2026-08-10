@@ -27,10 +27,11 @@ ATLASES = {
     "ginger": ("GingerBehavior.kt", "pets/ginger/ginger_sheet_v2.json"),
     "angel": ("AngelBehavior.kt", "pets/angel/angel_sheet_v4.json"),
     "moki": ("MokiBehavior.kt", "pets/moki/moki_sheet_v1.json"),
-    "yuki": ("PetBehaviorFactory.kt", "pets/yuki/yuki_sheet_v1.json"),
-    "piru": ("PetBehaviorFactory.kt", "pets/piru/piru_sheet_v1.json"),
-    "taro": ("PetBehaviorFactory.kt", "pets/taro/taro_sheet_v1.json"),
-    "menta": ("PetBehaviorFactory.kt", "pets/menta/menta_sheet_v1.json"),
+    "yuki": ("YukiBehavior.kt", "pets/yuki/yuki_sheet_v1.json"),
+    "piru": ("PiruBehavior.kt", "pets/piru/piru_sheet_v1.json"),
+    "taro": ("TaroBehavior.kt", "pets/taro/taro_sheet_v1.json"),
+    "menta": ("MentaBehavior.kt", "pets/menta/menta_sheet_v1.json"),
+    "tela": ("TelaBehavior.kt", "pets/tela/tela_sheet_v1.json"),
 }
 
 

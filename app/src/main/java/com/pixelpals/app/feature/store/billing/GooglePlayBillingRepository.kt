@@ -43,6 +43,7 @@ class GooglePlayBillingRepository(
             "pet_piru_premium",
             "pet_taro_premium",
             "pet_menta_premium",
+            "pet_tela_premium",
             // Coin packs
             "coins_small",
             "coins_medium",
