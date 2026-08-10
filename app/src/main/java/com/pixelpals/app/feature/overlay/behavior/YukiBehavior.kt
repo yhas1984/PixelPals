@@ -268,7 +268,7 @@ class YukiBehavior(
     }
 
     private companion object {
-        /** A partir de esta temperatura (°C) Yuki empieza a derretirse. */
-        const val MELT_TEMP_C = 36f
+        /** A partir de 40 °C de batería el dispositivo está realmente caliente. */
+        const val MELT_TEMP_C = 40f
     }
 }
