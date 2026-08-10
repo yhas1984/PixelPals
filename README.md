@@ -111,6 +111,8 @@ pixelpals.admob.appId=ca-app-pub-XXXXXXXXXXXXXXXX~XXXXXXXX
 pixelpals.admob.bannerId=ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXX
 ```
 
+3b. **app-ads.txt**: sube el archivo [`app-ads.txt`](app-ads.txt) (en la raíz del repo) a un dominio web propio y verifícalo en AdMob (**Settings → Website verification**). En apps Android este archivo NO puede ir dentro del APK: Google lo lee desde `https://tu-dominio.com/app-ads.txt`.
+
 4. Antes de la revisión de Play: declara **Anuncios** en la ficha (Data safety) e integra el SDK UMP (consentimiento EEE/UK).
 
 > **Importante**: durante pruebas con anuncios reales (closed testing incluida), no generar impresiones/clicks desde tus propios dispositivos (riesgo de suspensión de cuenta). Usa los test ads del build debug o [Ad Inspector](https://support.google.com/admob/answer/13072382).
@@ -257,6 +259,8 @@ To enable real ads:
 pixelpals.admob.appId=ca-app-pub-XXXXXXXXXXXXXXXX~XXXXXXXX
 pixelpals.admob.bannerId=ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXX
 ```
+
+3b. **app-ads.txt**: host the [`app-ads.txt`](app-ads.txt) file (repo root) on your own web domain and verify it in AdMob (**Settings → Website verification**). For Android apps this file CANNOT ship inside the APK: Google reads it from `https://your-domain.com/app-ads.txt`.
 
 4. Before Play review: declare **Ads** in the listing (Data safety) and integrate the UMP SDK (EEA/UK consent).
 
