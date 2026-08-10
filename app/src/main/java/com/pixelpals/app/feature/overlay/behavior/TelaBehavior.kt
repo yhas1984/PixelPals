@@ -280,6 +280,28 @@ class TelaBehavior(
         if (mode == Mode.TOUCH) updateTouch(dt)
     }
 
+    override fun updateDrag(dt: Float) {
+        // Al arrastrar, la araña sigue colgando de su hilo y balanceándose
+        // (no se congela como en BaseBehavior).
+        time += dt
+        val spec = spriteSheetSpec ?: return
+        val clip = spec.clip("idle") ?: return
+        val idx = ((time / 0.26f).toInt() % clip.frames.size)
+        bridge.currentFrame = clip.frames[idx]
+        bridge.animRotation = sin(time * 2.4f) * 3f
+        bridge.animOffsetX = sin(time * 2.4f) * 2f
+        bridge.animScaleX = 1f
+        bridge.animScaleY = 1f
+    }
+
+    override fun reset() {
+        super.reset()
+        // Al soltar el drag, la araña reanuda su ronda por el perímetro al momento.
+        modeTimer = 0f
+        animClock = 0f
+        decideNext()
+    }
+
     private fun syncWindowPosition() {
         val params = bridge.getWindowParams() ?: return
         params.x = params.x.coerceIn(minX().roundToInt(), maxX().roundToInt())

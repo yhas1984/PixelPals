@@ -36,7 +36,7 @@ class MentaBehavior(
         loadSpriteSheetAssetAsync("pets/menta/menta_sheet_v1.json")
     }
 
-    override fun getBaseSpeed(): Float = 130f
+    override fun getBaseSpeed(): Float = 55f
 
     override fun updateIdle(dt: Float) {
         if (isLoading || spriteSheetBitmap == null || spriteFrameRects.isEmpty()) return
@@ -55,28 +55,29 @@ class MentaBehavior(
         syncWindowPosition()
     }
 
-    /** Crucero por toda la pantalla: elige un punto lejano (incluso en altura). */
+    /** Crucero por toda la pantalla: va de un lado al otro, subiendo/bajando un poco. */
     private fun pickTarget() {
         val params = bridge.getWindowParams() ?: return
         startX = params.x.toFloat()
         startY = params.y.toFloat()
         val minX = 0f
         val maxX = (bridge.screenWidth - bridge.petSpriteSize).coerceAtLeast(0).toFloat()
-        val minY = 60f
-        val maxY = (bridge.screenHeight - bridge.petSpriteSize - 80).coerceAtLeast(60).toFloat()
-        // Tendencia a cruzar: 60% objetivo lejano horizontal, 40% vertical.
+        val minY = 80f
+        val maxY = (bridge.screenHeight - bridge.petSpriteSize - 80).coerceAtLeast(80).toFloat()
+        // La serpiente CRUZA de un lado al otro de la pantalla (nunca hacia el
+        // centro sin sentido): si está a la izquierda va a la derecha y viceversa.
+        val far = if (startX < (minX + maxX) / 2f) maxX else minX
+        cruiseTargetX = far
+        // Sube o baja un poco entre cruces para recorrer todo el alto con el tiempo
         if (random.nextFloat() < 0.6f) {
-            val far = if (startX < maxX / 2f) maxX else minX
-            cruiseTargetX = far
             cruiseTargetY = random.nextFloat() * (maxY - minY) + minY
         } else {
-            cruiseTargetX = random.nextFloat() * (maxX - minX) + minX
-            cruiseTargetY = if (startY < maxY / 2f) maxY else minY
+            cruiseTargetY = if (startY < (minY + maxY) / 2f) maxY else minY
         }
         val dx = cruiseTargetX - startX
         val dy = cruiseTargetY - startY
         val dist = kotlin.math.sqrt(dx * dx + dy * dy).coerceAtLeast(1f)
-        modeDuration = (dist / getBaseSpeed()).coerceIn(1.6f, 6f)
+        modeDuration = (dist / getBaseSpeed()).coerceIn(3.0f, 12.0f)
         facingRight = dx >= 0f
     }
 
@@ -97,15 +98,15 @@ class MentaBehavior(
         bridge.updateWindowLayout(params)
 
         // Ondulación: la serpiente serpentea mientras avanza
-        bridge.animOffsetX = sin(time * 9f) * 3f
-        bridge.animOffsetY = sin(time * 6f) * 2f
-        bridge.animRotation = sin(time * 7f) * 6f
+        bridge.animOffsetX = sin(time * 5f) * 3f
+        bridge.animOffsetY = sin(time * 3.5f) * 2f
+        bridge.animRotation = sin(time * 4f) * 6f
         bridge.animScaleX = if (facingRight) 1f else -1f
-        bridge.animScaleY = 1f + sin(time * 8f) * 0.03f
+        bridge.animScaleY = 1f + sin(time * 4.5f) * 0.03f
 
         // Alterna frames de slither con velocidad proporcional al movimiento
-        val speedFactor = (abs(cruiseTargetX - startX) / modeDuration) / 130f
-        val frameRate = (4f + speedFactor * 10f)
+        val speedFactor = (abs(cruiseTargetX - startX) / modeDuration) / 55f
+        val frameRate = (2.5f + speedFactor * 6f)
         bridge.currentFrame = if (((time * frameRate).toInt() % 2) == 0) 4 else 5
 
         if (random.nextFloat() < 0.00035f) {
@@ -187,6 +188,25 @@ class MentaBehavior(
         modeTimer += dt
         animClock += dt
         if (mode == Mode.TOUCH) updateTouch(dt)
+    }
+
+    override fun updateDrag(dt: Float) {
+        // Al arrastrar, la serpiente se queda en pose de slither (no se congela).
+        time += dt
+        bridge.currentFrame = if (((time * 4f).toInt() % 2) == 0) 4 else 5
+        bridge.animOffsetX = sin(time * 5f) * 2f
+        bridge.animScaleX = if (facingRight) 1f else -1f
+        bridge.animScaleY = 1f
+        bridge.animRotation = 0f
+    }
+
+    override fun reset() {
+        super.reset()
+        // Al soltar, reanuda el cruce de pantalla al momento.
+        modeTimer = 0f
+        animClock = 0f
+        mode = Mode.SLITHER
+        pickTarget()
     }
 
     private fun syncWindowPosition() {

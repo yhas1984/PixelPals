@@ -235,6 +235,27 @@ class YukiBehavior(
         if (mode == Mode.TOUCH) updateTouch(dt)
     }
 
+    override fun updateDrag(dt: Float) {
+        // Al arrastrar, el muñeco de nieve mantiene pose idle (no se congela).
+        time += dt
+        val spec = spriteSheetSpec ?: return
+        val clip = spec.clip("idle") ?: return
+        val idx = ((time / 0.24f).toInt() % clip.frames.size)
+        bridge.currentFrame = clip.frames[idx]
+        bridge.animScaleX = facingScale(facingDir)
+        bridge.animScaleY = 1f
+        bridge.animRotation = 0f
+    }
+
+    override fun reset() {
+        super.reset()
+        // Al soltar, reanuda su paseo al momento.
+        modeTimer = 0f
+        animClock = 0f
+        mode = Mode.WALK
+        startWalk(resetTimer = false)
+    }
+
     private fun syncWindowPosition() {
         val params = bridge.getWindowParams() ?: return
         val minX = 0

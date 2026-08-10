@@ -232,6 +232,26 @@ class PiruBehavior(
         if (mode == Mode.TOUCH) updateTouch(dt)
     }
 
+    override fun updateDrag(dt: Float) {
+        // Al arrastrar, el pingüino mantiene pose de waddle (no se congela).
+        time += dt
+        val spec = spriteSheetSpec ?: return
+        val clip = spec.clip("idle") ?: return
+        val idx = ((time / 0.22f).toInt() % clip.frames.size)
+        bridge.currentFrame = clip.frames[idx]
+        bridge.animScaleX = facingScale(facingDir)
+        bridge.animScaleY = 1f
+        bridge.animRotation = 0f
+    }
+
+    override fun reset() {
+        super.reset()
+        // Al soltar, reanuda el waddle por el suelo al momento.
+        modeTimer = 0f
+        animClock = 0f
+        startWaddle(resetTimer = false)
+    }
+
     private fun syncWindowPosition() {
         val params = bridge.getWindowParams() ?: return
         val minX = 0
