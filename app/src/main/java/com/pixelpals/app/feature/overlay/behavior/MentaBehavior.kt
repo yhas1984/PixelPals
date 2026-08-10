@@ -121,14 +121,17 @@ class MentaBehavior(
         bridge.animOffsetX = sin(time * 2.2f) * 4f
         bridge.animOffsetY = sin(time * 1.6f) * 2f
         bridge.animRotation = 0f   // siempre de frente, sin golpeteos de cabeza
-        bridge.animScaleX = 1f
+        // Las cuatro poses 4-7 son fases consecutivas de la onda. Se refleja
+        // solo para que la cabeza lidere hacia la izquierda; la cara es frontal.
+        bridge.animScaleX = if (facingRight) 1f else -1f
         bridge.animScaleY = 1f + sin(time * 2.0f) * 0.02f
 
         // La onda viaja sincronizada con el avance: cada pose corresponde a
         // una fracción real del trayecto, no a un reloj independiente.
-        // Varias ondas por cruce; el zigzag debe acompañar al avance.
-        val wave = (t * 10f).toInt() and 1
-        bridge.currentFrame = if (facingRight) 4 + wave else 6 + wave
+        // Cuatro fases completas repetidas durante el trayecto: el contoneo
+        // recorre todo el cuerpo mientras la cabeza avanza.
+        val wave = (t * 12f).toInt() % 4
+        bridge.currentFrame = 4 + wave
 
         if (random.nextFloat() < 0.00025f) {
             mode = Mode.HAPPY

@@ -128,7 +128,7 @@ class PetView(
         PetType.YUKI -> 0.6641f         // idle wobble (idx 0)
         PetType.PIRU -> 0.6641f         // idle waddle (idx 0)
         PetType.TARO -> 0.6094f         // idle peek (idx 0)
-        PetType.MENTA -> 0.6875f        // idle coiled (idx 0)
+        PetType.MENTA -> 0.8711f         // idle largo (idx 0), storyboard corporal v4
         PetType.TELA -> 0.8359f         // idle colgando (idx 0)
     }
 
