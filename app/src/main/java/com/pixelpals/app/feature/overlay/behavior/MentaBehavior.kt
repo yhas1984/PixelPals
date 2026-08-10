@@ -174,10 +174,13 @@ class MentaBehavior(
         val distance = kotlin.math.abs(cruiseTargetY - startY)
         val travelled = distance * t
         val wave = (travelled / 42f).toInt() and 1
-        bridge.currentFrame = if (movingDown) 10 + wave else 8 + wave
+        // La pose base de subida tiene la cabeza arriba. Para bajar se voltea
+        // verticalmente: la cabeza pasa inequívocamente al extremo inferior,
+        // que es el que lidera el desplazamiento descendente.
+        bridge.currentFrame = 8 + wave
         bridge.animRotation = 0f
         bridge.animScaleX = 1f
-        bridge.animScaleY = 1f
+        bridge.animScaleY = if (movingDown) -1f else 1f
         bridge.animOffsetX = sin(time * 1.8f) * 2f
         bridge.animOffsetY = sin(time * 1.4f) * 1.5f
     }
