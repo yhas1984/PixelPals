@@ -199,7 +199,10 @@ class TaroBehavior(
     }
 
     override fun updateInteracting(dt: Float) {
-        // TOUCH gestiona su propia salida y pasa a HIDE
+        time += dt
+        modeTimer += dt
+        animClock += dt
+        if (mode == Mode.TOUCH) updateTouch(dt)
     }
 
     private fun syncWindowPosition() {

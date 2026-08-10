@@ -57,54 +57,50 @@ class TelaBehavior(
         facingRight = toX >= fromX
     }
 
-    /** Decide la siguiente acción según la posición actual (comportamiento de araña). */
+    /** Decide la siguiente acción según la posición actual (perímetro, como araña real). */
     private fun decideNext() {
         val params = bridge.getWindowParams() ?: return
         val x = params.x.toFloat()
         val y = params.y.toFloat()
+        val edge = 30f
+        val nearLeft = x <= minX() + edge
+        val nearRight = x >= maxX() - edge
+        val nearTop = y <= minY() + edge
+        val nearBottom = y >= maxY() - edge
         val roll = random.nextFloat()
 
+        // La araña recorre el PERÍMETRO: borde izq → techo → borde der → suelo → ...
         when {
-            // En el techo: baja por un borde
-            y <= minY() + 40f -> {
-                val sideX = if (roll < 0.5f) minX() else maxX()
-                startMode(Mode.CLIMB, 1.6f + random.nextFloat() * 1.4f, x, y, sideX, maxY() * 0.5f)
-            }
-            // En un borde lateral: sube al techo o baja al suelo
-            x <= minX() + 20f || x >= maxX() - 20f -> {
-                if (roll < 0.5f) {
-                    startMode(Mode.CLIMB, 1.4f + random.nextFloat() * 1.6f, x, y, x, minY() + 20f)
+            nearTop && !nearLeft && !nearRight -> {
+                // En el techo: cruza hacia el lado opuesto o baja por el borde más cercano
+                if (roll < 0.35f && (nearLeft || nearRight)) {
+                    // Ya en esquina: baja
+                    startMode(Mode.CLIMB, 1.4f + random.nextFloat() * 1.2f, x, y, x, maxY() - 20f)
                 } else {
-                    startMode(Mode.CLIMB, 1.2f + random.nextFloat() * 1.4f, x, y, x, maxY() - 20f)
+                    val sideX = if (x < bridge.screenWidth / 2f) minX() else maxX()
+                    startMode(Mode.CEILING, 1.8f + random.nextFloat() * 1.6f, x, y, sideX + (if (sideX == minX()) 20f else -20f), minY() + 10f)
                 }
             }
-            // En el suelo: trepa por la pared más cercana
-            y >= maxY() - 40f -> {
-                val sideX = if (x < bridge.screenWidth / 2f) minX() else maxX()
-                startMode(Mode.CLIMB, 1.5f + random.nextFloat() * 1.5f, x, y, sideX, y * 0.5f)
+            nearLeft || nearRight -> {
+                // En un borde lateral: sube al techo o baja al suelo por el mismo borde
+                if (roll < 0.5f) {
+                    startMode(Mode.CLIMB, 1.3f + random.nextFloat() * 1.4f, x, y, x, minY() + 10f)
+                } else {
+                    startMode(Mode.CLIMB, 1.2f + random.nextFloat() * 1.3f, x, y, x, maxY() - 20f)
+                }
             }
-            // En el aire (colgando): se balancea, camina por el techo o baja
+            nearBottom && !nearLeft && !nearRight -> {
+                // En el suelo: sube por la pared más cercana
+                val sideX = if (x < bridge.screenWidth / 2f) minX() else maxX()
+                startMode(Mode.CLIMB, 1.5f + random.nextFloat() * 1.3f, x, y, sideX + (if (sideX == minX()) 20f else -20f), maxY() - 20f)
+            }
             else -> {
-                when {
-                    roll < 0.30f -> {
-                        // Caminar por el techo (patas arriba)
-                        val ceilingY = minY() + 10f
-                        startMode(Mode.CEILING, 1.8f + random.nextFloat() * 1.6f, x, y, random.nextFloat() * (maxX() - minX()) + minX(), ceilingY)
-                    }
-                    roll < 0.55f -> {
-                        // Colgarse y balancearse en el sitio
-                        startMode(Mode.HANG, 1.6f + random.nextFloat() * 1.4f, x, y, x, y)
-                    }
-                    roll < 0.80f -> {
-                        // Cruzar en diagonal (lanzarse con hilo)
-                        val targetX = random.nextFloat() * (maxX() - minX()) + minX()
-                        val targetY = random.nextFloat() * (maxY() - minY()) + minY()
-                        startMode(Mode.WALK, 1.8f + random.nextFloat() * 1.6f, x, y, targetX, targetY)
-                    }
-                    else -> {
-                        // Bajar al suelo
-                        startMode(Mode.CLIMB, 1.3f + random.nextFloat() * 1.3f, x, y, x, maxY() - 20f)
-                    }
+                // En el aire (colgando de un hilo en el centro): sube al techo
+                // o se deja caer al suelo; NUNCA cruza el centro sin motivo.
+                if (roll < 0.55f) {
+                    startMode(Mode.CLIMB, 1.2f + random.nextFloat() * 1.2f, x, y, x, minY() + 10f)
+                } else {
+                    startMode(Mode.CLIMB, 1.2f + random.nextFloat() * 1.2f, x, y, x, maxY() - 20f)
                 }
             }
         }
@@ -273,7 +269,12 @@ class TelaBehavior(
     }
 
     override fun updateInteracting(dt: Float) {
-        // TOUCH gestiona su propia salida
+        // El PetView llama a esto mientras state == INTERACTING; si no avanzamos
+        // el reloj, la araña se queda congelada en el frame de touch para siempre.
+        time += dt
+        modeTimer += dt
+        animClock += dt
+        if (mode == Mode.TOUCH) updateTouch(dt)
     }
 
     private fun syncWindowPosition() {

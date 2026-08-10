@@ -183,7 +183,10 @@ class MentaBehavior(
     }
 
     override fun updateInteracting(dt: Float) {
-        // TOUCH gestiona su propia salida
+        time += dt
+        modeTimer += dt
+        animClock += dt
+        if (mode == Mode.TOUCH) updateTouch(dt)
     }
 
     private fun syncWindowPosition() {
