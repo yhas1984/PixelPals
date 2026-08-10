@@ -55,9 +55,9 @@ class BloopBehavior(bridge: PetViewBridge, override val random: PetRandom) : Bas
     private fun teleportWithinWalls() {
         val params = bridge.getWindowParams() ?: return
         val minX = 0
-        val maxX = (bridge.screenWidth - bridge.petSpriteSize).coerceAtLeast(minX)
-        val minY = 50
-        val maxY = (bridge.screenHeight - bridge.petSpriteSize - 100).coerceAtLeast(minY)
+        val maxX = safeMaxX()
+        val minY = safeMinY()
+        val maxY = safeMaxY()
 
         params.x = if (maxX == minX) minX else random.nextInt(minX, maxX + 1)
         params.y = if (maxY == minY) minY else random.nextInt(minY, maxY + 1)
@@ -67,9 +67,9 @@ class BloopBehavior(bridge: PetViewBridge, override val random: PetRandom) : Bas
     private fun applyGhostFlight(dt: Float) {
         val params = bridge.getWindowParams() ?: return
         val minX = 0
-        val maxX = (bridge.screenWidth - bridge.petSpriteSize).coerceAtLeast(0)
-        val minY = 50
-        val maxY = (bridge.screenHeight - bridge.petSpriteSize - 100).coerceAtLeast(minY)
+        val maxX = safeMaxX()
+        val minY = safeMinY()
+        val maxY = safeMaxY()
         val softMargin = bridge.petSpriteSize * 0.9f
         if (params.x < minX + softMargin) velX = maxOf(abs(velX), 70f)
         if (params.x > maxX - softMargin) velX = -maxOf(abs(velX), 70f)
@@ -197,9 +197,9 @@ class BloopBehavior(bridge: PetViewBridge, override val random: PetRandom) : Bas
         // Objetivo diagonal alejado, pero no pegado a una esquina extrema:
         // se siente mas natural y evita una huida demasiado vertical/horizontal.
         val minX = 0f
-        val maxX = (bridge.screenWidth - bridge.petSpriteSize).coerceAtLeast(0).toFloat()
-        val minY = 50f
-        val maxY = (bridge.screenHeight - bridge.petSpriteSize - 100).coerceAtLeast(minY.toInt()).toFloat()
+        val maxX = safeMaxX().toFloat()
+        val minY = safeMinY().toFloat()
+        val maxY = safeMaxY().toFloat()
 
         val params = bridge.getWindowParams()
         val currX = (params?.x ?: bridge.windowX).toFloat()
@@ -239,14 +239,14 @@ class BloopBehavior(bridge: PetViewBridge, override val random: PetRandom) : Bas
         val currX = (params?.x ?: bridge.windowX).toFloat()
         val currY = (params?.y ?: bridge.windowY).toFloat()
         escapeTargetX = if (velocityX >= 0f) {
-            (bridge.screenWidth - bridge.petSpriteSize).coerceAtLeast(0).toFloat()
+            safeMaxX().toFloat()
         } else {
             0f
         }
         escapeTargetY = if (velocityY >= 0f) {
-            (bridge.screenHeight - bridge.petSpriteSize - 100).coerceAtLeast(50).toFloat()
+            safeMaxY().toFloat()
         } else {
-            50f
+            safeMinY().toFloat()
         }
         if (kotlin.math.abs(escapeTargetX - currX) < 20f) escapeTargetX = (bridge.screenWidth / 2f)
     }
@@ -311,9 +311,9 @@ class BloopBehavior(bridge: PetViewBridge, override val random: PetRandom) : Bas
         if (moveY == 0 && abs(dy) > 1f) moveY = if (dy > 0f) 4 else -4
 
         val minX = 0
-        val maxX = (bridge.screenWidth - bridge.petSpriteSize).coerceAtLeast(0)
-        val minY = 50
-        val maxY = (bridge.screenHeight - bridge.petSpriteSize - 100).coerceAtLeast(minY)
+        val maxX = safeMaxX()
+        val minY = safeMinY()
+        val maxY = safeMaxY()
 
         params.x = (params.x + moveX).coerceIn(minX, maxX)
         params.y = (params.y + moveY).coerceIn(minY, maxY)

@@ -40,8 +40,8 @@ class ImpBehavior(bridge: PetViewBridge, override val random: PetRandom) : BaseB
         val params = bridge.getWindowParams() ?: return
         val dashSpeed = 560f
         params.x = (params.x + ((if (isClimbingRight) dashSpeed else -dashSpeed) * dt).toInt())
-            .coerceIn(0, bridge.screenWidth - bridge.petSpriteSize)
-        params.y = params.y.coerceIn(50, (bridge.screenHeight - bridge.petSpriteSize - 100).coerceAtLeast(50))
+            .coerceIn(0, safeMaxX())
+        params.y = params.y.coerceIn(safeMinY(), safeMaxY())
         bridge.currentFrame = if ((time * 14f).toInt() % 2 == 0) 2 else 3
         bridge.animScaleX = if (isClimbingRight) 1f else -1f
         bridge.animOffsetX = if (isClimbingRight) 4f else -4f
@@ -95,9 +95,9 @@ class ImpBehavior(bridge: PetViewBridge, override val random: PetRandom) : BaseB
         val cycle = (time * 6f).toInt() % 3
         bridge.currentFrame = when(cycle) { 0 -> 4; 1 -> 5; else -> 6 }
 
-        if (params.y < 50) params.y = 50
-        if (params.y > bridge.screenHeight - bridge.petSpriteSize - 100) {
-            params.y = bridge.screenHeight - bridge.petSpriteSize - 100
+        if (params.y < safeMinY()) params.y = safeMinY()
+        if (params.y > safeMaxY()) {
+            params.y = safeMaxY()
         }
         if (climbTimer > climbDuration) {
             impState = ImpState.FLYING

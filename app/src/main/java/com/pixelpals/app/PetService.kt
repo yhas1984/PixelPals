@@ -48,6 +48,8 @@ class PetService : Service() {
         private const val MAX_VIEW_SIZE_RATIO = 0.40f
         private const val HOME_POLL_INTERVAL_MS = 4_000L
         private const val HOME_POLL_INTERVAL_SLOW_MS = 60_000L
+        /** La consulta de foreground (UsageEvents) se ejecuta cada N polls. */
+        private const val LAUNCHER_CHECK_EVERY_N_POLLS = 3
 
         fun requestPetRefresh(context: Context, message: String? = null, celebrate: Boolean = false) {
             if (!isRunning) return
@@ -92,25 +94,25 @@ class PetService : Service() {
     private val homeCheckRunnable = object : Runnable {
         override fun run() {
             try {
-                if (isViewAttached) {
-                    refreshKeyboardVisibility()
-                    val hadUsageAccess = DesktopForegroundHelper.hasUsageAccess(this@PetService)
-                    refreshPetVisibilityForForeground()
-                    val nextInterval = if (hadUsageAccess) {
-                        HOME_POLL_INTERVAL_MS
-                    } else {
-                        HOME_POLL_INTERVAL_SLOW_MS
-                    }
-                    homeCheckHandler.postDelayed(this, nextInterval)
-                } else {
+                if (!isViewAttached) {
                     homeCheckHandler.postDelayed(this, HOME_POLL_INTERVAL_SLOW_MS)
+                    return
                 }
+                refreshKeyboardVisibility()
+                launcherCheckCounter++
+                if (launcherCheckCounter >= LAUNCHER_CHECK_EVERY_N_POLLS) {
+                    launcherCheckCounter = 0
+                    refreshPetVisibilityForForeground()
+                }
+                homeCheckHandler.postDelayed(this, HOME_POLL_INTERVAL_MS)
             } catch (e: Exception) {
                 Log.w(TAG, "Polling cycle failed; keeping service alive", e)
                 homeCheckHandler.postDelayed(this, HOME_POLL_INTERVAL_MS)
             }
         }
     }
+
+    private var launcherCheckCounter = 0
 
     private var lastImeVisible: Boolean? = null
 
@@ -372,14 +374,6 @@ class PetService : Service() {
             .build()
     }
 
-    private fun updateNotification(isHidden: Boolean) {
-        try {
-            getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, buildNotification(isHidden))
-        } catch (_: Exception) {
-            Log.w(TAG, "Notification update failed")
-        }
-    }
-
     private fun registerBatteryReceiver() {
         if (batteryReceiver != null) return
         batteryReceiver = object : BroadcastReceiver() {
@@ -439,8 +433,6 @@ class PetService : Service() {
         if (!isForegroundStarted) {
             startForeground(NOTIFICATION_ID, buildNotification(false))
             isForegroundStarted = true
-        } else {
-            updateNotification(false)
         }
     }
 

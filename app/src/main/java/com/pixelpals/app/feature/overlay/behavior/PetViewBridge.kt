@@ -3,6 +3,7 @@ package com.pixelpals.app.feature.overlay.behavior
 import android.graphics.ColorFilter
 import android.view.WindowManager
 import com.pixelpals.app.core.domain.PetState
+import com.pixelpals.app.core.motion.PetBounds
 import com.pixelpals.app.status.CareAction
 import com.pixelpals.app.status.PetPersonality
 import com.pixelpals.app.status.PetStatusSnapshot
@@ -48,6 +49,17 @@ interface PetViewBridge {
     val screenHeight: Int
     val petSpriteSize: Int
     val groundY: Int
+
+    /** Zona transitable en coordenadas lógicas del sprite (left/right/top/floor). */
+    val bounds: PetBounds
+        get() = PetBounds.compute(
+            screenWidth,
+            screenHeight,
+            petSpriteSize,
+            topSystemInsetPx,
+            bottomSystemInsetPx
+        )
+
     val petStatus: PetStatusSnapshot
     val petPersonality: PetPersonality
 

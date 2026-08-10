@@ -2,7 +2,6 @@ package com.pixelpals.app.feature.overlay.behavior
 
 import com.pixelpals.app.core.domain.PetType
 import com.pixelpals.app.core.motion.DefaultPetRandom
-import com.pixelpals.app.core.motion.MokiMotionController
 import com.pixelpals.app.core.motion.PetRandom
 
 /**

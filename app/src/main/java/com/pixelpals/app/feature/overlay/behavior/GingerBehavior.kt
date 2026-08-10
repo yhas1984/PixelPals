@@ -169,8 +169,8 @@ class GingerBehavior(
             airVelocityX *= -0.32f
             facingDirection = if (airVelocityX >= 0f) 1f else -1f
         }
-        if (airY < TOP_LIMIT_PX) {
-            airY = TOP_LIMIT_PX
+        if (airY < topLimitPx()) {
+            airY = topLimitPx()
             airVelocityY = abs(airVelocityY) * 0.2f
         }
 
@@ -283,12 +283,11 @@ class GingerBehavior(
         bridge.updateWindowLayout(params)
     }
 
-    private fun groundY(): Float = bridge.groundY.coerceAtLeast(TOP_LIMIT_PX.toInt()).toFloat()
+    private fun groundY(): Float = bridge.groundY.toFloat().coerceAtLeast(topLimitPx())
 
-    private fun maxWindowX(): Int {
-        val width: Int = bridge.getWindowParams()?.width ?: bridge.petSpriteSize
-        return (bridge.screenWidth - width).coerceAtLeast(0)
-    }
+    private fun maxWindowX(): Int = (bridge.screenWidth - bridge.petSpriteSize).coerceAtLeast(0)
+
+    private fun topLimitPx(): Float = (bridge.topSystemInsetPx + TOP_LIMIT_PX.toInt()).toFloat()
 
     private fun facingScale(stretch: Float = 1f): Float {
         val magnitude: Float = abs(stretch)

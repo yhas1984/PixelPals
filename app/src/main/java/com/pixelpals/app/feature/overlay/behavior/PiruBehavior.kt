@@ -10,8 +10,9 @@ import kotlin.math.sin
 /**
  * PiruBehavior — Pingüinito con bufanda.
  * Waddle por el suelo como el Patito, con deslizamientos sobre la panza
- * (frames 4-5) y saltitos alegres. Es un pet de suelo: nunca vuela.
- * IA atlas: idle (0-3), slide (4-5), jump (6-7), happy (8-11), touch (12-14), sleep (15).
+ * (frames 12-13) y saltitos alegres. Es un pet de suelo: nunca vuela.
+ * IA atlas: idle (0-2), blink (3), walk (4-5), jump (6-7), happy (8-11),
+ * slide (12-13), sleep (14-15), touch (reacción 11-10-8).
  */
 class PiruBehavior(
     bridge: PetViewBridge,
@@ -80,6 +81,9 @@ class PiruBehavior(
 
     private fun startJump() {
         val params = bridge.getWindowParams() ?: return
+        // La X de partida se toma del estado actual: sin esto, un salto tras un
+        // slide/waddle podía despegar desde una X antigua y cruzar la pantalla.
+        swimStartX = params.x.toFloat()
         jumpStartY = params.y.toFloat()
         jumpTargetY = groundY() - bridge.petSpriteSize * 0.9f
         mode = Mode.JUMP
@@ -87,7 +91,7 @@ class PiruBehavior(
         // El salto mantiene la X
         val minX = 0f
         val maxX = (bridge.screenWidth - bridge.petSpriteSize).coerceAtLeast(0).toFloat()
-        swimTargetX = (params.x.toFloat() + facingDir * bridge.petSpriteSize * 0.6f).coerceIn(minX, maxX)
+        swimTargetX = (swimStartX + facingDir * bridge.petSpriteSize * 0.6f).coerceIn(minX, maxX)
     }
 
     override fun updateIdle(dt: Float) {
@@ -122,7 +126,7 @@ class PiruBehavior(
         bridge.updateWindowLayout(params)
 
         val spec = spriteSheetSpec ?: return
-        val clip = spec.clip("idle") ?: return
+        val clip = spec.clip("walk") ?: return
         val idx = ((animClock / 0.22f).toInt() % clip.frames.size)
         bridge.currentFrame = clip.frames[idx]
         bridge.animScaleX = facingScale(facingDir)
@@ -185,6 +189,10 @@ class PiruBehavior(
     }
 
     private fun updateHappy(dt: Float) {
+        if (modeTimer >= modeDuration) {
+            startWaddle()
+            return
+        }
         val spec = spriteSheetSpec ?: return
         val clip = spec.clip("happy") ?: return
         val idx = ((animClock / 0.24f).toInt() % clip.frames.size)
@@ -192,20 +200,23 @@ class PiruBehavior(
         bridge.animScaleX = facingScale(facingDir)
         bridge.animScaleY = 1f + sin(time * 6f) * 0.05f
         bridge.animOffsetY = sin(time * 4f) * 3f
-        if (modeTimer >= modeDuration) startWaddle()
     }
 
     private fun updateTouch(dt: Float) {
-        val spec = spriteSheetSpec ?: return
-        val clip = spec.clip("touch") ?: return
-        val idx = ((animClock / 0.26f).toInt() % clip.frames.size)
-        bridge.currentFrame = clip.frames[idx]
+        // La salida va ANTES del guard del clip: si el clip falta (atlas
+        // desactualizado) el pet igualmente termina la interacción y vuelve
+        // a IDLE en vez de quedar congelado en INTERACTING para siempre.
         if (modeTimer >= modeDuration) {
             bridge.state = PetState.IDLE
             animClock = 0f
             startWaddle()
             reset()
+            return
         }
+        val spec = spriteSheetSpec ?: return
+        val clip = spec.clip("touch") ?: return
+        val idx = ((animClock / 0.26f).toInt() % clip.frames.size)
+        bridge.currentFrame = clip.frames[idx]
     }
 
     private fun updateSleep(dt: Float) {
@@ -254,12 +265,8 @@ class PiruBehavior(
 
     private fun syncWindowPosition() {
         val params = bridge.getWindowParams() ?: return
-        val minX = 0
-        val maxX = (bridge.screenWidth - bridge.petSpriteSize).coerceAtLeast(0)
-        val minY = 50
-        val maxY = (bridge.screenHeight - bridge.petSpriteSize - 100).coerceAtLeast(minY)
-        params.x = params.x.coerceIn(minX, maxX)
-        params.y = params.y.coerceIn(minY, maxY)
+        params.x = params.x.coerceIn(0, safeMaxX())
+        params.y = params.y.coerceIn(safeMinY(), safeMaxY())
         bridge.updateWindowLayout(params)
     }
 }

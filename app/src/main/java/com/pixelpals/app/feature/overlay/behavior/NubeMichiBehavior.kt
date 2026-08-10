@@ -241,9 +241,9 @@ class NubeMichiBehavior(
 
         val params = bridge.getWindowParams() ?: return
         val minX = 0
-        val maxX = (bridge.screenWidth - bridge.petSpriteSize).coerceAtLeast(0)
-        val minY = 50
-        val maxY = (bridge.screenHeight - bridge.petSpriteSize - 100).coerceAtLeast(minY)
+        val maxX = safeMaxX()
+        val minY = safeMinY()
+        val maxY = safeMaxY()
 
         when (mode) {
             Mode.FEATHER_FALL -> {

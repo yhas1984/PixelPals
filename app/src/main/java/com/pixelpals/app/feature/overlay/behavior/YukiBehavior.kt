@@ -178,6 +178,12 @@ class YukiBehavior(
     }
 
     private fun updateHappy(dt: Float) {
+        if (modeTimer >= modeDuration) {
+            mode = Mode.IDLE
+            modeTimer = 0f
+            modeDuration = 2.0f + random.nextFloat() * 2.5f
+            return
+        }
         val spec = spriteSheetSpec ?: return
         val clip = spec.clip("happy") ?: return
         val idx = ((animClock / 0.24f).toInt() % clip.frames.size)
@@ -185,11 +191,6 @@ class YukiBehavior(
         bridge.animScaleX = facingScale(facingDir)
         bridge.animScaleY = 1f + sin(time * 6f) * 0.05f
         bridge.animOffsetY = sin(time * 4f) * 3f
-        if (modeTimer >= modeDuration) {
-            mode = Mode.IDLE
-            modeTimer = 0f
-            modeDuration = 2.0f + random.nextFloat() * 2.5f
-        }
     }
 
     private fun updateMelt(dt: Float) {
@@ -215,10 +216,6 @@ class YukiBehavior(
     }
 
     private fun updateTouch(dt: Float) {
-        val spec = spriteSheetSpec ?: return
-        val clip = spec.clip("touch") ?: return
-        val idx = ((animClock / 0.30f).toInt() % clip.frames.size)
-        bridge.currentFrame = clip.frames[idx]
         if (modeTimer >= modeDuration) {
             bridge.state = PetState.IDLE
             animClock = 0f
@@ -226,7 +223,12 @@ class YukiBehavior(
             modeTimer = 0f
             modeDuration = 2.0f + random.nextFloat() * 2.5f
             reset()
+            return
         }
+        val spec = spriteSheetSpec ?: return
+        val clip = spec.clip("touch") ?: return
+        val idx = ((animClock / 0.30f).toInt() % clip.frames.size)
+        bridge.currentFrame = clip.frames[idx]
     }
 
     private fun updateSleep(dt: Float) {
@@ -288,12 +290,8 @@ class YukiBehavior(
 
     private fun syncWindowPosition() {
         val params = bridge.getWindowParams() ?: return
-        val minX = 0
-        val maxX = (bridge.screenWidth - bridge.petSpriteSize).coerceAtLeast(0)
-        val minY = 50
-        val maxY = (bridge.screenHeight - bridge.petSpriteSize - 100).coerceAtLeast(minY)
-        params.x = params.x.coerceIn(minX, maxX)
-        params.y = params.y.coerceIn(minY, maxY)
+        params.x = params.x.coerceIn(0, safeMaxX())
+        params.y = params.y.coerceIn(safeMinY(), safeMaxY())
         bridge.updateWindowLayout(params)
     }
 

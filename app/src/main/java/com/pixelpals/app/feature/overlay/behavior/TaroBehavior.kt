@@ -146,6 +146,12 @@ class TaroBehavior(
     }
 
     private fun updateHappy(dt: Float) {
+        if (modeTimer >= modeDuration) {
+            mode = Mode.IDLE
+            modeTimer = 0f
+            modeDuration = 4f + random.nextFloat() * 4f
+            return
+        }
         val spec = spriteSheetSpec ?: return
         val clip = spec.clip("happy") ?: return
         val idx = ((animClock / 0.25f).toInt() % clip.frames.size)
@@ -153,14 +159,17 @@ class TaroBehavior(
         bridge.animScaleX = facingScale(facingDir)
         bridge.animScaleY = 1f + sin(time * 5f) * 0.04f
         bridge.animOffsetY = sin(time * 3.5f) * 2.5f
-        if (modeTimer >= modeDuration) {
-            mode = Mode.IDLE
-            modeTimer = 0f
-            modeDuration = 4f + random.nextFloat() * 4f
-        }
     }
 
     private fun updateTouch(dt: Float) {
+        if (modeTimer >= modeDuration) {
+            bridge.state = PetState.IDLE
+            animClock = 0f
+            mode = Mode.HIDE
+            modeTimer = 0f
+            modeDuration = 2.2f + random.nextFloat() * 1.5f
+            return
+        }
         val spec = spriteSheetSpec ?: return
         val clip = spec.clip("touch") ?: return
         val idx = ((animClock / 0.30f).toInt() % clip.frames.size)
@@ -168,13 +177,6 @@ class TaroBehavior(
         // Se encoge visiblemente al esconderse
         bridge.animScaleY = 0.94f
         bridge.animScaleX = 1.05f
-        if (modeTimer >= modeDuration) {
-            bridge.state = PetState.IDLE
-            animClock = 0f
-            mode = Mode.HIDE
-            modeTimer = 0f
-            modeDuration = 2.2f + random.nextFloat() * 1.5f
-        }
     }
 
     private fun updateSleep(dt: Float) {
@@ -227,12 +229,8 @@ class TaroBehavior(
 
     private fun syncWindowPosition() {
         val params = bridge.getWindowParams() ?: return
-        val minX = 0
-        val maxX = (bridge.screenWidth - bridge.petSpriteSize).coerceAtLeast(0)
-        val minY = 50
-        val maxY = (bridge.screenHeight - bridge.petSpriteSize - 100).coerceAtLeast(minY)
-        params.x = params.x.coerceIn(minX, maxX)
-        params.y = params.y.coerceIn(minY, maxY)
+        params.x = params.x.coerceIn(0, safeMaxX())
+        params.y = params.y.coerceIn(safeMinY(), safeMaxY())
         bridge.updateWindowLayout(params)
     }
 }

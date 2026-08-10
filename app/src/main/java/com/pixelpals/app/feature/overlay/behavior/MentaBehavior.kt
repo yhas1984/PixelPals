@@ -73,9 +73,10 @@ class MentaBehavior(
         startX = params.x.toFloat()
         startY = params.y.toFloat()
         val minX = 0f
-        val maxX = (bridge.screenWidth - bridge.petSpriteSize).coerceAtLeast(0).toFloat()
-        val minY = 80f
-        val maxY = (bridge.screenHeight - bridge.petSpriteSize - 80).coerceAtLeast(80).toFloat()
+        val maxX = safeMaxX().toFloat()
+        val minY = (bridge.topSystemInsetPx + 80).toFloat()
+        val maxY = (bridge.screenHeight - bridge.bottomSystemInsetPx - bridge.petSpriteSize - 80)
+            .coerceAtLeast(bridge.topSystemInsetPx + 80).toFloat()
 
         if (random.nextFloat() < 0.65f) {
             // CRUCE HORIZONTAL: de un lado al otro, subiendo/bajando un poco
@@ -206,6 +207,11 @@ class MentaBehavior(
     }
 
     private fun updateHappy(dt: Float) {
+        if (modeTimer >= modeDuration) {
+            modeTimer = 0f
+            pickTarget()
+            return
+        }
         val spec = spriteSheetSpec ?: return
         val clip = spec.clip("happy") ?: return
         val idx = ((animClock / 0.24f).toInt() % clip.frames.size)
@@ -213,17 +219,9 @@ class MentaBehavior(
         bridge.animScaleY = 1f + sin(time * 6f) * 0.05f
         bridge.animScaleX = 1f - sin(time * 6f) * 0.04f
         bridge.animOffsetY = sin(time * 4f) * 3f
-        if (modeTimer >= modeDuration) {
-            modeTimer = 0f
-            pickTarget()
-        }
     }
 
     private fun updateTouch(dt: Float) {
-        val spec = spriteSheetSpec ?: return
-        val clip = spec.clip("touch") ?: return
-        val idx = ((animClock / 0.26f).toInt() % clip.frames.size)
-        bridge.currentFrame = clip.frames[idx]
         if (modeTimer >= modeDuration) {
             bridge.state = PetState.IDLE
             mode = Mode.SLITHER
@@ -231,7 +229,12 @@ class MentaBehavior(
             animClock = 0f
             pickTarget()
             reset()
+            return
         }
+        val spec = spriteSheetSpec ?: return
+        val clip = spec.clip("touch") ?: return
+        val idx = ((animClock / 0.26f).toInt() % clip.frames.size)
+        bridge.currentFrame = clip.frames[idx]
     }
 
     private fun updateSleep(dt: Float) {
@@ -281,11 +284,10 @@ class MentaBehavior(
 
     private fun syncWindowPosition() {
         val params = bridge.getWindowParams() ?: return
-        val minX = 0
-        val maxX = (bridge.screenWidth - bridge.petSpriteSize).coerceAtLeast(0)
-        val minY = 80
-        val maxY = (bridge.screenHeight - bridge.petSpriteSize - 80).coerceAtLeast(minY)
-        params.x = params.x.coerceIn(minX, maxX)
+        val minY = bridge.topSystemInsetPx + 80
+        val maxY = (bridge.screenHeight - bridge.bottomSystemInsetPx - bridge.petSpriteSize - 80)
+            .coerceAtLeast(minY)
+        params.x = params.x.coerceIn(0, safeMaxX())
         params.y = params.y.coerceIn(minY, maxY)
         bridge.updateWindowLayout(params)
     }

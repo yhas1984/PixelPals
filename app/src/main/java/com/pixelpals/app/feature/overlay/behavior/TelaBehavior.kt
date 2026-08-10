@@ -42,9 +42,10 @@ class TelaBehavior(
     override fun getBaseSpeed(): Float = 0f
 
     private fun minX() = 0f
-    private fun maxX() = (bridge.screenWidth - bridge.petSpriteSize).coerceAtLeast(0).toFloat()
-    private fun minY() = 60f
-    private fun maxY() = (bridge.screenHeight - bridge.petSpriteSize - 60).coerceAtLeast(60).toFloat()
+    private fun maxX() = safeMaxX().toFloat()
+    private fun minY() = (bridge.topSystemInsetPx + 60).toFloat()
+    private fun maxY() = (bridge.screenHeight - bridge.bottomSystemInsetPx - bridge.petSpriteSize - 60)
+        .coerceAtLeast(bridge.topSystemInsetPx + 60).toFloat()
 
     private fun startMode(m: Mode, duration: Float, fromX: Float, fromY: Float, toX: Float, toY: Float) {
         mode = m
@@ -54,7 +55,12 @@ class TelaBehavior(
         this.fromY = fromY
         this.toX = toX
         this.toY = toY
-        facingRight = toX >= fromX
+        facingRight = when (m) {
+            // En paredes la X no cambia: la orientación la da el lado de la pared.
+            Mode.CLIMB -> toX >= bridge.screenWidth / 2f
+            Mode.WALK, Mode.CEILING -> toX >= fromX
+            else -> facingRight
+        }
     }
 
     /** Decide la siguiente acción según la posición actual (perímetro, como araña real). */
@@ -63,41 +69,32 @@ class TelaBehavior(
         val x = params.x.toFloat()
         val y = params.y.toFloat()
         val edge = 30f
-        val nearLeft = x <= minX() + edge
-        val nearRight = x >= maxX() - edge
-        val nearTop = y <= minY() + edge
-        val nearBottom = y >= maxY() - edge
+        val ceilingY = (minY() + 10f).coerceAtMost(maxY())
+        val floorY = (maxY() - 20f).coerceAtLeast(ceilingY)
+        val leftX = minX()
+        val rightX = maxX()
+        val atTop = y <= minY() + edge
+        val atBottom = y >= maxY() - edge
+        val atLeft = x <= leftX + edge
+        val atRight = x >= rightX - edge
         val roll = random.nextFloat()
 
-        // La araña es un animal de PERÍMETRO: cuelga de su hilo la mayor parte del
-        // tiempo, y cuando se mueve recorre borde → techo → borde → suelo.
+        // Circuito horario fijo por el perímetro cuando está cerca de un borde:
+        // techo → pared derecha → suelo → pared izquierda. Nunca se queda
+        // colgando al azar pegado a un borde.
         when {
-            // En el techo: se cuelga y se balancea, o cruza hacia el lado opuesto
-            nearTop && !nearLeft && !nearRight -> {
-                if (roll < 0.45f) {
-                    // Colgarse y balancearse en el sitio (estado natural de la araña)
-                    startMode(Mode.HANG, 2.2f + random.nextFloat() * 2.2f, x, y, x, y)
-                } else {
-                    val sideX = if (x < bridge.screenWidth / 2f) minX() else maxX()
-                    startMode(Mode.CEILING, 1.8f + random.nextFloat() * 1.6f, x, y, sideX + (if (sideX == minX()) 20f else -20f), minY() + 10f)
-                }
-            }
-            nearLeft || nearRight -> {
-                // En un borde lateral: cuelga un rato, o sube/baja por el mismo borde
-                when {
-                    roll < 0.40f -> startMode(Mode.HANG, 2.0f + random.nextFloat() * 2.0f, x, y, x, y)
-                    roll < 0.70f -> startMode(Mode.CLIMB, 1.3f + random.nextFloat() * 1.4f, x, y, x, minY() + 10f)
-                    else -> startMode(Mode.CLIMB, 1.2f + random.nextFloat() * 1.3f, x, y, x, maxY() - 20f)
-                }
-            }
-            nearBottom && !nearLeft && !nearRight -> {
-                // En el suelo: sube por la pared más cercana
-                val sideX = if (x < bridge.screenWidth / 2f) minX() else maxX()
-                startMode(Mode.CLIMB, 1.5f + random.nextFloat() * 1.3f, x, y, sideX + (if (sideX == minX()) 20f else -20f), maxY() - 20f)
-            }
+            atTop && atLeft -> startMode(Mode.CEILING, 1.8f + random.nextFloat() * 1.4f, x, y, rightX - 20f, ceilingY)
+            atTop && atRight -> startMode(Mode.CLIMB, 1.5f + random.nextFloat() * 1.3f, x, y, rightX, floorY)
+            atBottom && atRight -> startMode(Mode.WALK, 2.0f + random.nextFloat() * 1.6f, x, y, leftX + 20f, floorY)
+            atBottom && atLeft -> startMode(Mode.CLIMB, 1.5f + random.nextFloat() * 1.3f, x, y, leftX, ceilingY)
+            atTop -> startMode(Mode.CEILING, 1.8f + random.nextFloat() * 1.4f, x, y, rightX - 20f, ceilingY)
+            atRight -> startMode(Mode.CLIMB, 1.5f + random.nextFloat() * 1.3f, x, y, rightX, floorY)
+            atBottom -> startMode(Mode.WALK, 2.0f + random.nextFloat() * 1.6f, x, y, leftX + 20f, floorY)
+            atLeft -> startMode(Mode.CLIMB, 1.5f + random.nextFloat() * 1.3f, x, y, leftX, ceilingY)
             else -> {
-                // En el aire (colgando de un hilo): se balancea un rato y luego
-                // sube al techo o se deja caer al suelo — nunca cruza el centro.
+                // En el aire (colgando de un hilo lejos de los bordes): se
+                // balancea un rato y luego sube al techo o se deja caer al
+                // suelo — nunca cruza el centro a lo ancho.
                 if (roll < 0.60f) {
                     startMode(Mode.HANG, 2.0f + random.nextFloat() * 2.0f, x, y, x, y)
                 } else if (roll < 0.80f) {
@@ -225,6 +222,11 @@ class TelaBehavior(
     }
 
     private fun updateHappy(dt: Float) {
+        if (modeTimer >= modeDuration) {
+            modeTimer = 0f
+            decideNext()
+            return
+        }
         val spec = spriteSheetSpec ?: return
         val clip = spec.clip("happy") ?: return
         val idx = ((animClock / 0.24f).toInt() % clip.frames.size)
@@ -232,24 +234,21 @@ class TelaBehavior(
         bridge.animScaleY = 1f + sin(time * 6f) * 0.05f
         bridge.animScaleX = 1f - sin(time * 6f) * 0.04f
         bridge.animOffsetY = sin(time * 4f) * 3f
-        if (modeTimer >= modeDuration) {
-            modeTimer = 0f
-            decideNext()
-        }
     }
 
     private fun updateTouch(dt: Float) {
-        val spec = spriteSheetSpec ?: return
-        val clip = spec.clip("touch") ?: return
-        val idx = ((animClock / 0.24f).toInt() % clip.frames.size)
-        bridge.currentFrame = clip.frames[idx]
         if (modeTimer >= modeDuration) {
             bridge.state = PetState.IDLE
             animClock = 0f
             modeTimer = 0f
             decideNext()
             reset()
+            return
         }
+        val spec = spriteSheetSpec ?: return
+        val clip = spec.clip("touch") ?: return
+        val idx = ((animClock / 0.24f).toInt() % clip.frames.size)
+        bridge.currentFrame = clip.frames[idx]
     }
 
     private fun updateSleep(dt: Float) {

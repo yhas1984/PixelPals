@@ -4,12 +4,13 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.*
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import android.util.DisplayMetrics
 import android.util.Log
-import android.view.Choreographer
 import android.view.MotionEvent
 import android.view.VelocityTracker
 import android.view.View
@@ -21,6 +22,7 @@ import com.pixelpals.app.core.analytics.AnalyticsTracker
 import com.pixelpals.app.core.domain.PetState
 import com.pixelpals.app.core.domain.PetType
 import com.pixelpals.app.core.motion.MotionEngine
+import com.pixelpals.app.core.motion.PetBounds
 import com.pixelpals.app.core.services.AppServices
 import com.pixelpals.app.data.repository.PetProgress
 import com.pixelpals.app.data.repository.PixelPalsRepository
@@ -53,9 +55,9 @@ class PetView(
     private var ambientBubbleCooldown = 12f
     private var lastFrameTimeNanos = 0L
     private var lastTimeWindowKey = ""
+    private var lastTimeGreetingCheckAt = 0L
 
     private val motionEngine = MotionEngine()
-    private var lastFrameDelta = 0f
     private val touchSlop = ViewConfiguration.get(context).scaledTouchSlop.toFloat()
     private val minimumFlingVelocity = ViewConfiguration.get(context).scaledMinimumFlingVelocity.toFloat()
     private val maximumFlingVelocity = ViewConfiguration.get(context).scaledMaximumFlingVelocity.toFloat()
@@ -104,8 +106,8 @@ class PetView(
         PetType.DIABLILLO -> 0.929f     // idle 0.863 -> 0.802
         PetType.PATITO -> 1.317f        // ciclo idle 0.36-0.60 (irregular por diseño)
         PetType.YUKI -> 0.901f          // idle alto Pixar opaco 0.891 -> 0.802
-        PetType.PIRU -> 0.892f          // idle pingüino Pixar 0.898 -> 0.802
-        PetType.TARO -> 0.988f          // idle tortuga Pixar 0.812 -> 0.802
+        PetType.PIRU -> 0.881f          // idle pingüino Pixar 0.910 -> 0.802
+        PetType.TARO -> 0.929f          // idle tortuga (hoja nueva) 0.863 -> 0.802
         PetType.MENTA -> 0.908f         // idle serpiente Pixar opaco 0.883 -> 0.802
         PetType.TELA -> 0.880f          // idle araña Pixar 0.910 -> 0.802
     }
@@ -126,8 +128,8 @@ class PetView(
         PetType.DIABLILLO -> 0.875f     // idle (idx 0)
         PetType.PATITO -> 0.5951f       // ciclo natación (idx 0)
         PetType.YUKI -> 0.8906f         // idle Pixar opaco (idx 0), atlas 3D premium
-        PetType.PIRU -> 0.8984f         // idle pingüino Pixar (idx 0), atlas 3D premium
-        PetType.TARO -> 0.8125f         // idle tortuga Pixar (idx 0), atlas 3D premium
+        PetType.PIRU -> 0.9102f         // idle pingüino Pixar (idx 0), atlas 3D premium
+        PetType.TARO -> 0.8633f         // idle tortuga (idx 0), hoja nueva importada
         PetType.MENTA -> 0.8828f         // idle serpiente Pixar (idx 0), atlas 3D premium
         PetType.TELA -> 0.9102f         // idle araña Pixar (idx 0), atlas 3D premium
     }
@@ -151,8 +153,8 @@ class PetView(
         PetType.ANGEL -> floatArrayOf(0.9167f, 0.9167f, 0.9167f, 0.7891f, 0.9167f, 0.9167f, 0.7266f, 0.8802f, 0.9167f, 0.9167f, 0.9167f, 0.9167f, 0.9167f, 0.8724f, 0.9167f, 0.9167f)
         PetType.GINGER -> floatArrayOf(0.9167f, 0.9167f, 0.5703f, 0.6484f, 0.6536f, 0.6615f, 0.6667f, 0.6615f, 0.2682f, 0.3229f, 0.2812f, 0.3542f, 0.4531f, 0.4245f, 0.6432f, 0.5365f)
         PetType.YUKI -> floatArrayOf(0.8906f, 0.8984f, 0.8789f, 0.8984f, 0.8281f, 0.8086f, 0.7461f, 0.7930f, 0.8008f, 0.8047f, 0.8008f, 0.8125f, 0.7422f, 0.7969f, 0.7773f, 0.8125f)
-        PetType.PIRU -> floatArrayOf(0.8984f, 0.9062f, 0.8828f, 0.9102f, 0.8594f, 0.8438f, 0.7969f, 0.8047f, 0.8203f, 0.8242f, 0.8516f, 0.8516f, 0.7266f, 0.6602f, 0.8047f, 0.8594f)
-        PetType.TARO -> floatArrayOf(0.8125f, 0.8125f, 0.8086f, 0.7656f, 0.9102f, 0.9102f, 0.8398f, 0.8633f, 0.9102f, 0.9102f, 0.9102f, 0.6797f, 0.6055f, 0.6328f, 0.6562f, 0.6797f)
+        PetType.PIRU -> floatArrayOf(0.9102f, 0.9141f, 0.8945f, 0.9141f, 0.8711f, 0.8555f, 0.8086f, 0.8164f, 0.8320f, 0.8359f, 0.8633f, 0.8633f, 0.7383f, 0.6719f, 0.8164f, 0.8711f)
+        PetType.TARO -> floatArrayOf(0.8633f, 0.8594f, 0.8516f, 0.8125f, 0.8359f, 0.8477f, 0.6758f, 0.6484f, 0.9062f, 0.8789f, 0.8398f, 0.8711f, 0.7656f, 0.7578f, 0.7812f, 0.7656f)
         PetType.MENTA -> floatArrayOf(0.8516f, 0.8516f, 0.8320f, 0.8242f, 0.4141f, 0.4102f, 0.4102f, 0.4141f, 0.4102f, 0.4219f, 0.4102f, 0.4102f, 0.8516f, 0.8516f, 0.8320f, 0.8438f)
         PetType.TELA -> floatArrayOf(0.9102f, 0.9102f, 0.8945f, 0.8984f, 0.6875f, 0.7188f, 0.8164f, 0.7109f, 0.5469f, 0.7305f, 0.7422f, 0.7500f, 0.4648f, 0.5508f, 0.7578f, 0.6211f)
     }
@@ -212,8 +214,17 @@ class PetView(
     }
 
     override val groundY: Int
-        get() = screenHeight - petSpriteSize -
-            (56f * resources.displayMetrics.density).roundToInt() - keyboardHeightPx
+        get() = bounds.floor
+
+    override val bounds: PetBounds
+        get() = PetBounds.compute(
+            screenWidth,
+            screenHeight,
+            petSpriteSize,
+            topSystemInsetPx,
+            bottomSystemInsetPx,
+            keyboardHeightPx
+        )
 
     private var keyboardHeightPx = 0
 
@@ -236,18 +247,46 @@ class PetView(
     }
 
     private var isAnimating = false
-    private val frameCallback = object : Choreographer.FrameCallback {
-        override fun doFrame(frameTimeNanos: Long) {
+    private val frameHandler = Handler(Looper.getMainLooper())
+    private val frameRunnable = object : Runnable {
+        override fun run() {
             if (!isAnimating) return
-            if (lastFrameTimeNanos != 0L && frameTimeNanos > lastFrameTimeNanos) {
-                val rawDt = (frameTimeNanos - lastFrameTimeNanos) / 1_000_000_000f
+            val now = System.nanoTime()
+            if (lastFrameTimeNanos != 0L && now > lastFrameTimeNanos) {
+                val rawDt = (now - lastFrameTimeNanos) / 1_000_000_000f
                 val step = motionEngine.splitDelta(rawDt)
-                lastFrameDelta = step.stepDt.coerceAtLeast(1f / 60f)
                 repeat(step.steps) { update(step.stepDt) }
             }
-            lastFrameTimeNanos = frameTimeNanos
-            Choreographer.getInstance().postFrameCallback(this)
+            lastFrameTimeNanos = now
+            val moved = windowX != lastWindowX || windowY != lastWindowY
+            lastWindowX = windowX
+            lastWindowY = windowY
+            invalidate()
+            frameHandler.postDelayed(this, nextFrameDelayMs(moved))
         }
+    }
+
+    private var lastWindowX = 0
+    private var lastWindowY = 0
+
+    /**
+     * Frame pacing adaptativo para minimizar batería:
+     *   - 60 FPS si hay actividad visible (movimiento, estados, burbuja, tesoro),
+     *   - 30 FPS si solo anima un cosmético envolvente (aura/float),
+     *   - 12 FPS en idle profundo (la mascota está quieta y sin efectos).
+     */
+    private fun nextFrameDelayMs(wasMoving: Boolean): Long {
+        if (state != PetState.IDLE || bubbleTimer > 0f || treasureReactionTimer > 0f || wasMoving) {
+            return FRAME_INTERVAL_ACTIVE_MS
+        }
+        if (hasAnimatedCosmetic()) return FRAME_INTERVAL_COSMETIC_MS
+        return FRAME_INTERVAL_IDLE_MS
+    }
+
+    private fun hasAnimatedCosmetic(): Boolean {
+        val effect = equippedCosmetic?.effect
+        return effect is com.pixelpals.app.data.catalog.CosmeticEffect.AuraEffect ||
+            effect is com.pixelpals.app.data.catalog.CosmeticEffect.FloatEffect
     }
 
     /**
@@ -275,6 +314,7 @@ class PetView(
 
     override fun updateWindowLayout(params: WindowManager.LayoutParams) {
         try {
+            if (params.x == windowX && params.y == windowY) return
             // params llega en coordenadas lógicas (esquina del sprite en pantalla).
             // El view real (2x el sprite, centrado) se posiciona -inset.
             val real = WindowManager.LayoutParams(
@@ -308,8 +348,11 @@ class PetView(
 
     override fun teleportToRandomEdge() {
         val params = getWindowParams() ?: return
-        params.x = if (Random.nextBoolean()) 20 else screenWidth - petSpriteSize - 20
-        params.y = Random.nextInt(100, screenHeight - petSpriteSize - 200)
+        params.x = if (Random.nextBoolean()) bounds.left + 20 else bounds.right - 20
+        params.y = Random.nextInt(
+            bounds.top,
+            (bounds.floor - 100).coerceAtLeast(bounds.top + 1)
+        )
         updateWindowLayout(params)
     }
 
@@ -353,14 +396,18 @@ class PetView(
         if (!isAnimating) {
             isAnimating = true
             lastFrameTimeNanos = 0L
-            Choreographer.getInstance().postFrameCallback(frameCallback)
+            motionEngine.resetAccumulator()
+            frameHandler.post(frameRunnable)
             behavior?.resume()
         }
     }
 
     override fun pauseAnimation() {
+        if (isAnimating) progress.flush()
         isAnimating = false
         lastFrameTimeNanos = 0L
+        motionEngine.resetAccumulator()
+        frameHandler.removeCallbacks(frameRunnable)
         behavior?.pause()
     }
 
@@ -474,6 +521,7 @@ class PetView(
         activeSecondsAccumulator += dt
         while (activeSecondsAccumulator >= 60f) {
             progress.trackMinute()
+            progress.flush()
             activeSecondsAccumulator -= 60f
             uiScope.launch {
                 petStatus = repository.recordActiveMinute(petType)
@@ -527,8 +575,6 @@ class PetView(
             treasureEffectOffsetY = 0f
             treasureEffectRotation = 0f
         }
-
-        invalidate()
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -563,6 +609,9 @@ class PetView(
 
     private fun maybeShowTimeGreeting() {
         if (bubbleText != null || state != PetState.IDLE) return
+        val now = System.currentTimeMillis()
+        if (now - lastTimeGreetingCheckAt < TIME_GREETING_CHECK_INTERVAL_MS) return
+        lastTimeGreetingCheckAt = now
         val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
         val key = when {
             hour in 6..11 -> "morning"
@@ -688,8 +737,11 @@ class PetView(
                     }
                     params.x = (initialX + (event.rawX - initialTouchX).toInt())
                         .coerceIn(0, (screenWidth - petSpriteSize).coerceAtLeast(0))
+                    val dragMinY = topSystemInsetPx + 50
+                    val dragMaxY = (screenHeight - bottomSystemInsetPx - petSpriteSize)
+                        .coerceAtLeast(dragMinY)
                     params.y = (initialY + (event.rawY - initialTouchY).toInt())
-                        .coerceIn(0, (screenHeight - petSpriteSize).coerceAtLeast(0))
+                        .coerceIn(dragMinY, dragMaxY)
                     updateWindowLayout(params)
                 }
                 return true
@@ -711,6 +763,13 @@ class PetView(
                             abs(flingVY) >= minimumFlingVelocity
                         if (isFling) {
                             behavior?.onFling(flingVX, flingVY)
+                            // Algunos pets no implementan onFling (Piru, Taro, Menta,
+                            // Tela, Yuki): sin este fallback quedarían atrapados en
+                            // PetState.DRAGGING para siempre (pose congelada).
+                            if (state == PetState.DRAGGING) {
+                                state = PetState.IDLE
+                                behavior?.reset()
+                            }
                         } else {
                             state = PetState.IDLE
                             behavior?.reset()
@@ -737,6 +796,7 @@ class PetView(
 
     override fun onDetachedFromWindow() {
         recycleVelocityTracker()
+        progress.flush()
         behavior?.destroy()
         uiScope.cancel()
         super.onDetachedFromWindow()
@@ -777,5 +837,12 @@ class PetView(
             topSystemInsetPx = 0
             bottomSystemInsetPx = 0
         }
+    }
+
+    private companion object {
+        const val FRAME_INTERVAL_ACTIVE_MS = 16L
+        const val FRAME_INTERVAL_COSMETIC_MS = 33L
+        const val FRAME_INTERVAL_IDLE_MS = 83L
+        const val TIME_GREETING_CHECK_INTERVAL_MS = 60_000L
     }
 }

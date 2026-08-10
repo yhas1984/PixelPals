@@ -186,10 +186,7 @@ class CorgiBehavior(
 
     private fun groundY(): Int = bridge.groundY.coerceAtLeast(50)
 
-    private fun maxWindowX(): Int {
-        val width = bridge.getWindowParams()?.width ?: bridge.petSpriteSize
-        return (bridge.screenWidth - width).coerceAtLeast(0)
-    }
+    private fun maxWindowX(): Int = (bridge.screenWidth - bridge.petSpriteSize).coerceAtLeast(0)
 
     private fun clearTransforms() {
         bridge.animScaleX = if (walkDirection >= 0f) 1f else -1f

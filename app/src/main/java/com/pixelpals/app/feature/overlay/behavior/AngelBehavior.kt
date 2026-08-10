@@ -259,10 +259,7 @@ class AngelBehavior(
 
     private fun distanceToTarget(): Float = hypot(flightTargetX - positionX, flightTargetY - positionY)
 
-    private fun maxWindowX(): Int {
-        val width = bridge.getWindowParams()?.width ?: bridge.petSpriteSize
-        return (bridge.screenWidth - width).coerceAtLeast(0)
-    }
+    private fun maxWindowX(): Int = (bridge.screenWidth - bridge.petSpriteSize).coerceAtLeast(0)
 
     private fun preferredTop(): Float = bridge.screenHeight * 0.10f
     private fun preferredBottom(): Float = bridge.screenHeight * 0.30f

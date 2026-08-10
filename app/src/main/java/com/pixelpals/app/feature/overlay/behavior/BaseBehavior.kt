@@ -9,8 +9,10 @@ import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.RectF
 import android.util.Log
+import android.util.LruCache
 import android.view.View
 import com.pixelpals.app.core.domain.PetState
+import com.pixelpals.app.core.motion.PetBounds
 import com.pixelpals.app.core.motion.PetRandom
 import com.pixelpals.app.status.PetMood
 import org.json.JSONObject
@@ -52,6 +54,7 @@ abstract class BaseBehavior(
     // el movimiento se vuelva perceptible (evita que (vel * dt).toInt() quede en 0).
     private var carryX: Float = 0f
     private var carryY: Float = 0f
+    private var fallVelocityY: Float = 0f
 
     abstract val resourceIds: List<Int>
 
@@ -66,7 +69,7 @@ abstract class BaseBehavior(
                 else {
                     try {
                         val key = cacheKey(id, spriteSize)
-                        val cached = FRAME_CACHE[key]
+                        val cached = FRAME_CACHE.get(key)
                         if (cached != null) {
                             cached
                         } else {
@@ -75,7 +78,7 @@ abstract class BaseBehavior(
                                 Bitmap.createScaledBitmap(it, spriteSize, spriteSize, true)
                             }
                             if (scaled != null && b !== scaled) b.recycle()
-                            if (scaled != null) FRAME_CACHE[key] = scaled
+                            if (scaled != null) FRAME_CACHE.put(key, scaled)
                             scaled
                         }
                     } catch (_: Exception) { null }
@@ -155,12 +158,14 @@ abstract class BaseBehavior(
                     val specJson = context.assets.open(specAssetPath).bufferedReader().use { it.readText() }
                     val spec = PetAtlasSpec.fromJson(JSONObject(specJson))
                     // Cache de atlas por ruta: cambiar de pet no re-decodifica el PNG grande.
-                    val bitmap = ATLAS_CACHE.getOrPut(spec.atlasPath) {
-                        context.assets.open(spec.atlasPath).use { input ->
+                    var atlasBitmap = ATLAS_CACHE.get(spec.atlasPath)
+                    if (atlasBitmap == null) {
+                        atlasBitmap = context.assets.open(spec.atlasPath).use { input ->
                             BitmapFactory.decodeStream(input)
                         }
+                        if (atlasBitmap != null) ATLAS_CACHE.put(spec.atlasPath, atlasBitmap)
                     }
-                    Triple(spec, bitmap, null as Exception?)
+                    Triple(spec, atlasBitmap, null as Exception?)
                 } catch (e: Exception) {
                     Triple(null, null, e)
                 }
@@ -212,8 +217,11 @@ abstract class BaseBehavior(
     protected open fun updateDecision(dt: Float) {
         decisionTimer -= dt
         if (decisionTimer <= 0) {
-            targetX = random.nextInt(50, (bridge.screenWidth - bridge.petSpriteSize - 50).coerceAtLeast(51)).toFloat()
-            targetY = random.nextInt(100, (bridge.screenHeight - bridge.petSpriteSize - 200).coerceAtLeast(101)).toFloat()
+            targetX = random.nextInt(50, (safeMaxX() - 50).coerceAtLeast(51)).toFloat()
+            targetY = random.nextInt(
+                safeMinY() + 50,
+                (safeMaxY() - 100).coerceAtLeast(safeMinY() + 51)
+            ).toFloat()
 
             val dx = targetX - bridge.windowX
             val dy = targetY - bridge.windowY
@@ -230,6 +238,13 @@ abstract class BaseBehavior(
     }
 
     protected open fun getBaseSpeed(): Float = 100f
+
+    /** Ancho lógico del pet (nunca el del view 2x): el sprite llega a los bordes reales. */
+    protected fun safeMaxX(): Int = bridge.bounds.right
+
+    protected fun safeMinY(): Int = bridge.bounds.top
+
+    protected fun safeMaxY(): Int = bridge.bounds.floor
 
     protected fun currentMood(): PetMood = bridge.petStatus.mood
 
@@ -261,9 +276,9 @@ abstract class BaseBehavior(
         carryY -= moveY.toFloat()
 
         val minX = 0
-        val maxX = (bridge.screenWidth - bridge.petSpriteSize).coerceAtLeast(0)
-        val minY = 50
-        val maxY = (bridge.screenHeight - bridge.petSpriteSize - 100).coerceAtLeast(minY)
+        val maxX = safeMaxX()
+        val minY = safeMinY()
+        val maxY = safeMaxY()
 
         if (params.x < minX) {
             params.x = minX
@@ -296,9 +311,9 @@ abstract class BaseBehavior(
     protected fun clampWindowParams(
         params: android.view.WindowManager.LayoutParams,
         minX: Int = 0,
-        maxX: Int = (bridge.screenWidth - bridge.petSpriteSize).coerceAtLeast(0),
-        minY: Int = 50,
-        maxY: Int = (bridge.screenHeight - bridge.petSpriteSize - 100).coerceAtLeast(minY)
+        maxX: Int = safeMaxX(),
+        minY: Int = safeMinY(),
+        maxY: Int = safeMaxY()
     ) {
         params.x = params.x.coerceIn(minX, maxX)
         params.y = params.y.coerceIn(minY, maxY)
@@ -325,8 +340,21 @@ abstract class BaseBehavior(
 
     override fun updateFalling(dt: Float) {
         time += dt
-        bridge.state = PetState.IDLE
-        reset()
+        val params = bridge.getWindowParams() ?: return
+        fallVelocityY += FALL_GRAVITY_PX * dt
+        val floor = bridge.bounds.floor
+        val newY = params.y + fallVelocityY * dt
+        if (newY >= floor) {
+            params.y = floor
+            bridge.updateWindowLayout(params)
+            bridge.state = PetState.IDLE
+            reset()
+            return
+        }
+        params.y = newY.toInt()
+        bridge.updateWindowLayout(params)
+        bridge.animScaleY = 1.15f
+        bridge.animScaleX = 0.9f
     }
 
     override fun updateJumping(dt: Float) {
@@ -362,8 +390,15 @@ abstract class BaseBehavior(
     override fun onKeyboardVisibilityChanged(visible: Boolean, height: Int) {
         if (!visible) return
         val params = bridge.getWindowParams() ?: return
-        val minY = 50
-        val maxY = (bridge.screenHeight - height - bridge.petSpriteSize - 100).coerceAtLeast(minY)
+        val minY = safeMinY()
+        val maxY = PetBounds.compute(
+            bridge.screenWidth,
+            bridge.screenHeight,
+            bridge.petSpriteSize,
+            bridge.topSystemInsetPx,
+            bridge.bottomSystemInsetPx,
+            height
+        ).floor.coerceAtLeast(minY)
         if (params.y > maxY) {
             params.y = maxY
             bridge.updateWindowLayout(params)
@@ -405,10 +440,23 @@ abstract class BaseBehavior(
         paint.colorFilter = bridge.animColorFilter ?: bridge.cosmeticColorFilter ?: moodColorFilter()
 
         val frameIdx = bridge.currentFrame.coerceAtLeast(0)
-        val bitmap = if (frames.isNotEmpty()) {
-            frames[frameIdx.coerceIn(0, frames.size - 1)]
-        } else {
-            null
+        // Fallback al frame cargado más cercano: durante la carga parcial los
+        // índices altos (ej. Corgi walk 10..13) aún son null y el pet se
+        // mostraría invisible hasta terminar de decodificar.
+        var bitmap: Bitmap? = null
+        if (frames.isNotEmpty()) {
+            val requested = frameIdx.coerceIn(0, frames.size - 1)
+            bitmap = frames[requested]
+            if (bitmap == null) {
+                for (i in requested - 1 downTo 0) {
+                    frames[i]?.let { bitmap = it; break }
+                }
+                if (bitmap == null) {
+                    for (i in requested + 1 until frames.size) {
+                        frames[i]?.let { bitmap = it; break }
+                    }
+                }
+            }
         }
         val spriteSheet = spriteSheetBitmap
         val srcRect = if (spriteSheet != null && spriteFrameRects.isNotEmpty()) {
@@ -444,16 +492,21 @@ abstract class BaseBehavior(
             spriteSheet != null && srcRect != null -> {
                 val dstRect = RectF(-halfSize, -halfSize, halfSize, halfSize)
                 val bleedInset = spriteBleedInsetPx.coerceAtLeast(0)
-                val insetSrcRect = Rect(
-                    (srcRect.left + bleedInset).coerceAtMost(srcRect.right),
-                    (srcRect.top + bleedInset).coerceAtMost(srcRect.bottom),
-                    (srcRect.right - bleedInset).coerceAtLeast(srcRect.left),
-                    (srcRect.bottom - bleedInset).coerceAtLeast(srcRect.top)
-                )
-                val previousFilter = paint.isFilterBitmap
-                paint.isFilterBitmap = spriteFilterBitmap
-                canvas.drawBitmap(spriteSheet, insetSrcRect, dstRect, paint)
-                paint.isFilterBitmap = previousFilter
+                // Clamp contra el tamaño REAL del atlas: un spec desalineado con
+                // su PNG no debe provocar un drawBitmap fuera de rango (crash).
+                val sheetWidth = spriteSheet.width
+                val sheetHeight = spriteSheet.height
+                val left = (srcRect.left + bleedInset).coerceAtMost(srcRect.right).coerceAtMost(sheetWidth)
+                val top = (srcRect.top + bleedInset).coerceAtMost(srcRect.bottom).coerceAtMost(sheetHeight)
+                val right = (srcRect.right - bleedInset).coerceAtLeast(srcRect.left).coerceAtMost(sheetWidth)
+                val bottom = (srcRect.bottom - bleedInset).coerceAtLeast(srcRect.top).coerceAtMost(sheetHeight)
+                if (right > left && bottom > top) {
+                    val insetSrcRect = Rect(left, top, right, bottom)
+                    val previousFilter = paint.isFilterBitmap
+                    paint.isFilterBitmap = spriteFilterBitmap
+                    canvas.drawBitmap(spriteSheet, insetSrcRect, dstRect, paint)
+                    paint.isFilterBitmap = previousFilter
+                }
             }
         }
         canvas.restore()
@@ -461,14 +514,8 @@ abstract class BaseBehavior(
 
     private fun moodColorFilter(): ColorMatrixColorFilter? {
         return when (currentMood()) {
-            PetMood.DIRTY -> {
-                val matrix = ColorMatrix().apply { setSaturation(0.85f) }
-                ColorMatrixColorFilter(matrix)
-            }
-            PetMood.SLEEPY -> {
-                val matrix = ColorMatrix().apply { setScale(0.92f, 0.92f, 1.02f, 1f) }
-                ColorMatrixColorFilter(matrix)
-            }
+            PetMood.DIRTY -> DIRTY_COLOR_FILTER
+            PetMood.SLEEPY -> SLEEPY_COLOR_FILTER
             else -> null
         }
     }
@@ -481,6 +528,7 @@ abstract class BaseBehavior(
         decisionTimer = 0f
         carryX = 0f
         carryY = 0f
+        fallVelocityY = 0f
         bridge.animScaleX = 1f
         bridge.animScaleY = 1f
         bridge.animRotation = 0f
@@ -494,13 +542,15 @@ abstract class BaseBehavior(
         scope.cancel()
         // Los frames cacheados (FRAME_CACHE) son compartidos entre instancias de pet:
         // no se reciclan aquí, los reutiliza la siguiente mascota (evita re-decodificar).
+        val cachedFrames = FRAME_CACHE.snapshot().values
         frames.filterNotNull().distinct().forEach { bitmap ->
-            if (!FRAME_CACHE.containsValue(bitmap) && !bitmap.isRecycled) {
+            if (!cachedFrames.contains(bitmap) && !bitmap.isRecycled) {
                 bitmap.recycle()
             }
         }
         frames.clear()
-        if (spriteSheetBitmap != null && !ATLAS_CACHE.containsValue(spriteSheetBitmap)) {
+        val cachedAtlases = ATLAS_CACHE.snapshot().values
+        if (spriteSheetBitmap != null && !cachedAtlases.contains(spriteSheetBitmap)) {
             spriteSheetBitmap?.recycle()
         }
         spriteSheetBitmap = null
@@ -509,12 +559,29 @@ abstract class BaseBehavior(
     private companion object {
         const val LOW_BATTERY_THRESHOLD = 20
         const val ENVIRONMENT_REACTION_COOLDOWN_MS = 8L * 60L * 1000L
+        /** Gravedad del estado FALLING (px/s²). */
+        const val FALL_GRAVITY_PX = 1_400f
 
-        /** Cache de frames escalados por (drawableResId, petSpriteSize). */
-        val FRAME_CACHE = java.util.concurrent.ConcurrentHashMap<Long, Bitmap>()
+        /** Cache acotada de frames escalados por (drawableResId, petSpriteSize). */
+        val FRAME_CACHE = object : LruCache<Long, Bitmap>(FRAME_CACHE_MAX_BYTES) {
+            override fun sizeOf(key: Long, value: Bitmap): Int = value.byteCount.coerceAtLeast(1)
+        }
 
-        /** Cache de atlases decodificados por ruta de asset. */
-        val ATLAS_CACHE = java.util.concurrent.ConcurrentHashMap<String, Bitmap>()
+        /** Cache acotada de atlases decodificados por ruta de asset. */
+        val ATLAS_CACHE = object : LruCache<String, Bitmap>(ATLAS_CACHE_MAX_BYTES) {
+            override fun sizeOf(key: String, value: Bitmap): Int = value.byteCount.coerceAtLeast(1)
+        }
+
+        private val DIRTY_COLOR_FILTER = ColorMatrixColorFilter(
+            ColorMatrix().apply { setSaturation(0.85f) }
+        )
+
+        private val SLEEPY_COLOR_FILTER = ColorMatrixColorFilter(
+            ColorMatrix().apply { setScale(0.92f, 0.92f, 1.02f, 1f) }
+        )
+
+        private const val FRAME_CACHE_MAX_BYTES = 24 * 1024 * 1024
+        private const val ATLAS_CACHE_MAX_BYTES = 64 * 1024 * 1024
 
         fun cacheKey(resId: Int, size: Int): Long = (resId.toLong() shl 32) or size.toLong()
     }

@@ -94,9 +94,6 @@ dependencies {
     implementation("com.google.android.material:material:1.14.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.11.0")
 
-    // Lottie for lightweight vector animations
-    implementation("com.airbnb.android:lottie:6.7.1")
-
     // ConstraintLayout
     implementation("androidx.constraintlayout:constraintlayout:2.2.2")
 

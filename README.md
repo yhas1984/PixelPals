@@ -26,7 +26,7 @@ Cada mascota tiene lógica de movimiento propia, animaciones, interacción táct
 - Room
 - Coroutines
 - Foreground Service + Overlay (`SYSTEM_ALERT_WINDOW`)
-- Release con R8; `shrinkResources` desactivado por frames cargados dinámicamente (`getIdentifier()`)
+- Release con R8 y `shrinkResources` activados; los frames se referencian directamente (`R.drawable.*`), sin `getIdentifier()`.
 
 ### Estructura del proyecto
 
@@ -40,8 +40,8 @@ Cada mascota tiene lógica de movimiento propia, animaciones, interacción táct
 
 Definidas en [`app/build.gradle.kts`](app/build.gradle.kts):
 
-- `versionName`: `1.0.1`
-- `versionCode`: `2` (Play exige subir el código en cada nuevo envío)
+- `versionName`: `1.5.0`
+- `versionCode`: `8` (Play exige subir el código en cada nuevo envío)
 
 ### Requisitos
 
@@ -126,7 +126,7 @@ Each pet has its own movement logic, animation set, touch interactions, and pers
 - Room
 - Coroutines
 - Foreground Service + Overlay (`SYSTEM_ALERT_WINDOW`)
-- Release with R8; `shrinkResources` disabled for dynamically loaded frames (`getIdentifier()`)
+- Release with R8 and `shrinkResources` enabled; frames are referenced directly (`R.drawable.*`), no `getIdentifier()`.
 
 ### Project structure
 
@@ -140,8 +140,8 @@ Each pet has its own movement logic, animation set, touch interactions, and pers
 
 Defined in [`app/build.gradle.kts`](app/build.gradle.kts):
 
-- `versionName`: `1.0.1`
-- `versionCode`: `2` (Play requires a higher code for each new upload)
+- `versionName`: `1.5.0`
+- `versionCode`: `8` (Play requires a higher code for each new upload)
 
 ### Requirements
 

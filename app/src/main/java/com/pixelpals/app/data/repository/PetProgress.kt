@@ -9,6 +9,9 @@ import android.content.SharedPreferences
  * Solo persiste felicidad / evolución / rare-events. El sistema de tesoros
  * vive en [PixelPalsRepository] + Room (sin doble fuente de verdad).
  *
+ * Las escrituras se acumulan en memoria y se vuelcan con [flush] (al minuto
+ * activo, al pausar o al destruir) para minimizar I/O de SharedPreferences.
+ *
  * Niveles de evolución:
  *   Lv1 "Bebé"  (0-99 XP)    → 65% tamaño, pocas animaciones
  *   Lv2 "Niño"  (100-499 XP) → 80% tamaño, más animaciones
@@ -25,29 +28,31 @@ class PetProgress(context: Context) {
     private val prefs: SharedPreferences =
         context.getSharedPreferences("pixelpals_progress", Context.MODE_PRIVATE)
 
-    var happinessPoints: Int
-        get() = prefs.getInt(KEY_HAPPINESS_POINTS, 0)
-        private set(value) = prefs.edit().putInt(KEY_HAPPINESS_POINTS, value).apply()
+    private var pendingHappiness = 0
+    private var pendingActiveMinutes = 0
+    private var pendingInteractions = 0
+    private var pendingRareEvents = 0
 
-    var totalActiveMinutes: Int
-        get() = prefs.getInt(KEY_TOTAL_ACTIVE_MINUTES, 0)
-        private set(value) = prefs.edit().putInt(KEY_TOTAL_ACTIVE_MINUTES, value).apply()
+    val happinessPoints: Int
+        get() = prefs.getInt(KEY_HAPPINESS_POINTS, 0) + pendingHappiness
 
-    var totalInteractions: Int
-        get() = prefs.getInt(KEY_TOTAL_INTERACTIONS, 0)
-        private set(value) = prefs.edit().putInt(KEY_TOTAL_INTERACTIONS, value).apply()
+    val totalActiveMinutes: Int
+        get() = prefs.getInt(KEY_TOTAL_ACTIVE_MINUTES, 0) + pendingActiveMinutes
+
+    val totalInteractions: Int
+        get() = prefs.getInt(KEY_TOTAL_INTERACTIONS, 0) + pendingInteractions
 
     fun addXP(amount: Int) {
-        happinessPoints += amount
+        pendingHappiness += amount
     }
 
     fun trackMinute() {
-        totalActiveMinutes++
+        pendingActiveMinutes++
         addXP(1)
     }
 
     fun trackInteraction() {
-        totalInteractions++
+        pendingInteractions++
         addXP(5)
     }
 
@@ -79,13 +84,26 @@ class PetProgress(context: Context) {
     val unlockedBehaviors: Int
         get() = petLevel
 
-    var rareEventsWitnessed: Int
-        get() = prefs.getInt(KEY_RARE_EVENTS, 0)
-        private set(value) = prefs.edit().putInt(KEY_RARE_EVENTS, value).apply()
+    val rareEventsWitnessed: Int
+        get() = prefs.getInt(KEY_RARE_EVENTS, 0) + pendingRareEvents
 
     fun trackRareEvent() {
-        rareEventsWitnessed++
+        pendingRareEvents++
         addXP(3)
+    }
+
+    /** Vuelca los contadores pendientes a disco en una sola escritura. */
+    fun flush() {
+        val editor = prefs.edit()
+        if (pendingHappiness != 0) editor.putInt(KEY_HAPPINESS_POINTS, happinessPoints)
+        if (pendingActiveMinutes != 0) editor.putInt(KEY_TOTAL_ACTIVE_MINUTES, totalActiveMinutes)
+        if (pendingInteractions != 0) editor.putInt(KEY_TOTAL_INTERACTIONS, totalInteractions)
+        if (pendingRareEvents != 0) editor.putInt(KEY_RARE_EVENTS, rareEventsWitnessed)
+        editor.apply()
+        pendingHappiness = 0
+        pendingActiveMinutes = 0
+        pendingInteractions = 0
+        pendingRareEvents = 0
     }
 
     fun getStatsSummary(): String {

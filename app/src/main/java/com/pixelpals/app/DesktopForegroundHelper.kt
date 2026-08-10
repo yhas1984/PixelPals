@@ -16,7 +16,9 @@ import android.util.Log
  */
 object DesktopForegroundHelper {
     private const val TAG = "DesktopForegroundHelper"
-    private const val QUERY_WINDOW_MS = 180_000L
+    // Ventana mínima que cubre el intervalo de polling (4 s x 3): solo se
+    // necesita el ÚLTIMO evento RESUMED, no los 3 minutos completos.
+    private const val QUERY_WINDOW_MS = 15_000L
 
     @Suppress("DEPRECATION")
     fun hasUsageAccess(context: Context): Boolean {
