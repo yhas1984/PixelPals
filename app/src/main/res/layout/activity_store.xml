@@ -75,6 +75,16 @@
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
+    <FrameLayout
+        android:id="@+id/bannerAdContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="@android:color/transparent"
+        android:paddingHorizontal="20dp"
+        android:paddingBottom="12dp"
+        android:visibility="gone" />
+
     <LinearLayout
         android:id="@+id/cardStoreState"
         android:layout_width="match_parent"

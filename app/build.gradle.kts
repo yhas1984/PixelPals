@@ -26,9 +26,19 @@ android {
         applicationId = "com.pixelpals.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 8
-        versionName = "1.5.0"
+        versionCode = 9
+        versionName = "1.6.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // AdMob: IDs de PRUEBA de Google por defecto. Para ads reales define
+        // en gradle.properties (o env): pixelpals.admob.appId y pixelpals.admob.bannerId.
+        val adMobAppId = (project.findProperty("pixelpals.admob.appId") as String?)
+            ?: "ca-app-pub-3940256099942544~3347511713"
+        val adMobBannerId = (project.findProperty("pixelpals.admob.bannerId") as String?)
+            ?: "ca-app-pub-3940256099942544/9214589741"
+        manifestPlaceholders["adMobAppId"] = adMobAppId
+        buildConfigField("String", "ADMOB_BANNER_AD_UNIT_ID", "\"$adMobBannerId\"")
+        buildConfigField("boolean", "ADS_ENABLED", "false")
     }
 
     signingConfigs {
@@ -51,11 +61,19 @@ android {
         debug {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
+            // Los anuncios de prueba de Google funcionan sin cuenta AdMob.
+            buildConfigField("boolean", "ADS_ENABLED", "true")
         }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
             signingConfig = signingConfigs.getByName("release")
+            // Sin IDs reales configurados, el release NO muestra anuncios.
+            buildConfigField(
+                "boolean",
+                "ADS_ENABLED",
+                if (project.hasProperty("pixelpals.admob.appId")) "true" else "false"
+            )
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -121,4 +139,7 @@ dependencies {
 
     // Google Play Billing
     implementation("com.android.billingclient:billing-ktx:9.1.0")
+
+    // AdMob (banner adaptativo en la tienda)
+    implementation("com.google.android.gms:play-services-ads:25.4.0")
 }

@@ -30,6 +30,11 @@
         android:theme="@style/Theme.PixelPals"
         tools:targetApi="36">
 
+        <!-- AdMob (banner adaptativo en la tienda) -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="${adMobAppId}" />
+
         <!-- Main Activity: Onboarding & Permissions -->
         <activity
             android:name=".MainActivity"

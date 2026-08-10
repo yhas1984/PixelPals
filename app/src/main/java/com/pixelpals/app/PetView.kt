@@ -23,6 +23,10 @@ import com.pixelpals.app.core.domain.PetState
 import com.pixelpals.app.core.domain.PetType
 import com.pixelpals.app.core.motion.MotionEngine
 import com.pixelpals.app.core.motion.PetBounds
+import com.pixelpals.app.core.motion.PetPhysics
+import com.pixelpals.app.core.motion.PhysicsBody
+import com.pixelpals.app.core.motion.PhysicsEvent
+import com.pixelpals.app.core.motion.PhysicsProfile
 import com.pixelpals.app.core.services.AppServices
 import com.pixelpals.app.data.repository.PetProgress
 import com.pixelpals.app.data.repository.PixelPalsRepository
@@ -58,6 +62,7 @@ class PetView(
     private var lastTimeGreetingCheckAt = 0L
 
     private val motionEngine = MotionEngine()
+    private var physicsBody: PhysicsBody? = null
     private val touchSlop = ViewConfiguration.get(context).scaledTouchSlop.toFloat()
     private val minimumFlingVelocity = ViewConfiguration.get(context).scaledMinimumFlingVelocity.toFloat()
     private val maximumFlingVelocity = ViewConfiguration.get(context).scaledMaximumFlingVelocity.toFloat()
@@ -315,6 +320,10 @@ class PetView(
     override fun updateWindowLayout(params: WindowManager.LayoutParams) {
         try {
             if (params.x == windowX && params.y == windowY) return
+            // La posición lógica es la fuente de verdad; se registra aunque la
+            // llamada al WindowManager falle (view no attached en pruebas).
+            windowX = params.x
+            windowY = params.y
             // params llega en coordenadas lógicas (esquina del sprite en pantalla).
             // El view real (2x el sprite, centrado) se posiciona -inset.
             val real = WindowManager.LayoutParams(
@@ -327,8 +336,6 @@ class PetView(
             }
             val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
             wm.updateViewLayout(this, real)
-            windowX = params.x
-            windowY = params.y
         } catch (e: Exception) {
             Log.w("PetView", "Failed to update window layout", e)
         }
@@ -553,7 +560,7 @@ class PetView(
         when (state) {
             PetState.IDLE -> behavior?.updateIdle(dt)
             PetState.DRAGGING -> behavior?.updateDrag(dt)
-            PetState.FALLING -> behavior?.updateFalling(dt)
+            PetState.FALLING -> updatePhysicsFalling(dt)
             PetState.JUMPING -> behavior?.updateJumping(dt)
             PetState.INTERACTING -> behavior?.updateInteracting(dt)
             else -> behavior?.updateAutonomous(dt)
@@ -600,6 +607,44 @@ class PetView(
 
         canvas.drawText(text, cx, cy, bubbleStrokePaint)
         canvas.drawText(text, cx, cy, bubblePaint)
+    }
+
+    private fun launchPhysics(velocityX: Float, velocityY: Float) {
+        physicsBody = PhysicsBody(
+            x = windowX.toFloat(),
+            y = windowY.toFloat(),
+            velocityX = velocityX.coerceIn(-MAX_PHYSICS_LAUNCH_SPEED, MAX_PHYSICS_LAUNCH_SPEED),
+            velocityY = velocityY.coerceIn(-MAX_PHYSICS_LAUNCH_SPEED, MAX_PHYSICS_LAUNCH_SPEED)
+        )
+        state = PetState.FALLING
+    }
+
+    private fun updatePhysicsFalling(dt: Float) {
+        val body = physicsBody
+        if (body == null) {
+            state = PetState.IDLE
+            behavior?.reset()
+            return
+        }
+        val event = PetPhysics.step(body, dt, bounds, physicsProfileFor(petType))
+        val params = getWindowParams() ?: return
+        params.x = body.x.roundToInt()
+        params.y = body.y.roundToInt()
+        updateWindowLayout(params)
+        animScaleY = 1.15f
+        animScaleX = 0.9f
+        if (event == PhysicsEvent.SETTLED) {
+            physicsBody = null
+            state = PetState.IDLE
+            behavior?.reset()
+        }
+    }
+
+    private fun physicsProfileFor(type: PetType): PhysicsProfile = when (type) {
+        PetType.BLOOP, PetType.NUBE_MICHI, PetType.ANGEL -> PhysicsProfile.FLYING
+        PetType.PATITO, PetType.PIRU -> PhysicsProfile.AQUATIC
+        PetType.TELA, PetType.MOKI -> PhysicsProfile.EDGE
+        else -> PhysicsProfile.GROUND
     }
 
     private fun maybeShowAmbientMoodBubble() {
@@ -723,6 +768,7 @@ class PetView(
                 initialTouchX = event.rawX
                 initialTouchY = event.rawY
                 hasDragged = false
+                physicsBody = null
                 state = PetState.DRAGGING
                 return true
             }
@@ -763,16 +809,15 @@ class PetView(
                             abs(flingVY) >= minimumFlingVelocity
                         if (isFling) {
                             behavior?.onFling(flingVX, flingVY)
-                            // Algunos pets no implementan onFling (Piru, Taro, Menta,
-                            // Tela, Yuki): sin este fallback quedarían atrapados en
-                            // PetState.DRAGGING para siempre (pose congelada).
-                            if (state == PetState.DRAGGING) {
-                                state = PetState.IDLE
-                                behavior?.reset()
-                            }
-                        } else {
-                            state = PetState.IDLE
-                            behavior?.reset()
+                        }
+                        // Pets sin onFling propio (Piru, Taro, Menta, Tela, Yuki) o un
+                        // soltado sin fling: la física compartida por especie reemplaza
+                        // el antiguo salto a IDLE (pose congelada en el aire).
+                        if (state == PetState.DRAGGING) {
+                            launchPhysics(
+                                if (isFling) flingVX else 0f,
+                                if (isFling) flingVY else 0f
+                            )
                         }
                     }
                 }
@@ -780,6 +825,7 @@ class PetView(
                 return true
             }
             MotionEvent.ACTION_CANCEL -> {
+                physicsBody = null
                 state = PetState.IDLE
                 behavior?.reset()
                 recycleVelocityTracker()
@@ -844,5 +890,6 @@ class PetView(
         const val FRAME_INTERVAL_COSMETIC_MS = 33L
         const val FRAME_INTERVAL_IDLE_MS = 83L
         const val TIME_GREETING_CHECK_INTERVAL_MS = 60_000L
+        const val MAX_PHYSICS_LAUNCH_SPEED = 2_200f
     }
 }
