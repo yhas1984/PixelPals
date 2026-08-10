@@ -13,29 +13,29 @@
   "clips": [
     { "id": "idle",     "frames": [0, 1, 2],         "loop": true,  "frameDurationMs": 380 },
     { "id": "blink",    "frames": [3],              "loop": false, "frameDurationMs": 220 },
-    { "id": "right",    "frames": [4, 5],           "loop": true,  "frameDurationMs": 200 },
-    { "id": "left",     "frames": [6, 7],           "loop": true,  "frameDurationMs": 200 },
-    { "id": "up",       "frames": [8, 9],           "loop": true,  "frameDurationMs": 200 },
-    { "id": "down",     "frames": [10, 11],         "loop": true,  "frameDurationMs": 200 },
-    { "id": "touch",    "frames": [12, 13, 14],     "loop": false, "frameDurationMs": 280 },
-    { "id": "sleep",    "frames": [15],             "loop": false, "frameDurationMs": 500 }
+    { "id": "right",    "frames": [4, 5, 6, 7],     "loop": true,  "frameDurationMs": 180 },
+    { "id": "left",     "frames": [8, 9, 10, 11],   "loop": true,  "frameDurationMs": 180 },
+    { "id": "up",       "frames": [12, 13],         "loop": true,  "frameDurationMs": 220 },
+    { "id": "down",     "frames": [14, 15],         "loop": true,  "frameDurationMs": 220 },
+    { "id": "touch",    "frames": [1, 2, 3],        "loop": false, "frameDurationMs": 280 },
+    { "id": "sleep",    "frames": [0],              "loop": false, "frameDurationMs": 500 }
   ],
   "frames": [
     { "index": 0,  "name": "idle_coil_neutral",  "sourceHint": "idle" },
     { "index": 1,  "name": "idle_sway_left",     "sourceHint": "idle" },
     { "index": 2,  "name": "idle_sway_right",    "sourceHint": "idle" },
     { "index": 3,  "name": "blink",              "sourceHint": "blink" },
-    { "index": 4,  "name": "slither_right_a",    "sourceHint": "right" },
-    { "index": 5,  "name": "slither_right_b",    "sourceHint": "right" },
-    { "index": 6,  "name": "slither_left_a",     "sourceHint": "left" },
-    { "index": 7,  "name": "slither_left_b",     "sourceHint": "left" },
-    { "index": 8,  "name": "climb_up_a",          "sourceHint": "up" },
-    { "index": 9,  "name": "climb_up_b",          "sourceHint": "up" },
-    { "index": 10, "name": "descend_down_a",     "sourceHint": "down" },
-    { "index": 11, "name": "descend_down_b",     "sourceHint": "down" },
-    { "index": 12, "name": "touch_squash",       "sourceHint": "touch" },
-    { "index": 13, "name": "touch_wobble",       "sourceHint": "touch" },
-    { "index": 14, "name": "touch_recover",      "sourceHint": "touch" },
-    { "index": 15, "name": "sleep_coil",         "sourceHint": "sleep" }
+    { "index": 4,  "name": "slither_right_phase_a", "sourceHint": "right" },
+    { "index": 5,  "name": "slither_right_phase_b", "sourceHint": "right" },
+    { "index": 6,  "name": "slither_right_phase_c", "sourceHint": "right" },
+    { "index": 7,  "name": "slither_right_phase_d", "sourceHint": "right" },
+    { "index": 8,  "name": "slither_left_phase_a",  "sourceHint": "left" },
+    { "index": 9,  "name": "slither_left_phase_b",  "sourceHint": "left" },
+    { "index": 10, "name": "slither_left_phase_c",  "sourceHint": "left" },
+    { "index": 11, "name": "slither_left_phase_d",  "sourceHint": "left" },
+    { "index": 12, "name": "climb_up_phase_a",       "sourceHint": "up" },
+    { "index": 13, "name": "climb_up_phase_b",       "sourceHint": "up" },
+    { "index": 14, "name": "descend_down_phase_a",   "sourceHint": "down" },
+    { "index": 15, "name": "descend_down_phase_b",   "sourceHint": "down" }
   ]
 }

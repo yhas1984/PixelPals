@@ -130,10 +130,10 @@ class MentaBehavior(
                 (cruiseTargetY - startY) * (cruiseTargetY - startY)
         )
         val travelled = distance * t
-        // Dos fases por dirección, repetidas según los píxeles recorridos.
-        // right = 4-5; left = 6-7.
-        val wave = (travelled / WAVE_DISTANCE_PX).toInt() % 2
-        val poseBase = if (facingRight) 4 else 6
+        // Cuatro fases corporales distintas por dirección, repetidas según
+        // los píxeles recorridos. right = 4-7; left = 8-11.
+        val wave = (travelled / WAVE_DISTANCE_PX).toInt() % 4
+        val poseBase = if (facingRight) 4 else 8
         bridge.currentFrame = poseBase + wave
         val bodyPhase = (travelled / WAVE_DISTANCE_PX) * kotlin.math.PI.toFloat()
         bridge.animOffsetX = sin(bodyPhase) * 3f
@@ -178,9 +178,9 @@ class MentaBehavior(
         val distance = kotlin.math.abs(cruiseTargetY - startY)
         val travelled = distance * t
         val wave = (travelled / WAVE_DISTANCE_PX).toInt() and 1
-        // El atlas tiene dos grupos dibujados: up = 8-9, down = 10-11.
+        // El atlas tiene dos fases verticales: up = 12-13, down = 14-15.
         // No se voltea la imagen: cada pose conserva la cara y la cabeza líder.
-        bridge.currentFrame = (if (movingDown) 10 else 8) + wave
+        bridge.currentFrame = (if (movingDown) 14 else 12) + wave
         val bodyPhase = (travelled / WAVE_DISTANCE_PX) * kotlin.math.PI.toFloat()
         bridge.animRotation = 0f
         bridge.animScaleX = 1f
