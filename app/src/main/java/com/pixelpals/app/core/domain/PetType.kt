@@ -150,6 +150,66 @@ enum class PetType(
         movementStyle = MovementStyle.STATIC_PERCH,
         idleStyle = IdleStyle.BREATHING,
         interactionStyle = InteractionStyle.FEATHER_FALL
+    ),
+
+    YUKI(
+        displayName = "Yuki",
+        description = "El Muñeco de Nieve",
+        spriteResId = R.drawable.pet_yuki,
+        gravity = 1.4f,           // Pesado pero resbaladizo
+        terminalVelocity = 14f,
+        bounceDamping = 0.25f,    // Aterrizajes blandos
+        agility = 0.8f,           // Pausado, se derrite con el calor
+        boredomRate = 0.7f,
+        exploreInterval = 4200L,
+        movementStyle = MovementStyle.WALK_RUN,
+        idleStyle = IdleStyle.BREATHING,
+        interactionStyle = InteractionStyle.SQUISH_BOUNCE
+    ),
+
+    PIRU(
+        displayName = "Piru",
+        description = "El Pingüinito Curioso",
+        spriteResId = R.drawable.pet_piru,
+        gravity = 1.1f,
+        terminalVelocity = 15f,
+        bounceDamping = 0.4f,     // Rebote gomoso
+        agility = 1.3f,           // Alegre y vivaz
+        boredomRate = 1.1f,
+        exploreInterval = 3000L,
+        movementStyle = MovementStyle.WADDLE_EXPLORE,
+        idleStyle = IdleStyle.DUCK_IDLE,
+        interactionStyle = InteractionStyle.SQUISH_BOUNCE
+    ),
+
+    TARO(
+        displayName = "Taro",
+        description = "La Tortuguita de Jardín",
+        spriteResId = R.drawable.pet_taro,
+        gravity = 1.6f,           // Muy pesada y lenta
+        terminalVelocity = 12f,
+        bounceDamping = 0.0f,     // No rebota
+        agility = 0.35f,          // La más lenta: paciencia
+        boredomRate = 0.25f,      // Contenta estando quieta
+        exploreInterval = 7000L,  // Explora muy de vez en cuando
+        movementStyle = MovementStyle.ELEGANT_STRETCH,
+        idleStyle = IdleStyle.BREATHING,
+        interactionStyle = InteractionStyle.BELLY_RUB
+    ),
+
+    MENTA(
+        displayName = "Menta",
+        description = "La Serpientita de Menta",
+        spriteResId = R.drawable.pet_menta,
+        gravity = 0.9f,
+        terminalVelocity = 13f,
+        bounceDamping = 0.35f,
+        agility = 1.0f,           // Se desliza con gracia
+        boredomRate = 0.8f,
+        exploreInterval = 3600L,
+        movementStyle = MovementStyle.DRIFT_SLOW,
+        idleStyle = IdleStyle.SINE_FLOAT,
+        interactionStyle = InteractionStyle.FEATHER_FALL
     );
 }
 

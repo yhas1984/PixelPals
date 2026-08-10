@@ -244,4 +244,11 @@
     <!-- Premium pets with coins (V1.7) -->
     <string name="store_buy_pet_with_coins">Unlock for 🪙 %1$d</string>
     <string name="store_insufficient_coins">Not enough coins!</string>
+
+    <!-- Store categories (V1.7) -->
+    <string name="store_category_tints">Tints</string>
+    <string name="store_category_auras">Auras</string>
+    <string name="store_category_floats">Floating</string>
+    <string name="store_category_base">Base pets</string>
+    <string name="store_category_premium">Premium pets</string>
 </resources>

@@ -8,6 +8,7 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.pixelpals.app.PetService
@@ -59,10 +60,38 @@ class CosmeticsTabFragment : Fragment() {
                 .toSet()
             root.removeAllViews()
             val inflater = layoutInflater
-            cosmetics.forEach { cosmetic ->
-                root.addView(buildCosmeticCard(inflater, cosmetic, petId, equippedId, ownedIds))
+            // Orden por categorías: Tintes → Auras → Flotantes (delicado primero).
+            val grouped = cosmetics.sortedBy { categoryRank(it.effect) }
+                .groupBy { categoryRank(it.effect) }
+            grouped.forEach { (rank, items) ->
+                root.addView(buildCategoryHeader(inflater, categoryTitle(rank)))
+                items.forEach { cosmetic ->
+                    root.addView(buildCosmeticCard(inflater, cosmetic, petId, equippedId, ownedIds))
+                }
             }
         }
+    }
+
+    private fun buildCategoryHeader(inflater: LayoutInflater, title: String): View {
+        return TextView(requireContext()).apply {
+            text = title
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.text_primary))
+            textSize = 15f
+            setTypeface(null, android.graphics.Typeface.BOLD)
+            setPadding(4, 28, 4, 10)
+        }
+    }
+
+    private fun categoryRank(effect: CosmeticEffect): Int = when (effect) {
+        is CosmeticEffect.TintEffect -> 0
+        is CosmeticEffect.AuraEffect -> 1
+        is CosmeticEffect.FloatEffect -> 2
+    }
+
+    private fun categoryTitle(rank: Int): String = when (rank) {
+        0 -> getString(R.string.store_category_tints)
+        1 -> getString(R.string.store_category_auras)
+        else -> getString(R.string.store_category_floats)
     }
 
     private fun buildCosmeticCard(

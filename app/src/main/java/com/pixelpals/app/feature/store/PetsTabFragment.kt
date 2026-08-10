@@ -56,8 +56,23 @@ class PetsTabFragment : Fragment() {
             )
             root.removeAllViews()
             val inflater = layoutInflater
-            items.forEach { item ->
-                root.addView(buildPetCard(inflater, item))
+            // Categorías: Base primero, Premium después (con cabecera).
+            items.groupBy { it.isPremium }.forEach { (premium, pets) ->
+                root.addView(
+                    TextView(requireContext()).apply {
+                        text = getString(
+                            if (premium) R.string.store_category_premium
+                            else R.string.store_category_base
+                        )
+                        setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.text_primary))
+                        textSize = 15f
+                        setTypeface(null, android.graphics.Typeface.BOLD)
+                        setPadding(4, 28, 4, 10)
+                    }
+                )
+                pets.forEach { item ->
+                    root.addView(buildPetCard(inflater, item))
+                }
             }
         }
     }

@@ -34,13 +34,21 @@ class PixelPalsRepository(context: Context) {
 
     private val premiumPetProductIds = mapOf(
         PetType.ANGEL to "pet_angel_premium",
-        PetType.DIABLILLO to "pet_diablillo_premium"
+        PetType.DIABLILLO to "pet_diablillo_premium",
+        PetType.YUKI to "pet_yuki_premium",
+        PetType.PIRU to "pet_piru_premium",
+        PetType.TARO to "pet_taro_premium",
+        PetType.MENTA to "pet_menta_premium"
     )
 
     /** Precio en monedas del monedero GLOBAL para desbloquear cada pet premium (null = solo IAP). */
     private val premiumPetCoinPrices = mapOf(
         PetType.ANGEL to 400,
-        PetType.DIABLILLO to 350
+        PetType.DIABLILLO to 350,
+        PetType.YUKI to 500,
+        PetType.PIRU to 500,
+        PetType.TARO to 450,
+        PetType.MENTA to 450
     )
 
     /** Cosmético equipado por petId (null = ninguno). */
@@ -362,6 +370,10 @@ class PixelPalsRepository(context: Context) {
             PetType.PATITO -> PetPersonality.CURIOUS
             PetType.DIABLILLO -> PetPersonality.CHAOTIC
             PetType.MOKI -> PetPersonality.CURIOUS
+            PetType.YUKI -> PetPersonality.SWEET
+            PetType.PIRU -> PetPersonality.BOUNCY
+            PetType.TARO -> PetPersonality.ELEGANT
+            PetType.MENTA -> PetPersonality.DREAMY
         }
     }
 
@@ -578,6 +590,10 @@ class PixelPalsRepository(context: Context) {
             PetType.PATITO -> "patito"
             PetType.DIABLILLO -> "diablillo"
             PetType.MOKI -> "moki"
+            PetType.YUKI -> "yuki"
+            PetType.PIRU -> "piru"
+            PetType.TARO -> "taro"
+            PetType.MENTA -> "menta"
         }
     }
 

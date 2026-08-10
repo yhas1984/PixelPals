@@ -36,9 +36,13 @@ class GooglePlayBillingRepository(
     companion object {
         private const val BILLING_TIMEOUT_MS = 10_000L
         private val ALLOWED_PRODUCT_IDS = setOf(
-            // Premium pets
+            // Premium pets (los nuevos se compran con monedas; IDs por compatibilidad)
             "pet_angel_premium",
             "pet_diablillo_premium",
+            "pet_yuki_premium",
+            "pet_piru_premium",
+            "pet_taro_premium",
+            "pet_menta_premium",
             // Coin packs
             "coins_small",
             "coins_medium",

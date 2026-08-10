@@ -1,0 +1,76 @@
+{
+  "version": 1,
+  "petId": "taro",
+  "atlasPath": "pets/taro/taro_sheet_v1.png",
+  "previewPath": "res://drawable-nodpi/pet_taro.png",
+  "frameWidth": 256,
+  "frameHeight": 256,
+  "columns": 4,
+  "rows": 4,
+  "frameCount": 16,
+  "pivot": {
+    "x": 128,
+    "y": 128
+  },
+  "renderHints": {
+    "innerTransparentPaddingPx": 8,
+    "recommendedBleedInsetPx": 1,
+    "filterBitmap": true
+  },
+  "clips": [
+    {
+      "id": "idle",
+      "frames": [0, 1, 2, 3, 2, 1],
+      "loop": true,
+      "frameDurationMs": 380
+    },
+    {
+      "id": "walk",
+      "frames": [4, 5],
+      "loop": true,
+      "frameDurationMs": 420
+    },
+    {
+      "id": "hide",
+      "frames": [6, 7],
+      "loop": false,
+      "frameDurationMs": 300
+    },
+    {
+      "id": "happy",
+      "frames": [8, 9, 10, 11],
+      "loop": false,
+      "frameDurationMs": 250
+    },
+    {
+      "id": "touch",
+      "frames": [12, 13, 14],
+      "loop": false,
+      "frameDurationMs": 300
+    },
+    {
+      "id": "sleep",
+      "frames": [15],
+      "loop": false,
+      "frameDurationMs": 500
+    }
+  ],
+  "frames": [
+    { "index": 0, "name": "idle_peek", "sourceHint": "idle" },
+    { "index": 1, "name": "idle_head_in", "sourceHint": "idle" },
+    { "index": 2, "name": "idle_blink", "sourceHint": "idle" },
+    { "index": 3, "name": "idle_happy", "sourceHint": "idle" },
+    { "index": 4, "name": "walk_step1", "sourceHint": "walk" },
+    { "index": 5, "name": "walk_step2", "sourceHint": "walk" },
+    { "index": 6, "name": "hide_shell", "sourceHint": "hide" },
+    { "index": 7, "name": "hide_peek_out", "sourceHint": "hide" },
+    { "index": 8, "name": "happy_petals", "sourceHint": "happy" },
+    { "index": 9, "name": "happy_wave", "sourceHint": "happy" },
+    { "index": 10, "name": "happy_shy", "sourceHint": "happy" },
+    { "index": 11, "name": "surprised", "sourceHint": "happy" },
+    { "index": 12, "name": "touch_squash", "sourceHint": "touch" },
+    { "index": 13, "name": "touch_wobble", "sourceHint": "touch" },
+    { "index": 14, "name": "touch_recover", "sourceHint": "touch" },
+    { "index": 15, "name": "sleep", "sourceHint": "sleep" }
+  ]
+}

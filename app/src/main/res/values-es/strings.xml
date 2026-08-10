@@ -242,4 +242,11 @@
     <!-- Premium pets with coins (V1.7) -->
     <string name="store_buy_pet_with_coins">Desbloquear por 🪙 %1$d</string>
     <string name="store_insufficient_coins">¡Monedas insuficientes!</string>
+
+    <!-- Store categories (V1.7) -->
+    <string name="store_category_tints">Tintes</string>
+    <string name="store_category_auras">Auras</string>
+    <string name="store_category_floats">Flotantes</string>
+    <string name="store_category_base">Mascotas base</string>
+    <string name="store_category_premium">Mascotas premium</string>
 </resources>
