@@ -93,6 +93,28 @@ Tests:
 ./gradlew connectedDebugAndroidTest       # tests instrumentados (requiere dispositivo/emulador)
 ```
 
+### Publicidad (AdMob)
+
+La tienda muestra un **banner adaptativo no inmersivo** al pie (`StoreActivity`). Funcionamiento por build:
+
+- **Debug**: siempre habilitado con los **IDs de prueba de Google** (no requieren cuenta AdMob).
+- **Release**: solo se muestran anuncios si existen los IDs reales; si no, la tienda se renderiza igual sin banner.
+
+Para activar anuncios reales:
+
+1. Crea la cuenta en [admob.google.com](https://admob.google.com) (se puede vincular a una cuenta AdSense existente). Si la app está en prueba cerrada y Play no la detecta, añádela manualmente con el nombre y paquete (`com.pixelpals.app`).
+2. En AdMob: **Apps** → tu app → **Ad units** → crea un **Banner adaptativo** (anclado).
+3. Añade en `gradle.properties` (NO comitear estos valores):
+
+```properties
+pixelpals.admob.appId=ca-app-pub-XXXXXXXXXXXXXXXX~XXXXXXXX
+pixelpals.admob.bannerId=ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXX
+```
+
+4. Antes de la revisión de Play: declara **Anuncios** en la ficha (Data safety) e integra el SDK UMP (consentimiento EEE/UK).
+
+> **Importante**: durante pruebas con anuncios reales (closed testing incluida), no generar impresiones/clicks desde tus propios dispositivos (riesgo de suspensión de cuenta). Usa los test ads del build debug o [Ad Inspector](https://support.google.com/admob/answer/13072382).
+
 ### Permisos sensibles
 
 - `SYSTEM_ALERT_WINDOW`: necesario para mostrar la mascota flotante.
@@ -217,6 +239,28 @@ Current Play policy requires **minimum target API 36**; this project uses `targe
 - **Do not upload** an AAB signed only with the **debug** key; Play will reject it.
 - Sign with your **release keystore** (or configure `signingConfigs.release` in Gradle and use Play App Signing).
 - Each upload needs a **higher `versionCode`** than the last one accepted in the console.
+
+### Advertising (AdMob)
+
+The store shows a **non-intrusive adaptive banner** at the bottom (`StoreActivity`). Behavior per build:
+
+- **Debug**: always enabled with **Google test IDs** (no AdMob account required).
+- **Release**: ads are shown only when real IDs exist; otherwise the store renders the same without a banner.
+
+To enable real ads:
+
+1. Create the account at [admob.google.com](https://admob.google.com) (can be linked to an existing AdSense account). If the app is in closed testing and Play does not detect it, add it manually with name and package (`com.pixelpals.app`).
+2. In AdMob: **Apps** → your app → **Ad units** → create an **Adaptive banner** (anchored).
+3. Add to `gradle.properties` (do NOT commit these values):
+
+```properties
+pixelpals.admob.appId=ca-app-pub-XXXXXXXXXXXXXXXX~XXXXXXXX
+pixelpals.admob.bannerId=ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXX
+```
+
+4. Before Play review: declare **Ads** in the listing (Data safety) and integrate the UMP SDK (EEA/UK consent).
+
+> **Important**: when testing with real ads (including closed testing), do not generate impressions/clicks from your own devices (account suspension risk). Use the debug build's test ads or [Ad Inspector](https://support.google.com/admob/answer/13072382).
 
 ### Sensitive permissions
 
