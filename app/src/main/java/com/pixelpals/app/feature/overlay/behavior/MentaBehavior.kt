@@ -124,9 +124,10 @@ class MentaBehavior(
         bridge.animScaleX = 1f
         bridge.animScaleY = 1f + sin(time * 2.0f) * 0.02f
 
-        // La onda viaja por el cuerpo completo: cuatro poses, no solo cabeceo.
-        val progress = (time * 1.45f).toInt() % 4
-        bridge.currentFrame = 4 + progress
+        // La onda viaja sincronizada con el avance: cada pose corresponde a
+        // una fracción real del trayecto, no a un reloj independiente.
+        val wavePhase = (t * 4f) % 4f
+        bridge.currentFrame = 4 + wavePhase.toInt()
 
         if (random.nextFloat() < 0.00025f) {
             mode = Mode.HAPPY
@@ -156,9 +157,10 @@ class MentaBehavior(
         params.y = y.roundToInt()
         bridge.updateWindowLayout(params)
 
-        // La onda vertical también recorre el cuerpo completo.
-        val progress = (time * 1.25f).toInt() % 4
-        bridge.currentFrame = 8 + progress
+        // También en vertical: la cabeza avanza y la onda la sigue por el
+        // cuerpo mientras recorre la pantalla.
+        val wavePhase = (t * 4f) % 4f
+        bridge.currentFrame = 8 + wavePhase.toInt()
         bridge.animRotation = 0f
         bridge.animScaleX = 1f
         bridge.animScaleY = 1f
@@ -240,6 +242,7 @@ class MentaBehavior(
     override fun updateDrag(dt: Float) {
         // Al arrastrar, la serpiente se desliza suave (no se congela).
         time += dt
+        // Durante el arrastre, el cuerpo sigue el desplazamiento del dedo.
         bridge.currentFrame = 4 + ((time * 1.45f).toInt() % 4)
         bridge.animOffsetX = sin(time * 2.2f) * 3f
         bridge.animScaleX = 1f
