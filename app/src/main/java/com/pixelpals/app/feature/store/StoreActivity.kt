@@ -111,6 +111,11 @@ class StoreActivity : AppCompatActivity() {
                 }
 
                 override fun onAdFailedToLoad(adError: LoadAdError) {
+                    android.util.Log.w(
+                        "AdMob",
+                        "Banner failed: code=${adError.code} msg=${adError.message} " +
+                            "domain=${adError.domain} response=${adError.responseInfo?.responseId}"
+                    )
                     container.visibility = View.GONE
                 }
             }
