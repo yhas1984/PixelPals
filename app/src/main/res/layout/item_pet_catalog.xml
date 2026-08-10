@@ -16,7 +16,9 @@
         android:id="@+id/imgPetPreview"
         android:layout_width="72dp"
         android:layout_height="72dp"
+        android:background="@drawable/bg_pet_avatar"
         android:contentDescription="@null"
+        android:padding="6dp"
         android:scaleType="fitCenter" />
 
     <LinearLayout
