@@ -22,3 +22,6 @@ __pycache__/
 
 # Planes y notas locales del agente
 /.hermes/
+
+# Copias de trabajo locales (importadores)
+/tools/*/backup/

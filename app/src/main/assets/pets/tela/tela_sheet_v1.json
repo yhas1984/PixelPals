@@ -19,6 +19,8 @@
     { "id": "hang",     "frames": [8, 9],           "loop": true,  "frameDurationMs": 320 },
     { "id": "landed",   "frames": [10],             "loop": false, "frameDurationMs": 240 },
     { "id": "surprise", "frames": [11],             "loop": false, "frameDurationMs": 280 },
+    { "id": "happy",    "frames": [8, 9],           "loop": true,  "frameDurationMs": 300 },
+    { "id": "touch",    "frames": [11],             "loop": false, "frameDurationMs": 260 },
     { "id": "squash",   "frames": [12],             "loop": false, "frameDurationMs": 220 },
     { "id": "webshoot", "frames": [13],             "loop": false, "frameDurationMs": 260 },
     { "id": "recover",  "frames": [14],             "loop": false, "frameDurationMs": 220 },

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from pathlib import Path
 
 from PIL import Image
@@ -83,6 +84,11 @@ def validate_atlas(name: str, behavior_name: str, spec_path: str) -> int:
     }
     if used != set(range(count)):
         raise ValueError(f"{name}: unused atlas frames {sorted(set(range(count)) - used)}")
+    clip_ids = {str(clip["id"]) for clip in spec["clips"]}
+    required = set(re.findall(r'spec\.clip\("([^"]+)"\)', behavior))
+    missing = required - clip_ids
+    if missing:
+        raise ValueError(f"{name}: behavior requires clips missing from JSON: {sorted(missing)}")
     for index in range(count):
         col, row = index % columns, index // columns
         cell = atlas.crop((col * width, row * height, (col + 1) * width, (row + 1) * height))
