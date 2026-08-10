@@ -2,19 +2,17 @@ package com.pixelpals.app.feature.overlay.behavior
 
 import com.pixelpals.app.core.domain.PetState
 import com.pixelpals.app.core.motion.PetRandom
-import kotlin.math.PI
-import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.math.sin
 
 /**
  * MentaBehavior — Serpientita de menta.
  * Se desliza por TODA la pantalla como una serpiente real:
- *  - Cruza horizontalmente de lado a lado (frames de slither 4-5),
- *  - Sube y baja verticalmente estirándose (frames de stretch 6-7),
+ *  - Cruza horizontalmente de lado a lado (frames de slither 4-7),
+ *  - Sube y baja verticalmente estirándose (frames de stretch 8-11),
  *  - SIEMPRE de frente a su dirección (nunca mira hacia un lado raro),
  *  - Deslizamiento lento y continuo: sin golpeteos de cabeza ni tirones.
- * IA atlas: idle (0-3), slither (4-5), stretch (6-7), happy (8-11), touch (12-14), sleep (15).
+ * IA atlas: idle (0-3), slither (4-7), stretch (8-11), touch (12-14), sleep (15).
  */
 class MentaBehavior(
     bridge: PetViewBridge,
@@ -112,7 +110,7 @@ class MentaBehavior(
             }
             return
         }
-        val eased = sin((t * PI).toFloat() / 2f)
+        val eased = t
         val x = startX + (cruiseTargetX - startX) * eased
         val y = startY + (cruiseTargetY - startY) * eased
         params.x = x.roundToInt()
@@ -123,12 +121,12 @@ class MentaBehavior(
         bridge.animOffsetX = sin(time * 2.2f) * 4f
         bridge.animOffsetY = sin(time * 1.6f) * 2f
         bridge.animRotation = 0f   // siempre de frente, sin golpeteos de cabeza
-        bridge.animScaleX = if (facingRight) 1f else -1f
+        bridge.animScaleX = 1f
         bridge.animScaleY = 1f + sin(time * 2.0f) * 0.02f
 
-        // Frames de slither alternando MUY lento (sensación de deslizamiento)
-        val progress = (time * 1.3f).toInt() % 2
-        bridge.currentFrame = if (progress == 0) 4 else 5
+        // La onda viaja por el cuerpo completo: cuatro poses, no solo cabeceo.
+        val progress = (time * 1.45f).toInt() % 4
+        bridge.currentFrame = 4 + progress
 
         if (random.nextFloat() < 0.00025f) {
             mode = Mode.HAPPY
@@ -151,16 +149,16 @@ class MentaBehavior(
             }
             return
         }
-        val eased = sin((t * PI).toFloat() / 2f)
+        val eased = t
         val x = startX + (cruiseTargetX - startX) * eased
         val y = startY + (cruiseTargetY - startY) * eased
         params.x = x.roundToInt()
         params.y = y.roundToInt()
         bridge.updateWindowLayout(params)
 
-        // Estirándose hacia arriba/abajo: frames de stretch, rotación 0 (frente)
-        val progress = (time * 1.1f).toInt() % 2
-        bridge.currentFrame = if (progress == 0) 6 else 7
+        // La onda vertical también recorre el cuerpo completo.
+        val progress = (time * 1.25f).toInt() % 4
+        bridge.currentFrame = 8 + progress
         bridge.animRotation = 0f
         bridge.animScaleX = 1f
         bridge.animScaleY = 1f
@@ -242,9 +240,9 @@ class MentaBehavior(
     override fun updateDrag(dt: Float) {
         // Al arrastrar, la serpiente se desliza suave (no se congela).
         time += dt
-        bridge.currentFrame = if (((time * 1.3f).toInt() % 2) == 0) 4 else 5
+        bridge.currentFrame = 4 + ((time * 1.45f).toInt() % 4)
         bridge.animOffsetX = sin(time * 2.2f) * 3f
-        bridge.animScaleX = if (facingRight) 1f else -1f
+        bridge.animScaleX = 1f
         bridge.animScaleY = 1f
         bridge.animRotation = 0f
     }

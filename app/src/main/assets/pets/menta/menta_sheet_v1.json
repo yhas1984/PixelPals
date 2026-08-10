@@ -26,15 +26,15 @@
     },
     {
       "id": "walk",
-      "frames": [4, 5],
+      "frames": [4, 5, 6, 7],
       "loop": true,
-      "frameDurationMs": 200
+      "frameDurationMs": 260
     },
     {
       "id": "stretch",
-      "frames": [6, 7],
-      "loop": false,
-      "frameDurationMs": 320
+      "frames": [8, 9, 10, 11],
+      "loop": true,
+      "frameDurationMs": 300
     },
     {
       "id": "happy",
@@ -62,12 +62,12 @@
     { "index": 3, "name": "idle_blink", "sourceHint": "idle" },
     { "index": 4, "name": "slither_1", "sourceHint": "walk" },
     { "index": 5, "name": "slither_2", "sourceHint": "walk" },
-    { "index": 6, "name": "stretch_up", "sourceHint": "stretch" },
-    { "index": 7, "name": "curl_ball", "sourceHint": "stretch" },
-    { "index": 8, "name": "happy_wiggle", "sourceHint": "happy" },
-    { "index": 9, "name": "happy_tail", "sourceHint": "happy" },
-    { "index": 10, "name": "happy_blush", "sourceHint": "happy" },
-    { "index": 11, "name": "surprised", "sourceHint": "happy" },
+    { "index": 6, "name": "slither_wave_left", "sourceHint": "walk" },
+    { "index": 7, "name": "slither_wave_right", "sourceHint": "walk" },
+    { "index": 8, "name": "crawl_wave_1", "sourceHint": "stretch" },
+    { "index": 9, "name": "crawl_wave_2", "sourceHint": "stretch" },
+    { "index": 10, "name": "crawl_wave_3", "sourceHint": "stretch" },
+    { "index": 11, "name": "crawl_wave_4", "sourceHint": "stretch" },
     { "index": 12, "name": "touch_squash", "sourceHint": "touch" },
     { "index": 13, "name": "touch_wobble", "sourceHint": "touch" },
     { "index": 14, "name": "touch_recover", "sourceHint": "touch" },
