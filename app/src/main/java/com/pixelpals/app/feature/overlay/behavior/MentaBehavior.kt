@@ -128,9 +128,14 @@ class MentaBehavior(
 
         // La onda viaja sincronizada con el avance: cada pose corresponde a
         // una fracción real del trayecto, no a un reloj independiente.
-        // Cuatro fases completas repetidas durante el trayecto: el contoneo
-        // recorre todo el cuerpo mientras la cabeza avanza.
-        val wave = (t * 12f).toInt() % 4
+        // La onda avanza por distancia real, no por un reloj independiente:
+        // cabeza y contoneo tienen la misma velocidad física.
+        val distance = kotlin.math.sqrt(
+            (cruiseTargetX - startX) * (cruiseTargetX - startX) +
+                (cruiseTargetY - startY) * (cruiseTargetY - startY)
+        )
+        val travelled = distance * t
+        val wave = (travelled / 42f).toInt() % 4
         bridge.currentFrame = 4 + wave
 
         if (random.nextFloat() < 0.00025f) {
@@ -166,7 +171,9 @@ class MentaBehavior(
         // La dirección se obtiene del desplazamiento real, no de un estado
         // auxiliar que pueda quedar desfasado después de otro modo.
         val movingDown = cruiseTargetY > startY
-        val wave = (t * 10f).toInt() and 1
+        val distance = kotlin.math.abs(cruiseTargetY - startY)
+        val travelled = distance * t
+        val wave = (travelled / 42f).toInt() and 1
         bridge.currentFrame = if (movingDown) 10 + wave else 8 + wave
         bridge.animRotation = 0f
         bridge.animScaleX = 1f
