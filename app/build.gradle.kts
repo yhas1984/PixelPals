@@ -31,14 +31,19 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // AdMob: IDs de PRUEBA de Google por defecto. Para ads reales define
-        // en gradle.properties (o env): pixelpals.admob.appId y pixelpals.admob.bannerId.
+        // (por orden de prioridad) pixelpals.admob.appId/bannerId en gradle.properties
+        // o las variables de entorno PIXELPALS_ADMOB_APP_ID / PIXELPALS_ADMOB_BANNER_ID.
         val adMobAppId = (project.findProperty("pixelpals.admob.appId") as String?)
+            ?: System.getenv("PIXELPALS_ADMOB_APP_ID")
             ?: "ca-app-pub-3940256099942544~3347511713"
         val adMobBannerId = (project.findProperty("pixelpals.admob.bannerId") as String?)
+            ?: System.getenv("PIXELPALS_ADMOB_BANNER_ID")
             ?: "ca-app-pub-3940256099942544/9214589741"
+        val adMobConfigured = project.hasProperty("pixelpals.admob.appId") ||
+            !System.getenv("PIXELPALS_ADMOB_APP_ID").isNullOrBlank()
         manifestPlaceholders["adMobAppId"] = adMobAppId
         buildConfigField("String", "ADMOB_BANNER_AD_UNIT_ID", "\"$adMobBannerId\"")
-        buildConfigField("boolean", "ADS_ENABLED", "false")
+        buildConfigField("boolean", "ADS_ENABLED", if (adMobConfigured) "true" else "false")
     }
 
     signingConfigs {
@@ -72,7 +77,13 @@ android {
             buildConfigField(
                 "boolean",
                 "ADS_ENABLED",
-                if (project.hasProperty("pixelpals.admob.appId")) "true" else "false"
+                if (project.hasProperty("pixelpals.admob.appId") ||
+                    !System.getenv("PIXELPALS_ADMOB_APP_ID").isNullOrBlank()
+                ) {
+                    "true"
+                } else {
+                    "false"
+                }
             )
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
