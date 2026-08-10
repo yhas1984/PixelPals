@@ -106,7 +106,7 @@ class PetView(
         PetType.YUKI -> 1.208f          // idle yuki_0 0.664 -> 0.802
         PetType.PIRU -> 1.208f          // idle piru_0 0.664 -> 0.802
         PetType.TARO -> 1.316f          // idle taro_0 0.609 -> 0.802
-        PetType.MENTA -> 1.167f         // idle menta_0 0.688 -> 0.802
+        PetType.MENTA -> 0.90f          // más pequeña: el usuario la veía muy grande (0.688 idle)
         PetType.TELA -> 0.960f          // idle tela_0 0.836 -> 0.802
     }
 
