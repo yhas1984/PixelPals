@@ -163,8 +163,11 @@ class MentaBehavior(
 
         // También en vertical: la cabeza avanza y la onda la sigue por el
         // cuerpo mientras recorre la pantalla.
+        // La dirección se obtiene del desplazamiento real, no de un estado
+        // auxiliar que pueda quedar desfasado después de otro modo.
+        val movingDown = cruiseTargetY > startY
         val wave = (t * 10f).toInt() and 1
-        bridge.currentFrame = if (climbingUp) 8 + wave else 10 + wave
+        bridge.currentFrame = if (movingDown) 10 + wave else 8 + wave
         bridge.animRotation = 0f
         bridge.animScaleX = 1f
         bridge.animScaleY = 1f
