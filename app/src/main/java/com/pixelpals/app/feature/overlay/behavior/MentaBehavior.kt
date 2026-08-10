@@ -126,8 +126,9 @@ class MentaBehavior(
 
         // La onda viaja sincronizada con el avance: cada pose corresponde a
         // una fracción real del trayecto, no a un reloj independiente.
-        val wavePhase = (t * 4f) % 4f
-        bridge.currentFrame = 4 + wavePhase.toInt()
+        // Varias ondas por cruce; el zigzag debe acompañar al avance.
+        val wave = (t * 10f).toInt() and 1
+        bridge.currentFrame = if (facingRight) 4 + wave else 6 + wave
 
         if (random.nextFloat() < 0.00025f) {
             mode = Mode.HAPPY
@@ -159,8 +160,8 @@ class MentaBehavior(
 
         // También en vertical: la cabeza avanza y la onda la sigue por el
         // cuerpo mientras recorre la pantalla.
-        val wavePhase = (t * 4f) % 4f
-        bridge.currentFrame = 8 + wavePhase.toInt()
+        val wave = (t * 10f).toInt() and 1
+        bridge.currentFrame = if (climbingUp) 8 + wave else 10 + wave
         bridge.animRotation = 0f
         bridge.animScaleX = 1f
         bridge.animScaleY = 1f
@@ -243,7 +244,7 @@ class MentaBehavior(
         // Al arrastrar, la serpiente se desliza suave (no se congela).
         time += dt
         // Durante el arrastre, el cuerpo sigue el desplazamiento del dedo.
-        bridge.currentFrame = 4 + ((time * 1.45f).toInt() % 4)
+        bridge.currentFrame = 4 + ((time * 5f).toInt() % 2)
         bridge.animOffsetX = sin(time * 2.2f) * 3f
         bridge.animScaleX = 1f
         bridge.animScaleY = 1f
