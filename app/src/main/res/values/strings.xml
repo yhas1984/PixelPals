@@ -252,4 +252,84 @@
     <string name="store_category_floats">Floating</string>
     <string name="store_category_base">Base pets</string>
     <string name="store_category_premium">Premium pets</string>
+
+    <!-- V1.8 localization -->
+    <string name="language_title">Language</string>
+    <string name="language_system">System</string>
+    <string name="language_english">English</string>
+    <string name="language_spanish">Español</string>
+
+    <string name="pet_name_bloop">Bloop</string>
+    <string name="pet_name_nube_michi">Nube-Michi</string>
+    <string name="pet_name_jelly">Jelly</string>
+    <string name="pet_name_corgi">Corgi</string>
+    <string name="pet_name_ginger">Ginger</string>
+    <string name="pet_name_angel">Cherub</string>
+    <string name="pet_name_patito">Duckie</string>
+    <string name="pet_name_diablillo">Imp</string>
+    <string name="pet_name_moki">Moki</string>
+    <string name="pet_name_yuki">Yuki</string>
+    <string name="pet_name_piru">Piru</string>
+    <string name="pet_name_taro">Taro</string>
+    <string name="pet_name_menta">Menta</string>
+    <string name="pet_name_tela">Tela</string>
+    <string name="moki_desc">The Sticky Chameleon\nClings &amp; blends</string>
+    <string name="yuki_desc">The Snow Buddy\nChilly &amp; soft</string>
+    <string name="piru_desc">The Curious Penguin\nWaddles &amp; slides</string>
+    <string name="taro_desc">The Garden Turtle\nCalm &amp; patient</string>
+    <string name="menta_desc">The Minty Snake\nSlithers &amp; glides</string>
+    <string name="tela_desc">The Web Weaver\nClimbs &amp; swings</string>
+
+    <string name="daily_task_check_in_title">Say hello</string>
+    <string name="daily_task_check_in_description">Visit your pet and make them feel accompanied.</string>
+    <string name="daily_task_feed_title">Favorite snack</string>
+    <string name="daily_task_feed_description">Give them something tasty to lift their mood.</string>
+    <string name="daily_task_play_title">Playtime</string>
+    <string name="daily_task_play_description">Spend a little time together and share some energy.</string>
+    <string name="daily_task_clean_title">Groom up</string>
+    <string name="daily_task_clean_description">Keep your pet looking their best.</string>
+    <string name="daily_task_rest_title">Sweet nap</string>
+    <string name="daily_task_rest_description">Help your pet recover energy with a cozy rest.</string>
+
+    <string name="memory_first_day_title">First day together</string>
+    <string name="memory_first_day_default">Your first meeting</string>
+    <string name="memory_first_day_since">Always with you since %1$s</string>
+    <string name="memory_bond_15_title">First trust</string>
+    <string name="memory_bond_15_subtitle">Your pet recognizes you and follows you more calmly.</string>
+    <string name="memory_streak_3_title">Care streak</string>
+    <string name="memory_streak_3_subtitle">You have shared your routine for %1$d days in a row.</string>
+    <string name="memory_bond_35_title">Favorite routine</string>
+    <string name="memory_bond_35_subtitle">Your pet now looks forward to snacks, games, and cuddles.</string>
+    <string name="memory_bond_50_title">Strong bond</string>
+    <string name="memory_bond_50_subtitle">It shows in every reaction, calm moment, and greeting.</string>
+    <string name="memory_streak_7_title">A week together</string>
+    <string name="memory_streak_7_subtitle">A full week of caring for each other.</string>
+
+    <string name="store_badge_current">Current companion</string>
+    <string name="store_badge_base">Base</string>
+    <string name="selection_spotlight_format">%1$s feels %2$s. Their best next step is %3$s.</string>
+    <string name="premium_pet_perk_angel">Includes a serene aura, gentle moves, and celestial details.</string>
+    <string name="premium_pet_perk_diablillo">Includes mischievous reactions, high energy, and chaotic effects.</string>
+    <string name="premium_pet_perk_default">Includes a unique personality, presence, and style.</string>
+
+    <string name="progress_level_baby">Baby</string>
+    <string name="progress_level_child">Child</string>
+    <string name="progress_level_young">Young</string>
+    <string name="progress_level_adult">Adult</string>
+    <string name="progress_summary_level">🏆 Level: %1$d (%2$s)</string>
+    <string name="progress_summary_happiness">💛 Happiness: %1$d XP</string>
+    <string name="progress_summary_active_time">⏱️ Active time: %1$d min</string>
+    <string name="progress_summary_interactions">👆 Interactions: %1$d</string>
+    <string name="progress_summary_rare_events">✨ Rare events: %1$d</string>
+
+    <string name="bubble_duck_quack">quack</string>
+    <string name="bubble_duck_quack_excited">quack!</string>
+    <string name="bubble_yuki_brrr">brrr!</string>
+    <string name="bubble_yuki_snow">❄️</string>
+    <string name="bubble_yuki_cold">cold!</string>
+    <string name="bubble_yuki_wow">wow!</string>
+    <string name="bubble_jelly_splash">splash</string>
+    <string name="bubble_jelly_boing">boing</string>
+    <string name="bubble_ginger_purr">prrr</string>
+    <string name="bubble_ginger_mrrp">mrrp</string>
 </resources>

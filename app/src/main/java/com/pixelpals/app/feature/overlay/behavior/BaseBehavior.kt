@@ -11,6 +11,7 @@ import android.graphics.RectF
 import android.util.Log
 import android.util.LruCache
 import android.view.View
+import androidx.annotation.StringRes
 import com.pixelpals.app.core.domain.PetState
 import com.pixelpals.app.core.motion.PetBounds
 import com.pixelpals.app.core.motion.PetRandom
@@ -42,6 +43,10 @@ abstract class BaseBehavior(
     protected val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { isFilterBitmap = true }
     protected val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     protected var isLoading = true
+
+    protected fun localizedString(@StringRes resId: Int, fallback: String): String {
+        return (bridge as? View)?.context?.getString(resId) ?: fallback
+    }
     protected var velX = 0f
     protected var velY = 0f
     protected var targetX = 0f

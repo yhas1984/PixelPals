@@ -26,8 +26,8 @@ android {
         applicationId = "com.pixelpals.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 11
-        versionName = "1.7.1"
+        versionCode = 12
+        versionName = "1.8.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // AdMob: IDs de PRUEBA de Google por defecto. Para ads reales define

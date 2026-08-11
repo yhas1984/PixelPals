@@ -123,7 +123,10 @@ class PetDashboardActivity : AppCompatActivity() {
                 val message = when {
                     newMemory != null -> getString(R.string.dashboard_memory_unlocked, newMemory.title)
                     bondGain > 0 || coinGain > 0 -> getString(R.string.dashboard_care_reward, bondGain, coinGain)
-                    else -> getString(R.string.dashboard_care_received, selectedPet.displayName)
+                    else -> getString(
+                        R.string.dashboard_care_received,
+                        getString(selectedPet.displayNameResId),
+                    )
                 }
                 showSuccessState(message)
                 PetService.requestPetRefresh(
@@ -164,13 +167,13 @@ class PetDashboardActivity : AppCompatActivity() {
 
         txtDashboardSubtitle.text = getString(
             R.string.dashboard_subtitle_format,
-            selectedPet.displayName,
+            getString(selectedPet.displayNameResId),
             snapshot.careStreakDays,
             snapshot.softCurrency
         )
         txtCompanionLine.text = getString(
             R.string.dashboard_companion_line_format,
-            selectedPet.displayName,
+            getString(selectedPet.displayNameResId),
             moodLabel(snapshot.mood),
             personalityLabel(repository.getPersonality(selectedPet))
         )

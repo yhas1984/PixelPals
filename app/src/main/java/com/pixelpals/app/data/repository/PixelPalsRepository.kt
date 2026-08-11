@@ -2,6 +2,7 @@ package com.pixelpals.app.data.repository
 
 import android.content.Context
 import com.pixelpals.app.BuildConfig
+import com.pixelpals.app.R
 import com.pixelpals.app.core.domain.PetType
 import com.pixelpals.app.data.catalog.CatalogItemState
 import com.pixelpals.app.data.catalog.PetCatalogItem
@@ -19,7 +20,10 @@ import com.pixelpals.app.status.PetMood
 import com.pixelpals.app.status.PetPersonality
 import com.pixelpals.app.status.PetStatusSnapshot
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import java.time.temporal.ChronoUnit
+import java.util.Locale
 import androidx.room.withTransaction
 import kotlin.math.max
 import kotlin.math.min
@@ -197,11 +201,41 @@ class PixelPalsRepository(context: Context, database: AppDatabase? = null) {
         val today = todayKey()
         val completedIds = db.dailyTaskStateDao().getTasksForDay(petId, today).map { it.taskId }.toSet()
         return listOf(
-            DailyTask("check_in", "Saludar", "Pásate a verlo y hazle sentir acompañado.", 8, "check_in" in completedIds),
-            DailyTask("feed", "Snack favorito", "Dale algo rico para subirle el ánimo.", 14, "feed" in completedIds),
-            DailyTask("play", "Momento de juego", "Hazle caso un rato y comparte energía.", 14, "play" in completedIds),
-            DailyTask("clean", "Asear", "Déjalo guapo para lucirse por la pantalla.", 12, "clean" in completedIds),
-            DailyTask("rest", "Siesta tierna", "Ayúdale a recuperar energía con un descanso.", 10, "rest" in completedIds)
+            DailyTask(
+                "check_in",
+                appContext.getString(R.string.daily_task_check_in_title),
+                appContext.getString(R.string.daily_task_check_in_description),
+                8,
+                "check_in" in completedIds,
+            ),
+            DailyTask(
+                "feed",
+                appContext.getString(R.string.daily_task_feed_title),
+                appContext.getString(R.string.daily_task_feed_description),
+                14,
+                "feed" in completedIds,
+            ),
+            DailyTask(
+                "play",
+                appContext.getString(R.string.daily_task_play_title),
+                appContext.getString(R.string.daily_task_play_description),
+                14,
+                "play" in completedIds,
+            ),
+            DailyTask(
+                "clean",
+                appContext.getString(R.string.daily_task_clean_title),
+                appContext.getString(R.string.daily_task_clean_description),
+                12,
+                "clean" in completedIds,
+            ),
+            DailyTask(
+                "rest",
+                appContext.getString(R.string.daily_task_rest_title),
+                appContext.getString(R.string.daily_task_rest_description),
+                10,
+                "rest" in completedIds,
+            ),
         )
     }
 
@@ -213,25 +247,57 @@ class PixelPalsRepository(context: Context, database: AppDatabase? = null) {
             val date = java.time.Instant.ofEpochMilli(bond.firstSeenAt)
                 .atZone(java.time.ZoneId.systemDefault())
                 .toLocalDate()
-            "Siempre contigo desde $date"
-        } else "Primer encuentro"
+            appContext.getString(
+                R.string.memory_first_day_since,
+                DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
+                    .withLocale(currentLocale())
+                    .format(date),
+            )
+        } else appContext.getString(R.string.memory_first_day_default)
         val memories = mutableListOf(
-            MemoryMoment("first_day", "Primer día juntos", firstDay)
+            MemoryMoment(
+                "first_day",
+                appContext.getString(R.string.memory_first_day_title),
+                firstDay,
+            )
         )
         if (snapshot.bond >= 15) {
-            memories += MemoryMoment("bond_15", "Confianza inicial", "Tu pet ya te reconoce y te sigue con más calma.")
+            memories += MemoryMoment(
+                "bond_15",
+                appContext.getString(R.string.memory_bond_15_title),
+                appContext.getString(R.string.memory_bond_15_subtitle),
+            )
         }
         if (snapshot.careStreakDays >= 3) {
-            memories += MemoryMoment("streak_3", "Racha de cuidado", "Lleváis ${snapshot.careStreakDays} días seguidos compartiendo rutina.")
+            memories += MemoryMoment(
+                "streak_3",
+                appContext.getString(R.string.memory_streak_3_title),
+                appContext.getString(
+                    R.string.memory_streak_3_subtitle,
+                    snapshot.careStreakDays,
+                ),
+            )
         }
         if (snapshot.bond >= 35) {
-            memories += MemoryMoment("bond_35", "Rutina favorita", "Ya espera tus mimos, snacks y juegos del día.")
+            memories += MemoryMoment(
+                "bond_35",
+                appContext.getString(R.string.memory_bond_35_title),
+                appContext.getString(R.string.memory_bond_35_subtitle),
+            )
         }
         if (snapshot.memoriesUnlocked >= 3) {
-            memories += MemoryMoment("bond_50", "Vínculo fuerte", "Se nota en sus reacciones, su calma y su forma de saludarte.")
+            memories += MemoryMoment(
+                "bond_50",
+                appContext.getString(R.string.memory_bond_50_title),
+                appContext.getString(R.string.memory_bond_50_subtitle),
+            )
         }
         if (snapshot.careStreakDays >= 7) {
-            memories += MemoryMoment("streak_7", "Semana juntos", "Una semana completa cuidándoos mutuamente.")
+            memories += MemoryMoment(
+                "streak_7",
+                appContext.getString(R.string.memory_streak_7_title),
+                appContext.getString(R.string.memory_streak_7_subtitle),
+            )
         }
         return memories
     }
@@ -250,8 +316,8 @@ class PixelPalsRepository(context: Context, database: AppDatabase? = null) {
             }
             PetCatalogItem(
                 id = petIdOf(petType),
-                displayName = petType.displayName,
-                description = petType.description,
+                displayName = appContext.getString(petType.displayNameResId),
+                description = appContext.getString(petType.descriptionResId),
                 previewResId = petType.spriteResId,
                 petType = petType,
                 productId = productId,
@@ -259,9 +325,9 @@ class PixelPalsRepository(context: Context, database: AppDatabase? = null) {
                 state = state,
                 coinPrice = premiumPetCoinPrices[petType],
                 badge = when {
-                    productId != null -> "Premium"
-                    petType == selectedType -> "Compi actual"
-                    else -> "Base"
+                    productId != null -> appContext.getString(R.string.selection_premium_badge)
+                    petType == selectedType -> appContext.getString(R.string.store_badge_current)
+                    else -> appContext.getString(R.string.store_badge_base)
                 }
             )
         }
@@ -588,61 +654,71 @@ class PixelPalsRepository(context: Context, database: AppDatabase? = null) {
     }
 
     fun moodLabel(mood: PetMood): String {
-        return when (mood) {
-            PetMood.HAPPY -> "feliz"
-            PetMood.SLEEPY -> "somnoliento"
-            PetMood.HUNGRY -> "hambriento"
-            PetMood.DIRTY -> "desaliñado"
-            PetMood.BORED -> "aburrido"
-            PetMood.EXCITED -> "emocionado"
-        }
+        return appContext.getString(
+            when (mood) {
+                PetMood.HAPPY -> R.string.mood_happy
+                PetMood.SLEEPY -> R.string.mood_sleepy
+                PetMood.HUNGRY -> R.string.mood_hungry
+                PetMood.DIRTY -> R.string.mood_dirty
+                PetMood.BORED -> R.string.mood_bored
+                PetMood.EXCITED -> R.string.mood_excited
+            }
+        )
     }
 
     fun careActionLabel(action: CareAction): String {
-        return when (action) {
-            CareAction.FEED -> "darle un snack"
-            CareAction.CLEAN -> "asearlo"
-            CareAction.PLAY -> "jugar un rato"
-            CareAction.REST -> "dejarlo descansar"
-            CareAction.CHECK_IN -> "saludarlo"
-        }
+        return appContext.getString(
+            when (action) {
+                CareAction.FEED -> R.string.action_feed
+                CareAction.CLEAN -> R.string.action_clean
+                CareAction.PLAY -> R.string.action_play
+                CareAction.REST -> R.string.action_rest
+                CareAction.CHECK_IN -> R.string.action_check_in
+            }
+        )
     }
 
     fun personalityLabel(personality: PetPersonality): String {
-        return when (personality) {
-            PetPersonality.SWEET -> "dulce"
-            PetPersonality.DREAMY -> "soñador"
-            PetPersonality.BOUNCY -> "rebotón"
-            PetPersonality.LOYAL -> "leal"
-            PetPersonality.ELEGANT -> "elegante"
-            PetPersonality.ANGELIC -> "angelical"
-            PetPersonality.CURIOUS -> "curioso"
-            PetPersonality.CHAOTIC -> "travieso"
-        }
+        return appContext.getString(
+            when (personality) {
+                PetPersonality.SWEET -> R.string.personality_sweet
+                PetPersonality.DREAMY -> R.string.personality_dreamy
+                PetPersonality.BOUNCY -> R.string.personality_bouncy
+                PetPersonality.LOYAL -> R.string.personality_loyal
+                PetPersonality.ELEGANT -> R.string.personality_elegant
+                PetPersonality.ANGELIC -> R.string.personality_angelic
+                PetPersonality.CURIOUS -> R.string.personality_curious
+                PetPersonality.CHAOTIC -> R.string.personality_chaotic
+            }
+        )
     }
 
     fun dashboardCompanionLine(petType: PetType, snapshot: PetStatusSnapshot): String {
-        val personality = personalityLabel(getPersonality(petType))
-        return when (snapshot.mood) {
-            PetMood.EXCITED -> "${petType.displayName} está brillante hoy. Se nota su lado $personality."
-            PetMood.HAPPY -> "${petType.displayName} está a gusto contigo y se comporta de forma más $personality."
-            PetMood.SLEEPY -> "${petType.displayName} pide calma, mimo y una pausa corta."
-            PetMood.HUNGRY -> "${petType.displayName} tiene antojo y agradecería algo rico."
-            PetMood.DIRTY -> "${petType.displayName} necesita un pequeño mimo para volver a lucirse."
-            PetMood.BORED -> "${petType.displayName} echa de menos atención y algo divertido."
-        }
+        return appContext.getString(
+            R.string.dashboard_companion_line_format,
+            appContext.getString(petType.displayNameResId),
+            moodLabel(snapshot.mood),
+            personalityLabel(getPersonality(petType)),
+        )
     }
 
     fun selectionSpotlight(petType: PetType, snapshot: PetStatusSnapshot): String {
-        return "${petType.displayName} está ${moodLabel(snapshot.mood)}. Su mejor siguiente paso es ${careActionLabel(snapshot.dominantSuggestion)}."
+        return appContext.getString(
+            R.string.selection_spotlight_format,
+            appContext.getString(petType.displayNameResId),
+            moodLabel(snapshot.mood),
+            careActionLabel(snapshot.dominantSuggestion),
+        )
     }
 
     fun premiumPetPerk(petType: PetType): String {
-        return when (petType) {
-            PetType.ANGEL -> "Incluye aura serena, maniobras suaves y detalles celestiales."
-            PetType.DIABLILLO -> "Incluye reacciones traviesas, energía alta y efectos más caóticos."
-            else -> "Incluye personalidad, presencia y estilo únicos."
-        }
+        return appContext.getString(
+            when (petType) {
+                PetType.ANGEL -> R.string.premium_pet_perk_angel
+                PetType.DIABLILLO -> R.string.premium_pet_perk_diablillo
+                else -> R.string.premium_pet_perk_default
+            }
+        )
     }
 
     private fun isEligibleEntitlement(product: OwnedProductEntity): Boolean {
@@ -688,6 +764,8 @@ class PixelPalsRepository(context: Context, database: AppDatabase? = null) {
     }
 
     private fun todayKey(): String = LocalDate.now().toString()
+
+    private fun currentLocale(): Locale = appContext.resources.configuration.locales[0]
 
     private fun daysBetween(fromDay: String, toDay: String): Long {
         return runCatching {

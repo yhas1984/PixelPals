@@ -69,6 +69,19 @@ class PetService : Service() {
             }
             ContextCompat.startForegroundService(context, intent)
         }
+
+        fun refreshNotificationChannel(context: Context) {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                context.getString(R.string.notif_channel_name),
+                NotificationManager.IMPORTANCE_LOW,
+            ).apply {
+                description = context.getString(R.string.notif_channel_desc)
+            }
+            context.getSystemService(NotificationManager::class.java)
+                .createNotificationChannel(channel)
+        }
     }
 
     private var windowManager: WindowManager? = null
@@ -340,14 +353,7 @@ class PetService : Service() {
     }
 
     private fun createNotificationChannel() {
-        val channel = NotificationChannel(
-            CHANNEL_ID,
-            getString(R.string.notif_channel_name),
-            NotificationManager.IMPORTANCE_LOW
-        ).apply {
-            description = getString(R.string.notif_channel_desc)
-        }
-        getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
+        refreshNotificationChannel(this)
     }
 
     private fun buildNotification(isHidden: Boolean): Notification {

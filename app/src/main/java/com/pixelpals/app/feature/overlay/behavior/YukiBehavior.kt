@@ -1,6 +1,7 @@
 package com.pixelpals.app.feature.overlay.behavior
 
 import com.pixelpals.app.core.domain.PetState
+import com.pixelpals.app.R
 import com.pixelpals.app.core.motion.PetRandom
 import kotlin.math.PI
 import kotlin.math.abs
@@ -164,7 +165,14 @@ class YukiBehavior(
             mode = Mode.HAPPY
             modeTimer = 0f
             modeDuration = 1.4f + random.nextFloat() * 1.0f
-            bridge.showBubble(listOf("❄️", "brrr!", "☃️", "✨").random())
+            bridge.showBubble(
+                listOf(
+                    localizedString(R.string.bubble_yuki_snow, "❄️"),
+                    localizedString(R.string.bubble_yuki_brrr, "brrr!"),
+                    "☃️",
+                    "✨",
+                ).random()
+            )
             bridge.playHaptic(18)
             return
         }
@@ -245,7 +253,14 @@ class YukiBehavior(
 
     override fun onInteract() {
         super.onInteract()
-        bridge.showBubble(listOf("brrr!", "☃️", "¡frío!", "✨").random())
+        bridge.showBubble(
+            listOf(
+                localizedString(R.string.bubble_yuki_brrr, "brrr!"),
+                "☃️",
+                localizedString(R.string.bubble_yuki_cold, "cold!"),
+                "✨",
+            ).random()
+        )
         mode = Mode.TOUCH
         modeDuration = 0.9f + random.nextFloat() * 0.6f
         modeTimer = 0f
@@ -285,7 +300,7 @@ class YukiBehavior(
         modeDuration = 0.85f
         startWalk(resetTimer = false)
         mode = Mode.HAPPY
-        bridge.showBubble("¡wooow!")
+        bridge.showBubble(localizedString(R.string.bubble_yuki_wow, "wow!"))
     }
 
     private fun syncWindowPosition() {

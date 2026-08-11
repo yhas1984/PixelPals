@@ -1,6 +1,7 @@
 package com.pixelpals.app.feature.overlay.behavior
 
 import com.pixelpals.app.core.domain.PetState
+import com.pixelpals.app.R
 import com.pixelpals.app.core.motion.PetRandom
 import kotlin.math.PI
 import kotlin.math.abs
@@ -312,7 +313,7 @@ class GingerBehavior(
         val params = bridge.getWindowParams()
         facingDirection = if ((params?.x ?: bridge.windowX) < maxWindowX() / 2f) -1f else 1f
         changeMode(Mode.TOUCH, TOUCH_SECONDS)
-        bridge.showBubble("prrr")
+        bridge.showBubble(localizedString(R.string.bubble_ginger_purr, "prrr"))
         bridge.playHaptic(24)
     }
 
@@ -339,7 +340,7 @@ class GingerBehavior(
     override fun onFling(velocityX: Float, velocityY: Float) {
         bridge.state = PetState.IDLE
         startAirborne(velocityX * 0.34f, velocityY * 0.34f)
-        bridge.showBubble("mrrp")
+        bridge.showBubble(localizedString(R.string.bubble_ginger_mrrp, "mrrp"))
     }
 
     override fun reset() {
