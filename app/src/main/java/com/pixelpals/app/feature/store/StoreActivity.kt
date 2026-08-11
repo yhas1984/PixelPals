@@ -175,6 +175,8 @@ class StoreActivity : AppCompatActivity() {
                 }
             }
         }
+        // A GONE container measures at 0dp, which makes the adaptive request invalid.
+        container.visibility = View.VISIBLE
         container.addView(bannerView)
         // El ancho del adaptive banner se expresa en dp y debe medirse tras el
         // layout del contenedor (20dp de padding a cada lado).
