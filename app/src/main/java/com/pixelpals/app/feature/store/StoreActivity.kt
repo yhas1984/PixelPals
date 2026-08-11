@@ -18,11 +18,13 @@ import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.ads.RequestConfiguration
 import com.google.android.material.tabs.TabLayoutMediator
 import com.pixelpals.app.BuildConfig
 import com.pixelpals.app.PetService
 import com.pixelpals.app.R
 import com.pixelpals.app.core.analytics.AnalyticsTracker
+import com.pixelpals.app.core.ads.GoogleMobileAdsConsentManager
 import com.pixelpals.app.core.domain.PetType
 import com.pixelpals.app.core.services.AppServices
 import com.pixelpals.app.data.catalog.CoinProduct
@@ -30,6 +32,7 @@ import com.pixelpals.app.data.prefs.SelectedPetStore
 import com.pixelpals.app.data.repository.PixelPalsRepository
 import com.pixelpals.app.feature.store.billing.BillingRepository
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.roundToInt
 
 class StoreActivity : AppCompatActivity() {
@@ -38,9 +41,14 @@ class StoreActivity : AppCompatActivity() {
     private val repository: PixelPalsRepository by lazy { AppServices.repository(this) }
     private val analytics: AnalyticsTracker by lazy { AppServices.analytics(this) }
     private val billing: BillingRepository by lazy { AppServices.billingRepository(this) }
+    private val consentManager: GoogleMobileAdsConsentManager by lazy {
+        GoogleMobileAdsConsentManager.getInstance(applicationContext)
+    }
     private lateinit var selectedPet: PetType
     private var isStoreCreated = false
     private var adView: AdView? = null
+    private val mobileAdsInitialized = AtomicBoolean(false)
+    private var purchaseInProgress = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,7 +59,15 @@ class StoreActivity : AppCompatActivity() {
         selectedPet = selectedPetStore.load()
 
         applySystemBarsInsets()
-        setupBannerAd()
+        findViewById<View>(R.id.btnPrivacyOptions).setOnClickListener {
+            consentManager.showPrivacyOptionsForm(this) { error ->
+                if (error != null) {
+                    android.util.Log.w("UMP", "Privacy options failed: ${error.message}")
+                }
+                updatePrivacyOptionsVisibility()
+            }
+        }
+        setupConsentAndAds()
 
         findViewById<com.google.android.material.tabs.TabLayout>(R.id.storeTabs).also { tabs ->
             val pager = findViewById<androidx.viewpager2.widget.ViewPager2>(R.id.storePager)
@@ -68,6 +84,10 @@ class StoreActivity : AppCompatActivity() {
         refreshHeader()
         analytics.track("store_opened_v15")
         isStoreCreated = true
+        lifecycleScope.launch {
+            billing.reconcilePurchases()
+            refreshHeader()
+        }
     }
 
     override fun onResume() {
@@ -87,45 +107,88 @@ class StoreActivity : AppCompatActivity() {
         super.onDestroy()
     }
 
-    /**
-     * Banner adaptativo no inmersivo al pie de la tienda. En debug se usa el ID
-     * de prueba de Google (funciona sin cuenta AdMob); en release solo se
-     * muestran anuncios si se configuraron los IDs reales (pixelpals.admob.*).
-     */
-    private fun setupBannerAd() {
+    private fun setupConsentAndAds() {
         val container = findViewById<FrameLayout>(R.id.bannerAdContainer) ?: return
-        val pager = findViewById<View>(R.id.storePager)
         if (!BuildConfig.ADS_ENABLED) {
             container.visibility = View.GONE
+            updatePrivacyOptionsVisibility()
             return
         }
-        MobileAds.initialize(this) {}
-        val adView = AdView(this).apply {
+
+        updatePrivacyOptionsVisibility()
+        if (consentManager.canRequestAds) initializeMobileAdsSdk()
+        consentManager.gatherConsent(this) { error ->
+            if (error != null) {
+                android.util.Log.w("UMP", "Consent failed: ${error.errorCode} ${error.message}")
+            }
+            updatePrivacyOptionsVisibility()
+            if (consentManager.canRequestAds) initializeMobileAdsSdk()
+        }
+    }
+
+    private fun updatePrivacyOptionsVisibility() {
+        findViewById<View>(R.id.btnPrivacyOptions)?.visibility = if (
+            BuildConfig.ADS_ENABLED && consentManager.isPrivacyOptionsRequired
+        ) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
+    }
+
+    private fun initializeMobileAdsSdk() {
+        if (!BuildConfig.ADS_ENABLED || !consentManager.canRequestAds) return
+        if (!mobileAdsInitialized.compareAndSet(false, true)) return
+
+        if (BuildConfig.DEBUG && BuildConfig.UMP_TEST_DEVICE_ID.isNotBlank()) {
+            MobileAds.setRequestConfiguration(
+                RequestConfiguration.Builder()
+                    .setTestDeviceIds(listOf(BuildConfig.UMP_TEST_DEVICE_ID))
+                    .build()
+            )
+        }
+        MobileAds.initialize(this) {
+            runOnUiThread {
+                if (!isFinishing && !isDestroyed) setupBannerAd()
+            }
+        }
+    }
+
+    /** Banner adaptativo cargado solo después de que UMP permita solicitar anuncios. */
+    private fun setupBannerAd() {
+        val container = findViewById<FrameLayout>(R.id.bannerAdContainer) ?: return
+        if (adView != null) return
+        val bannerView = AdView(this).apply {
             setAdUnitId(BuildConfig.ADMOB_BANNER_AD_UNIT_ID)
             adListener = object : AdListener() {
                 override fun onAdLoaded() {
                     container.visibility = View.VISIBLE
-                    val bannerBottomPadding =
-                        (110f * resources.displayMetrics.density).roundToInt()
-                    pager?.setPadding(0, 0, 0, bannerBottomPadding)
                 }
 
                 override fun onAdFailedToLoad(adError: LoadAdError) {
+                    android.util.Log.w(
+                        "AdMob",
+                        "Banner failed: code=${adError.code} msg=${adError.message} " +
+                            "domain=${adError.domain} response=${adError.responseInfo?.responseId}"
+                    )
                     container.visibility = View.GONE
                 }
             }
         }
-        container.addView(adView)
+        container.addView(bannerView)
         // El ancho del adaptive banner se expresa en dp y debe medirse tras el
         // layout del contenedor (20dp de padding a cada lado).
         container.post {
-            val widthDp = (container.width / resources.displayMetrics.density)
+            val widthDp = ((container.width - container.paddingLeft - container.paddingRight) /
+                resources.displayMetrics.density)
                 .roundToInt()
-                .coerceAtLeast(320)
-            adView.setAdSize(AdSize.getLargeAnchoredAdaptiveBannerAdSize(this@StoreActivity, widthDp))
-            adView.loadAd(AdRequest.Builder().build())
+                .coerceAtLeast(1)
+            bannerView.setAdSize(
+                AdSize.getLargeAnchoredAdaptiveBannerAdSize(this@StoreActivity, widthDp)
+            )
+            bannerView.loadAd(AdRequest.Builder().build())
         }
-        this.adView = adView
+        this.adView = bannerView
     }
 
     /** Refresca el header (usado por las tabs tras cambios). */
@@ -151,12 +214,17 @@ class StoreActivity : AppCompatActivity() {
         }
     }
 
-    /** Compra un pack de monedas (real money) */
-    fun purchaseCoinPack(coinProduct: CoinProduct) {
+    /** Starts a coin purchase; Billing owns fulfillment and the UI only reports the result. */
+    fun purchaseCoinPack(coinProduct: CoinProduct, onFinished: (Boolean) -> Unit = {}) {
+        if (purchaseInProgress) {
+            onFinished(false)
+            return
+        }
+        purchaseInProgress = true
         billing.launchPurchase(this, coinProduct.productId) { success ->
-            if (success) {
-                lifecycleScope.launch {
-                    repository.grantCoinPack(coinProduct, selectedPet, source = "billing")
+            runOnUiThread {
+                purchaseInProgress = false
+                if (success) {
                     analytics.track("coins_purchased", mapOf("product_id" to coinProduct.productId))
                     Toast.makeText(
                         this@StoreActivity,
@@ -165,6 +233,7 @@ class StoreActivity : AppCompatActivity() {
                     ).show()
                     refreshHeader()
                 }
+                onFinished(success)
             }
         }
     }

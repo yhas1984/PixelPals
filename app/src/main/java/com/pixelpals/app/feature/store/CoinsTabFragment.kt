@@ -24,11 +24,24 @@ class CoinsTabFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View {
-        val scroll = inflater.inflate(R.layout.fragment_store_scroll, container, false) as android.widget.ScrollView
+        return inflater.inflate(
+            R.layout.fragment_store_scroll,
+            container,
+            false,
+        )
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        val scroll = view as android.widget.ScrollView
         val root = scroll.findViewById<LinearLayout>(R.id.scrollContent)
+        val activity = requireActivity() as StoreActivity
+        val billing = AppServices.billingRepository(requireContext())
+        val lifecycleOwner = viewLifecycleOwner
+        val cards = mutableListOf<Triple<CoinProduct, TextView, Button>>()
 
         CoinProduct.CATALOG.forEach { pack ->
-            val card = inflater.inflate(R.layout.item_coin_pack, root, false)
+            val card = layoutInflater.inflate(R.layout.item_coin_pack, root, false)
             card.findViewById<TextView>(R.id.txtCoinPackTitle).text = pack.displayName
             card.findViewById<TextView>(R.id.txtCoinPackSubtitle).text = pack.subtitle
             val badge = card.findViewById<TextView>(R.id.txtCoinPackBadge)
@@ -40,20 +53,30 @@ class CoinsTabFragment : Fragment() {
             }
             val price = card.findViewById<TextView>(R.id.txtCoinPackPrice)
             val buyBtn = card.findViewById<Button>(R.id.btnCoinPackBuy)
-            // Prefetch price from billing
-            val activity = requireActivity() as StoreActivity
-            val billing = AppServices.billingRepository(requireContext())
-            lifecycleScope.launch {
-                val prices = billing.prefetch(listOf(pack.productId))
-                price.text = prices[pack.productId] ?: getString(R.string.store_preview_price)
-                buyBtn.isEnabled = prices[pack.productId] != null
-                buyBtn.setOnClickListener {
-                    analytics.track("coin_pack_buy_tap", mapOf("product_id" to pack.productId))
-                    activity.purchaseCoinPack(pack)
+            buyBtn.isEnabled = false
+            buyBtn.setOnClickListener {
+                analytics.track("coin_pack_buy_tap", mapOf("product_id" to pack.productId))
+                buyBtn.isEnabled = false
+                activity.purchaseCoinPack(pack) {
+                    if (lifecycleOwner.lifecycle.currentState.isAtLeast(
+                            androidx.lifecycle.Lifecycle.State.CREATED
+                        )
+                    ) {
+                        buyBtn.isEnabled = price.text.isNotBlank()
+                    }
                 }
             }
             root.addView(card)
+            cards += Triple(pack, price, buyBtn)
         }
-        return scroll
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            val prices = billing.prefetch(CoinProduct.CATALOG.map { it.productId })
+            cards.forEach { (pack, price, buyBtn) ->
+                val formattedPrice = prices[pack.productId]
+                price.text = formattedPrice ?: getString(R.string.store_preview_price)
+                buyBtn.isEnabled = formattedPrice != null
+            }
+        }
     }
 }

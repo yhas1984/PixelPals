@@ -10,6 +10,7 @@ import com.pixelpals.app.database.DailyTaskStateEntity
 import com.pixelpals.app.database.OwnedProductEntity
 import com.pixelpals.app.database.PetBondEntity
 import com.pixelpals.app.database.PetStatusEntity
+import com.pixelpals.app.database.ProcessedPurchaseEntity
 import com.pixelpals.app.database.TreasureItem
 import com.pixelpals.app.status.CareAction
 import com.pixelpals.app.status.DailyTask
@@ -23,9 +24,9 @@ import androidx.room.withTransaction
 import kotlin.math.max
 import kotlin.math.min
 
-class PixelPalsRepository(context: Context) {
+class PixelPalsRepository(context: Context, database: AppDatabase? = null) {
     private val appContext: Context = context.applicationContext
-    private val db = AppDatabase.getDatabase(appContext)
+    private val db = database ?: AppDatabase.getDatabase(appContext)
     private val cosmeticPrefs = appContext.getSharedPreferences("pixelpals_cosmetics", Context.MODE_PRIVATE)
     private val coinPrefs = appContext.getSharedPreferences("pixelpals_coins", Context.MODE_PRIVATE)
 
@@ -267,6 +268,68 @@ class PixelPalsRepository(context: Context) {
     }
 
     suspend fun grantOwnedProduct(productId: String, source: String) {
+        grantOwnedProductInternal(productId, source)
+    }
+
+    /**
+     * Records and fulfills one Play purchase exactly once on this device.
+     * The ledger row and the wallet/entitlement update share one transaction.
+     */
+    suspend fun grantPlayPurchaseOnce(
+        purchaseToken: String,
+        productId: String,
+        quantity: Int,
+        purchaseTime: Long,
+        source: String,
+    ): Boolean {
+        if (purchaseToken.isBlank() || quantity <= 0) return false
+        ensureWalletMigrated()
+        val now = System.currentTimeMillis()
+        return db.withTransaction {
+            val inserted = db.processedPurchaseDao().insert(
+                ProcessedPurchaseEntity(
+                    purchaseToken = purchaseToken,
+                    productId = productId,
+                    quantity = quantity,
+                    purchaseTime = purchaseTime,
+                    source = source,
+                    grantedAt = now,
+                    lastSeenAt = now,
+                )
+            )
+            if (inserted == -1L) return@withTransaction false
+
+            val coinProduct = com.pixelpals.app.data.catalog.CoinProduct.CATALOG
+                .firstOrNull { it.productId == productId }
+            if (coinProduct != null) {
+                val amount = (coinProduct.coinAmount.toLong() * quantity)
+                    .coerceAtMost(Int.MAX_VALUE.toLong())
+                    .toInt()
+                val wallet = ensureBondEntity(walletId)
+                db.petBondDao().upsert(wallet.copy(softCurrency = wallet.softCurrency + amount))
+            } else {
+                grantOwnedProductInternal(productId, source)
+            }
+            true
+        }
+    }
+
+    suspend fun markPlayPurchaseConsumed(purchaseToken: String) {
+        if (purchaseToken.isBlank()) return
+        db.processedPurchaseDao().markConsumed(purchaseToken)
+    }
+
+    suspend fun markPlayPurchaseSeen(purchaseToken: String, productId: String) {
+        if (purchaseToken.isBlank() || productId.isBlank()) return
+        db.processedPurchaseDao().markSeen(purchaseToken, productId)
+    }
+
+    suspend fun markPlayPurchaseAcknowledged(purchaseToken: String, productId: String) {
+        if (purchaseToken.isBlank() || productId.isBlank()) return
+        db.processedPurchaseDao().markAcknowledged(purchaseToken, productId)
+    }
+
+    private suspend fun grantOwnedProductInternal(productId: String, source: String) {
         val productType = when {
             productId.startsWith("acc_") -> "accessory"
             productId.startsWith("pet_") -> "pet"
@@ -280,7 +343,11 @@ class PixelPalsRepository(context: Context) {
                 productType = productType,
                 source = source,
                 purchasedAt = System.currentTimeMillis(),
-                restoredAt = if (source == "restore") System.currentTimeMillis() else null
+                restoredAt = if (source == "restore" || source == "reconcile") {
+                    System.currentTimeMillis()
+                } else {
+                    null
+                }
             )
         )
     }
@@ -330,7 +397,6 @@ class PixelPalsRepository(context: Context) {
     suspend fun grantCoinPack(coinProduct: com.pixelpals.app.data.catalog.CoinProduct, petType: PetType?, source: String) {
         ensureWalletMigrated()
         db.withTransaction {
-            grantOwnedProduct(coinProduct.productId, source)
             val bond = ensureBondEntity(walletId)
             db.petBondDao().upsert(bond.copy(softCurrency = bond.softCurrency + coinProduct.coinAmount))
         }

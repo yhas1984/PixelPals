@@ -26,19 +26,38 @@ android {
         applicationId = "com.pixelpals.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 9
-        versionName = "1.6.0"
+        versionCode = 11
+        versionName = "1.7.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // AdMob: IDs de PRUEBA de Google por defecto. Para ads reales define
-        // en gradle.properties (o env): pixelpals.admob.appId y pixelpals.admob.bannerId.
-        val adMobAppId = (project.findProperty("pixelpals.admob.appId") as String?)
+        // (por orden de prioridad) pixelpals.admob.appId/bannerId en gradle.properties
+        // o las variables de entorno PIXELPALS_ADMOB_APP_ID / PIXELPALS_ADMOB_BANNER_ID.
+        val configuredAdMobAppId = (project.findProperty("pixelpals.admob.appId") as String?)
+            ?: System.getenv("PIXELPALS_ADMOB_APP_ID")
+        val configuredAdMobBannerId = (project.findProperty("pixelpals.admob.bannerId") as String?)
+            ?: System.getenv("PIXELPALS_ADMOB_BANNER_ID")
+        val adMobAppId = configuredAdMobAppId
             ?: "ca-app-pub-3940256099942544~3347511713"
-        val adMobBannerId = (project.findProperty("pixelpals.admob.bannerId") as String?)
+        val adMobBannerId = configuredAdMobBannerId
             ?: "ca-app-pub-3940256099942544/9214589741"
+        val adMobConfigured = !configuredAdMobAppId.isNullOrBlank() &&
+            !configuredAdMobBannerId.isNullOrBlank()
+        val umpTestDeviceId = (project.findProperty("pixelpals.ump.testDeviceId") as String?)
+            ?: System.getenv("PIXELPALS_UMP_TEST_DEVICE_ID")
+            ?: ""
+        val umpDebugEea = (project.findProperty("pixelpals.ump.debugEea") as String?)
+            ?.toBooleanStrictOrNull()
+            ?: System.getenv("PIXELPALS_UMP_DEBUG_EEA")?.toBooleanStrictOrNull()
+            ?: false
+        val escapedUmpTestDeviceId = umpTestDeviceId
+            .replace("\\", "\\\\")
+            .replace("\"", "\\\"")
         manifestPlaceholders["adMobAppId"] = adMobAppId
         buildConfigField("String", "ADMOB_BANNER_AD_UNIT_ID", "\"$adMobBannerId\"")
-        buildConfigField("boolean", "ADS_ENABLED", "false")
+        buildConfigField("boolean", "ADS_ENABLED", if (adMobConfigured) "true" else "false")
+        buildConfigField("String", "UMP_TEST_DEVICE_ID", "\"$escapedUmpTestDeviceId\"")
+        buildConfigField("boolean", "UMP_DEBUG_EEA", umpDebugEea.toString())
     }
 
     signingConfigs {
@@ -72,7 +91,18 @@ android {
             buildConfigField(
                 "boolean",
                 "ADS_ENABLED",
-                if (project.hasProperty("pixelpals.admob.appId")) "true" else "false"
+                if (
+                    !((project.findProperty("pixelpals.admob.appId") as String?)
+                        ?: System.getenv("PIXELPALS_ADMOB_APP_ID"))
+                        .isNullOrBlank() &&
+                    !((project.findProperty("pixelpals.admob.bannerId") as String?)
+                        ?: System.getenv("PIXELPALS_ADMOB_BANNER_ID"))
+                        .isNullOrBlank()
+                ) {
+                    "true"
+                } else {
+                    "false"
+                }
             )
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -142,4 +172,7 @@ dependencies {
 
     // AdMob (banner adaptativo en la tienda)
     implementation("com.google.android.gms:play-services-ads:25.4.0")
+
+    // User Messaging Platform (consent before requesting ads)
+    implementation("com.google.android.ump:user-messaging-platform:4.0.0")
 }

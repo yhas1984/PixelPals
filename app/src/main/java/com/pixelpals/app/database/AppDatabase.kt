@@ -13,9 +13,10 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         PetStatusEntity::class,
         PetBondEntity::class,
         DailyTaskStateEntity::class,
-        OwnedProductEntity::class
+        OwnedProductEntity::class,
+        ProcessedPurchaseEntity::class,
     ],
-    version = 5,
+    version = 6,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -24,6 +25,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun petBondDao(): PetBondDao
     abstract fun dailyTaskStateDao(): DailyTaskStateDao
     abstract fun ownedProductDao(): OwnedProductDao
+    abstract fun processedPurchaseDao(): ProcessedPurchaseDao
 
     companion object {
         @Volatile
@@ -129,6 +131,28 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /** v5 -> v6: durable Play purchase ledger for idempotent fulfillment. */
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `processed_purchase` (
+                        `purchaseToken` TEXT NOT NULL,
+                        `productId` TEXT NOT NULL,
+                        `quantity` INTEGER NOT NULL,
+                        `purchaseTime` INTEGER NOT NULL,
+                        `source` TEXT NOT NULL,
+                        `grantedAt` INTEGER,
+                        `consumedAt` INTEGER,
+                        `acknowledgedAt` INTEGER,
+                        `lastSeenAt` INTEGER NOT NULL,
+                        PRIMARY KEY(`purchaseToken`, `productId`)
+                    )
+                    """.trimIndent()
+                )
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -136,7 +160,13 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "pixelpals_database"
                 )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                .addMigrations(
+                    MIGRATION_1_2,
+                    MIGRATION_2_3,
+                    MIGRATION_3_4,
+                    MIGRATION_4_5,
+                    MIGRATION_5_6,
+                )
                 .build()
                 INSTANCE = instance
                 instance

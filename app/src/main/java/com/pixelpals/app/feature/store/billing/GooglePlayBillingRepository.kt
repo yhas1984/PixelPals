@@ -15,28 +15,30 @@ import com.android.billingclient.api.PurchasesUpdatedListener
 import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryProductDetailsResult
 import com.android.billingclient.api.QueryPurchasesParams
+import com.pixelpals.app.core.analytics.AnalyticsTracker
 import com.pixelpals.app.data.catalog.CoinProduct
 import com.pixelpals.app.data.repository.PixelPalsRepository
-import com.pixelpals.app.core.analytics.AnalyticsTracker
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.coroutines.resume
 
 class GooglePlayBillingRepository(
     context: Context,
     private val repository: PixelPalsRepository,
-    private val analytics: AnalyticsTracker
+    private val analytics: AnalyticsTracker,
 ) : BillingRepository, PurchasesUpdatedListener {
 
     companion object {
         private const val BILLING_TIMEOUT_MS = 10_000L
         private val ALLOWED_PRODUCT_IDS = setOf(
-            // Premium pets (los nuevos se compran con monedas; IDs por compatibilidad)
+            // Premium pets remain supported for already-configured products.
             "pet_angel_premium",
             "pet_diablillo_premium",
             "pet_yuki_premium",
@@ -44,7 +46,7 @@ class GooglePlayBillingRepository(
             "pet_taro_premium",
             "pet_menta_premium",
             "pet_tela_premium",
-            // Coin packs
+            // Consumable coin packs.
             "coins_small",
             "coins_medium",
             "coins_large",
@@ -52,22 +54,41 @@ class GooglePlayBillingRepository(
         )
     }
 
+    private data class CachedProduct(
+        val details: ProductDetails,
+        val offerToken: String,
+        val formattedPrice: String,
+    )
+
+    private data class PurchaseProcessingResult(
+        val eligible: Boolean,
+        val newlyGranted: Int,
+    )
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private val productDetailsCache = mutableMapOf<String, ProductDetails>()
-    private val priceCache = mutableMapOf<String, String>()
+    private val connectionMutex = Mutex()
+    private val productCache = mutableMapOf<String, CachedProduct>()
     private var purchaseCallbackToken = 0
+    private var purchaseInProgress = false
+    private var activeProductId: String? = null
     private var onPurchaseFinished: ((Boolean) -> Unit)? = null
 
     private val billingClient: BillingClient = BillingClient.newBuilder(context)
         .setListener(this)
-        .enablePendingPurchases(PendingPurchasesParams.newBuilder().enableOneTimeProducts().build())
+        .enablePendingPurchases(
+            PendingPurchasesParams.newBuilder().enableOneTimeProducts().build()
+        )
         .build()
 
     override suspend fun prefetch(productIds: List<String>): Map<String, String> {
         val whitelisted = productIds.distinct().filter(ALLOWED_PRODUCT_IDS::contains)
         if (whitelisted.isEmpty()) return emptyMap()
-        val setup = withTimeoutOrNull(BILLING_TIMEOUT_MS) { ensureConnected() } ?: return emptyMap()
+
+        val setup = withTimeoutOrNull(BILLING_TIMEOUT_MS) { ensureConnected() }
+            ?: return emptyMap()
         if (setup.responseCode != BillingClient.BillingResponseCode.OK) return emptyMap()
+        whitelisted.forEach { productCache.remove(it) }
+
         val params = QueryProductDetailsParams.newBuilder().setProductList(
             whitelisted.map { productId ->
                 QueryProductDetailsParams.Product.newBuilder()
@@ -76,127 +97,251 @@ class GooglePlayBillingRepository(
                     .build()
             }
         ).build()
-        val result = withTimeoutOrNull(BILLING_TIMEOUT_MS) { queryProductDetails(params) } ?: return emptyMap()
+        val result = withTimeoutOrNull(BILLING_TIMEOUT_MS) { queryProductDetails(params) }
+            ?: return emptyMap()
         if (result.first.responseCode != BillingClient.BillingResponseCode.OK) return emptyMap()
+
         result.second.forEach { details ->
-            productDetailsCache[details.productId] = details
-            priceCache[details.productId] = details.oneTimePurchaseOfferDetails?.formattedPrice ?: ""
+            val offer = selectOffer(details.oneTimePurchaseOfferDetailsList)
+            val offerToken = offer?.offerToken
+            val formattedPrice = offer?.formattedPrice
+            if (offerToken.isNullOrBlank() || formattedPrice.isNullOrBlank()) {
+                productCache.remove(details.productId)
+                analytics.track(
+                    "store_product_unavailable",
+                    mapOf("product_id" to details.productId),
+                )
+            } else {
+                productCache[details.productId] = CachedProduct(
+                    details = details,
+                    offerToken = offerToken,
+                    formattedPrice = formattedPrice,
+                )
+            }
         }
-        return whitelisted.associateWith { priceCache[it] ?: "" }
+
+        return whitelisted.mapNotNull { productId ->
+            productCache[productId]?.let { productId to it.formattedPrice }
+        }.toMap()
     }
 
-    override fun launchPurchase(activity: Activity, productId: String, onFinished: (Boolean) -> Unit) {
-        val details = productDetailsCache[productId] ?: run {
+    override fun launchPurchase(
+        activity: Activity,
+        productId: String,
+        onFinished: (Boolean) -> Unit,
+    ) {
+        if (purchaseInProgress) {
             onFinished(false)
             return
         }
+        val cached = productCache[productId] ?: run {
+            onFinished(false)
+            return
+        }
+
+        purchaseInProgress = true
+        activeProductId = productId
         val callbackId = ++purchaseCallbackToken
-        onPurchaseFinished = { success -> if (callbackId == purchaseCallbackToken) onFinished(success) }
-        val result = billingClient.launchBillingFlow(activity, BillingFlowParams.newBuilder().setProductDetailsParamsList(
-            listOf(BillingFlowParams.ProductDetailsParams.newBuilder().setProductDetails(details).build())
-        ).build())
-        if (result.responseCode != BillingClient.BillingResponseCode.OK) finishPurchase(callbackId, false)
+        onPurchaseFinished = { success ->
+            if (callbackId == purchaseCallbackToken) {
+                purchaseInProgress = false
+                activeProductId = null
+                onFinished(success)
+            }
+        }
+
+        val params = BillingFlowParams.newBuilder()
+            .setProductDetailsParamsList(
+                listOf(
+                    BillingFlowParams.ProductDetailsParams.newBuilder()
+                        .setProductDetails(cached.details)
+                        .setOfferToken(cached.offerToken)
+                        .build()
+                )
+            )
+            .build()
+        val result = billingClient.launchBillingFlow(activity, params)
+        if (result.responseCode != BillingClient.BillingResponseCode.OK) {
+            finishPurchase(callbackId, false)
+        }
     }
 
-    override suspend fun restorePurchases(): Int {
-        val setup = withTimeoutOrNull(BILLING_TIMEOUT_MS) { ensureConnected() } ?: return 0
+    override suspend fun reconcilePurchases(): Int {
+        val setup = withTimeoutOrNull(BILLING_TIMEOUT_MS) { ensureConnected() }
+            ?: return 0
         if (setup.responseCode != BillingClient.BillingResponseCode.OK) return 0
-        val result = withTimeoutOrNull(BILLING_TIMEOUT_MS) { queryPurchases() } ?: return 0
+
+        val result = withTimeoutOrNull(BILLING_TIMEOUT_MS) { queryPurchases() }
+            ?: return 0
         if (result.first.responseCode != BillingClient.BillingResponseCode.OK) return 0
+
         var restored = 0
         result.second.forEach { purchase ->
-            if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED) restored += grantPurchase(purchase, "restore")
+            if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {
+                restored += processPurchase(purchase, "reconcile").newlyGranted
+            }
         }
-        analytics.track("store_restore", mapOf("restored_count" to restored.toString()))
+        analytics.track("store_reconcile", mapOf("granted_count" to restored.toString()))
         return restored
     }
 
-    override fun onPurchasesUpdated(billingResult: BillingResult, purchases: MutableList<Purchase>?) {
-        if (billingResult.responseCode == BillingClient.BillingResponseCode.USER_CANCELED) return finishPurchase(purchaseCallbackToken, false)
-        if (billingResult.responseCode != BillingClient.BillingResponseCode.OK || purchases.isNullOrEmpty()) return finishPurchase(purchaseCallbackToken, false)
+    override fun onPurchasesUpdated(
+        billingResult: BillingResult,
+        purchases: MutableList<Purchase>?,
+    ) {
+        val callbackId = purchaseCallbackToken
+        if (billingResult.responseCode == BillingClient.BillingResponseCode.USER_CANCELED) {
+            return finishPurchase(callbackId, false)
+        }
+        if (billingResult.responseCode != BillingClient.BillingResponseCode.OK || purchases.isNullOrEmpty()) {
+            return finishPurchase(callbackId, false)
+        }
+
         scope.launch {
-            val granted = purchases.sumOf { purchase ->
+            var newlyGranted = 0
+            var eligible = false
+            purchases.forEach { purchase ->
                 when (purchase.purchaseState) {
-                    Purchase.PurchaseState.PURCHASED -> grantPurchase(purchase, "billing")
+                    Purchase.PurchaseState.PURCHASED -> {
+                        val result = processPurchase(purchase, "billing")
+                        newlyGranted += result.newlyGranted
+                        eligible = eligible || result.eligible
+                    }
                     Purchase.PurchaseState.PENDING -> {
                         analytics.track("store_purchase_pending", emptyMap())
-                        0
                     }
-                    else -> 0
+                    else -> Unit
                 }
             }
-            finishPurchase(purchaseCallbackToken, granted > 0)
+            if (newlyGranted > 0) {
+                analytics.track(
+                    "store_purchase_batch_granted",
+                    mapOf("count" to newlyGranted.toString()),
+                )
+            }
+            val matchesActiveRequest = purchases.any { purchase ->
+                activeProductId?.let(purchase.products::contains) == true
+            }
+            if (matchesActiveRequest) finishPurchase(callbackId, eligible)
         }
     }
 
-    private suspend fun grantPurchase(purchase: Purchase, source: String): Int {
-        if (purchase.purchaseState != Purchase.PurchaseState.PURCHASED) return 0
-        var granted = 0
+    private suspend fun processPurchase(
+        purchase: Purchase,
+        source: String,
+    ): PurchaseProcessingResult {
+        if (purchase.purchaseState != Purchase.PurchaseState.PURCHASED) {
+            return PurchaseProcessingResult(eligible = false, newlyGranted = 0)
+        }
+
+        var eligible = false
+        var newlyGranted = 0
         var hasConsumable = false
-        for (productId in purchase.products) {
-            if (!isWhitelisted(productId)) continue
-            repository.grantOwnedProduct(productId, source)
-            // Los coin packs también otorgan su cantidad al balance del pet activo.
-            CoinProduct.CATALOG.firstOrNull { it.productId == productId }?.let { coinPack ->
-                repository.grantCoins(petType = null, amount = coinPack.coinAmount)
+        var hasNonConsumable = false
+
+        purchase.products.forEach { productId ->
+            if (!isWhitelisted(productId)) return@forEach
+            eligible = true
+            val isConsumable = CoinProduct.CATALOG.any { it.productId == productId }
+            if (isConsumable) hasConsumable = true else hasNonConsumable = true
+
+            if (
+                repository.grantPlayPurchaseOnce(
+                    purchaseToken = purchase.purchaseToken,
+                    productId = productId,
+                    quantity = purchase.quantity,
+                    purchaseTime = purchase.purchaseTime,
+                    source = source,
+                )
+            ) {
+                newlyGranted++
+                analytics.track(
+                    "store_purchase_granted",
+                    mapOf("product_id" to productId, "source" to source),
+                )
             }
-            analytics.track("store_purchase_granted", mapOf("product_id" to productId, "source" to source))
-            granted++
-            if (productId.startsWith("coins_")) hasConsumable = true
+            repository.markPlayPurchaseSeen(purchase.purchaseToken, productId)
         }
-        if (granted > 0) {
-            acknowledgeSafely(purchase)
-            // Los coin packs son consumibles: Play bloquea comprar el mismo SKU de nuevo
-            // hasta consumirlo. Consumimos aquí para permitir compras repetidas.
-            if (hasConsumable) consumeSafely(purchase)
+
+        if (!eligible) return PurchaseProcessingResult(eligible = false, newlyGranted = 0)
+
+        if (hasConsumable) {
+            val result = withTimeoutOrNull(BILLING_TIMEOUT_MS) { consumeSafely(purchase) }
+                ?: errorResult("Consume timed out")
+            val consumed = result.responseCode == BillingClient.BillingResponseCode.OK ||
+                result.responseCode == BillingClient.BillingResponseCode.ITEM_NOT_OWNED
+            analytics.track("store_consume", mapOf("code" to result.responseCode.toString()))
+            if (consumed) repository.markPlayPurchaseConsumed(purchase.purchaseToken)
         }
-        return granted
+
+        if (hasNonConsumable) {
+            purchase.products.filterNot { productId ->
+                CoinProduct.CATALOG.any { it.productId == productId }
+            }.filter(::isWhitelisted).forEach { productId ->
+                if (purchase.isAcknowledged) {
+                    repository.markPlayPurchaseAcknowledged(purchase.purchaseToken, productId)
+                } else {
+                    val result = withTimeoutOrNull(BILLING_TIMEOUT_MS) {
+                        acknowledgeSafely(purchase)
+                    } ?: errorResult("Acknowledge timed out")
+                    analytics.track(
+                        "store_acknowledge",
+                        mapOf("code" to result.responseCode.toString()),
+                    )
+                    if (result.responseCode == BillingClient.BillingResponseCode.OK) {
+                        repository.markPlayPurchaseAcknowledged(purchase.purchaseToken, productId)
+                    }
+                }
+            }
+        }
+
+        return PurchaseProcessingResult(eligible = true, newlyGranted = newlyGranted)
     }
 
-    private suspend fun consumeSafely(purchase: Purchase) {
-        suspendCancellableCoroutine<Unit> { cont ->
+    private suspend fun consumeSafely(purchase: Purchase): BillingResult =
+        suspendCancellableCoroutine { cont ->
             billingClient.consumeAsync(
-                ConsumeParams.newBuilder().setPurchaseToken(purchase.purchaseToken).build()
+                ConsumeParams.newBuilder()
+                    .setPurchaseToken(purchase.purchaseToken)
+                    .build()
             ) { billingResult, _ ->
-                analytics.track("store_consume", mapOf("code" to billingResult.responseCode.toString()))
-                if (cont.isActive) cont.resume(Unit)
+                if (cont.isActive) cont.resume(billingResult)
             }
         }
-    }
 
-    private suspend fun acknowledgeSafely(purchase: Purchase) {
-        if (purchase.isAcknowledged) return
-        suspendCancellableCoroutine<Unit> { cont ->
+    private suspend fun acknowledgeSafely(purchase: Purchase): BillingResult =
+        suspendCancellableCoroutine { cont ->
             billingClient.acknowledgePurchase(
-                AcknowledgePurchaseParams.newBuilder().setPurchaseToken(purchase.purchaseToken).build()
+                AcknowledgePurchaseParams.newBuilder()
+                    .setPurchaseToken(purchase.purchaseToken)
+                    .build()
             ) { billingResult ->
-                analytics.track("store_acknowledge", mapOf("code" to billingResult.responseCode.toString()))
-                if (cont.isActive) cont.resume(Unit)
+                if (cont.isActive) cont.resume(billingResult)
             }
         }
-    }
 
     private suspend fun ensureConnected(): BillingResult {
-        if (billingClient.isReady) return okResult()
-        return suspendCancellableCoroutine { cont ->
-            billingClient.startConnection(object : BillingClientStateListener {
-                override fun onBillingSetupFinished(billingResult: BillingResult) { if (cont.isActive) cont.resume(billingResult) }
-                override fun onBillingServiceDisconnected() {
-                    analytics.track("billing_disconnected")
-                    if (cont.isActive) {
-                        cont.resume(
-                            BillingResult.newBuilder()
-                                .setResponseCode(BillingClient.BillingResponseCode.SERVICE_DISCONNECTED)
-                                .setDebugMessage("Billing service disconnected")
-                                .build()
-                        )
+        return connectionMutex.withLock {
+            if (billingClient.isReady) return@withLock okResult()
+            suspendCancellableCoroutine { cont ->
+                billingClient.startConnection(object : BillingClientStateListener {
+                    override fun onBillingSetupFinished(billingResult: BillingResult) {
+                        if (cont.isActive) cont.resume(billingResult)
+                    }
+
+                    override fun onBillingServiceDisconnected() {
+                        analytics.track("billing_disconnected")
+                        if (cont.isActive) cont.resume(errorResult("Billing service disconnected"))
                     }
                 }
-            })
+                )
+            }
         }
     }
 
-    private suspend fun queryProductDetails(params: QueryProductDetailsParams): Pair<BillingResult, List<ProductDetails>> =
+    private suspend fun queryProductDetails(
+        params: QueryProductDetailsParams,
+    ): Pair<BillingResult, List<ProductDetails>> =
         suspendCancellableCoroutine { cont ->
             billingClient.queryProductDetailsAsync(params) { billingResult, result: QueryProductDetailsResult ->
                 if (cont.isActive) cont.resume(billingResult to result.productDetailsList)
@@ -204,7 +349,28 @@ class GooglePlayBillingRepository(
         }
 
     private suspend fun queryPurchases(): Pair<BillingResult, List<Purchase>> =
-        suspendCancellableCoroutine { cont -> billingClient.queryPurchasesAsync(QueryPurchasesParams.newBuilder().setProductType(BillingClient.ProductType.INAPP).build()) { billingResult, purchases -> if (cont.isActive) cont.resume(billingResult to purchases) } }
+        suspendCancellableCoroutine { cont ->
+            billingClient.queryPurchasesAsync(
+                QueryPurchasesParams.newBuilder()
+                    .setProductType(BillingClient.ProductType.INAPP)
+                    .build()
+            ) { billingResult, purchases ->
+                if (cont.isActive) cont.resume(billingResult to purchases)
+            }
+        }
+
+    /** Prefer the single base offer and fail closed when Play returns ambiguity. */
+    private fun selectOffer(
+        offers: List<ProductDetails.OneTimePurchaseOfferDetails>?,
+    ): ProductDetails.OneTimePurchaseOfferDetails? {
+        val availableOffers = offers.orEmpty()
+        val baseOffers = availableOffers.filter { it.offerId == null && it.purchaseOptionId == null }
+        return when {
+            baseOffers.size == 1 -> baseOffers.single()
+            availableOffers.size == 1 -> availableOffers.single()
+            else -> null
+        }
+    }
 
     private fun finishPurchase(token: Int, success: Boolean) {
         if (token != purchaseCallbackToken) return
@@ -214,7 +380,15 @@ class GooglePlayBillingRepository(
 
     private fun isWhitelisted(productId: String): Boolean = productId in ALLOWED_PRODUCT_IDS
 
-    private fun okResult(): BillingResult = BillingResult.newBuilder().setResponseCode(BillingClient.BillingResponseCode.OK).setDebugMessage("already_connected").build()
+    private fun okResult(): BillingResult = BillingResult.newBuilder()
+        .setResponseCode(BillingClient.BillingResponseCode.OK)
+        .setDebugMessage("already_connected")
+        .build()
+
+    private fun errorResult(message: String): BillingResult = BillingResult.newBuilder()
+        .setResponseCode(BillingClient.BillingResponseCode.SERVICE_DISCONNECTED)
+        .setDebugMessage(message)
+        .build()
 
     fun close() {
         billingClient.endConnection()

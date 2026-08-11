@@ -199,6 +199,7 @@
     <string name="coins_pack_mega_subtitle">2500 monedas +5%% extra</string>
     <string name="coins_pack_best_value">Mejor valor</string>
     <string name="coins_purchase_success">¡+%1$d monedas añadidas!</string>
+    <string name="store_privacy_options">Opciones de privacidad</string>
     <string name="coins_wallet_format">💰 %1$d monedas</string>
 
     <!-- Tienda V1.5: packs premium -->

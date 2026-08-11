@@ -58,6 +58,16 @@
                 android:textSize="15sp"
                 android:textStyle="bold" />
 
+            <Button
+                android:id="@+id/btnPrivacyOptions"
+                style="?android:attr/borderlessButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="0dp"
+                android:text="@string/store_privacy_options"
+                android:textColor="@color/golden_accent"
+                android:visibility="gone" />
+
             <com.google.android.material.tabs.TabLayout
                 android:id="@+id/storeTabs"
                 android:layout_width="match_parent"
@@ -94,7 +104,8 @@
         android:layout_marginBottom="20dp"
         android:background="@drawable/bg_status_info"
         android:orientation="horizontal"
-        android:padding="12dp">
+        android:padding="12dp"
+        android:visibility="gone">
 
         <ProgressBar
             android:id="@+id/progressStoreLoading"
