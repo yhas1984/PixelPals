@@ -30,6 +30,7 @@ class AppDatabaseMigrationTest {
                 AppDatabase.MIGRATION_2_3,
                 AppDatabase.MIGRATION_3_4,
                 AppDatabase.MIGRATION_4_5,
+                AppDatabase.MIGRATION_5_6,
             )
             .build()
 
@@ -42,6 +43,7 @@ class AppDatabaseMigrationTest {
             assertEquals(1, queryCount(db.openHelper.writableDatabase, "pet_bond"))
             assertEquals(1, queryCount(db.openHelper.writableDatabase, "daily_task_state"))
             assertEquals(1, queryCount(db.openHelper.writableDatabase, "owned_product"))
+            assertEquals(1, queryCount(db.openHelper.writableDatabase, "processed_purchase"))
             // v4->v5 eliminó el sistema de accesorios (reemplazado por cosméticos en prefs).
             assertEquals(0, queryCount(db.openHelper.writableDatabase, "equipped_accessory"))
         } finally {
@@ -61,6 +63,7 @@ class AppDatabaseMigrationTest {
                 AppDatabase.MIGRATION_2_3,
                 AppDatabase.MIGRATION_3_4,
                 AppDatabase.MIGRATION_4_5,
+                AppDatabase.MIGRATION_5_6,
             )
             .build()
 
