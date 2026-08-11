@@ -1,5 +1,6 @@
 package com.pixelpals.app.core.domain
 
+import androidx.annotation.StringRes
 import com.pixelpals.app.R
 
 /**
@@ -8,8 +9,8 @@ import com.pixelpals.app.R
  * Cada tipo define: nombre, sprite, estilo visual, y parámetros de física/comportamiento.
  */
 enum class PetType(
-    val displayName: String,
-    val description: String,
+    @param:StringRes val displayNameResId: Int,
+    @param:StringRes val descriptionResId: Int,
     val spriteResId: Int,
     val gravity: Float,
     val terminalVelocity: Float,
@@ -23,8 +24,8 @@ enum class PetType(
     val interactionStyle: InteractionStyle
 ) {
     BLOOP(
-        displayName = "Bloop",
-        description = "El Fantasmita Tímido",
+        displayNameResId = R.string.pet_name_bloop,
+        descriptionResId = R.string.bloop_desc,
         spriteResId = R.drawable.pet_bloop,
         gravity = 0.0f,           // Floats! No gravity
         terminalVelocity = 0f,
@@ -37,8 +38,8 @@ enum class PetType(
     ),
 
     NUBE_MICHI(
-        displayName = "Nube-Michi",
-        description = "El Gatito de Nube",
+        displayNameResId = R.string.pet_name_nube_michi,
+        descriptionResId = R.string.nube_michi_desc,
         spriteResId = R.drawable.pet_nube_michi,
         gravity = 0.2f,           // Falls like a feather
         terminalVelocity = 4f,
@@ -51,8 +52,8 @@ enum class PetType(
     ),
 
     JELLY(
-        displayName = "Jelly",
-        description = "El Slime de Gelatina",
+        displayNameResId = R.string.pet_name_jelly,
+        descriptionResId = R.string.jelly_desc,
         spriteResId = R.drawable.pet_jelly,
         gravity = 2.2f,           // High dynamic gravity for quick snappy falls
         terminalVelocity = 30f,
@@ -66,8 +67,8 @@ enum class PetType(
     ),
 
     CORGI(
-        displayName = "Corgi",
-        description = "El Perrito Explorador",
+        displayNameResId = R.string.pet_name_corgi,
+        descriptionResId = R.string.corgi_desc,
         spriteResId = R.drawable.pet_corgi,
         gravity = 1.2f,           // heavy
         terminalVelocity = 15f,
@@ -80,8 +81,8 @@ enum class PetType(
     ),
 
     GINGER(
-        displayName = "Ginger",
-        description = "La Gata Elegante",
+        displayNameResId = R.string.pet_name_ginger,
+        descriptionResId = R.string.ginger_desc,
         spriteResId = R.drawable.pet_ginger,
         gravity = 1.4f,           // Heavy like a real cat
         terminalVelocity = 18f,
@@ -94,8 +95,8 @@ enum class PetType(
     ),
 
     ANGEL(
-        displayName = "Querubin",
-        description = "El Querubin Luminoso",
+        displayNameResId = R.string.pet_name_angel,
+        descriptionResId = R.string.angel_desc,
         spriteResId = R.drawable.pet_angel,
         gravity = 0.1f,
         terminalVelocity = 3f,
@@ -108,8 +109,8 @@ enum class PetType(
     ),
 
     PATITO(
-        displayName = "Patito",
-        description = "El Patito Curioso",
+        displayNameResId = R.string.pet_name_patito,
+        descriptionResId = R.string.patito_desc,
         spriteResId = R.drawable.pet_patito,
         gravity = 1.2f,           // Rubber duck physics
         terminalVelocity = 16f,
@@ -123,8 +124,8 @@ enum class PetType(
     ),
 
     DIABLILLO(
-        displayName = "Diablillo",
-        description = "El Diablillo Travieso",
+        displayNameResId = R.string.pet_name_diablillo,
+        descriptionResId = R.string.diablillo_desc,
         spriteResId = R.drawable.pet_diablillo,
         gravity = 0.8f,           // Light gravity - can "fly" a bit
         terminalVelocity = 12f,
@@ -138,8 +139,8 @@ enum class PetType(
     ),
 
     MOKI(
-        displayName = "Moki",
-        description = "El Camaleón Adhesivo",
+        displayNameResId = R.string.pet_name_moki,
+        descriptionResId = R.string.moki_desc,
         spriteResId = R.drawable.pet_moki,
         gravity = 0.6f,
         terminalVelocity = 12f,
@@ -153,8 +154,8 @@ enum class PetType(
     ),
 
     YUKI(
-        displayName = "Yuki",
-        description = "El Muñeco de Nieve",
+        displayNameResId = R.string.pet_name_yuki,
+        descriptionResId = R.string.yuki_desc,
         spriteResId = R.drawable.pet_yuki,
         gravity = 1.4f,           // Pesado pero resbaladizo
         terminalVelocity = 14f,
@@ -168,8 +169,8 @@ enum class PetType(
     ),
 
     PIRU(
-        displayName = "Piru",
-        description = "El Pingüinito Curioso",
+        displayNameResId = R.string.pet_name_piru,
+        descriptionResId = R.string.piru_desc,
         spriteResId = R.drawable.pet_piru,
         gravity = 1.1f,
         terminalVelocity = 15f,
@@ -183,8 +184,8 @@ enum class PetType(
     ),
 
     TARO(
-        displayName = "Taro",
-        description = "La Tortuguita de Jardín",
+        displayNameResId = R.string.pet_name_taro,
+        descriptionResId = R.string.taro_desc,
         spriteResId = R.drawable.pet_taro,
         gravity = 1.6f,           // Muy pesada y lenta
         terminalVelocity = 12f,
@@ -198,8 +199,8 @@ enum class PetType(
     ),
 
     MENTA(
-        displayName = "Menta",
-        description = "La Serpientita de Menta",
+        displayNameResId = R.string.pet_name_menta,
+        descriptionResId = R.string.menta_desc,
         spriteResId = R.drawable.pet_menta,
         gravity = 0.9f,
         terminalVelocity = 13f,
@@ -213,8 +214,8 @@ enum class PetType(
     ),
 
     TELA(
-        displayName = "Tela",
-        description = "La Arañita Tejedora",
+        displayNameResId = R.string.pet_name_tela,
+        descriptionResId = R.string.tela_desc,
         spriteResId = R.drawable.pet_tela,
         gravity = 0.2f,           // Casi sin gravedad: trepa y cuelga
         terminalVelocity = 6f,

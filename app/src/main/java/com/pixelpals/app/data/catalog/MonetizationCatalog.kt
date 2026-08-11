@@ -1,18 +1,21 @@
 package com.pixelpals.app.data.catalog
 
+import androidx.annotation.StringRes
+import com.pixelpals.app.R
+
 /**
  * Producto de monedas (IAP real).
  *
  * @param productId Identificador del SKU en Play Console (e.g. "coins_small").
- * @param displayName Nombre legible del pack.
- * @param subtitle Subtítulo con la cantidad de monedas.
+ * @param displayNameResId Recurso localizado con el nombre legible del pack.
+ * @param subtitleResId Recurso localizado con la cantidad de monedas.
  * @param coinAmount Cantidad de monedas que el pack otorga.
  * @param bestValueFlag Si es el pack con mejor ratio monedas/precio.
  */
 data class CoinProduct(
     val productId: String,
-    val displayName: String,
-    val subtitle: String,
+    @param:StringRes val displayNameResId: Int,
+    @param:StringRes val subtitleResId: Int,
     val coinAmount: Int,
     val bestValueFlag: Boolean = false,
 ) {
@@ -21,27 +24,27 @@ data class CoinProduct(
         val CATALOG: List<CoinProduct> = listOf(
             CoinProduct(
                 productId = "coins_small",
-                displayName = "Starter Pack",
-                subtitle = "100 coins",
+                displayNameResId = R.string.coins_pack_small_title,
+                subtitleResId = R.string.coins_pack_small_subtitle,
                 coinAmount = 100,
             ),
             CoinProduct(
                 productId = "coins_medium",
-                displayName = "Sweet Pack",
-                subtitle = "350 coins",
+                displayNameResId = R.string.coins_pack_medium_title,
+                subtitleResId = R.string.coins_pack_medium_subtitle,
                 coinAmount = 350,
             ),
             CoinProduct(
                 productId = "coins_large",
-                displayName = "Mega Pack",
-                subtitle = "1000 coins",
+                displayNameResId = R.string.coins_pack_large_title,
+                subtitleResId = R.string.coins_pack_large_subtitle,
                 coinAmount = 1000,
                 bestValueFlag = true,
             ),
             CoinProduct(
                 productId = "coins_mega",
-                displayName = "Giga Pack",
-                subtitle = "2500 coins +5% bonus",
+                displayNameResId = R.string.coins_pack_mega_title,
+                subtitleResId = R.string.coins_pack_mega_subtitle,
                 coinAmount = 2500,
             ),
         )

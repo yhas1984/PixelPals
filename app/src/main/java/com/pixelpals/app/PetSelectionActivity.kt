@@ -96,7 +96,7 @@ class PetSelectionActivity : AppCompatActivity() {
 
             txtCurrentMood.text = getString(
                 R.string.selection_current_pet_format,
-                selected.displayName,
+                getString(selected.displayNameResId),
                 moodLabel(snapshot.mood),
                 snapshot.bond
             )
@@ -214,7 +214,7 @@ class PetSelectionActivity : AppCompatActivity() {
         selectedPetStore.save(type)
         analytics.track(
             "pet_selected",
-            mapOf("pet_id" to type.name.lowercase(), "display_name" to type.displayName)
+            mapOf("pet_id" to type.name.lowercase(), "display_name" to getString(type.displayNameResId))
         )
         launchPet(type)
     }
@@ -227,7 +227,7 @@ class PetSelectionActivity : AppCompatActivity() {
 
         Toast.makeText(
             this,
-            getString(R.string.selection_launching_pet_format, type.displayName),
+            getString(R.string.selection_launching_pet_format, getString(type.displayNameResId)),
             Toast.LENGTH_SHORT
         ).show()
 

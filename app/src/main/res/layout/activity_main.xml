@@ -37,8 +37,64 @@
             android:textSize="16sp"
             android:textColor="@color/text_secondary"
             android:layout_marginTop="8dp"
-            android:layout_marginBottom="40dp"
+            android:layout_marginBottom="20dp"
             android:gravity="center" />
+
+        <LinearLayout
+            android:id="@+id/languageSelector"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="28dp"
+            android:background="@drawable/bg_card"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="14dp"
+            android:paddingVertical="8dp">
+
+            <TextView
+                android:id="@+id/txtLanguageTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/language_title"
+                android:textColor="@color/text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <RadioGroup
+                android:id="@+id/languageOptions"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <RadioButton
+                    android:id="@+id/btnLanguageSystem"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:buttonTint="@color/purple_soft"
+                    android:text="@string/language_system"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
+
+                <RadioButton
+                    android:id="@+id/btnLanguageEnglish"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:buttonTint="@color/purple_soft"
+                    android:text="@string/language_english"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
+
+                <RadioButton
+                    android:id="@+id/btnLanguageSpanish"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:buttonTint="@color/purple_soft"
+                    android:text="@string/language_spanish"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
+            </RadioGroup>
+        </LinearLayout>
 
         <LinearLayout
             android:id="@+id/cardPermissionSummary"

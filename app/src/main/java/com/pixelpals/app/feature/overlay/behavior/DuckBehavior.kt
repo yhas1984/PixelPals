@@ -207,7 +207,7 @@ class DuckBehavior(
         }
 
         if (random.nextFloat() < 0.0004f) {
-            bridge.showBubble("cuac")
+            bridge.showBubble(localizedString(R.string.bubble_duck_quack, "quack"))
         }
     }
 
@@ -235,7 +235,7 @@ class DuckBehavior(
 
         mode = DuckMode.TAKEOFF
         modeTimer = 0f
-        bridge.showBubble("cuac!")
+        bridge.showBubble(localizedString(R.string.bubble_duck_quack_excited, "quack!"))
     }
 
     override fun onFling(velocityX: Float, velocityY: Float) {

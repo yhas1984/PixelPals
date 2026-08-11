@@ -173,7 +173,7 @@ class JellyBehavior(
         val params = bridge.getWindowParams()
         meltStartX = params?.x?.toFloat() ?: bridge.windowX.toFloat()
         meltStartY = params?.y?.toFloat() ?: bridge.windowY.toFloat()
-        bridge.showBubble("splash")
+        bridge.showBubble(localizedString(R.string.bubble_jelly_splash, "splash"))
     }
 
     override fun onFling(velocityX: Float, velocityY: Float) {
@@ -191,7 +191,7 @@ class JellyBehavior(
         mode = JellyMode.HOPPING
         modeTimer = 0f
         bridge.state = PetState.IDLE
-        bridge.showBubble("boing")
+        bridge.showBubble(localizedString(R.string.bubble_jelly_boing, "boing"))
         bridge.animRotation = (velocityX * 0.02f).coerceIn(-20f, 20f)
         bridge.animScaleX = 1.25f
         bridge.animScaleY = 0.75f

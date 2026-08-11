@@ -10,8 +10,10 @@ import android.provider.Settings
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.os.LocaleListCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -61,6 +63,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         applySystemBarsInsets()
+        setupLanguageSelector()
         setupClickListeners()
         animateEntrance()
         updatePermissionUI()
@@ -68,6 +71,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        PetService.refreshNotificationChannel(this)
         updatePermissionUI()
         // Si el usuario ya tiene el overlay concedido, arranca el servicio con el
         // pet seleccionado para que aparezca al abrir la app (aunque el proceso
@@ -80,6 +84,26 @@ class MainActivity : AppCompatActivity() {
     }
 
     // ── Click Listeners ───────────────────────────────────────
+    private fun setupLanguageSelector() {
+        updateLanguageSelector()
+        binding.btnLanguageSystem.setOnClickListener {
+            AppCompatDelegate.setApplicationLocales(LocaleListCompat.getEmptyLocaleList())
+        }
+        binding.btnLanguageEnglish.setOnClickListener {
+            AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags("en"))
+        }
+        binding.btnLanguageSpanish.setOnClickListener {
+            AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags("es"))
+        }
+    }
+
+    private fun updateLanguageSelector() {
+        val language = AppCompatDelegate.getApplicationLocales().get(0)?.language
+        binding.btnLanguageSystem.isChecked = language == null
+        binding.btnLanguageEnglish.isChecked = language == "en"
+        binding.btnLanguageSpanish.isChecked = language == "es"
+    }
+
     private fun setupClickListeners() {
         binding.btnOverlay.setOnClickListener {
             requestOverlayPermission()
@@ -274,6 +298,7 @@ class MainActivity : AppCompatActivity() {
         val views = listOf(
             binding.titleText,
             binding.subtitleText,
+            binding.languageSelector,
             binding.cardPermissionSummary,
             binding.cardOverlay,
             binding.cardNotification,

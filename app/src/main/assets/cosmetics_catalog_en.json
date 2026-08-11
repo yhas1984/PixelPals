@@ -1,0 +1,221 @@
+{
+  "version": 2,
+  "cosmetics": [
+    {
+      "id": "tint_golden",
+      "displayName": "Golden Glow",
+      "description": "Your pet shines with a golden aura.",
+      "productId": "cos_tint_golden",
+      "effect": { "type": "tint", "redScale": 1.25, "greenScale": 1.05, "blueScale": 0.65 },
+      "coinPrice": 40
+    },
+    {
+      "id": "tint_rose",
+      "displayName": "Rose Tint",
+      "description": "A soft pink tint for romantics.",
+      "productId": "cos_tint_rose",
+      "effect": { "type": "tint", "redScale": 1.2, "greenScale": 0.85, "blueScale": 0.95 },
+      "coinPrice": 40
+    },
+    {
+      "id": "tint_emerald",
+      "displayName": "Emerald Tint",
+      "description": "A mysterious emerald green.",
+      "productId": "cos_tint_emerald",
+      "effect": { "type": "tint", "redScale": 0.7, "greenScale": 1.2, "blueScale": 0.9 },
+      "coinPrice": 40
+    },
+    {
+      "id": "tint_ghost",
+      "displayName": "Pale Ghost",
+      "description": "A spectral, desaturated look.",
+      "productId": "cos_tint_ghost",
+      "effect": { "type": "tint", "saturation": 0.35 },
+      "coinPrice": 40
+    },
+    {
+      "id": "aura_stars",
+      "displayName": "Starry Aura",
+      "description": "Little stars orbit your pet.",
+      "productId": "cos_aura_stars",
+      "effect": { "type": "aura", "emoji": "✨", "count": 6, "radiusRatio": 0.85, "speed": 1.6 },
+      "coinPrice": 60
+    },
+    {
+      "id": "aura_fire",
+      "displayName": "Infernal Fire",
+      "description": "Flames surround your mischievous pet.",
+      "productId": "cos_aura_fire",
+      "effect": { "type": "aura", "emoji": "🔥", "count": 5, "radiusRatio": 0.8, "speed": 2.0 },
+      "coinPrice": 80
+    },
+    {
+      "id": "aura_bubbles",
+      "displayName": "Sweet Bubbles",
+      "description": "Cheerful bubbles float around.",
+      "productId": "cos_aura_bubbles",
+      "effect": { "type": "aura", "emoji": "🫧", "count": 7, "radiusRatio": 0.9, "speed": 1.2 },
+      "coinPrice": 60
+    },
+    {
+      "id": "float_crown",
+      "displayName": "Floating Crown",
+      "description": "A crown that floats above your pet.",
+      "productId": "cos_float_crown",
+      "effect": { "type": "float", "emoji": "👑", "xRatio": 0.0, "yRatio": -0.6, "bobAmplitude": 0.08, "bobSpeed": 2.2 },
+      "coinPrice": 100
+    },
+    {
+      "id": "float_wand",
+      "displayName": "Magic Wand",
+      "description": "A wand that orbits by your pet's side.",
+      "productId": "cos_float_wand",
+      "effect": { "type": "float", "emoji": "🪄", "xRatio": 0.6, "yRatio": -0.15, "bobAmplitude": 0.08, "bobSpeed": 1.8 },
+      "coinPrice": 100
+    },
+    {
+      "id": "float_umbrella",
+      "displayName": "Umbrella",
+      "description": "A floating umbrella for rainy days.",
+      "productId": "cos_float_umbrella",
+      "effect": { "type": "float", "emoji": "☂️", "xRatio": 0.55, "yRatio": -0.4, "bobAmplitude": 0.05, "bobSpeed": 1.4 },
+      "coinPrice": 80
+    },
+    {
+      "id": "float_tophat",
+      "displayName": "Top Hat",
+      "description": "A top hat floating with elegance.",
+      "productId": "cos_float_tophat",
+      "effect": { "type": "float", "emoji": "🎩", "xRatio": 0.0, "yRatio": -0.55, "bobAmplitude": 0.06, "bobSpeed": 1.8 },
+      "coinPrice": 100
+    },
+    {
+      "id": "float_bow",
+      "displayName": "Pink Bow",
+      "description": "A rosy bow floating above the head.",
+      "productId": "cos_float_bow",
+      "effect": { "type": "float", "emoji": "🎀", "xRatio": 0.0, "yRatio": -0.6, "bobAmplitude": 0.07, "bobSpeed": 2.0 },
+      "coinPrice": 80
+    },
+    {
+      "id": "float_bone",
+      "displayName": "Lucky Bone",
+      "description": "A little bone for good friends.",
+      "productId": "cos_float_bone",
+      "effect": { "type": "float", "emoji": "🦴", "xRatio": 0.62, "yRatio": 0.0, "bobAmplitude": 0.05, "bobSpeed": 1.5 },
+      "coinPrice": 80
+    },
+    {
+      "id": "float_fish",
+      "displayName": "Swimming Fish",
+      "description": "A little fish swimming beside your pet.",
+      "productId": "cos_float_fish",
+      "effect": { "type": "float", "emoji": "🐟", "xRatio": 0.6, "yRatio": -0.1, "bobAmplitude": 0.15, "bobSpeed": 1.2 },
+      "coinPrice": 80
+    },
+    {
+      "id": "float_cloud",
+      "displayName": "Little Cloud",
+      "description": "A cloud that follows your pet and rains on them.",
+      "productId": "cos_float_cloud",
+      "effect": { "type": "float", "emoji": "☁️", "xRatio": 0.0, "yRatio": -0.6, "bobAmplitude": 0.03, "bobSpeed": 1.0 },
+      "coinPrice": 100
+    },
+    {
+      "id": "float_bolt",
+      "displayName": "Mischievous Bolt",
+      "description": "A lightning bolt full of energy.",
+      "productId": "cos_float_bolt",
+      "effect": { "type": "float", "emoji": "⚡", "xRatio": 0.58, "yRatio": -0.1, "bobAmplitude": 0.08, "bobSpeed": 2.4 },
+      "coinPrice": 80
+    },
+    {
+      "id": "float_cherry",
+      "displayName": "Cherry Blossom",
+      "description": "A delicate flower spinning beside your pet.",
+      "productId": "cos_float_cherry",
+      "effect": { "type": "float", "emoji": "🌸", "xRatio": 0.6, "yRatio": -0.05, "bobAmplitude": 0.06, "bobSpeed": 1.6 },
+      "coinPrice": 80
+    },
+    {
+      "id": "float_moon",
+      "displayName": "Crescent Moon",
+      "description": "A mysterious crescent moon.",
+      "productId": "cos_float_moon",
+      "effect": { "type": "float", "emoji": "🌙", "xRatio": 0.62, "yRatio": -0.25, "bobAmplitude": 0.07, "bobSpeed": 1.3 },
+      "coinPrice": 100
+    },
+    {
+      "id": "float_balloon",
+      "displayName": "Little Balloon",
+      "description": "A balloon floating happily above your pet.",
+      "productId": "cos_float_balloon",
+      "effect": { "type": "float", "emoji": "🎈", "xRatio": 0.0, "yRatio": -0.55, "bobAmplitude": 0.12, "bobSpeed": 2.0 },
+      "coinPrice": 60
+    },
+    {
+      "id": "aura_butterflies",
+      "displayName": "Butterflies",
+      "description": "Butterflies fluttering delicately.",
+      "productId": "cos_aura_butterflies",
+      "effect": { "type": "aura", "emoji": "🦋", "count": 3, "radiusRatio": 0.95, "speed": 0.8 },
+      "coinPrice": 80
+    },
+    {
+      "id": "aura_hearts",
+      "displayName": "Little Hearts",
+      "description": "Hearts floating with love.",
+      "productId": "cos_aura_hearts",
+      "effect": { "type": "aura", "emoji": "💕", "count": 5, "radiusRatio": 0.75, "speed": 1.4 },
+      "coinPrice": 60
+    },
+    {
+      "id": "aura_leaves",
+      "displayName": "Autumn Leaves",
+      "description": "Leaves falling and twirling around.",
+      "productId": "cos_aura_leaves",
+      "effect": { "type": "aura", "emoji": "🍃", "count": 5, "radiusRatio": 0.9, "speed": 0.9 },
+      "coinPrice": 60
+    },
+    {
+      "id": "aura_snow",
+      "displayName": "Snowflakes",
+      "description": "A gentle winter around your pet.",
+      "productId": "cos_aura_snow",
+      "effect": { "type": "aura", "emoji": "❄️", "count": 6, "radiusRatio": 0.85, "speed": 1.0 },
+      "coinPrice": 80
+    },
+    {
+      "id": "tint_sunset",
+      "displayName": "Sunset",
+      "description": "A warm orange sunset tint.",
+      "productId": "cos_tint_sunset",
+      "effect": { "type": "tint", "redScale": 1.25, "greenScale": 0.85, "blueScale": 0.6 },
+      "coinPrice": 40
+    },
+    {
+      "id": "tint_mystic",
+      "displayName": "Mystic",
+      "description": "A soft and mysterious purple.",
+      "productId": "cos_tint_mystic",
+      "effect": { "type": "tint", "redScale": 0.85, "greenScale": 0.7, "blueScale": 1.25 },
+      "coinPrice": 40
+    },
+    {
+      "id": "tint_aqua",
+      "displayName": "Aquamarine",
+      "description": "A bright ocean blue.",
+      "productId": "cos_tint_aqua",
+      "effect": { "type": "tint", "redScale": 0.6, "greenScale": 1.05, "blueScale": 1.2 },
+      "coinPrice": 40
+    },
+    {
+      "id": "tint_pearl",
+      "displayName": "Pearl",
+      "description": "An elegant pearly white.",
+      "productId": "cos_tint_pearl",
+      "effect": { "type": "tint", "redScale": 1.1, "greenScale": 1.1, "blueScale": 1.15 },
+      "coinPrice": 40
+    }
+  ]
+}

@@ -10,28 +10,29 @@ object CosmeticCatalog {
     private const val ASSET = "cosmetics_catalog.json"
 
     @Volatile
-    private var cache: List<Cosmetic>? = null
+    private var cache = mutableMapOf<String, List<Cosmetic>>()
 
     fun all(context: Context): List<Cosmetic> {
-        cache?.let { return it }
+        val language = context.resources.configuration.locales[0].language
+        cache[language]?.let { return it }
         synchronized(this) {
-            cache?.let { return it }
-            cache = load(context.applicationContext)
-            return cache!!
+            cache[language]?.let { return it }
+            return load(context.applicationContext, language).also { cache[language] = it }
         }
     }
 
     fun findById(context: Context, id: String): Cosmetic? = all(context).firstOrNull { it.id == id }
 
     fun invalidate() {
-        synchronized(this) { cache = null }
+        synchronized(this) { cache.clear() }
     }
 
-    private fun load(context: Context): List<Cosmetic> {
+    private fun load(context: Context, language: String): List<Cosmetic> {
+        val asset = if (language == "es") ASSET else "cosmetics_catalog_en.json"
         val raw = try {
-            context.assets.open(ASSET).bufferedReader().use { it.readText() }
+            context.assets.open(asset).bufferedReader().use { it.readText() }
         } catch (e: IOException) {
-            android.util.Log.w("CosmeticCatalog", "No se pudo leer $ASSET")
+            android.util.Log.w("CosmeticCatalog", "No se pudo leer $asset")
             return emptyList()
         }
         return try {

@@ -25,8 +25,9 @@ import android.content.SharedPreferences
  */
 class PetProgress(context: Context) {
 
+    private val appContext = context.applicationContext
     private val prefs: SharedPreferences =
-        context.getSharedPreferences("pixelpals_progress", Context.MODE_PRIVATE)
+        appContext.getSharedPreferences("pixelpals_progress", Context.MODE_PRIVATE)
 
     private var pendingHappiness = 0
     private var pendingActiveMinutes = 0
@@ -66,10 +67,10 @@ class PetProgress(context: Context) {
 
     val levelName: String
         get() = when (petLevel) {
-            1 -> "Bebé"
-            2 -> "Niño"
-            3 -> "Joven"
-            else -> "Adulto"
+            1 -> appContext.getString(com.pixelpals.app.R.string.progress_level_baby)
+            2 -> appContext.getString(com.pixelpals.app.R.string.progress_level_child)
+            3 -> appContext.getString(com.pixelpals.app.R.string.progress_level_young)
+            else -> appContext.getString(com.pixelpals.app.R.string.progress_level_adult)
         }
 
     /** Pets grow physically as they level up */
@@ -108,11 +109,11 @@ class PetProgress(context: Context) {
 
     fun getStatsSummary(): String {
         return buildString {
-            appendLine("🏆 Nivel: $petLevel ($levelName)")
-            appendLine("💛 Felicidad: $happinessPoints XP")
-            appendLine("⏱️ Tiempo activo: $totalActiveMinutes min")
-            appendLine("👆 Interacciones: $totalInteractions")
-            appendLine("✨ Eventos raros: $rareEventsWitnessed")
+            appendLine(appContext.getString(com.pixelpals.app.R.string.progress_summary_level, petLevel, levelName))
+            appendLine(appContext.getString(com.pixelpals.app.R.string.progress_summary_happiness, happinessPoints))
+            appendLine(appContext.getString(com.pixelpals.app.R.string.progress_summary_active_time, totalActiveMinutes))
+            appendLine(appContext.getString(com.pixelpals.app.R.string.progress_summary_interactions, totalInteractions))
+            appendLine(appContext.getString(com.pixelpals.app.R.string.progress_summary_rare_events, rareEventsWitnessed))
         }
     }
 

@@ -42,8 +42,8 @@ class CoinsTabFragment : Fragment() {
 
         CoinProduct.CATALOG.forEach { pack ->
             val card = layoutInflater.inflate(R.layout.item_coin_pack, root, false)
-            card.findViewById<TextView>(R.id.txtCoinPackTitle).text = pack.displayName
-            card.findViewById<TextView>(R.id.txtCoinPackSubtitle).text = pack.subtitle
+            card.findViewById<TextView>(R.id.txtCoinPackTitle).text = getString(pack.displayNameResId)
+            card.findViewById<TextView>(R.id.txtCoinPackSubtitle).text = getString(pack.subtitleResId)
             val badge = card.findViewById<TextView>(R.id.txtCoinPackBadge)
             if (pack.bestValueFlag) {
                 badge.visibility = View.VISIBLE

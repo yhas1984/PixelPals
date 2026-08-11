@@ -198,7 +198,10 @@ class StoreActivity : AppCompatActivity() {
         // Re-lee el pet seleccionado: la pestaña de cosméticos puede haber
         // cambiado la selección, y el header no debe quedarse con un pet viejo.
         selectedPet = selectedPetStore.load()
-        findViewById<TextView>(R.id.txtStoreSubtitle).text = getString(R.string.store_subtitle_format, selectedPet.displayName)
+        findViewById<TextView>(R.id.txtStoreSubtitle).text = getString(
+            R.string.store_subtitle_format,
+            getString(selectedPet.displayNameResId),
+        )
         lifecycleScope.launch {
             val balance = repository.getCoinBalance(selectedPet)
             findViewById<TextView>(R.id.txtStoreWallet).text = getString(R.string.coins_wallet_format, balance)
@@ -208,7 +211,7 @@ class StoreActivity : AppCompatActivity() {
             }
             findViewById<TextView>(R.id.txtStoreHighlight).text = getString(
                 R.string.store_featured_message_format,
-                selectedPet.displayName,
+                getString(selectedPet.displayNameResId),
                 equippedName ?: getString(R.string.store_owned_hint_default),
             )
         }
