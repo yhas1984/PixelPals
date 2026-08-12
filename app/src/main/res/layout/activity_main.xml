@@ -364,6 +364,19 @@
             android:insetBottom="0dp"
             android:minHeight="56dp" />
 
+        <Button
+            android:id="@+id/btnStopPet"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="10dp"
+            android:backgroundTint="@color/surface_warm"
+            android:enabled="false"
+            android:insetBottom="0dp"
+            android:text="@string/pet_stopped"
+            android:textAllCaps="false"
+            android:textColor="@color/text_primary"
+            android:textStyle="bold" />
+
         <!-- Botón Álbum de Tesoros -->
         <Button
             android:id="@+id/btnAlbum"

@@ -1,5 +1,7 @@
 package com.pixelpals.app
 
+import android.app.ActivityManager
+import android.app.ApplicationExitInfo
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -20,6 +22,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.pixelpals.app.core.services.AppServices
 import com.pixelpals.app.core.analytics.AnalyticsTracker
+import com.pixelpals.app.data.prefs.SelectedPetStore
 import com.pixelpals.app.databinding.ActivityMainBinding
 import com.pixelpals.app.feature.store.StoreActivity
 import com.pixelpals.app.feature.treasure.TreasureAlbumActivity
@@ -32,13 +35,14 @@ import com.pixelpals.app.status.PetDashboardActivity
  * 1. Explica qué hace la app
  * 2. Solicita permiso de overlay (SYSTEM_ALERT_WINDOW)
  * 3. Solicita permiso de notificaciones (Android 13+)
- * 4. Lanza el PetService cuando todo está listo
+ * 4. Abre la selección de mascota cuando todo está listo
  */
 class MainActivity : AppCompatActivity() {
 
     // ── View Binding ──────────────────────────────────────────
     private lateinit var binding: ActivityMainBinding
     private val analytics: AnalyticsTracker by lazy { AppServices.analytics(this) }
+    private val selectedPetStore: SelectedPetStore by lazy { SelectedPetStore(this) }
 
     // ── Launchers ──────────────────────────────────────────────
     private val overlayPermissionLauncher = registerForActivityResult(
@@ -62,6 +66,7 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        clearPetAfterTaskManagerStop()
         applySystemBarsInsets()
         setupLanguageSelector()
         setupClickListeners()
@@ -73,14 +78,6 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         PetService.refreshNotificationChannel(this)
         updatePermissionUI()
-        // Si el usuario ya tiene el overlay concedido, arranca el servicio con el
-        // pet seleccionado para que aparezca al abrir la app (aunque el proceso
-        // hubiera sido terminado por el sistema).
-        if (Settings.canDrawOverlays(this)) {
-            try {
-                ContextCompat.startForegroundService(this, Intent(this, PetService::class.java))
-            } catch (_: Exception) {}
-        }
     }
 
     // ── Click Listeners ───────────────────────────────────────
@@ -104,6 +101,16 @@ class MainActivity : AppCompatActivity() {
         binding.btnLanguageSpanish.isChecked = language == "es"
     }
 
+    private fun clearPetAfterTaskManagerStop() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R || !selectedPetStore.isPetEnabled()) return
+        val enabledAt = selectedPetStore.getPetEnabledAt() ?: return
+        val activityManager = getSystemService(ActivityManager::class.java) ?: return
+        val lastExit = activityManager.getHistoricalProcessExitReasons(packageName, 0, 1).firstOrNull()
+        if (lastExit?.reason == ApplicationExitInfo.REASON_USER_REQUESTED && lastExit.timestamp >= enabledAt) {
+            selectedPetStore.setPetEnabled(false)
+        }
+    }
+
     private fun setupClickListeners() {
         binding.btnOverlay.setOnClickListener {
             requestOverlayPermission()
@@ -121,6 +128,12 @@ class MainActivity : AppCompatActivity() {
         binding.btnLaunch.setOnClickListener {
             analytics.track("main_launch_tapped")
             launchPet()
+        }
+
+        binding.btnStopPet.setOnClickListener {
+            PetService.stopPet(this)
+            updatePermissionUI()
+            Toast.makeText(this, getString(R.string.pet_stopped), Toast.LENGTH_SHORT).show()
         }
 
         binding.btnAlbum.setOnClickListener {
@@ -273,6 +286,12 @@ class MainActivity : AppCompatActivity() {
         val allGranted = overlayGranted && notifGranted
         binding.btnLaunch.isEnabled = allGranted
         binding.btnLaunch.alpha = if (allGranted) 1f else 0.4f
+        val petEnabled = selectedPetStore.isPetEnabled()
+        binding.btnStopPet.isEnabled = petEnabled
+        binding.btnStopPet.alpha = if (petEnabled) 1f else 0.5f
+        binding.btnStopPet.text = getString(
+            if (petEnabled) R.string.stop_pet else R.string.pet_stopped
+        )
         binding.txtPermissionSummary.text = if (usageGranted) {
             getString(R.string.permissions_optional_label)
         } else {
@@ -290,7 +309,6 @@ class MainActivity : AppCompatActivity() {
         // Navigate to pet selection screen
         val intent = Intent(this, PetSelectionActivity::class.java)
         startActivity(intent)
-        finish()
     }
 
     // ── Entrance Animations ───────────────────────────────────
@@ -304,6 +322,7 @@ class MainActivity : AppCompatActivity() {
             binding.cardNotification,
             binding.cardUsage,
             binding.btnLaunch,
+            binding.btnStopPet,
             binding.btnAlbum,
             binding.btnDashboard,
             binding.btnStore

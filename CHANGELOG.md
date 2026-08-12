@@ -2,7 +2,19 @@
 
 Todas las versiones notables se documentan aquí. El formato sigue [Keep a Changelog](https://keepachangelog.com/es/1.1.0/).
 
-## [Unreleased] — v1.5.0
+## [1.9.0] — 2026-08-12
+
+### Added
+- Controles persistentes para detener, ocultar y mostrar la mascota.
+- Persistencia explícita del estado activo de la mascota.
+- Pruebas de detección de foreground y persistencia del estado.
+
+### Fixed
+- La mascota ya no se inicia automáticamente al volver a abrir PixelPals.
+- La mascota se detiene al quitar PixelPals de recientes y no se reinicia sola.
+- El modo "Solo en el escritorio" conserva el último foreground conocido y oculta el overlay si el estado es desconocido.
+
+## [Unreleased]
 
 ### Planned
 - Migración de marca a PixelPals (strings, theme, README)

@@ -220,10 +220,7 @@ class PetSelectionActivity : AppCompatActivity() {
     }
 
     private fun launchPet(type: PetType) {
-        val serviceIntent = Intent(this, PetService::class.java).apply {
-            putExtra(EXTRA_PET_TYPE, type.name)
-        }
-        ContextCompat.startForegroundService(this, serviceIntent)
+        PetService.requestPetChange(this, type)
 
         Toast.makeText(
             this,
@@ -232,6 +229,7 @@ class PetSelectionActivity : AppCompatActivity() {
         ).show()
 
         finish()
+        moveTaskToBack(true)
     }
 
     private fun edgeToEdge() {

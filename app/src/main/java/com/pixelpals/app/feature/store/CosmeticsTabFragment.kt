@@ -174,7 +174,7 @@ class CosmeticsTabFragment : Fragment() {
         val petId = petType.name.lowercase()
         repository.setEquippedCosmetic(petId, cosmetic.id)
         analytics.track("cosmetic_equipped", mapOf("cosmetic_id" to cosmetic.id, "pet_id" to petId))
-        PetService.requestPetChange(requireContext(), petType)
+        PetService.requestPetRefresh(requireContext())
         (activity as? StoreActivity)?.refreshStoreHeader()
         renderCosmetics()
     }

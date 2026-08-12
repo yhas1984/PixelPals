@@ -48,8 +48,6 @@ class PetService : Service() {
         private const val MAX_VIEW_SIZE_RATIO = 0.40f
         private const val HOME_POLL_INTERVAL_MS = 4_000L
         private const val HOME_POLL_INTERVAL_SLOW_MS = 60_000L
-        /** La consulta de foreground (UsageEvents) se ejecuta cada N polls. */
-        private const val LAUNCHER_CHECK_EVERY_N_POLLS = 3
 
         fun requestPetRefresh(context: Context, message: String? = null, celebrate: Boolean = false) {
             if (!isRunning) return
@@ -58,16 +56,35 @@ class PetService : Service() {
                 putExtra(EXTRA_REFRESH_MESSAGE, message)
                 putExtra(EXTRA_REFRESH_CELEBRATE, celebrate)
             }
-            ContextCompat.startForegroundService(context, intent)
+            context.startService(intent)
         }
 
         fun requestPetChange(context: Context, petType: PetType) {
-            // Sin guard isRunning: si el servicio está detenido, este intent lo
-            // arranca y onStartCommand aplica el pet type.
+            val selectedPetStore = SelectedPetStore(context)
+            selectedPetStore.save(petType)
+            selectedPetStore.setPetEnabled(true)
             val intent = Intent(context, PetService::class.java).apply {
                 putExtra(PetSelectionActivity.EXTRA_PET_TYPE, petType.name)
             }
-            ContextCompat.startForegroundService(context, intent)
+            runCatching { ContextCompat.startForegroundService(context, intent) }
+                .onFailure {
+                    selectedPetStore.setPetEnabled(false)
+                    Log.w(TAG, "Pet service start failed", it)
+                }
+        }
+
+        fun stopPet(context: Context) {
+            SelectedPetStore(context).setPetEnabled(false)
+            context.stopService(Intent(context, PetService::class.java))
+        }
+
+        fun requestTreasureReactionIfRunning(context: Context, emoji: String) {
+            if (!isRunning) return
+            val intent = Intent(context, PetService::class.java).apply {
+                action = ACTION_CONSUME_TREASURE
+                putExtra("TREASURE_EMOJI", emoji)
+            }
+            context.startService(intent)
         }
 
         fun refreshNotificationChannel(context: Context) {
@@ -112,11 +129,7 @@ class PetService : Service() {
                     return
                 }
                 refreshKeyboardVisibility()
-                launcherCheckCounter++
-                if (launcherCheckCounter >= LAUNCHER_CHECK_EVERY_N_POLLS) {
-                    launcherCheckCounter = 0
-                    refreshPetVisibilityForForeground()
-                }
+                refreshPetVisibilityForForeground()
                 homeCheckHandler.postDelayed(this, HOME_POLL_INTERVAL_MS)
             } catch (e: Exception) {
                 Log.w(TAG, "Polling cycle failed; keeping service alive", e)
@@ -124,8 +137,6 @@ class PetService : Service() {
             }
         }
     }
-
-    private var launcherCheckCounter = 0
 
     private var lastImeVisible: Boolean? = null
 
@@ -157,33 +168,67 @@ class PetService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val action = intent?.action
-        if (action != ACTION_STOP) ensureForeground()
+        if (action == ACTION_SHOW) selectedPetStore.setPetEnabled(true)
+        val shouldStartForeground = when (action) {
+            ACTION_STOP -> false
+            ACTION_SHOW -> true
+            ACTION_HIDE,
+            ACTION_CONSUME_TREASURE,
+            ACTION_REFRESH_PET -> selectedPetStore.isPetEnabled()
+            else -> selectedPetStore.isPetEnabled()
+        }
+        if (shouldStartForeground) {
+            ensureForeground()
+        }
 
         when (intent?.action) {
             ACTION_HIDE -> {
+                if (!selectedPetStore.isPetEnabled()) {
+                    stopForeground(STOP_FOREGROUND_REMOVE)
+                    stopSelf()
+                    return START_NOT_STICKY
+                }
                 userManuallyHidden = true
                 applyPetOverlayVisible(false)
-                return START_STICKY
+                updateNotification(true)
+                return START_NOT_STICKY
             }
             ACTION_SHOW -> {
                 userManuallyHidden = false
+                ensureOverlayReady()
                 applyPetOverlayVisible(shouldShowPetForPolicy())
-                return START_STICKY
+                updateNotification(false)
+                return START_NOT_STICKY
             }
-            ACTION_STOP -> { stopSelf(); return START_NOT_STICKY }
+            ACTION_STOP -> {
+                selectedPetStore.setPetEnabled(false)
+                stopForeground(STOP_FOREGROUND_REMOVE)
+                stopSelf()
+                return START_NOT_STICKY
+            }
             ACTION_CONSUME_TREASURE -> {
+                if (!selectedPetStore.isPetEnabled()) {
+                    stopForeground(STOP_FOREGROUND_REMOVE)
+                    stopSelf()
+                    return START_NOT_STICKY
+                }
                 ensureOverlayReady()
                 val emoji = intent.getStringExtra("TREASURE_EMOJI") ?: "✨"
                 petView?.consumeTreasure(emoji)
-                return START_STICKY
+                return START_NOT_STICKY
             }
             ACTION_REFRESH_PET -> {
+                if (!selectedPetStore.isPetEnabled()) {
+                    stopForeground(STOP_FOREGROUND_REMOVE)
+                    stopSelf()
+                    return START_NOT_STICKY
+                }
                 ensureOverlayReady()
                 petView?.refreshFromRepository(
                     message = intent.getStringExtra(EXTRA_REFRESH_MESSAGE),
                     celebrate = intent.getBooleanExtra(EXTRA_REFRESH_CELEBRATE, false),
                 )
-                return START_STICKY
+                return START_NOT_STICKY
             }
         }
 
@@ -191,14 +236,20 @@ class PetService : Service() {
         if (petTypeName != null) {
             currentPetType = try { PetType.valueOf(petTypeName) } catch (e: Exception) { selectedPetStore.load() }
             selectedPetStore.save(currentPetType)
+            userManuallyHidden = false
             if (isViewAttached) removePetOverlay()
         } else {
             currentPetType = selectedPetStore.load()
         }
 
+        if (!selectedPetStore.isPetEnabled()) {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+            stopSelf()
+            return START_NOT_STICKY
+        }
         ensureOverlayReady()
 
-        return START_STICKY
+        return START_NOT_STICKY
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -208,11 +259,13 @@ class PetService : Service() {
         windowManager = getSystemService(WindowManager::class.java)
         if (windowManager == null) {
             Log.e(TAG, "WindowManager unavailable")
+            selectedPetStore.setPetEnabled(false)
             stopSelf()
             return
         }
         if (!canDrawOverlays()) {
             Log.e(TAG, "Overlay permission missing")
+            selectedPetStore.setPetEnabled(false)
             stopSelf()
             return
         }
@@ -252,12 +305,15 @@ class PetService : Service() {
             startHomeForegroundPolling()
         } catch (e: WindowManager.BadTokenException) {
             Log.e(TAG, "Overlay attach failed", e)
+            selectedPetStore.setPetEnabled(false)
             stopSelf()
         } catch (e: IllegalStateException) {
             Log.e(TAG, "Overlay attach failed", e)
+            selectedPetStore.setPetEnabled(false)
             stopSelf()
         } catch (e: Exception) {
             Log.e(TAG, "Overlay attach failed", e)
+            selectedPetStore.setPetEnabled(false)
             stopSelf()
         }
     }
@@ -369,12 +425,27 @@ class PetService : Service() {
             Intent(this, PetService::class.java).setAction(ACTION_STOP),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
+        val toggleIntent = PendingIntent.getService(
+            this,
+            102,
+            Intent(this, PetService::class.java).setAction(
+                if (isHidden) ACTION_SHOW else ACTION_HIDE
+            ),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(getString(R.string.notif_active_title))
-            .setContentText(getString(R.string.notif_active_subtitle))
+            .setContentText(
+                getString(if (isHidden) R.string.notif_hidden_subtitle else R.string.notif_active_subtitle)
+            )
             .setSmallIcon(android.R.drawable.ic_menu_compass)
             .setContentIntent(contentIntent)
-            .addAction(android.R.drawable.ic_menu_close_clear_cancel, getString(android.R.string.cancel), stopIntent)
+            .addAction(
+                android.R.drawable.ic_menu_view,
+                getString(if (isHidden) R.string.notif_show_pet else R.string.notif_hide_pet),
+                toggleIntent,
+            )
+            .addAction(android.R.drawable.ic_menu_close_clear_cancel, getString(R.string.notif_stop_pet), stopIntent)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .build()
@@ -437,9 +508,17 @@ class PetService : Service() {
 
     private fun ensureForeground() {
         if (!isForegroundStarted) {
-            startForeground(NOTIFICATION_ID, buildNotification(false))
+            startForeground(NOTIFICATION_ID, buildNotification(userManuallyHidden))
             isForegroundStarted = true
         }
+    }
+
+    private fun updateNotification(isHidden: Boolean) {
+        if (!isForegroundStarted) return
+        getSystemService(NotificationManager::class.java).notify(
+            NOTIFICATION_ID,
+            buildNotification(isHidden),
+        )
     }
 
     private fun ensureOverlayReady() {
@@ -470,5 +549,12 @@ class PetService : Service() {
         screenReceiver = null
         isRunning = false
         super.onDestroy()
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        selectedPetStore.setPetEnabled(false)
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        stopSelf()
+        super.onTaskRemoved(rootIntent)
     }
 }
