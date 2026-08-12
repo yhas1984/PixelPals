@@ -31,6 +31,8 @@
 
     <!-- Actions -->
     <string name="launch_pet">🐾  Choose Your Pet!</string>
+    <string name="stop_pet">Stop pet</string>
+    <string name="pet_stopped">Pet stopped</string>
     <string name="open_treasure_album">🏆 Treasure Album</string>
     <string name="pet_launched">Your pet is now exploring! 🐕</string>
     <string name="overlay_needed">Overlay permission is needed first</string>
@@ -52,6 +54,10 @@
     <string name="notif_channel_desc">Keeps your virtual pet alive on screen</string>
     <string name="notif_active_title">PixelPals Active</string>
     <string name="notif_active_subtitle">Tap to care for your companion</string>
+    <string name="notif_hidden_subtitle">Pet hidden. Tap Show to display it on the home screen.</string>
+    <string name="notif_show_pet">Show pet</string>
+    <string name="notif_hide_pet">Hide pet</string>
+    <string name="notif_stop_pet">Stop pet</string>
     <string name="fgs_special_use_subtype" translatable="false">User-controlled floating virtual pet overlay</string>
 
     <!-- Accessibility -->

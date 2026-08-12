@@ -85,11 +85,7 @@ class TreasureAlbumActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val remaining = repository.consumeTreasure(treasure.emoji)
 
-            val consumeIntent = android.content.Intent(this@TreasureAlbumActivity, PetService::class.java).apply {
-                action = PetService.ACTION_CONSUME_TREASURE
-                putExtra("TREASURE_EMOJI", treasure.emoji)
-            }
-            ContextCompat.startForegroundService(this@TreasureAlbumActivity, consumeIntent)
+            PetService.requestTreasureReactionIfRunning(this@TreasureAlbumActivity, treasure.emoji)
 
             val remainingText = if (remaining > 0) {
                 resources.getQuantityString(

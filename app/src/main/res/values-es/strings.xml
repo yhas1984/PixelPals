@@ -31,6 +31,8 @@
 
     <!-- Acciones -->
     <string name="launch_pet">🐾  ¡Elige tu Mascota!</string>
+    <string name="stop_pet">Detener mascota</string>
+    <string name="pet_stopped">Mascota detenida</string>
     <string name="open_treasure_album">🏆 Álbum de tesoros</string>
     <string name="pet_launched">¡Tu mascota está explorando! 🐕</string>
     <string name="overlay_needed">Se necesita el permiso de superposición primero</string>
@@ -52,6 +54,10 @@
     <string name="notif_channel_desc">Mantiene a tu mascota virtual viva en la pantalla</string>
     <string name="notif_active_title">PixelPals Activo</string>
     <string name="notif_active_subtitle">Toca para cuidar a tu compañero</string>
+    <string name="notif_hidden_subtitle">Mascota oculta. Pulsa Mostrar para verla en el escritorio.</string>
+    <string name="notif_show_pet">Mostrar mascota</string>
+    <string name="notif_hide_pet">Ocultar mascota</string>
+    <string name="notif_stop_pet">Detener mascota</string>
 
     <!-- Accesibilidad -->
     <string name="overlay_icon_desc">Icono de permiso de superposición</string>

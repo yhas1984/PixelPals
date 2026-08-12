@@ -47,8 +47,8 @@ Cada mascota tiene lógica de movimiento propia, animaciones, interacción táct
 
 Definidas en [`app/build.gradle.kts`](app/build.gradle.kts):
 
-- `versionName`: `1.5.0`
-- `versionCode`: `8` (Play exige subir el código en cada nuevo envío)
+- `versionName`: `1.9.0`
+- `versionCode`: `13` (Play exige subir el código en cada nuevo envío)
 
 ### Requisitos
 
@@ -186,8 +186,8 @@ Each pet has its own movement logic, animation set, touch interactions, equippab
 
 Defined in [`app/build.gradle.kts`](app/build.gradle.kts):
 
-- `versionName`: `1.5.0`
-- `versionCode`: `8` (Play requires a higher code for each new upload)
+- `versionName`: `1.9.0`
+- `versionCode`: `13` (Play requires a higher code for each new upload)
 
 ### Requirements
 

@@ -16,9 +16,16 @@ import android.util.Log
  */
 object DesktopForegroundHelper {
     private const val TAG = "DesktopForegroundHelper"
-    // Ventana mínima que cubre el intervalo de polling (4 s x 3): solo se
-    // necesita el ÚLTIMO evento RESUMED, no los 3 minutos completos.
-    private const val QUERY_WINDOW_MS = 15_000L
+    private const val INITIAL_QUERY_WINDOW_MS = 24 * 60 * 60 * 1_000L
+    private const val QUERY_WINDOW_MS = 60_000L
+    private var hasPerformedInitialQuery = false
+    private var lastForegroundPackage: String? = null
+    private var lastUsageAccess: Boolean? = null
+
+    internal data class ForegroundEvent(
+        val packageName: String,
+        val eventType: Int,
+    )
 
     @Suppress("DEPRECATION")
     fun hasUsageAccess(context: Context): Boolean {
@@ -46,47 +53,66 @@ object DesktopForegroundHelper {
         return ri?.activityInfo?.packageName
     }
 
-    /**
-     * Última app en primer plano mediante el ÚLTIMO evento RESUMED.
-     *
-     * Fix v1.5.4: la máquina de estados anterior anulaba el foreground con
-     * PAUSED/STOPPED del paquete actual, dejando el estado "null" cuando el
-     * launcher se pausaba sin que otra activity RESUMED aún. `isLauncherForeground`
-     * interpretaba null como "mostrar pet", así que el pet aparecía sobre
-     * cualquier ventana. Ahora el último RESUMED gana: PAUSED/STOPPED no
-     * despejan el estado (no aportan info de qué app está en frente).
-     */
+    @Suppress("DEPRECATION")
+    internal fun resolveLatestForegroundPackage(
+        events: Iterable<ForegroundEvent>,
+        fallback: String?,
+    ): String? {
+        var current = fallback
+        events.forEach { event ->
+            when (event.eventType) {
+                UsageEvents.Event.MOVE_TO_FOREGROUND,
+                UsageEvents.Event.ACTIVITY_RESUMED -> current = event.packageName
+            }
+        }
+        return current
+    }
+
     @Suppress("DEPRECATION")
     private fun queryLastForegroundPackage(context: Context): String? {
         return try {
             val usm = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
             val end = System.currentTimeMillis()
-            val begin = end - QUERY_WINDOW_MS
-            val events = usm.queryEvents(begin, end)
+            val queryWindow = if (hasPerformedInitialQuery) QUERY_WINDOW_MS else INITIAL_QUERY_WINDOW_MS
+            hasPerformedInitialQuery = true
+            val events = usm.queryEvents(end - queryWindow, end)
             val ev = UsageEvents.Event()
-            var current: String? = null
+            var current = lastForegroundPackage
             while (events.hasNextEvent()) {
                 events.getNextEvent(ev)
-                when (ev.eventType) {
-                    UsageEvents.Event.MOVE_TO_FOREGROUND,
-                    UsageEvents.Event.ACTIVITY_RESUMED -> current = ev.packageName
+                if (ev.eventType == UsageEvents.Event.MOVE_TO_FOREGROUND ||
+                    ev.eventType == UsageEvents.Event.ACTIVITY_RESUMED
+                ) {
+                    current = ev.packageName
                 }
             }
+            lastForegroundPackage = current
             current
         } catch (e: Exception) {
-            Log.w(TAG, "Usage query failed")
-            null
+            Log.w(TAG, "Usage query failed", e)
+            lastForegroundPackage
         }
     }
 
     /**
      * True si lo que el usuario ve como "frente" es el escritorio (lanzador por defecto).
-     * Si el estado es desconocido, devuelve true (conservador: la mascota se muestra).
+     * Con acceso de uso, un estado desconocido oculta la mascota para no cubrir otra app.
      */
     fun isLauncherForeground(context: Context): Boolean {
-        if (!hasUsageAccess(context)) return true
-        val launcherPkg = defaultLauncherPackage(context.packageManager) ?: return true
-        val fg = queryLastForegroundPackage(context) ?: return true
+        val usageAccess = hasUsageAccess(context)
+        if (!usageAccess) {
+            hasPerformedInitialQuery = false
+            lastForegroundPackage = null
+            lastUsageAccess = false
+            return true
+        }
+        if (lastUsageAccess == false) {
+            hasPerformedInitialQuery = false
+            lastForegroundPackage = null
+        }
+        lastUsageAccess = true
+        val launcherPkg = defaultLauncherPackage(context.packageManager) ?: return false
+        val fg = queryLastForegroundPackage(context) ?: return false
         return fg == launcherPkg
     }
 }

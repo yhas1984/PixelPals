@@ -107,14 +107,14 @@ class PetsTabFragment : Fragment() {
         btn.text = when (item.state) {
             CatalogItemState.LOCKED -> getString(R.string.store_buy_pet_with_coins, item.coinPrice ?: 0)
             CatalogItemState.OWNED -> getString(R.string.store_select_button)
-            CatalogItemState.SELECTED -> getString(R.string.store_selected_button)
+            CatalogItemState.SELECTED -> getString(R.string.store_select_button)
         }
-        btn.isEnabled = item.state != CatalogItemState.SELECTED
+        btn.isEnabled = true
         btn.setOnClickListener {
             when (item.state) {
                 CatalogItemState.LOCKED -> buyPremiumPet(item)
                 CatalogItemState.OWNED -> usePet(item)
-                CatalogItemState.SELECTED -> Unit
+                CatalogItemState.SELECTED -> usePet(item)
             }
         }
         return card
@@ -125,7 +125,7 @@ class PetsTabFragment : Fragment() {
         lifecycleScope.launch {
             val ok = repository.purchasePetWithCoins(item.petType!!)
             if (ok) {
-                analytics.track("premium_pet_purchased_coins", mapOf("pet_id" to (item.petType?.name ?: "")))
+                analytics.track("premium_pet_purchased_coins", mapOf("pet_id" to (item.petType.name)))
                 android.widget.Toast.makeText(
                     requireContext(),
                     getString(R.string.pet_unlocked_toast, item.displayName),
