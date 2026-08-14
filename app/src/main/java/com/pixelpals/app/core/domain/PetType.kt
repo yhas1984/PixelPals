@@ -226,6 +226,21 @@ enum class PetType(
         movementStyle = MovementStyle.CHAOTIC_ZOOM,
         idleStyle = IdleStyle.LURK_IDLE,
         interactionStyle = InteractionStyle.SQUISH_BOUNCE
+    ),
+
+    LUMI(
+        displayNameResId = R.string.pet_name_lumi,
+        descriptionResId = R.string.lumi_desc,
+        spriteResId = R.drawable.pet_lumi,
+        gravity = 0.8f,
+        terminalVelocity = 13f,
+        bounceDamping = 0.25f,
+        agility = 1.25f,
+        boredomRate = 1.0f,
+        exploreInterval = 3600L,
+        movementStyle = MovementStyle.WALK_RUN,
+        idleStyle = IdleStyle.BREATHING,
+        interactionStyle = InteractionStyle.SQUISH_BOUNCE
     );
 }
 

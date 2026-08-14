@@ -27,6 +27,8 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.pixelpals.app.status.PetDashboardActivity
+import com.pixelpals.app.feature.overlay.behavior.TelaCornerWebState
+import com.pixelpals.app.feature.overlay.behavior.TelaSilkState
 
 class PetService : Service() {
 
@@ -41,6 +43,8 @@ class PetService : Service() {
         const val ACTION_STOP = "com.pixelpals.app.ACTION_STOP"
         const val ACTION_CONSUME_TREASURE = "com.pixelpals.app.ACTION_CONSUME_TREASURE"
         const val ACTION_REFRESH_PET = "com.pixelpals.app.ACTION_REFRESH_PET"
+        const val ACTION_DEBUG_TELA_WEB = "com.pixelpals.app.ACTION_DEBUG_TELA_WEB"
+        const val ACTION_DEBUG_TELA_CORNER_WEB = "com.pixelpals.app.ACTION_DEBUG_TELA_CORNER_WEB"
         private const val EXTRA_REFRESH_MESSAGE = "REFRESH_MESSAGE"
         private const val EXTRA_REFRESH_CELEBRATE = "REFRESH_CELEBRATE"
         private const val PET_SIZE_DP = 80
@@ -87,6 +91,30 @@ class PetService : Service() {
             context.startService(intent)
         }
 
+        fun requestTelaWebTest(context: Context) {
+            val selectedPetStore = SelectedPetStore(context)
+            selectedPetStore.save(PetType.TELA)
+            selectedPetStore.setPetEnabled(true)
+            val intent = Intent(context, PetService::class.java).apply {
+                action = ACTION_DEBUG_TELA_WEB
+                putExtra(PetSelectionActivity.EXTRA_PET_TYPE, PetType.TELA.name)
+            }
+            runCatching { ContextCompat.startForegroundService(context, intent) }
+                .onFailure { Log.w(TAG, "Tela web test start failed", it) }
+        }
+
+        fun requestTelaCornerWebTest(context: Context) {
+            val selectedPetStore = SelectedPetStore(context)
+            selectedPetStore.save(PetType.TELA)
+            selectedPetStore.setPetEnabled(true)
+            val intent = Intent(context, PetService::class.java).apply {
+                action = ACTION_DEBUG_TELA_CORNER_WEB
+                putExtra(PetSelectionActivity.EXTRA_PET_TYPE, PetType.TELA.name)
+            }
+            runCatching { ContextCompat.startForegroundService(context, intent) }
+                .onFailure { Log.w(TAG, "Tela corner web test start failed", it) }
+        }
+
         fun refreshNotificationChannel(context: Context) {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
             val channel = NotificationChannel(
@@ -103,6 +131,7 @@ class PetService : Service() {
 
     private var windowManager: WindowManager? = null
     private var petView: PetView? = null
+    private var telaWebOverlay: TelaWebOverlayController? = null
     private var screenReceiver: ScreenStateReceiver? = null
     private var batteryReceiver: BroadcastReceiver? = null
     private var airplaneReceiver: BroadcastReceiver? = null
@@ -168,6 +197,11 @@ class PetService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val action = intent?.action
+        if (action == ACTION_DEBUG_TELA_WEB || action == ACTION_DEBUG_TELA_CORNER_WEB) {
+            currentPetType = PetType.TELA
+            selectedPetStore.save(currentPetType)
+            selectedPetStore.setPetEnabled(true)
+        }
         if (action == ACTION_SHOW) selectedPetStore.setPetEnabled(true)
         val shouldStartForeground = when (action) {
             ACTION_STOP -> false
@@ -242,6 +276,17 @@ class PetService : Service() {
             currentPetType = selectedPetStore.load()
         }
 
+        if (action == ACTION_DEBUG_TELA_WEB) {
+            ensureOverlayReady()
+            petView?.debugStartTelaWeb()
+            return START_NOT_STICKY
+        }
+        if (action == ACTION_DEBUG_TELA_CORNER_WEB) {
+            ensureOverlayReady()
+            petView?.debugStartTelaCornerWeb()
+            return START_NOT_STICKY
+        }
+
         if (!selectedPetStore.isPetEnabled()) {
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()
@@ -280,7 +325,26 @@ class PetService : Service() {
         val maxViewSize = (metrics.widthPixels * MAX_VIEW_SIZE_RATIO).toInt()
         val safeViewSize = minOf(viewSize, maxViewSize)
 
-        petView = PetView(this, metrics.widthPixels, metrics.heightPixels, petSize, currentPetType)
+        telaWebOverlay = if (currentPetType == PetType.TELA) {
+            TelaWebOverlayController(
+                context = this,
+                windowManager = windowManager!!,
+                screenWidth = metrics.widthPixels,
+                screenHeight = metrics.heightPixels,
+            )
+        } else {
+            null
+        }
+
+        petView = PetView(
+            this,
+            metrics.widthPixels,
+            metrics.heightPixels,
+            petSize,
+            currentPetType,
+            onTelaSilkChanged = ::onTelaSilkChanged,
+            onTelaCornerWebChanged = ::onTelaCornerWebChanged,
+        )
 
         // Evita robar foco al sistema (mejora back/gestos), manteniendo el overlay touchable.
         // adjustNothing: el sistema no debe panear/insetar la ventana cuando abre el teclado;
@@ -328,7 +392,17 @@ class PetService : Service() {
             }
         }
         petView = null
+        telaWebOverlay?.destroy()
+        telaWebOverlay = null
         lastAppliedPetVisible = null
+    }
+
+    private fun onTelaSilkChanged(state: TelaSilkState?) {
+        if (currentPetType == PetType.TELA) telaWebOverlay?.render(state)
+    }
+
+    private fun onTelaCornerWebChanged(state: TelaCornerWebState?) {
+        if (currentPetType == PetType.TELA) telaWebOverlay?.renderCornerWeb(state)
     }
 
     /**
@@ -359,6 +433,7 @@ class PetService : Service() {
         if (already) return
         lastAppliedPetVisible = visible
         v.visibility = if (visible) View.VISIBLE else View.GONE
+        telaWebOverlay?.setVisible(visible)
         updateOverlayTouchThrough(!visible)
         if (visible) v.resumeAnimation() else v.pauseAnimation()
     }

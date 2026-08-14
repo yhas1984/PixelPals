@@ -49,7 +49,9 @@ class PetView(
     override var screenWidth: Int,
     override var screenHeight: Int,
     override val petSpriteSize: Int,
-    private val petType: PetType
+    private val petType: PetType,
+    private val onTelaSilkChanged: (com.pixelpals.app.feature.overlay.behavior.TelaSilkState?) -> Unit = {},
+    private val onTelaCornerWebChanged: (com.pixelpals.app.feature.overlay.behavior.TelaCornerWebState?) -> Unit = {},
 ) : View(context), PetViewBridge {
     private val progress = PetProgress(context)
     private val repository: PixelPalsRepository = AppServices.repository(context)
@@ -115,6 +117,7 @@ class PetView(
         PetType.TARO -> 0.929f          // idle tortuga (hoja nueva) 0.863 -> 0.802
         PetType.MENTA -> 0.908f         // idle serpiente Pixar opaco 0.883 -> 0.802
         PetType.TELA -> 0.880f          // idle araña Pixar 0.910 -> 0.802
+        PetType.LUMI -> 0.963f          // idle Lumi V2 0.833 -> 0.802
     }
 
     /**
@@ -137,6 +140,7 @@ class PetView(
         PetType.TARO -> 0.8633f         // idle tortuga (idx 0), hoja nueva importada
         PetType.MENTA -> 0.8828f         // idle serpiente Pixar (idx 0), atlas 3D premium
         PetType.TELA -> 0.9102f         // idle araña Pixar (idx 0), atlas 3D premium
+        PetType.LUMI -> 0.8333f         // idle Lumi V2 (idx 0)
     }
 
     /**
@@ -162,6 +166,18 @@ class PetView(
         PetType.TARO -> floatArrayOf(0.8633f, 0.8594f, 0.8516f, 0.8125f, 0.8359f, 0.8477f, 0.6758f, 0.6484f, 0.9062f, 0.8789f, 0.8398f, 0.8711f, 0.7656f, 0.7578f, 0.7812f, 0.7656f)
         PetType.MENTA -> floatArrayOf(0.8516f, 0.8516f, 0.8320f, 0.8242f, 0.4141f, 0.4102f, 0.4102f, 0.4141f, 0.4102f, 0.4219f, 0.4102f, 0.4102f, 0.8516f, 0.8516f, 0.8320f, 0.8438f)
         PetType.TELA -> floatArrayOf(0.9102f, 0.9102f, 0.8945f, 0.8984f, 0.6875f, 0.7188f, 0.8164f, 0.7109f, 0.5469f, 0.7305f, 0.7422f, 0.7500f, 0.4648f, 0.5508f, 0.7578f, 0.6211f)
+        PetType.LUMI -> floatArrayOf(
+            0.8333f, 0.8333f, 0.8333f, 0.8333f,
+            0.8203f, 0.8021f, 0.7891f, 0.7865f,
+            0.8333f, 0.8255f, 0.7917f, 0.8229f,
+            0.8333f, 0.8333f, 0.8333f, 0.8333f,
+            0.6797f, 0.7917f, 0.7161f, 0.8125f,
+            0.7292f, 0.7526f, 0.7839f, 0.7630f,
+            0.8333f, 0.8333f, 0.8333f, 0.8281f,
+            0.7708f, 0.8333f, 0.8333f, 0.8333f,
+            0.7969f, 0.5833f, 0.6016f, 0.5938f,
+            0.8333f, 0.8333f, 0.8333f, 0.8333f,
+        )
     }
 
     /** Cosmético equipado de este pet (efectos que envuelven, sin alineación). */
@@ -361,6 +377,22 @@ class PetView(
             (bounds.floor - 100).coerceAtLeast(bounds.top + 1)
         )
         updateWindowLayout(params)
+    }
+
+    override fun updateTelaSilk(state: com.pixelpals.app.feature.overlay.behavior.TelaSilkState?) {
+        onTelaSilkChanged(state)
+    }
+
+    override fun updateTelaCornerWeb(state: com.pixelpals.app.feature.overlay.behavior.TelaCornerWebState?) {
+        onTelaCornerWebChanged(state)
+    }
+
+    fun debugStartTelaWeb() {
+        (behavior as? com.pixelpals.app.feature.overlay.behavior.TelaBehavior)?.debugStartWebSequence()
+    }
+
+    fun debugStartTelaCornerWeb() {
+        (behavior as? com.pixelpals.app.feature.overlay.behavior.TelaBehavior)?.debugLeaveCornerWeb()
     }
 
     override fun trackInteraction() {
@@ -644,6 +676,7 @@ class PetView(
         PetType.BLOOP, PetType.NUBE_MICHI, PetType.ANGEL -> PhysicsProfile.FLYING
         PetType.PATITO, PetType.PIRU -> PhysicsProfile.AQUATIC
         PetType.TELA, PetType.MOKI -> PhysicsProfile.EDGE
+        PetType.LUMI -> PhysicsProfile.GROUND
         else -> PhysicsProfile.GROUND
     }
 

@@ -1,0 +1,215 @@
+{
+  "version": 1,
+  "petId": "lumi",
+  "source": "/home/yhas/Pictures/pixelpals_refs/lumi_atlas_preview_image.png",
+  "atlasPath": "tools/lumi/archive/v1/source_atlas/action_trial_v1/lumi_action_trial_v1.png",
+  "prototypeAtlasPath": "source_atlas/action_trial_v1/lumi_action_trial_v1.png",
+  "frameWidth": 384,
+  "frameHeight": 384,
+  "columns": 8,
+  "rows": 4,
+  "frameCount": 32,
+  "pivot": {
+    "x": 192,
+    "y": 368
+  },
+  "renderHints": {
+    "innerTransparentPaddingPx": 16,
+    "backgroundRemoval": "border_connected_neutral_checkerboard",
+    "contentInsetPx": 16,
+    "alphaErosionPx": 1,
+    "sourceCellCompositionPreserved": true
+  },
+  "clips": [
+    {
+      "id": "idle",
+      "frames": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "loop": true,
+      "frameDurationMs": 180
+    },
+    {
+      "id": "walk",
+      "frames": [
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "loop": true,
+      "frameDurationMs": 145
+    },
+    {
+      "id": "pounce",
+      "frames": [
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23
+      ],
+      "loop": false,
+      "frameDurationMs": 180
+    },
+    {
+      "id": "special",
+      "frames": [
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31
+      ],
+      "loop": false,
+      "frameDurationMs": 260
+    }
+  ],
+  "frames": [
+    {
+      "index": 0,
+      "name": "idle_neutral"
+    },
+    {
+      "index": 1,
+      "name": "idle_tail_shift"
+    },
+    {
+      "index": 2,
+      "name": "idle_wink"
+    },
+    {
+      "index": 3,
+      "name": "idle_curious"
+    },
+    {
+      "index": 4,
+      "name": "idle_attentive"
+    },
+    {
+      "index": 5,
+      "name": "sit_neutral"
+    },
+    {
+      "index": 6,
+      "name": "wave_standing"
+    },
+    {
+      "index": 7,
+      "name": "wave_sitting"
+    },
+    {
+      "index": 8,
+      "name": "walk_00"
+    },
+    {
+      "index": 9,
+      "name": "walk_01"
+    },
+    {
+      "index": 10,
+      "name": "walk_02"
+    },
+    {
+      "index": 11,
+      "name": "walk_03"
+    },
+    {
+      "index": 12,
+      "name": "walk_04"
+    },
+    {
+      "index": 13,
+      "name": "walk_05"
+    },
+    {
+      "index": 14,
+      "name": "walk_06"
+    },
+    {
+      "index": 15,
+      "name": "walk_07"
+    },
+    {
+      "index": 16,
+      "name": "stalk_00"
+    },
+    {
+      "index": 17,
+      "name": "stalk_01"
+    },
+    {
+      "index": 18,
+      "name": "pounce_launch"
+    },
+    {
+      "index": 19,
+      "name": "pounce_air"
+    },
+    {
+      "index": 20,
+      "name": "pounce_land"
+    },
+    {
+      "index": 21,
+      "name": "recovery"
+    },
+    {
+      "index": 22,
+      "name": "settle_stand"
+    },
+    {
+      "index": 23,
+      "name": "happy_jump"
+    },
+    {
+      "index": 24,
+      "name": "magic_ready"
+    },
+    {
+      "index": 25,
+      "name": "magic_cast"
+    },
+    {
+      "index": 26,
+      "name": "magic_orb"
+    },
+    {
+      "index": 27,
+      "name": "surprised"
+    },
+    {
+      "index": 28,
+      "name": "yawn"
+    },
+    {
+      "index": 29,
+      "name": "sleep_curl"
+    },
+    {
+      "index": 30,
+      "name": "snuggle"
+    },
+    {
+      "index": 31,
+      "name": "idle_return"
+    }
+  ]
+}

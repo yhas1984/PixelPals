@@ -1,0 +1,40 @@
+{
+  "version": 2,
+  "petId": "taro",
+  "status": "candidate_pipeline",
+  "characterBible": "tools/taro/TARO_CHARACTER_BIBLE_V2.md",
+  "reviewChecklist": "tools/taro/REVIEW_CHECKLIST.md",
+  "canonicalReference": "/home/yhas/Pictures/pixelpals_refs/taro.png",
+  "technicalContract": {
+    "frameWidth": 384,
+    "frameHeight": 384,
+    "columns": 8,
+    "rows": 5,
+    "frameCount": 40,
+    "minimumTransparentPaddingPx": 16,
+    "pivot": { "x": 192, "y": 368 },
+    "canonicalFacing": "right",
+    "format": "png-rgba",
+    "candidatePath": "tools/taro/pipeline/atlas_v2/taro_motion_v2.png",
+    "candidateSpecPath": "tools/taro/pipeline/atlas_v2/taro_motion_v2.json",
+    "productionPath": "app/src/main/assets/pets/taro/taro_motion_v2.png",
+    "productionSpecPath": "app/src/main/assets/pets/taro/taro_motion_v2.json"
+  },
+  "clips": [
+    "idle",
+    "walk",
+    "turn",
+    "hide",
+    "peek",
+    "front_social",
+    "touch",
+    "sleep",
+    "curiosity"
+  ],
+  "promotionGates": [
+    "technical_atlas_validation_passed",
+    "visual_identity_review_passed",
+    "device_clip_review_passed",
+    "thirty_minute_device_run_passed"
+  ]
+}

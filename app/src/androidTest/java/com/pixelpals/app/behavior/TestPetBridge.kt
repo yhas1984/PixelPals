@@ -81,15 +81,26 @@ class TestPetBridge(context: Context, petType: PetType) : View(context), PetView
         PetType.TARO -> PetPersonality.DREAMY
         PetType.MENTA -> PetPersonality.ELEGANT
         PetType.TELA -> PetPersonality.CURIOUS
+        PetType.LUMI -> PetPersonality.DREAMY
     }
     override var windowX: Int = params.x
     override var windowY: Int = params.y
+    var lastTelaSilkState: TelaSilkState? = null
+    var lastTelaCornerWebState: TelaCornerWebState? = null
 
     override fun getWindowParams(): WindowManager.LayoutParams = params
 
     override fun updateWindowLayout(params: WindowManager.LayoutParams) {
         windowX = params.x
         windowY = params.y
+    }
+
+    override fun updateTelaSilk(state: TelaSilkState?) {
+        lastTelaSilkState = state
+    }
+
+    override fun updateTelaCornerWeb(state: TelaCornerWebState?) {
+        lastTelaCornerWebState = state
     }
 
     override fun showBubble(text: String) = Unit

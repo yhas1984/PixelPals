@@ -277,12 +277,14 @@
     <string name="pet_name_taro">Taro</string>
     <string name="pet_name_menta">Menta</string>
     <string name="pet_name_tela">Tela</string>
+    <string name="pet_name_lumi">Lumi</string>
     <string name="moki_desc">El Camaleón Adhesivo\nSe pega y se camufla</string>
     <string name="yuki_desc">El Muñeco de Nieve\nFrío y blandito</string>
     <string name="piru_desc">El Pingüinito Curioso\nCamina y se desliza</string>
     <string name="taro_desc">La Tortuguita de Jardín\nTranquila y paciente</string>
     <string name="menta_desc">La Serpientita de Menta\nSe desliza con gracia</string>
     <string name="tela_desc">La Arañita Tejedora\nTrepa y se balancea</string>
+    <string name="lumi_desc">El Espíritu Luminoso\nBrilla y juega</string>
 
     <string name="daily_task_check_in_title">Saludar</string>
     <string name="daily_task_check_in_description">Pásate a verlo y hazle sentir acompañado.</string>
@@ -314,6 +316,7 @@
     <string name="selection_spotlight_format">%1$s está %2$s. Su mejor siguiente paso es %3$s.</string>
     <string name="premium_pet_perk_angel">Incluye aura serena, maniobras suaves y detalles celestiales.</string>
     <string name="premium_pet_perk_diablillo">Incluye reacciones traviesas, energía alta y efectos más caóticos.</string>
+    <string name="premium_pet_perk_lumi">Incluye magia luminosa, saludos juguetones y un set de movimiento premium.</string>
     <string name="premium_pet_perk_default">Incluye personalidad, presencia y estilo únicos.</string>
 
     <string name="progress_level_baby">Bebé</string>

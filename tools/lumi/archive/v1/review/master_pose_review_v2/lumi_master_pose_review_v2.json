@@ -1,0 +1,81 @@
+{
+  "version": 2,
+  "petId": "lumi",
+  "status": "review_pending",
+  "promotionAllowed": false,
+  "boardPath": "tools/lumi/archive/v1/review/master_pose_review_v2/lumi_master_pose_review_v2.png",
+  "frameDirectory": "tools/lumi/archive/v1/review/master_pose_review_v2/frames",
+  "technicalContract": {
+    "frameWidth": 384,
+    "frameHeight": 384,
+    "minimumTransparentPaddingPx": 16,
+    "pivot": {
+      "x": 192,
+      "y": 368
+    },
+    "canonicalFacing": "right"
+  },
+  "candidates": [
+    {
+      "id": "idle_neutral",
+      "source": "action_trial_v1/frames/lumi_00_idle_neutral.png",
+      "sourceType": "existing_normalized_frame",
+      "flipHorizontal": false,
+      "status": "candidate_needs_retouch",
+      "note": "Best current neutral standing silhouette; still needs manual identity cleanup."
+    },
+    {
+      "id": "idle_breath_in",
+      "source": "action_trial_v1/frames/lumi_01_idle_tail_shift.png",
+      "sourceType": "reference_only_nearest_pose",
+      "flipHorizontal": false,
+      "status": "manual_paint_required",
+      "note": "Nearest idle reference is not a real breath pose. Do not promote it as animation."
+    },
+    {
+      "id": "look_profile",
+      "source": "/home/yhas/Pictures/pixelpals_refs/lumi_turnaround_sheet.png",
+      "sourceType": "turnaround_profile_extract",
+      "flipHorizontal": true,
+      "status": "manual_paint_required",
+      "note": "Extracted side profile is a design reference, not an approved attentive animation pose."
+    },
+    {
+      "id": "walk_contact_right",
+      "source": "action_trial_v1/frames/lumi_08_walk_00.png",
+      "sourceType": "existing_normalized_frame",
+      "flipHorizontal": true,
+      "status": "candidate_needs_retouch",
+      "note": "Useful locomotion contact candidate; verify paw weight, facing, and foot-slide continuity."
+    },
+    {
+      "id": "pounce_air",
+      "source": "action_trial_v1/frames/lumi_19_pounce_air.png",
+      "sourceType": "existing_normalized_frame",
+      "flipHorizontal": true,
+      "status": "candidate_needs_retouch",
+      "note": "Readable airborne silhouette; verify anatomy, tail continuity, and orb attachment."
+    },
+    {
+      "id": "sleep_curl",
+      "source": "action_trial_v1/frames/lumi_29_sleep_curl.png",
+      "sourceType": "existing_normalized_frame",
+      "flipHorizontal": false,
+      "status": "candidate_needs_retouch",
+      "note": "Strong comfort silhouette; retouch fur/orb contact and validate its ground anchor."
+    }
+  ],
+  "reviewChecklist": {
+    "identityMatch": "pending",
+    "silhouetteConsistency": "pending",
+    "pivotAndGroundLine": "pending",
+    "transparentPadding": "pending",
+    "noBackgroundOrHalos": "pending",
+    "deviceSizeReadability": "pending"
+  },
+  "blockingGaps": [
+    "Paint a real idle_breath_in pose; the nearest trial frame is only a reference.",
+    "Paint an attentive look_profile pose; the extracted turnaround profile is only a design reference.",
+    "Manually retouch all four usable candidates before approval."
+  ]
+}

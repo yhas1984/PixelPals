@@ -38,6 +38,7 @@ class DebugPreviewBillingRepository(
         "pet_taro_premium" to "€3.49",
         "pet_menta_premium" to "€3.49",
         "pet_tela_premium" to "€3.99",
+        "pet_lumi_premium" to "€3.99",
     )
 
     override suspend fun prefetch(productIds: List<String>): Map<String, String> {

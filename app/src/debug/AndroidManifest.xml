@@ -6,5 +6,43 @@
             android:exported="true"
             android:label="@string/debug_moki_title"
             android:theme="@style/Theme.PixelPals" />
+        <activity
+            android:name=".debug.LumiDebugActivity"
+            android:exported="true"
+            android:label="@string/debug_lumi_title"
+            android:theme="@style/Theme.PixelPals" />
+        <activity
+            android:name=".debug.LumiMasterPoseReviewActivity"
+            android:exported="true"
+            android:label="@string/debug_lumi_review_title"
+            android:theme="@style/Theme.PixelPals" />
+        <activity
+            android:name=".debug.TaroDebugActivity"
+            android:exported="true"
+            android:label="@string/debug_taro_title"
+            android:theme="@style/Theme.PixelPals" />
+        <activity
+            android:name=".debug.TelaDebugActivity"
+            android:exported="true"
+            android:label="@string/debug_tela_title"
+            android:theme="@style/Theme.PixelPals" />
+        <service
+            android:name=".debug.LumiDebugOverlayService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse"
+            android:label="@string/debug_lumi_title">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="debug floating Lumi sprite trial" />
+        </service>
+        <service
+            android:name=".debug.TaroDebugOverlayService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse"
+            android:label="@string/debug_taro_title">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="debug floating Taro sprite trial" />
+        </service>
     </application>
 </manifest>

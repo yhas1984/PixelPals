@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lumi Behavior Lab</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #fff4dd;
+      --muted: #b8c5ce;
+      --panel: rgba(12, 22, 32, 0.84);
+      --line: rgba(126, 224, 218, 0.22);
+      --teal: #55e2d3;
+      --gold: #ffc36a;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #101923;
+      color: var(--ink);
+      font: 15px/1.4 Inter, ui-sans-serif, system-ui, sans-serif;
+    }
+
+    .shell {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 24px 0 34px;
+    }
+
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 16px;
+    }
+
+    h1, h2, p { margin: 0; }
+    h1 { font-size: clamp(28px, 4vw, 46px); letter-spacing: -0.04em; }
+    header p { max-width: 540px; color: var(--muted); }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 300px;
+      gap: 16px;
+    }
+
+    .stage-card, .panel {
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: var(--panel);
+      box-shadow: 0 18px 60px rgba(0, 0, 0, 0.28);
+      overflow: hidden;
+    }
+
+    .stage-wrap { padding: 12px; }
+    canvas {
+      display: block;
+      width: 100%;
+      aspect-ratio: 16 / 10;
+      border-radius: 15px;
+      background: #182532;
+      cursor: pointer;
+      touch-action: none;
+    }
+    canvas:focus-visible { outline: 2px solid var(--teal); outline-offset: 4px; }
+
+    .panel { padding: 18px; }
+    .panel h2 { font-size: 15px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--teal); }
+    .state {
+      margin: 14px 0;
+      padding: 14px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.055);
+    }
+    .state strong { display: block; color: var(--gold); font-size: 23px; }
+    .state span { display: block; margin-top: 4px; color: var(--muted); }
+    .meter { margin-top: 13px; }
+    .meter-row { display: flex; justify-content: space-between; color: var(--muted); font-size: 12px; }
+    .track { height: 6px; margin-top: 5px; border-radius: 99px; background: rgba(255,255,255,.12); overflow: hidden; }
+    .fill { height: 100%; width: 50%; border-radius: inherit; background: linear-gradient(90deg, #ff9c52, #55e2d3); transition: width .2s ease; }
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 16px; }
+    button {
+      min-height: 40px;
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 10px;
+      background: rgba(255,255,255,.08);
+      color: var(--ink);
+      cursor: pointer;
+      font: inherit;
+    }
+    button:hover { border-color: var(--teal); background: rgba(85,226,211,.12); }
+    .log { margin-top: 18px; max-height: 220px; overflow: auto; color: var(--muted); font-size: 12px; }
+    .log div { padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,.07); }
+    .note { margin-top: 16px; color: var(--muted); font-size: 12px; }
+
+    @media (max-width: 820px) {
+      header { display: block; }
+      header p { margin-top: 8px; }
+      .layout { grid-template-columns: 1fr; }
+      .panel { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; }
+      .panel h2, .state, .controls, .log, .note { grid-column: 1 / -1; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div>
+        <h1>Lumi Behavior Lab</h1>
+        <p>Autonomous baby-fox choreography using the real source atlas. Click Lumi to get her attention. Use the buttons to force a behavior.</p>
+      </div>
+    </header>
+    <section class="layout">
+      <div class="stage-card">
+        <div class="stage-wrap"><canvas id="stage" width="960" height="600" tabindex="0" role="img" aria-label="Lumi behavior stage. Use arrow keys to redirect Lumi or Enter to call her."></canvas></div>
+      </div>
+      <aside class="panel">
+        <h2>Behavior</h2>
+        <div class="state" aria-live="polite">
+          <strong id="state-name">Loading</strong>
+          <span id="state-detail">Waiting for atlas</span>
+        </div>
+        <div class="meter"><div class="meter-row"><span>Energy</span><span id="energy-value">0%</span></div><div class="track"><div class="fill" id="energy-bar"></div></div></div>
+        <div class="meter"><div class="meter-row"><span>Curiosity</span><span id="curiosity-value">0%</span></div><div class="track"><div class="fill" id="curiosity-bar"></div></div></div>
+        <div class="meter"><div class="meter-row"><span>Affection</span><span id="affection-value">0%</span></div><div class="track"><div class="fill" id="affection-bar"></div></div></div>
+        <div class="controls">
+          <button data-action="social_bid">Call me</button>
+          <button data-action="wonder_magic">Magic</button>
+          <button data-action="play_stalk">Play hunt</button>
+          <button data-action="drowsy">Sleepy</button>
+          <button data-action="startle">Startle</button>
+          <button data-action="reset">Reset</button>
+        </div>
+        <div class="log" id="behavior-log" aria-live="polite"></div>
+        <p class="note">The current atlas has one real walk pose and no landing pose. The lab uses short prance bursts and protected action beats instead of pretending it has a full walk cycle.</p>
+      </aside>
+    </section>
+  </main>
+  <script>
+    const canvas = document.getElementById('stage');
+    const ctx = canvas.getContext('2d');
+    const LOGICAL_WIDTH = 960;
+    const LOGICAL_HEIGHT = 600;
+    const atlas = new Image();
+    let atlasSpec = null;
+    let definitions = {};
+    let cooldowns = {};
+    let ready = false;
+    let loadError = '';
+
+    const COLORS = { ink: '#10202b', line: 'rgba(132, 229, 221, 0.2)', teal: '#58e2d4', gold: '#ffc56d' };
+    const state = {
+      name: 'loading', x: 470, y: 430, targetX: 470, facing: 1,
+      stateTime: 0, frameTime: 0, frameCursor: 0, sequence: [[0, 1]],
+      energy: 0.76, curiosity: 0.7, affection: 0.42, sleepiness: 0.14,
+      homeX: 470, lastTime: performance.now(), clock: 0, cooldownUntil: {}, particles: [], log: []
+    };
+
+    const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+    const random = (min, max) => min + Math.random() * (max - min);
+    function validateAtlasSpec(spec) {
+      if (!spec || !Number.isInteger(spec.frameCount) || !Number.isInteger(spec.columns) || !Number.isInteger(spec.rows)) {
+        throw new Error('Atlas metadata is incomplete');
+      }
+      if (spec.frameCount !== spec.columns * spec.rows) throw new Error('Atlas frame grid is inconsistent');
+      if (!Number.isInteger(spec.frameWidth) || !Number.isInteger(spec.frameHeight)) throw new Error('Atlas frame size is invalid');
+      if (!spec.prototypeAtlasPath) throw new Error('Atlas metadata has no prototype path');
+    }
+
+    function buildDefinitions(spec, behavior) {
+      if (!behavior || !behavior.states) throw new Error('Behavior metadata has no states');
+      return Object.fromEntries(Object.entries(behavior.states).map(([name, definition]) => {
+        if (!Array.isArray(definition.frames) || !Array.isArray(definition.durationSeconds) || definition.frames.length !== definition.durationSeconds.length || !definition.frames.length) {
+          throw new Error(`Invalid sequence for ${name}`);
+        }
+        const sequence = definition.frames.map((frame, index) => {
+          const duration = Number(definition.durationSeconds[index]);
+          if (!Number.isInteger(frame) || frame < 0 || frame >= spec.frameCount || !Number.isFinite(duration) || duration <= 0) {
+            throw new Error(`Invalid frame or duration in ${name}`);
+          }
+          return [frame, duration];
+        });
+        return [name, sequence];
+      }));
+    }
+
+    function totalDuration(sequence) { return sequence.reduce((sum, step) => sum + step[1], 0); }
+
+    function cooldownRemaining(name) {
+      return Math.max(0, (state.cooldownUntil[name] || 0) - state.clock);
+    }
+
+    function logEvent(message) {
+      state.log.unshift(`${new Date().toLocaleTimeString()}  ${message}`);
+      state.log = state.log.slice(0, 8);
+      document.getElementById('behavior-log').innerHTML = state.log.map((item) => `<div>${item}</div>`).join('');
+    }
+
+    function enter(name, payload = {}, options = {}) {
+      if (!definitions[name]) return false;
+      const remaining = cooldownRemaining(name);
+      if (!options.ignoreCooldown && remaining > 0) {
+        if (!options.silent) logEvent(`${name.replace(/_/g, ' ')} cooling down (${remaining.toFixed(0)}s)`);
+        return false;
+      }
+      state.name = name;
+      state.sequence = definitions[name];
+      state.stateTime = 0;
+      state.frameTime = 0;
+      state.frameCursor = 0;
+      state.targetX = payload.targetX ?? state.targetX;
+      state.pounceStartX = state.x;
+      state.pounceEndX = payload.targetX ?? clamp(state.x + state.facing * random(100, 190), 120, 840);
+      state.pounceStartY = state.y;
+      if (name === 'toddle' || name === 'investigate' || name === 'settle') state.targetX = payload.targetX ?? random(130, 830);
+      if (name === 'toddle') state.targetX = clamp(state.targetX, 120, 840);
+      if (name === 'play_stalk') state.targetX = clamp(state.x + state.facing * random(0, 45), 120, 840);
+      if (name === 'pounce_burst') state.targetX = state.pounceEndX;
+      if (cooldowns[name]) state.cooldownUntil[name] = state.clock + cooldowns[name];
+      logEvent(name.replace(/_/g, ' '));
+      return true;
+    }
+
+    function autonomous(name, payload = {}) {
+      if (!enter(name, payload, { silent: true })) enter('idle_observe', {}, { ignoreCooldown: true });
+    }
+
+    function nextAutonomousState() {
+      state.energy = clamp(state.energy + random(-0.06, 0.045), 0.08, 1);
+      state.curiosity = clamp(state.curiosity + random(-0.09, 0.08), 0.12, 1);
+      state.affection = clamp(state.affection + random(-0.03, 0.08), 0.12, 1);
+      state.sleepiness = clamp(state.sleepiness + random(0.015, 0.055), 0.05, 1);
+      if (state.sleepiness > 0.78 || state.energy < 0.18) return autonomous('drowsy');
+      if (state.name === 'play_stalk') return autonomous(Math.random() < 0.74 ? 'pounce_burst' : 'investigate');
+      if (state.name === 'pounce_burst') return autonomous(Math.random() < 0.7 ? 'happy_burst' : 'idle_observe');
+      if (state.name === 'drowsy') return autonomous(Math.random() < 0.8 ? 'sleep_curl' : 'snuggle');
+      if (state.name === 'sleep_curl') { state.energy = clamp(state.energy + 0.28, 0, 1); state.sleepiness = clamp(state.sleepiness - 0.45, 0, 1); return autonomous('idle_observe'); }
+      if (state.name === 'wonder_magic') return autonomous(Math.random() < 0.45 ? 'happy_burst' : 'idle_observe');
+      if (state.name === 'startle') return autonomous(Math.random() < 0.3 ? 'snuggle' : 'investigate');
+      const roll = Math.random();
+      if (roll < 0.22) return autonomous('investigate', { targetX: random(130, 830) });
+      if (roll < 0.46) return autonomous('toddle', { targetX: random(130, 830) });
+      if (roll < 0.59 && state.affection > 0.34) return autonomous('social_bid');
+      if (roll < 0.72 && state.energy > 0.35) return autonomous('play_stalk');
+      if (roll < 0.77 && state.energy > 0.5) return autonomous('wonder_magic');
+      if (roll < 0.9) return autonomous('settle');
+      return autonomous('idle_observe');
+    }
+
+    function currentFrame() {
+      let elapsed = state.frameTime;
+      for (let index = 0; index < state.sequence.length; index += 1) {
+        if (elapsed <= state.sequence[index][1]) return state.sequence[index][0];
+        elapsed -= state.sequence[index][1];
+      }
+      return state.sequence[state.sequence.length - 1][0];
+    }
+
+    function moveToward(target, speed, dt) {
+      const delta = target - state.x;
+      if (Math.abs(delta) < 2) return;
+      state.facing = delta >= 0 ? 1 : -1;
+      state.x += state.facing * Math.min(Math.abs(delta), speed * dt);
+    }
+
+    function updateMotion(dt) {
+      const time = state.stateTime;
+      if (state.name === 'toddle') {
+        moveToward(state.targetX, random(46, 74), dt);
+        state.y = 430 + Math.sin(time * 7.5) * 3;
+      } else if (state.name === 'investigate') {
+        moveToward(state.targetX, 30, dt);
+        state.y = 430 + Math.sin(time * 3.2) * 1.5;
+      } else if (state.name === 'settle') {
+        moveToward(state.homeX, 35, dt);
+        state.y = 430 + Math.min(time * 18, 18);
+      } else if (state.name === 'play_stalk') {
+        moveToward(state.targetX, 16, dt);
+        state.y = 430 + Math.sin(time * 10) * 2;
+      } else if (state.name === 'pounce_burst') {
+        const launchAt = 0.42;
+        const travelDuration = 0.68;
+        if (time > launchAt) {
+          const progress = clamp((time - launchAt) / travelDuration, 0, 1);
+          state.x = state.pounceStartX + (state.pounceEndX - state.pounceStartX) * progress;
+          state.y = state.pounceStartY - Math.sin(progress * Math.PI) * 112;
+          state.facing = state.pounceEndX >= state.pounceStartX ? 1 : -1;
+        } else state.y = 430;
+      } else if (state.name === 'happy_burst') {
+        state.y = 430 - Math.sin(clamp(time / 0.9, 0, 1) * Math.PI) * 42;
+      } else if (state.name === 'wonder_magic') {
+        state.y = 430 + Math.sin(time * 2.5) * 2;
+      } else if (state.name === 'drowsy') {
+        state.y = 430 + Math.min(time * 9, 10);
+      } else if (state.name === 'sleep_curl') {
+        state.y = 430 + Math.sin(time * 1.4) * 2;
+      } else if (state.name === 'snuggle') {
+        state.y = 430 + Math.sin(time * 2.2) * 2;
+      } else {
+        state.y = 430 + Math.sin(time * 1.4) * 2;
+      }
+      state.x = clamp(state.x, 100, 860);
+    }
+
+    function update(dt) {
+      state.clock += dt;
+      state.stateTime += dt;
+      state.frameTime += dt;
+      updateMotion(dt);
+      if (state.name === 'wonder_magic' && Math.random() < dt * 7) {
+        state.particles.push({ x: state.x + random(-70, 80), y: state.y + random(-110, 20), life: 1, size: random(2, 7) });
+      }
+      state.particles.forEach((particle) => { particle.life -= dt * 0.8; particle.y -= dt * 18; });
+      state.particles = state.particles.filter((particle) => particle.life > 0);
+      const duration = totalDuration(state.sequence);
+      if (state.stateTime >= duration) nextAutonomousState();
+    }
+
+    function drawBackground() {
+      const gradient = ctx.createLinearGradient(0, 0, 0, LOGICAL_HEIGHT);
+      gradient.addColorStop(0, '#182b39');
+      gradient.addColorStop(0.62, '#263b43');
+      gradient.addColorStop(1, '#14242d');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+      ctx.strokeStyle = COLORS.line;
+      ctx.lineWidth = 1;
+      for (let x = 0; x < LOGICAL_WIDTH; x += 48) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, LOGICAL_HEIGHT); ctx.stroke(); }
+      for (let y = 0; y < LOGICAL_HEIGHT; y += 48) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(LOGICAL_WIDTH, y); ctx.stroke(); }
+      ctx.fillStyle = 'rgba(9, 18, 25, 0.55)';
+      ctx.fillRect(0, 474, LOGICAL_WIDTH, 126);
+      ctx.strokeStyle = 'rgba(85, 226, 211, 0.35)';
+      ctx.beginPath(); ctx.moveTo(0, 474); ctx.lineTo(LOGICAL_WIDTH, 474); ctx.stroke();
+      ctx.fillStyle = 'rgba(255, 198, 106, 0.08)';
+      ctx.beginPath(); ctx.arc(760, 120, 110, 0, Math.PI * 2); ctx.fill();
+    }
+
+    function drawParticles() {
+      state.particles.forEach((particle) => {
+        ctx.globalAlpha = clamp(particle.life, 0, 1);
+        ctx.fillStyle = particle.size > 5 ? '#ffe9a6' : '#58e2d4';
+        ctx.beginPath(); ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2); ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+    }
+
+    function drawSprite() {
+      if (!ready || !atlasSpec || !atlas.complete) return;
+      const size = 220;
+      const frame = currentFrame();
+      const sourceX = (frame % atlasSpec.columns) * atlasSpec.frameWidth;
+      const sourceY = Math.floor(frame / atlasSpec.columns) * atlasSpec.frameHeight;
+      ctx.save();
+      ctx.translate(state.x, state.y);
+      ctx.scale(state.facing, 1);
+      if (state.name === 'wonder_magic') {
+        ctx.strokeStyle = 'rgba(85, 226, 211, 0.65)';
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(0, -38, 110 + Math.sin(state.stateTime * 7) * 8, 0, Math.PI * 2); ctx.stroke();
+      }
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.42)';
+      ctx.shadowBlur = 20;
+      ctx.shadowOffsetY = 8;
+      ctx.drawImage(atlas, sourceX, sourceY, atlasSpec.frameWidth, atlasSpec.frameHeight, -size / 2, -size / 2, size, size);
+      ctx.restore();
+      ctx.fillStyle = 'rgba(4, 12, 17, 0.45)';
+      ctx.beginPath(); ctx.ellipse(state.x, 470, 70, 10, 0, 0, Math.PI * 2); ctx.fill();
+    }
+
+    function draw() {
+      drawBackground();
+      drawParticles();
+      drawSprite();
+      ctx.fillStyle = COLORS.ink;
+      ctx.font = '600 16px Inter, system-ui, sans-serif';
+      ctx.fillText('HOME SPOT', state.homeX - 42, 498);
+      ctx.fillStyle = 'rgba(255,255,255,0.68)';
+      ctx.font = '14px Inter, system-ui, sans-serif';
+      ctx.fillText('click the stage to redirect Lumi', 22, 34);
+      if (loadError) {
+        ctx.fillStyle = 'rgba(5, 13, 19, 0.86)';
+        ctx.fillRect(24, 66, 470, 78);
+        ctx.fillStyle = '#ffc56d';
+        ctx.font = '600 18px Inter, system-ui, sans-serif';
+        ctx.fillText('Lumi could not load', 44, 96);
+        ctx.fillStyle = '#fff4dd';
+        ctx.font = '14px Inter, system-ui, sans-serif';
+        ctx.fillText(loadError, 44, 121);
+      }
+    }
+
+    function updatePanel() {
+      const label = state.name.replace(/_/g, ' ');
+      document.getElementById('state-name').textContent = label;
+      document.getElementById('state-detail').textContent = loadError || (ready
+        ? `frame ${currentFrame()}  •  ${state.stateTime.toFixed(1)}s  •  facing ${state.facing > 0 ? 'right' : 'left'}`
+        : 'Loading atlas and behavior metadata');
+      for (const [name, value] of [['energy', state.energy], ['curiosity', state.curiosity], ['affection', state.affection]]) {
+        document.getElementById(`${name}-value`).textContent = `${Math.round(value * 100)}%`;
+        document.getElementById(`${name}-bar`).style.width = `${Math.round(value * 100)}%`;
+      }
+    }
+
+    function resize() {
+      const ratio = window.devicePixelRatio || 1;
+      canvas.width = Math.round(LOGICAL_WIDTH * ratio);
+      canvas.height = Math.round(LOGICAL_HEIGHT * ratio);
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    }
+
+    function redirectAt(clientX) {
+      const rect = canvas.getBoundingClientRect();
+      const x = (clientX - rect.left) * (LOGICAL_WIDTH / rect.width);
+      if (Math.abs(x - state.x) < 160) {
+        enter(state.name === 'sleep_curl' ? 'startle' : 'social_bid');
+        state.affection = clamp(state.affection + 0.12, 0, 1);
+      } else enter('investigate', { targetX: clamp(x, 120, 840) });
+    }
+
+    canvas.addEventListener('pointerdown', (event) => {
+      redirectAt(event.clientX);
+      canvas.setPointerCapture(event.pointerId);
+    });
+
+    canvas.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        enter('social_bid');
+      } else if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+        event.preventDefault();
+        const direction = event.key === 'ArrowLeft' ? -1 : 1;
+        enter('investigate', { targetX: clamp(state.x + direction * 180, 120, 840) });
+      }
+    });
+
+    document.querySelectorAll('[data-action]').forEach((button) => button.addEventListener('click', () => {
+      const action = button.dataset.action;
+      if (action === 'reset') {
+        state.x = state.homeX; state.energy = 0.76; state.curiosity = 0.7; state.affection = 0.42; state.sleepiness = 0.14; state.log = [];
+        state.cooldownUntil = {};
+        logEvent('reset to home'); enter('idle_observe', {}, { ignoreCooldown: true }); return;
+      }
+      enter(action);
+    }));
+
+    function loop(now) {
+      const dt = Math.min(0.05, (now - state.lastTime) / 1000);
+      state.lastTime = now;
+      if (ready) update(dt);
+      draw();
+      updatePanel();
+      requestAnimationFrame(loop);
+    }
+
+    async function loadAssets() {
+      try {
+        const [atlasResponse, behaviorResponse] = await Promise.all([
+          fetch('source_atlas/lumi_sheet_source_v1.json'),
+          fetch('behavior/lumi_behavior_v1.json')
+        ]);
+        if (!atlasResponse.ok || !behaviorResponse.ok) throw new Error('Metadata request failed');
+        atlasSpec = await atlasResponse.json();
+        const behaviorSpec = await behaviorResponse.json();
+        validateAtlasSpec(atlasSpec);
+        definitions = buildDefinitions(atlasSpec, behaviorSpec);
+        cooldowns = Object.fromEntries(Object.entries(behaviorSpec.cooldownsSeconds || {}).map(([name, seconds]) => [name, Number(seconds)]));
+        await new Promise((resolve, reject) => {
+          atlas.addEventListener('load', resolve, { once: true });
+          atlas.addEventListener('error', () => reject(new Error('Atlas image request failed')), { once: true });
+          atlas.src = atlasSpec.prototypeAtlasPath;
+        });
+        ready = true;
+        enter('idle_observe', {}, { ignoreCooldown: true });
+      } catch (error) {
+        loadError = error instanceof Error ? error.message : 'Unknown loading error';
+        state.name = 'error';
+      }
+    }
+
+    window.addEventListener('resize', resize);
+    resize();
+    requestAnimationFrame(loop);
+    loadAssets();
+  </script>
+</body>
+</html>
