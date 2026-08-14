@@ -25,6 +25,7 @@ object PetBehaviorFactory {
             PetType.TARO -> TaroBehavior(bridge, random)
             PetType.MENTA -> MentaBehavior(bridge, random)
             PetType.TELA -> TelaBehavior(bridge, random)
+            PetType.LUMI -> LumiBehavior(bridge, random)
         }
     }
 }

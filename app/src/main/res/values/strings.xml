@@ -279,12 +279,14 @@
     <string name="pet_name_taro">Taro</string>
     <string name="pet_name_menta">Menta</string>
     <string name="pet_name_tela">Tela</string>
+    <string name="pet_name_lumi">Lumi</string>
     <string name="moki_desc">The Sticky Chameleon\nClings &amp; blends</string>
     <string name="yuki_desc">The Snow Buddy\nChilly &amp; soft</string>
     <string name="piru_desc">The Curious Penguin\nWaddles &amp; slides</string>
     <string name="taro_desc">The Garden Turtle\nCalm &amp; patient</string>
     <string name="menta_desc">The Minty Snake\nSlithers &amp; glides</string>
     <string name="tela_desc">The Web Weaver\nClimbs &amp; swings</string>
+    <string name="lumi_desc">The Luminous Sprite\nGlows &amp; plays</string>
 
     <string name="daily_task_check_in_title">Say hello</string>
     <string name="daily_task_check_in_description">Visit your pet and make them feel accompanied.</string>
@@ -316,6 +318,7 @@
     <string name="selection_spotlight_format">%1$s feels %2$s. Their best next step is %3$s.</string>
     <string name="premium_pet_perk_angel">Includes a serene aura, gentle moves, and celestial details.</string>
     <string name="premium_pet_perk_diablillo">Includes mischievous reactions, high energy, and chaotic effects.</string>
+    <string name="premium_pet_perk_lumi">Includes luminous magic, playful socials, and a premium motion set.</string>
     <string name="premium_pet_perk_default">Includes a unique personality, presence, and style.</string>
 
     <string name="progress_level_baby">Baby</string>

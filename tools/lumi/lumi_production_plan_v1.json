@@ -1,0 +1,334 @@
+{
+  "version": 2,
+  "petId": "lumi",
+  "status": "candidate",
+  "sourceOfTruth": "tools/lumi/pipeline/atlas_v2/lumi_motion_v2.json",
+  "legacyPlanningData": "The original 32-frame plan below is retained for provenance; runtime uses sourceOfTruth.",
+  "productionBible": "tools/lumi/PET_PRODUCTION_BIBLE_V1.md",
+  "characterBible": "tools/lumi/LUMI_CHARACTER_BIBLE_V1.md",
+  "canonicalReferences": {
+    "paintedKeyArt": "/home/yhas/Pictures/pixelpals_refs/lumi.png",
+    "actionSheet": "/home/yhas/Pictures/pixelpals_refs/lumi_action_sheet.png",
+    "expressionsSheet": "/home/yhas/Pictures/pixelpals_refs/lumi_expressions_sheet.png",
+    "turnaroundSheet": "/home/yhas/Pictures/pixelpals_refs/lumi_turnaround_sheet.png"
+  },
+  "technicalContract": {
+    "frameWidth": 384,
+    "frameHeight": 384,
+    "columns": 8,
+    "rows": 5,
+    "frameCount": 40,
+    "minimumTransparentPaddingPx": 16,
+    "pivot": { "x": 192, "y": 368 },
+    "canonicalFacing": "right",
+    "format": "png-rgba",
+    "productionPath": "app/src/main/assets/pets/lumi/lumi_motion_v2.png",
+    "productionSpecPath": "app/src/main/assets/pets/lumi/lumi_motion_v2.json"
+  },
+  "masterPoses": [
+    { "id": "idle_neutral", "status": "required" },
+    { "id": "idle_breath_in", "status": "required" },
+    { "id": "look_profile", "status": "required" },
+    { "id": "walk_contact_right", "status": "required" },
+    { "id": "pounce_air", "status": "required" },
+    { "id": "sleep_curl", "status": "required" }
+  ],
+  "framePlan": [
+    {
+      "index": 0,
+      "name": "idle_neutral",
+      "clip": "idle",
+      "kind": "master",
+      "durationMs": 320,
+      "status": "planned"
+    },
+    {
+      "index": 1,
+      "name": "idle_breath_in",
+      "clip": "idle",
+      "kind": "master",
+      "durationMs": 260,
+      "status": "planned"
+    },
+    {
+      "index": 2,
+      "name": "idle_breath_out",
+      "clip": "idle",
+      "kind": "in_between",
+      "durationMs": 320,
+      "status": "planned"
+    },
+    {
+      "index": 3,
+      "name": "idle_blink",
+      "clip": "idle",
+      "kind": "accent",
+      "durationMs": 140,
+      "status": "planned"
+    },
+    {
+      "index": 4,
+      "name": "look_profile",
+      "clip": "look",
+      "kind": "master",
+      "durationMs": 260,
+      "status": "planned"
+    },
+    {
+      "index": 5,
+      "name": "look_curious_tilt",
+      "clip": "look",
+      "kind": "accent",
+      "durationMs": 420,
+      "status": "planned"
+    },
+    {
+      "index": 6,
+      "name": "turn_to_profile",
+      "clip": "turn",
+      "kind": "transition",
+      "durationMs": 180,
+      "status": "planned"
+    },
+    {
+      "index": 7,
+      "name": "turn_to_front",
+      "clip": "turn",
+      "kind": "transition",
+      "durationMs": 180,
+      "status": "planned"
+    },
+    {
+      "index": 8,
+      "name": "walk_contact_right",
+      "clip": "walk",
+      "kind": "master",
+      "durationMs": 120,
+      "status": "planned"
+    },
+    {
+      "index": 9,
+      "name": "walk_down_right",
+      "clip": "walk",
+      "kind": "in_between",
+      "durationMs": 100,
+      "status": "planned"
+    },
+    {
+      "index": 10,
+      "name": "walk_passing_right",
+      "clip": "walk",
+      "kind": "key",
+      "durationMs": 120,
+      "status": "planned"
+    },
+    {
+      "index": 11,
+      "name": "walk_up_right",
+      "clip": "walk",
+      "kind": "in_between",
+      "durationMs": 100,
+      "status": "planned"
+    },
+    {
+      "index": 12,
+      "name": "walk_contact_left",
+      "clip": "walk",
+      "kind": "key",
+      "durationMs": 120,
+      "status": "planned"
+    },
+    {
+      "index": 13,
+      "name": "walk_down_left",
+      "clip": "walk",
+      "kind": "in_between",
+      "durationMs": 100,
+      "status": "planned"
+    },
+    {
+      "index": 14,
+      "name": "walk_passing_left",
+      "clip": "walk",
+      "kind": "key",
+      "durationMs": 120,
+      "status": "planned"
+    },
+    {
+      "index": 15,
+      "name": "walk_up_left",
+      "clip": "walk",
+      "kind": "in_between",
+      "durationMs": 100,
+      "status": "planned"
+    },
+    {
+      "index": 16,
+      "name": "stalk_ready",
+      "clip": "stalk",
+      "kind": "key",
+      "durationMs": 220,
+      "status": "planned"
+    },
+    {
+      "index": 17,
+      "name": "stalk_creep",
+      "clip": "stalk",
+      "kind": "key",
+      "durationMs": 240,
+      "status": "planned"
+    },
+    {
+      "index": 18,
+      "name": "pounce_anticipation",
+      "clip": "pounce",
+      "kind": "key",
+      "durationMs": 180,
+      "status": "planned"
+    },
+    {
+      "index": 19,
+      "name": "pounce_launch",
+      "clip": "pounce",
+      "kind": "key",
+      "durationMs": 120,
+      "status": "planned"
+    },
+    {
+      "index": 20,
+      "name": "pounce_air",
+      "clip": "pounce",
+      "kind": "master",
+      "durationMs": 180,
+      "status": "planned"
+    },
+    {
+      "index": 21,
+      "name": "pounce_land",
+      "clip": "land",
+      "kind": "key",
+      "durationMs": 120,
+      "status": "planned"
+    },
+    {
+      "index": 22,
+      "name": "land_recovery",
+      "clip": "land",
+      "kind": "key",
+      "durationMs": 260,
+      "status": "planned"
+    },
+    {
+      "index": 23,
+      "name": "happy_jump",
+      "clip": "happy",
+      "kind": "accent",
+      "durationMs": 240,
+      "status": "planned"
+    },
+    {
+      "index": 24,
+      "name": "social_wave",
+      "clip": "social",
+      "kind": "key",
+      "durationMs": 360,
+      "status": "planned"
+    },
+    {
+      "index": 25,
+      "name": "social_snuggle",
+      "clip": "social",
+      "kind": "key",
+      "durationMs": 900,
+      "status": "planned"
+    },
+    {
+      "index": 26,
+      "name": "magic_ready",
+      "clip": "magic",
+      "kind": "key",
+      "durationMs": 300,
+      "status": "planned"
+    },
+    {
+      "index": 27,
+      "name": "magic_cast",
+      "clip": "magic",
+      "kind": "key",
+      "durationMs": 420,
+      "status": "planned"
+    },
+    {
+      "index": 28,
+      "name": "magic_hold",
+      "clip": "magic",
+      "kind": "key",
+      "durationMs": 520,
+      "status": "planned"
+    },
+    {
+      "index": 29,
+      "name": "surprised",
+      "clip": "startle",
+      "kind": "accent",
+      "durationMs": 520,
+      "status": "planned"
+    },
+    {
+      "index": 30,
+      "name": "yawn",
+      "clip": "drowsy",
+      "kind": "key",
+      "durationMs": 820,
+      "status": "planned"
+    },
+    {
+      "index": 31,
+      "name": "sleep_curl",
+      "clip": "sleep",
+      "kind": "master",
+      "durationMs": 1400,
+      "status": "planned"
+    }
+  ],
+  "clipPlan": [
+    { "id": "idle", "frames": [0, 1, 2, 3], "loop": true, "frameDurationMs": 320 },
+    { "id": "look", "frames": [0, 4, 5, 0], "loop": false, "frameDurationMs": 260 },
+    { "id": "turn", "frames": [0, 6, 7, 4], "loop": false, "frameDurationMs": 180 },
+    { "id": "walk", "frames": [8, 9, 10, 11, 12, 13, 14, 15], "loop": true, "frameDurationMs": 120 },
+    { "id": "stalk", "frames": [16, 17], "loop": true, "frameDurationMs": 230 },
+    { "id": "pounce", "frames": [18, 19, 20], "loop": false, "frameDurationMs": 160 },
+    { "id": "land", "frames": [21, 22], "loop": false, "frameDurationMs": 180 },
+    { "id": "happy", "frames": [23, 0], "loop": false, "frameDurationMs": 240 },
+    { "id": "social", "frames": [24, 25, 0], "loop": false, "frameDurationMs": 420 },
+    { "id": "magic", "frames": [26, 27, 28, 0], "loop": false, "frameDurationMs": 360 },
+    { "id": "startle", "frames": [29, 5, 0], "loop": false, "frameDurationMs": 300 },
+    { "id": "drowsy", "frames": [30, 31], "loop": false, "frameDurationMs": 820 },
+    { "id": "sleep", "frames": [31], "loop": true, "frameDurationMs": 1400 }
+  ],
+  "behaviorStates": [
+    "idle_observe",
+    "investigate",
+    "toddle",
+    "play_stalk",
+    "pounce_burst",
+    "happy_burst",
+    "social_bid",
+    "wonder_magic",
+    "settle",
+    "drowsy",
+    "sleep_curl",
+    "snuggle",
+    "startle"
+  ],
+  "qualityGates": [
+    "master_poses_approved",
+    "idle_loop_approved",
+    "turn_transition_approved",
+    "walk_loop_approved",
+    "pounce_land_recovery_approved",
+    "technical_atlas_validation_passed",
+    "android_debug_overlay_passed",
+    "production_promotion_approved"
+  ]
+}

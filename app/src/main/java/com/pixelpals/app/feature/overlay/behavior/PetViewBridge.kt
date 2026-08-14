@@ -97,6 +97,12 @@ interface PetViewBridge {
     fun invalidate()
     fun teleportToRandomEdge()
 
+    /** Publishes Tela's web geometry to the service-owned silk overlay. */
+    fun updateTelaSilk(state: TelaSilkState?) {}
+
+    /** Publishes Tela's short-lived decorative corner web. */
+    fun updateTelaCornerWeb(state: TelaCornerWebState?) {}
+
     /** Notifies the system that an interaction (XP) happened */
     fun trackInteraction()
 

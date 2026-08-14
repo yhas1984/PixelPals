@@ -2,6 +2,7 @@ package com.pixelpals.app.feature.overlay.behavior
 
 import com.pixelpals.app.core.domain.PetState
 import com.pixelpals.app.core.motion.PetRandom
+import com.pixelpals.app.BuildConfig
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -12,9 +13,9 @@ import kotlin.math.sin
  * Se comporta como una araña de verdad:
  *  - TREPA por los bordes laterales (sube y baja por las paredes),
  *  - CAMINA por el techo (parte superior de la pantalla, patas arriba),
- *  - SE CUELGA de un hilo y se balancea,
+ *  - BAJA desde el techo por una seda visible, se balancea y vuelve a subir,
  *  - Recorre el perímetro de la pantalla entera.
- * IA atlas: idle colgando (0-3), walk (4-5), climb (6-7), happy (8-11), touch (12-14), sleep (15).
+ * IA atlas V2: idle, walk, climb, ceiling, web descend/hang/ascend, land/touch and sleep.
  */
 class TelaBehavior(
     bridge: PetViewBridge,
@@ -23,7 +24,18 @@ class TelaBehavior(
 
     override val resourceIds: List<Int> = emptyList()
 
-    private enum class Mode { HANG, WALK, CLIMB, CEILING, HAPPY, TOUCH, SLEEP }
+    private enum class Mode {
+        HANG,
+        WALK,
+        CLIMB,
+        CEILING,
+        WEB_DESCEND,
+        WEB_HANG,
+        WEB_ASCEND,
+        HAPPY,
+        TOUCH,
+        SLEEP,
+    }
 
     private var mode = Mode.HANG
     private var modeTimer = 0f
@@ -34,9 +46,19 @@ class TelaBehavior(
     private var toX = 0f
     private var toY = 0f
     private var facingRight = true
+    private var webAnchorX = 0f
+    private var webAnchorY = 0f
+    private var webTopY = 0f
+    private var cornerWebState: TelaCornerWebState? = null
+    private var cornerWebTimer = 0f
 
     init {
-        loadSpriteSheetAssetAsync("pets/tela/tela_sheet_v1.json")
+        val specPath = if (BuildConfig.DEBUG) {
+            "pets/tela/tela_motion_v2.json"
+        } else {
+            "pets/tela/tela_sheet_v1.json"
+        }
+        loadSpriteSheetAssetAsync(specPath)
     }
 
     override fun getBaseSpeed(): Float = 0f
@@ -78,6 +100,22 @@ class TelaBehavior(
         val atLeft = x <= leftX + edge
         val atRight = x >= rightX - edge
         val roll = random.nextFloat()
+        val corner = when {
+            atTop && atLeft -> TelaWebCorner.TOP_LEFT
+            atTop && atRight -> TelaWebCorner.TOP_RIGHT
+            atBottom && atRight -> TelaWebCorner.BOTTOM_RIGHT
+            atBottom && atLeft -> TelaWebCorner.BOTTOM_LEFT
+            else -> null
+        }
+
+        if (corner != null && roll >= 0.24f && roll < 0.58f) {
+            leaveCornerWeb(corner)
+        }
+
+        if (atTop && roll < 0.24f) {
+            startWebDescend(x, y)
+            return
+        }
 
         // Circuito horario fijo por el perímetro cuando está cerca de un borde:
         // techo → pared derecha → suelo → pared izquierda. Nunca se queda
@@ -112,12 +150,16 @@ class TelaBehavior(
         time += step
         modeTimer += step
         animClock += step
+        updateCornerWeb(step)
 
         when (mode) {
             Mode.HANG -> updateHang(step)
             Mode.WALK -> updateWalk(step)
             Mode.CLIMB -> updateClimb(step)
             Mode.CEILING -> updateCeiling(step)
+            Mode.WEB_DESCEND -> updateWebDescend(step)
+            Mode.WEB_HANG -> updateWebHang(step)
+            Mode.WEB_ASCEND -> updateWebAscend(step)
             Mode.HAPPY -> updateHappy(step)
             Mode.TOUCH -> updateTouch(step)
             Mode.SLEEP -> updateSleep(step)
@@ -221,6 +263,145 @@ class TelaBehavior(
         }
     }
 
+    private fun startWebDescend(x: Float, y: Float) {
+        webAnchorX = x + bridge.petSpriteSize / 2f
+        webAnchorY = 0f
+        webTopY = y
+        val descentY = (minY() + (maxY() - minY()) * (0.45f + random.nextFloat() * 0.2f))
+            .coerceIn(minY(), maxY())
+        startMode(Mode.WEB_DESCEND, 1.7f, x, y, x, descentY)
+    }
+
+    private fun leaveCornerWeb(corner: TelaWebCorner) {
+        val centerX = when (corner) {
+            TelaWebCorner.TOP_LEFT,
+            TelaWebCorner.BOTTOM_LEFT -> 0f
+            TelaWebCorner.TOP_RIGHT,
+            TelaWebCorner.BOTTOM_RIGHT -> bridge.screenWidth.toFloat()
+        }
+        val centerY = when (corner) {
+            TelaWebCorner.TOP_LEFT,
+            TelaWebCorner.TOP_RIGHT -> 0f
+            TelaWebCorner.BOTTOM_LEFT,
+            TelaWebCorner.BOTTOM_RIGHT -> bridge.screenHeight.toFloat()
+        }
+        val next = TelaCornerWebState(
+            corner = corner,
+            centerX = centerX,
+            centerY = centerY,
+            radius = bridge.petSpriteSize * 0.9f,
+        )
+        cornerWebState = next
+        cornerWebTimer = 4.8f
+        bridge.updateTelaCornerWeb(next)
+    }
+
+    private fun updateCornerWeb(dt: Float) {
+        if (cornerWebTimer <= 0f) return
+        cornerWebTimer -= dt
+        val current = cornerWebState ?: return
+        if (cornerWebTimer <= 0f) {
+            cornerWebState = null
+            bridge.updateTelaCornerWeb(null)
+            return
+        }
+        bridge.updateTelaCornerWeb(
+            current.copy(alpha = (cornerWebTimer / 0.8f).coerceIn(0f, 1f))
+        )
+    }
+
+    private fun clearCornerWeb() {
+        if (cornerWebState == null && cornerWebTimer <= 0f) return
+        cornerWebState = null
+        cornerWebTimer = 0f
+        bridge.updateTelaCornerWeb(null)
+    }
+
+    fun debugStartWebSequence() {
+        val params = bridge.getWindowParams() ?: return
+        params.x = params.x.coerceIn(minX().roundToInt(), maxX().roundToInt())
+        params.y = minY().roundToInt()
+        bridge.updateWindowLayout(params)
+        startWebDescend(params.x.toFloat(), params.y.toFloat())
+    }
+
+    fun debugLeaveCornerWeb() {
+        leaveCornerWeb(TelaWebCorner.TOP_LEFT)
+    }
+
+    private fun updateWebDescend(dt: Float) {
+        updateWebPosition()
+        if (modeTimer >= modeDuration) {
+            modeTimer = 0f
+            modeDuration = 2.4f + random.nextFloat() * 1.8f
+            mode = Mode.WEB_HANG
+        }
+    }
+
+    private fun updateWebHang(dt: Float) {
+        updateWebPosition()
+        if (modeTimer >= modeDuration) {
+            modeTimer = 0f
+            startMode(Mode.WEB_ASCEND, 1.7f, fromX, toY, fromX, webTopY)
+        }
+    }
+
+    private fun updateWebAscend(dt: Float) {
+        updateWebPosition()
+        if (modeTimer >= modeDuration) {
+            bridge.updateTelaSilk(null)
+            modeTimer = 0f
+            decideNext()
+        }
+    }
+
+    private fun updateWebPosition() {
+        val params = bridge.getWindowParams() ?: return
+        val progress = (modeTimer / modeDuration).coerceIn(0f, 1f)
+        params.y = when (mode) {
+            Mode.WEB_HANG -> toY.roundToInt()
+            Mode.WEB_ASCEND -> {
+                val eased = sin((progress * PI).toFloat() / 2f)
+                (fromY + (toY - fromY) * eased).roundToInt()
+            }
+            else -> {
+                val eased = sin((progress * PI).toFloat() / 2f)
+                (fromY + (toY - fromY) * eased).roundToInt()
+            }
+        }
+        bridge.updateWindowLayout(params)
+
+        val spec = spriteSheetSpec ?: return
+        val clipId = when (mode) {
+            Mode.WEB_DESCEND -> "web_descend"
+            Mode.WEB_ASCEND -> "web_ascend"
+            else -> "web_hang"
+        }
+        val clip = spec.clip(clipId)
+            ?: spec.clip("hang")
+            ?: spec.clip("idle")
+            ?: return
+        val frameDuration = clip.frameDurationMs / 1000f
+        val idx = ((animClock / frameDuration).toInt() % clip.frames.size)
+        bridge.currentFrame = clip.frames[idx]
+
+        val sway = sin(time * 2.2f) * 8f
+        bridge.animScaleX = if (facingRight) 1f else -1f
+        bridge.animScaleY = 1f + sin(time * 2.8f) * 0.015f
+        bridge.animRotation = sin(time * 2.2f) * 3.5f
+        bridge.animOffsetX = sin(time * 2.2f) * 3f
+        bridge.animOffsetY = abs(sin(time * 1.8f)) * 1.5f
+        bridge.updateTelaSilk(
+            TelaSilkState(
+                anchorX = webAnchorX,
+                anchorY = webAnchorY,
+                targetX = params.x + bridge.petSpriteSize / 2f + bridge.renderOffsetX,
+                targetY = params.y + bridge.petSpriteSize * 0.48f + bridge.renderOffsetY,
+                sway = sway,
+            )
+        )
+    }
+
     private fun updateHappy(dt: Float) {
         if (modeTimer >= modeDuration) {
             modeTimer = 0f
@@ -264,6 +445,8 @@ class TelaBehavior(
 
     override fun onInteract() {
         super.onInteract()
+        bridge.updateTelaSilk(null)
+        clearCornerWeb()
         mode = Mode.TOUCH
         modeDuration = 0.9f + random.nextFloat() * 0.6f
         modeTimer = 0f
@@ -283,6 +466,8 @@ class TelaBehavior(
         // Al arrastrar, la araña sigue colgando de su hilo y balanceándose
         // (no se congela como en BaseBehavior).
         time += dt
+        bridge.updateTelaSilk(null)
+        clearCornerWeb()
         val spec = spriteSheetSpec ?: return
         val clip = spec.clip("idle") ?: return
         val idx = ((time / 0.26f).toInt() % clip.frames.size)
@@ -295,6 +480,8 @@ class TelaBehavior(
 
     override fun reset() {
         super.reset()
+        bridge.updateTelaSilk(null)
+        clearCornerWeb()
         // Al soltar el drag, la araña reanuda su ronda por el perímetro al momento.
         modeTimer = 0f
         animClock = 0f

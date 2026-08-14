@@ -1,0 +1,195 @@
+{
+  "version": 1,
+  "petId": "lumi",
+  "atlasPath": "pets/lumi/lumi_sheet_source_v1.png",
+  "prototypeAtlasPath": "source_atlas/lumi_sheet_source_v1.png",
+  "previewPath": "res://drawable-nodpi/pet_lumi.png",
+  "frameWidth": 384,
+  "frameHeight": 384,
+  "columns": 4,
+  "rows": 4,
+  "frameCount": 16,
+  "pivot": {
+    "x": 192,
+    "y": 368
+  },
+  "renderHints": {
+    "innerTransparentPaddingPx": 16,
+    "recommendedBleedInsetPx": 1,
+    "filterBitmap": true
+  },
+  "clips": [
+    {
+      "id": "idle",
+      "frames": [
+        0,
+        1,
+        0,
+        2,
+        0
+      ],
+      "loop": true,
+      "frameDurationMs": 240
+    },
+    {
+      "id": "look",
+      "frames": [
+        0,
+        3,
+        0
+      ],
+      "loop": false,
+      "frameDurationMs": 260
+    },
+    {
+      "id": "play",
+      "frames": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "loop": false,
+      "frameDurationMs": 180
+    },
+    {
+      "id": "magic",
+      "frames": [
+        0,
+        8,
+        8,
+        0
+      ],
+      "loop": false,
+      "frameDurationMs": 240
+    },
+    {
+      "id": "walk",
+      "frames": [
+        9,
+        10,
+        9,
+        10
+      ],
+      "loop": true,
+      "frameDurationMs": 190
+    },
+    {
+      "id": "pounce",
+      "frames": [
+        11,
+        10
+      ],
+      "loop": false,
+      "frameDurationMs": 200
+    },
+    {
+      "id": "sleep",
+      "frames": [
+        12,
+        13,
+        12
+      ],
+      "loop": true,
+      "frameDurationMs": 520
+    },
+    {
+      "id": "surprise",
+      "frames": [
+        14
+      ],
+      "loop": false,
+      "frameDurationMs": 520
+    },
+    {
+      "id": "snuggle",
+      "frames": [
+        15
+      ],
+      "loop": true,
+      "frameDurationMs": 680
+    }
+  ],
+  "frames": [
+    {
+      "index": 0,
+      "name": "idle_neutral",
+      "sourceHint": "lumi_atlas_preview.png"
+    },
+    {
+      "index": 1,
+      "name": "idle_wink",
+      "sourceHint": "lumi_atlas_preview.png"
+    },
+    {
+      "index": 2,
+      "name": "happy_jump",
+      "sourceHint": "lumi_atlas_preview.png"
+    },
+    {
+      "index": 3,
+      "name": "curious_tilt",
+      "sourceHint": "lumi_atlas_preview.png"
+    },
+    {
+      "index": 4,
+      "name": "playful_crouch",
+      "sourceHint": "lumi_atlas_preview.png"
+    },
+    {
+      "index": 5,
+      "name": "sit_neutral",
+      "sourceHint": "lumi_atlas_preview.png"
+    },
+    {
+      "index": 6,
+      "name": "wave",
+      "sourceHint": "lumi_atlas_preview.png"
+    },
+    {
+      "index": 7,
+      "name": "jump_cheer",
+      "sourceHint": "lumi_atlas_preview.png"
+    },
+    {
+      "index": 8,
+      "name": "magic_cast",
+      "sourceHint": "lumi_atlas_preview.png"
+    },
+    {
+      "index": 9,
+      "name": "sit_wave",
+      "sourceHint": "lumi_atlas_preview.png"
+    },
+    {
+      "index": 10,
+      "name": "walk_step",
+      "sourceHint": "lumi_atlas_preview.png"
+    },
+    {
+      "index": 11,
+      "name": "pounce",
+      "sourceHint": "lumi_atlas_preview.png"
+    },
+    {
+      "index": 12,
+      "name": "yawn",
+      "sourceHint": "lumi_atlas_preview.png"
+    },
+    {
+      "index": 13,
+      "name": "sleep_curl",
+      "sourceHint": "lumi_atlas_preview.png"
+    },
+    {
+      "index": 14,
+      "name": "surprised",
+      "sourceHint": "lumi_atlas_preview.png"
+    },
+    {
+      "index": 15,
+      "name": "snuggle",
+      "sourceHint": "lumi_atlas_preview.png"
+    }
+  ]
+}

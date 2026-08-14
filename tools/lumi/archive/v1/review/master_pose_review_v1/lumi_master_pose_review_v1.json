@@ -1,0 +1,80 @@
+{
+  "version": 1,
+  "petId": "lumi",
+  "status": "review_pending",
+  "sourceAtlas": "tools/lumi/archive/v1/source_atlas/action_trial_v1/lumi_action_trial_v1.png",
+  "sourceFrameDirectory": "tools/lumi/archive/v1/source_atlas/action_trial_v1/frames",
+  "reviewBoard": "tools/lumi/archive/v1/review/master_pose_review_v1/lumi_master_pose_review_v1.png",
+  "promotionAllowed": false,
+  "approvalRule": "All six master poses must pass manual retouch and visual QA before production frame generation.",
+  "candidates": [
+    {
+      "id": "idle_neutral",
+      "sourceFrame": 0,
+      "sourceName": "idle_neutral",
+      "status": "candidate_needs_retouch",
+      "why": "Best current neutral standing silhouette.",
+      "gaps": [
+        "Compare face, tail, orb, and chest star against the canonical key art."
+      ]
+    },
+    {
+      "id": "idle_breath_in",
+      "sourceFrame": 1,
+      "sourceName": "idle_tail_shift",
+      "status": "missing_pose",
+      "why": "Closest idle variation available in the trial atlas.",
+      "gaps": [
+        "This is not a clear breath pose; paint a controlled chest lift."
+      ]
+    },
+    {
+      "id": "look_profile",
+      "sourceFrame": 8,
+      "sourceName": "walk_00",
+      "status": "missing_pose",
+      "why": "Only current source with a readable side profile.",
+      "gaps": [
+        "Redraw as an attentive profile, not a locomotion contact pose."
+      ]
+    },
+    {
+      "id": "walk_contact_right",
+      "sourceFrame": 8,
+      "sourceName": "walk_00",
+      "status": "candidate_needs_retouch",
+      "why": "Useful contact-pose starting point for the walk cycle.",
+      "gaps": [
+        "Canonicalize facing, verify paw weight, and remove any foot-slide risk."
+      ]
+    },
+    {
+      "id": "pounce_air",
+      "sourceFrame": 19,
+      "sourceName": "pounce_air",
+      "status": "candidate_needs_retouch",
+      "why": "Readable airborne action silhouette.",
+      "gaps": [
+        "Verify anatomy, tail continuity, orb attachment, and a stable landing arc."
+      ]
+    },
+    {
+      "id": "sleep_curl",
+      "sourceFrame": 29,
+      "sourceName": "sleep_curl",
+      "status": "candidate_needs_retouch",
+      "why": "Strongest current comfort/sleep silhouette.",
+      "gaps": [
+        "Retouch fur and orb contact, then align the comfort pose to the ground pivot."
+      ]
+    }
+  ],
+  "reviewChecklist": {
+    "identityMatch": "pending",
+    "silhouetteConsistency": "pending",
+    "pivotAndGroundLine": "pending",
+    "transparentPadding": "pending",
+    "noBackgroundOrHalos": "pending",
+    "deviceSizeReadability": "pending"
+  }
+}

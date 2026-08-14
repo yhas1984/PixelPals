@@ -33,6 +33,11 @@ ATLASES = {
     "taro": ("TaroBehavior.kt", "pets/taro/taro_sheet_v1.json"),
     "menta": ("MentaBehavior.kt", "pets/menta/menta_sheet_v1.json"),
     "tela": ("TelaBehavior.kt", "pets/tela/tela_sheet_v1.json"),
+    "lumi": ("LumiBehavior.kt", "pets/lumi/lumi_motion_v2.json"),
+}
+
+REQUIRED_CLIPS = {
+    "lumi": {"idle", "walk", "turn", "hop_up", "hop_down", "front_social", "pounce", "sleep", "magic"},
 }
 
 
@@ -86,6 +91,7 @@ def validate_atlas(name: str, behavior_name: str, spec_path: str) -> int:
         raise ValueError(f"{name}: unused atlas frames {sorted(set(range(count)) - used)}")
     clip_ids = {str(clip["id"]) for clip in spec["clips"]}
     required = set(re.findall(r'spec\.clip\("([^"]+)"\)', behavior))
+    required.update(REQUIRED_CLIPS.get(name, set()))
     missing = required - clip_ids
     if missing:
         raise ValueError(f"{name}: behavior requires clips missing from JSON: {sorted(missing)}")

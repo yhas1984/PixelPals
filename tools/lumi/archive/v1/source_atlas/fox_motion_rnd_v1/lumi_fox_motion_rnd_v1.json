@@ -1,0 +1,725 @@
+{
+  "version": 1,
+  "petId": "lumi",
+  "atlasPath": "tools/lumi/archive/v1/source_atlas/fox_motion_rnd_v1/lumi_fox_motion_rnd_v1.png",
+  "previewPath": "tools/lumi/archive/v1/source_atlas/fox_motion_rnd_v1/lumi_fox_motion_rnd_preview_v1.png",
+  "frameWidth": 384,
+  "frameHeight": 384,
+  "columns": 7,
+  "rows": 4,
+  "frameCount": 28,
+  "pivot": {
+    "x": 192,
+    "y": 368
+  },
+  "renderHints": {
+    "innerTransparentPaddingPx": 16,
+    "recommendedBleedInsetPx": 1,
+    "filterBitmap": true,
+    "backgroundRemoval": "largest_connected_rgba_component",
+    "sourceCellCompositionPreserved": true
+  },
+  "clips": [
+    {
+      "id": "idle",
+      "frames": [
+        0,
+        1,
+        0,
+        3
+      ],
+      "loop": true,
+      "frameDurationMs": 820
+    },
+    {
+      "id": "walk",
+      "frames": [
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "loop": true,
+      "frameDurationMs": 180
+    },
+    {
+      "id": "investigate",
+      "frames": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "loop": false,
+      "frameDurationMs": 760
+    },
+    {
+      "id": "stalk",
+      "frames": [
+        5,
+        6,
+        5,
+        7
+      ],
+      "loop": false,
+      "frameDurationMs": 760
+    },
+    {
+      "id": "pounce",
+      "frames": [
+        16,
+        17,
+        18,
+        19
+      ],
+      "loop": false,
+      "frameDurationMs": 520
+    },
+    {
+      "id": "recovery",
+      "frames": [
+        18,
+        19,
+        3,
+        0
+      ],
+      "loop": false,
+      "frameDurationMs": 680
+    },
+    {
+      "id": "happy",
+      "frames": [
+        3,
+        2,
+        3,
+        27
+      ],
+      "loop": false,
+      "frameDurationMs": 700
+    },
+    {
+      "id": "magic",
+      "frames": [
+        20,
+        21,
+        22,
+        27
+      ],
+      "loop": false,
+      "frameDurationMs": 620
+    },
+    {
+      "id": "startle",
+      "frames": [
+        23,
+        1,
+        0
+      ],
+      "loop": false,
+      "frameDurationMs": 520
+    },
+    {
+      "id": "sleep",
+      "frames": [
+        24,
+        25
+      ],
+      "loop": true,
+      "frameDurationMs": 1600
+    },
+    {
+      "id": "snuggle",
+      "frames": [
+        26,
+        26,
+        27
+      ],
+      "loop": false,
+      "frameDurationMs": 900
+    }
+  ],
+  "frames": [
+    {
+      "index": 0,
+      "name": "idle_alert"
+    },
+    {
+      "index": 1,
+      "name": "idle_attentive"
+    },
+    {
+      "index": 2,
+      "name": "play_bow_stretch"
+    },
+    {
+      "index": 3,
+      "name": "happy_recovery"
+    },
+    {
+      "index": 4,
+      "name": "investigate_alert"
+    },
+    {
+      "index": 5,
+      "name": "sniff_ground"
+    },
+    {
+      "index": 6,
+      "name": "listen_freeze"
+    },
+    {
+      "index": 7,
+      "name": "investigate_step"
+    },
+    {
+      "index": 8,
+      "name": "walk_00"
+    },
+    {
+      "index": 9,
+      "name": "walk_01"
+    },
+    {
+      "index": 10,
+      "name": "walk_02"
+    },
+    {
+      "index": 11,
+      "name": "walk_03"
+    },
+    {
+      "index": 12,
+      "name": "walk_04"
+    },
+    {
+      "index": 13,
+      "name": "walk_05"
+    },
+    {
+      "index": 14,
+      "name": "walk_06"
+    },
+    {
+      "index": 15,
+      "name": "walk_07"
+    },
+    {
+      "index": 16,
+      "name": "pounce_anticipation"
+    },
+    {
+      "index": 17,
+      "name": "pounce_air"
+    },
+    {
+      "index": 18,
+      "name": "pounce_land"
+    },
+    {
+      "index": 19,
+      "name": "pounce_recovery"
+    },
+    {
+      "index": 20,
+      "name": "magic_ready"
+    },
+    {
+      "index": 21,
+      "name": "magic_cast"
+    },
+    {
+      "index": 22,
+      "name": "magic_orb"
+    },
+    {
+      "index": 23,
+      "name": "surprised"
+    },
+    {
+      "index": 24,
+      "name": "yawn"
+    },
+    {
+      "index": 25,
+      "name": "sleep_curl"
+    },
+    {
+      "index": 26,
+      "name": "snuggle"
+    },
+    {
+      "index": 27,
+      "name": "idle_return"
+    }
+  ],
+  "frameDetails": [
+    {
+      "name": "idle_alert",
+      "source": "/home/yhas/Pictures/pixelpals_refs/Lumi/lumi_fox_alert_stretch.png",
+      "sourceBounds": [
+        37,
+        39,
+        621,
+        611
+      ],
+      "sourceCell": [
+        0,
+        0,
+        627,
+        627
+      ],
+      "scale": 0.547945205479452,
+      "outputBounds": [
+        32,
+        55,
+        352,
+        368
+      ],
+      "margins": [
+        32,
+        55,
+        32,
+        16
+      ],
+      "targetVisibleSize": 320
+    },
+    {
+      "name": "idle_attentive",
+      "source": "/home/yhas/Pictures/pixelpals_refs/Lumi/lumi_fox_alert_stretch.png",
+      "sourceBounds": [
+        39,
+        30,
+        577,
+        611
+      ],
+      "sourceCell": [
+        627,
+        0,
+        1254,
+        627
+      ],
+      "scale": 0.5507745266781411,
+      "outputBounds": [
+        44,
+        48,
+        340,
+        368
+      ],
+      "margins": [
+        44,
+        48,
+        44,
+        16
+      ],
+      "targetVisibleSize": 320
+    },
+    {
+      "name": "play_bow_stretch",
+      "source": "/home/yhas/Pictures/pixelpals_refs/Lumi/lumi_fox_alert_stretch.png",
+      "sourceBounds": [
+        46,
+        25,
+        627,
+        559
+      ],
+      "sourceCell": [
+        0,
+        627,
+        627,
+        1254
+      ],
+      "scale": 0.5507745266781411,
+      "outputBounds": [
+        32,
+        74,
+        352,
+        368
+      ],
+      "margins": [
+        32,
+        74,
+        32,
+        16
+      ],
+      "targetVisibleSize": 320
+    },
+    {
+      "name": "happy_recovery",
+      "source": "/home/yhas/Pictures/pixelpals_refs/Lumi/lumi_fox_alert_stretch.png",
+      "sourceBounds": [
+        30,
+        57,
+        588,
+        570
+      ],
+      "sourceCell": [
+        627,
+        627,
+        1254,
+        1254
+      ],
+      "scale": 0.5734767025089605,
+      "outputBounds": [
+        32,
+        74,
+        352,
+        368
+      ],
+      "margins": [
+        32,
+        74,
+        32,
+        16
+      ],
+      "targetVisibleSize": 320
+    },
+    {
+      "name": "investigate_alert",
+      "source": "/home/yhas/Pictures/pixelpals_refs/Lumi/lumi_fox_investigate.png",
+      "sourceBounds": [
+        61,
+        76,
+        592,
+        584
+      ],
+      "sourceCell": [
+        0,
+        0,
+        627,
+        627
+      ],
+      "scale": 0.6026365348399246,
+      "outputBounds": [
+        32,
+        62,
+        352,
+        368
+      ],
+      "margins": [
+        32,
+        62,
+        32,
+        16
+      ],
+      "targetVisibleSize": 320
+    },
+    {
+      "name": "sniff_ground",
+      "source": "/home/yhas/Pictures/pixelpals_refs/Lumi/lumi_fox_investigate.png",
+      "sourceBounds": [
+        79,
+        103,
+        590,
+        590
+      ],
+      "sourceCell": [
+        627,
+        0,
+        1254,
+        627
+      ],
+      "scale": 0.6262230919765166,
+      "outputBounds": [
+        32,
+        63,
+        352,
+        368
+      ],
+      "margins": [
+        32,
+        63,
+        32,
+        16
+      ],
+      "targetVisibleSize": 320
+    },
+    {
+      "name": "listen_freeze",
+      "source": "/home/yhas/Pictures/pixelpals_refs/Lumi/lumi_fox_investigate.png",
+      "sourceBounds": [
+        74,
+        31,
+        602,
+        512
+      ],
+      "sourceCell": [
+        0,
+        627,
+        627,
+        1254
+      ],
+      "scale": 0.6060606060606061,
+      "outputBounds": [
+        32,
+        76,
+        352,
+        368
+      ],
+      "margins": [
+        32,
+        76,
+        32,
+        16
+      ],
+      "targetVisibleSize": 320
+    },
+    {
+      "name": "investigate_step",
+      "source": "/home/yhas/Pictures/pixelpals_refs/Lumi/lumi_fox_investigate.png",
+      "sourceBounds": [
+        57,
+        44,
+        589,
+        524
+      ],
+      "sourceCell": [
+        627,
+        627,
+        1254,
+        1254
+      ],
+      "scale": 0.6015037593984962,
+      "outputBounds": [
+        32,
+        79,
+        352,
+        368
+      ],
+      "margins": [
+        32,
+        79,
+        32,
+        16
+      ],
+      "targetVisibleSize": 320
+    },
+    {
+      "name": "walk_00",
+      "sourceFrame": 8,
+      "outputIndex": 8,
+      "flippedToRight": true,
+      "targetVisibleSize": 320
+    },
+    {
+      "name": "walk_01",
+      "sourceFrame": 9,
+      "outputIndex": 9,
+      "flippedToRight": true,
+      "targetVisibleSize": 320
+    },
+    {
+      "name": "walk_02",
+      "sourceFrame": 10,
+      "outputIndex": 10,
+      "flippedToRight": true,
+      "targetVisibleSize": 320
+    },
+    {
+      "name": "walk_03",
+      "sourceFrame": 11,
+      "outputIndex": 11,
+      "flippedToRight": true,
+      "targetVisibleSize": 320
+    },
+    {
+      "name": "walk_04",
+      "sourceFrame": 12,
+      "outputIndex": 12,
+      "flippedToRight": true,
+      "targetVisibleSize": 320
+    },
+    {
+      "name": "walk_05",
+      "sourceFrame": 13,
+      "outputIndex": 13,
+      "flippedToRight": true,
+      "targetVisibleSize": 320
+    },
+    {
+      "name": "walk_06",
+      "sourceFrame": 14,
+      "outputIndex": 14,
+      "flippedToRight": true,
+      "targetVisibleSize": 320
+    },
+    {
+      "name": "walk_07",
+      "sourceFrame": 15,
+      "outputIndex": 15,
+      "flippedToRight": true,
+      "targetVisibleSize": 320
+    },
+    {
+      "name": "pounce_anticipation",
+      "source": "/home/yhas/Pictures/pixelpals_refs/Lumi/lumi_fox_pounce.png",
+      "sourceBounds": [
+        17,
+        28,
+        611,
+        554
+      ],
+      "sourceCell": [
+        0,
+        0,
+        627,
+        627
+      ],
+      "scale": 0.5387205387205387,
+      "outputBounds": [
+        32,
+        85,
+        352,
+        368
+      ],
+      "margins": [
+        32,
+        85,
+        32,
+        16
+      ],
+      "targetVisibleSize": 320
+    },
+    {
+      "name": "pounce_air",
+      "source": "/home/yhas/Pictures/pixelpals_refs/Lumi/lumi_fox_pounce.png",
+      "sourceBounds": [
+        2,
+        76,
+        595,
+        516
+      ],
+      "sourceCell": [
+        627,
+        0,
+        1254,
+        627
+      ],
+      "scale": 0.5396290050590219,
+      "outputBounds": [
+        32,
+        131,
+        352,
+        368
+      ],
+      "margins": [
+        32,
+        131,
+        32,
+        16
+      ],
+      "targetVisibleSize": 320
+    },
+    {
+      "name": "pounce_land",
+      "source": "/home/yhas/Pictures/pixelpals_refs/Lumi/lumi_fox_pounce.png",
+      "sourceBounds": [
+        25,
+        5,
+        616,
+        461
+      ],
+      "sourceCell": [
+        0,
+        627,
+        627,
+        1254
+      ],
+      "scale": 0.5414551607445008,
+      "outputBounds": [
+        32,
+        121,
+        352,
+        368
+      ],
+      "margins": [
+        32,
+        121,
+        32,
+        16
+      ],
+      "targetVisibleSize": 320
+    },
+    {
+      "name": "pounce_recovery",
+      "source": "/home/yhas/Pictures/pixelpals_refs/Lumi/lumi_fox_pounce.png",
+      "sourceBounds": [
+        67,
+        0,
+        581,
+        578
+      ],
+      "sourceCell": [
+        627,
+        627,
+        1254,
+        1254
+      ],
+      "scale": 0.5536332179930796,
+      "outputBounds": [
+        49,
+        48,
+        334,
+        368
+      ],
+      "margins": [
+        49,
+        48,
+        50,
+        16
+      ],
+      "targetVisibleSize": 320
+    },
+    {
+      "name": "magic_ready",
+      "sourceFrame": 24,
+      "outputIndex": 20,
+      "targetVisibleSize": 320
+    },
+    {
+      "name": "magic_cast",
+      "sourceFrame": 25,
+      "outputIndex": 21,
+      "targetVisibleSize": 320
+    },
+    {
+      "name": "magic_orb",
+      "sourceFrame": 26,
+      "outputIndex": 22,
+      "targetVisibleSize": 320
+    },
+    {
+      "name": "surprised",
+      "sourceFrame": 27,
+      "outputIndex": 23,
+      "targetVisibleSize": 320
+    },
+    {
+      "name": "yawn",
+      "sourceFrame": 28,
+      "outputIndex": 24,
+      "targetVisibleSize": 320
+    },
+    {
+      "name": "sleep_curl",
+      "sourceFrame": 29,
+      "outputIndex": 25,
+      "targetVisibleSize": 320
+    },
+    {
+      "name": "snuggle",
+      "sourceFrame": 30,
+      "outputIndex": 26,
+      "targetVisibleSize": 320
+    },
+    {
+      "name": "idle_return",
+      "sourceFrame": 31,
+      "outputIndex": 27,
+      "targetVisibleSize": 320
+    }
+  ]
+}

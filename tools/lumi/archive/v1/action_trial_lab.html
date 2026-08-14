@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Lumi Action Trial</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #101923;
+      --panel: #182633;
+      --ink: #fff4dd;
+      --muted: #b8c5ce;
+      --teal: #55e2d3;
+      --gold: #ffc36a;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(circle at 50% 0, #294354, var(--bg) 58%);
+      color: var(--ink);
+      font: 15px/1.4 system-ui, sans-serif;
+    }
+
+    main { width: min(720px, calc(100% - 28px)); margin: 0 auto; padding: 24px 0 32px; }
+    h1, p { margin: 0; }
+    h1 { font-size: clamp(28px, 8vw, 44px); letter-spacing: -.04em; }
+    header p { margin-top: 6px; color: var(--muted); }
+    .card {
+      margin-top: 18px;
+      padding: 14px;
+      border: 1px solid rgba(126, 224, 218, .22);
+      border-radius: 22px;
+      background: rgba(12, 22, 32, .82);
+      box-shadow: 0 18px 60px rgba(0, 0, 0, .28);
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      max-width: 520px;
+      aspect-ratio: 1;
+      margin: 0 auto;
+      border-radius: 16px;
+      background: #263944;
+      image-rendering: auto;
+      touch-action: manipulation;
+    }
+    .status { display: flex; justify-content: space-between; gap: 12px; margin-top: 12px; color: var(--muted); }
+    .status strong { color: var(--gold); }
+    .controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 14px; }
+    button {
+      min-height: 44px;
+      border: 1px solid rgba(255, 255, 255, .15);
+      border-radius: 11px;
+      background: rgba(255, 255, 255, .08);
+      color: var(--ink);
+      font: inherit;
+    }
+    button[aria-pressed="true"] { border-color: var(--teal); background: rgba(85, 226, 211, .16); }
+    button:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+    .transport { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 8px; }
+    .note { margin-top: 14px; color: var(--muted); font-size: 12px; }
+    .error { color: #ffad9e; }
+    @media (min-width: 600px) {
+      .controls { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Lumi Action Trial</h1>
+      <p>32-frame atlas test. Tap a clip, then watch Lumi on the phone.</p>
+    </header>
+    <section class="card">
+      <canvas id="stage" width="384" height="384" role="img" aria-label="Lumi animation preview"></canvas>
+      <div class="status" aria-live="polite">
+        <strong id="clip-name">Loading</strong>
+        <span id="frame-name">metadata</span>
+      </div>
+      <div class="controls" id="clip-controls"></div>
+      <div class="transport">
+        <button id="previous" type="button">Previous</button>
+        <button id="toggle" type="button">Pause</button>
+        <button id="next" type="button">Next</button>
+      </div>
+      <p class="note" id="note">Loading trial atlas...</p>
+    </section>
+  </main>
+  <script>
+    const canvas = document.getElementById('stage');
+    const ctx = canvas.getContext('2d');
+    const state = { spec: null, atlas: new Image(), clip: null, position: 0, elapsed: 0, playing: true, lastTime: performance.now() };
+
+    function drawBackground() {
+      const gradient = ctx.createLinearGradient(0, 0, 0, 384);
+      gradient.addColorStop(0, '#334b58');
+      gradient.addColorStop(1, '#18262f');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, 384, 384);
+      ctx.strokeStyle = 'rgba(126, 224, 218, .12)';
+      ctx.lineWidth = 1;
+      for (let value = 0; value <= 384; value += 48) {
+        ctx.beginPath(); ctx.moveTo(value, 0); ctx.lineTo(value, 384); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, value); ctx.lineTo(384, value); ctx.stroke();
+      }
+      ctx.fillStyle = 'rgba(8, 15, 20, .35)';
+      ctx.beginPath(); ctx.ellipse(192, 326, 94, 13, 0, 0, Math.PI * 2); ctx.fill();
+    }
+
+    function currentFrame() {
+      return state.clip.frames[state.position];
+    }
+
+    function draw() {
+      drawBackground();
+      if (!state.spec || !state.atlas.complete || !state.clip) return;
+      const frame = currentFrame();
+      const sourceX = (frame % state.spec.columns) * state.spec.frameWidth;
+      const sourceY = Math.floor(frame / state.spec.columns) * state.spec.frameHeight;
+      ctx.drawImage(state.atlas, sourceX, sourceY, state.spec.frameWidth, state.spec.frameHeight, 32, 32, 320, 320);
+    }
+
+    function updateStatus() {
+      if (!state.spec || !state.clip) return;
+      const frame = currentFrame();
+      const frameInfo = state.spec.frames[frame];
+      document.getElementById('clip-name').textContent = state.clip.id;
+      document.getElementById('frame-name').textContent = `${frame} · ${frameInfo.name}`;
+      document.getElementById('toggle').textContent = state.playing ? 'Pause' : 'Play';
+    }
+
+    function selectClip(clip) {
+      state.clip = clip;
+      state.position = 0;
+      state.elapsed = 0;
+      document.querySelectorAll('[data-clip]').forEach((button) => {
+        button.setAttribute('aria-pressed', String(button.dataset.clip === clip.id));
+      });
+      updateStatus();
+    }
+
+    function step(direction) {
+      if (!state.clip) return;
+      state.position = (state.position + direction + state.clip.frames.length) % state.clip.frames.length;
+      state.elapsed = 0;
+      updateStatus();
+    }
+
+    function update(dt) {
+      if (!state.playing || !state.clip) return;
+      state.elapsed += dt * 1000;
+      const duration = state.spec.clips.find((clip) => clip.id === state.clip.id).frameDurationMs;
+      while (state.elapsed >= duration) {
+        state.elapsed -= duration;
+        step(1);
+      }
+    }
+
+    function loop(now) {
+      const dt = Math.min(.05, (now - state.lastTime) / 1000);
+      state.lastTime = now;
+      update(dt);
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    async function load() {
+      try {
+        const response = await fetch('source_atlas/action_trial_v1/lumi_action_trial_v1.json');
+        if (!response.ok) throw new Error('Metadata request failed');
+        state.spec = await response.json();
+        const imageReady = new Promise((resolve, reject) => {
+          state.atlas.addEventListener('load', resolve, { once: true });
+          state.atlas.addEventListener('error', () => reject(new Error('Atlas image request failed')), { once: true });
+          state.atlas.src = state.spec.prototypeAtlasPath;
+        });
+        await imageReady;
+        const controls = document.getElementById('clip-controls');
+        state.spec.clips.forEach((clip) => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.textContent = clip.id;
+          button.dataset.clip = clip.id;
+          button.setAttribute('aria-pressed', 'false');
+          button.addEventListener('click', () => selectClip(clip));
+          controls.appendChild(button);
+        });
+        selectClip(state.spec.clips[0]);
+        document.getElementById('note').textContent = 'Trial atlas loaded from the cleaned 32-frame source.';
+      } catch (error) {
+        document.getElementById('clip-name').textContent = 'Load error';
+        document.getElementById('note').textContent = error instanceof Error ? error.message : 'Unknown error';
+        document.getElementById('note').classList.add('error');
+      }
+    }
+
+    document.getElementById('previous').addEventListener('click', () => step(-1));
+    document.getElementById('next').addEventListener('click', () => step(1));
+    document.getElementById('toggle').addEventListener('click', () => { state.playing = !state.playing; updateStatus(); });
+    requestAnimationFrame(loop);
+    load();
+  </script>
+</body>
+</html>

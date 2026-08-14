@@ -126,6 +126,7 @@ class PetBehaviorSmokeTest {
             PetType.TARO to 15,
             PetType.MENTA to 15,
             PetType.TELA to 15,
+            PetType.LUMI to 39,
         )
     }
 }

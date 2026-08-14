@@ -1,0 +1,83 @@
+{
+  "petId": "lumi",
+  "designPrinciples": [
+    "curious before brave",
+    "play in short bursts",
+    "return to a comfort spot",
+    "seek affection after exertion",
+    "sleep in long uninterrupted holds"
+  ],
+  "states": {
+    "idle_observe": {
+      "frames": [0, 1, 0, 3, 0],
+      "durationSeconds": [1.2, 0.25, 0.8, 0.7, 1.4],
+      "movement": "stationary_with_micro_sway"
+    },
+    "investigate": {
+      "frames": [0, 3, 0],
+      "durationSeconds": [0.45, 0.8, 0.7],
+      "movement": "short_arc_to_interest"
+    },
+    "toddle": {
+      "frames": [0, 10, 0, 10, 3],
+      "durationSeconds": [0.28, 0.18, 0.24, 0.18, 0.65],
+      "movement": "shallow_s_curve"
+    },
+    "play_stalk": {
+      "frames": [3, 4, 4, 3],
+      "durationSeconds": [0.35, 0.35, 0.5, 0.35],
+      "movement": "tiny_creep"
+    },
+    "pounce_burst": {
+      "frames": [4, 11, 2, 0],
+      "durationSeconds": [0.45, 0.16, 0.28, 0.55],
+      "movement": "low_forward_arc"
+    },
+    "happy_burst": {
+      "frames": [2, 7, 2, 0],
+      "durationSeconds": [0.24, 0.34, 0.24, 0.45],
+      "movement": "in_place_hop"
+    },
+    "social_bid": {
+      "frames": [0, 6, 0, 9, 15, 0],
+      "durationSeconds": [0.35, 0.55, 0.45, 0.55, 1.5, 0.6],
+      "movement": "small_affectionate_sway"
+    },
+    "wonder_magic": {
+      "frames": [3, 8, 8, 14, 0],
+      "durationSeconds": [0.35, 0.8, 0.65, 0.28, 0.6],
+      "movement": "stationary_magic_ring"
+    },
+    "settle": {
+      "frames": [10, 5, 5, 0],
+      "durationSeconds": [0.35, 1.2, 1.6, 0.5],
+      "movement": "drift_to_home"
+    },
+    "drowsy": {
+      "frames": [5, 12, 5, 13],
+      "durationSeconds": [0.8, 1.1, 0.8, 0.7],
+      "movement": "slow_sink"
+    },
+    "sleep_curl": {
+      "frames": [13],
+      "durationSeconds": [7.0],
+      "movement": "breathing_hold"
+    },
+    "snuggle": {
+      "frames": [15, 15, 5, 0],
+      "durationSeconds": [2.0, 1.8, 1.1, 0.6],
+      "movement": "comfort_sway"
+    },
+    "startle": {
+      "frames": [14, 3, 0],
+      "durationSeconds": [0.28, 0.6, 0.6],
+      "movement": "small_retreat"
+    }
+  },
+  "cooldownsSeconds": {
+    "wonder_magic": 24,
+    "startle": 7,
+    "social_bid": 5,
+    "happy_burst": 3
+  }
+}

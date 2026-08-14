@@ -44,7 +44,8 @@ class PixelPalsRepository(context: Context, database: AppDatabase? = null) {
         PetType.PIRU to "pet_piru_premium",
         PetType.TARO to "pet_taro_premium",
         PetType.MENTA to "pet_menta_premium",
-        PetType.TELA to "pet_tela_premium"
+        PetType.TELA to "pet_tela_premium",
+        PetType.LUMI to "pet_lumi_premium"
     )
 
     /** Precio en monedas del monedero GLOBAL para desbloquear cada pet premium (null = solo IAP). */
@@ -55,7 +56,8 @@ class PixelPalsRepository(context: Context, database: AppDatabase? = null) {
         PetType.PIRU to 500,
         PetType.TARO to 450,
         PetType.MENTA to 450,
-        PetType.TELA to 550
+        PetType.TELA to 550,
+        PetType.LUMI to 600
     )
 
     /** Cosmético equipado por petId (null = ninguno). */
@@ -510,6 +512,7 @@ class PixelPalsRepository(context: Context, database: AppDatabase? = null) {
             PetType.TARO -> PetPersonality.ELEGANT
             PetType.MENTA -> PetPersonality.DREAMY
             PetType.TELA -> PetPersonality.CHAOTIC
+            PetType.LUMI -> PetPersonality.DREAMY
         }
     }
 
@@ -716,6 +719,7 @@ class PixelPalsRepository(context: Context, database: AppDatabase? = null) {
             when (petType) {
                 PetType.ANGEL -> R.string.premium_pet_perk_angel
                 PetType.DIABLILLO -> R.string.premium_pet_perk_diablillo
+                PetType.LUMI -> R.string.premium_pet_perk_lumi
                 else -> R.string.premium_pet_perk_default
             }
         )
@@ -741,6 +745,7 @@ class PixelPalsRepository(context: Context, database: AppDatabase? = null) {
             PetType.TARO -> "taro"
             PetType.MENTA -> "menta"
             PetType.TELA -> "tela"
+            PetType.LUMI -> "lumi"
         }
     }
 

@@ -4,6 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.pixelpals.app.core.domain.PetType
 import com.pixelpals.app.core.motion.DefaultPetRandom
+import com.pixelpals.app.core.motion.PetRandom
 import kotlin.random.Random
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -57,6 +58,19 @@ class TelaBehaviorPerimeterTest {
     private fun toX(): Float = field("toX") as Float
     private fun toY(): Float = field("toY") as Float
     private fun facingRight(): Boolean = field("facingRight") as Boolean
+
+    private fun field(target: TelaBehavior, name: String): Any? {
+        val f = TelaBehavior::class.java.getDeclaredField(name)
+        f.isAccessible = true
+        return f.get(target)
+    }
+
+    private fun modeName(target: TelaBehavior): String = (field(target, "mode") as Enum<*>).name
+
+    private class FixedPetRandom(private val value: Float) : PetRandom {
+        override fun nextFloat(): Float = value
+        override fun nextInt(from: Int, until: Int): Int = from
+    }
 
     @Test
     fun topLeftCornerWalksTheCeilingToTheRight() {
@@ -136,5 +150,40 @@ class TelaBehaviorPerimeterTest {
             "movimiento vertical local (y=$y)",
             y == 1200f || y == 170f || y == 2040f
         )
+    }
+
+    @Test
+    fun topEdgeCanStartAnUprightWebDescent() {
+        val webBridge = TestPetBridge(instrumentation.targetContext, PetType.TELA)
+        val webBehavior = TelaBehavior(webBridge, FixedPetRandom(0.1f))
+        instrumentation.runOnMainSync {
+            webBridge.getWindowParams().apply {
+                x = 500
+                y = 165
+            }
+            webBehavior.reset()
+        }
+
+        assertEquals("WEB_DESCEND", modeName(webBehavior))
+        assertEquals(500f, field(webBehavior, "toX"))
+        val targetY = field(webBehavior, "toY") as Float
+        assertTrue("desciende a media pantalla", targetY in 1_000f..1_600f)
+        assertEquals("la seda nace del borde superior", 0f, field(webBehavior, "webAnchorY") as Float)
+    }
+
+    @Test
+    fun cornerCanLeaveTemporaryDecorativeWeb() {
+        val cornerBridge = TestPetBridge(instrumentation.targetContext, PetType.TELA)
+        val cornerBehavior = TelaBehavior(cornerBridge, FixedPetRandom(0.3f))
+        instrumentation.runOnMainSync {
+            cornerBridge.getWindowParams().apply {
+                x = 5
+                y = 165
+            }
+            cornerBehavior.reset()
+        }
+
+        assertEquals(TelaWebCorner.TOP_LEFT, cornerBridge.lastTelaCornerWebState?.corner)
+        assertTrue((cornerBridge.lastTelaCornerWebState?.radius ?: 0f) > 0f)
     }
 }

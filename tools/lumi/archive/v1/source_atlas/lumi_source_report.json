@@ -1,0 +1,707 @@
+{
+  "source": "/home/yhas/Pictures/pixelpals_refs/lumi_atlas_preview.png",
+  "sourceSize": [
+    1536,
+    1024
+  ],
+  "grid": {
+    "columns": 4,
+    "rows": 4,
+    "cellSize": [
+      384,
+      256
+    ]
+  },
+  "frames": [
+    {
+      "index": 0,
+      "name": "idle_neutral",
+      "sourceBounds": [
+        41,
+        4,
+        338,
+        279
+      ],
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "nominalCell": [
+        0,
+        0,
+        384,
+        256
+      ],
+      "componentCount": 1,
+      "componentAreas": [
+        51205
+      ],
+      "scale": 1.1851851851851851,
+      "outputBounds": [
+        16,
+        42,
+        368,
+        368
+      ],
+      "outputMargins": [
+        16,
+        42,
+        16,
+        16
+      ],
+      "crossesNominalCellBounds": {
+        "top": false,
+        "bottom": true,
+        "left": false,
+        "right": false
+      }
+    },
+    {
+      "index": 1,
+      "name": "idle_wink",
+      "sourceBounds": [
+        434,
+        4,
+        730,
+        272
+      ],
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "nominalCell": [
+        384,
+        0,
+        768,
+        256
+      ],
+      "componentCount": 1,
+      "componentAreas": [
+        48981
+      ],
+      "scale": 1.1891891891891893,
+      "outputBounds": [
+        16,
+        49,
+        368,
+        368
+      ],
+      "outputMargins": [
+        16,
+        49,
+        16,
+        16
+      ],
+      "crossesNominalCellBounds": {
+        "top": false,
+        "bottom": true,
+        "left": false,
+        "right": false
+      }
+    },
+    {
+      "index": 2,
+      "name": "happy_jump",
+      "sourceBounds": [
+        826,
+        0,
+        1102,
+        275
+      ],
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "nominalCell": [
+        768,
+        0,
+        1152,
+        256
+      ],
+      "componentCount": 1,
+      "componentAreas": [
+        49069
+      ],
+      "scale": 1.2753623188405796,
+      "outputBounds": [
+        16,
+        17,
+        368,
+        368
+      ],
+      "outputMargins": [
+        16,
+        17,
+        16,
+        16
+      ],
+      "crossesNominalCellBounds": {
+        "top": false,
+        "bottom": true,
+        "left": false,
+        "right": false
+      }
+    },
+    {
+      "index": 3,
+      "name": "curious_tilt",
+      "sourceBounds": [
+        1156,
+        4,
+        1475,
+        270
+      ],
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "nominalCell": [
+        1152,
+        0,
+        1536,
+        256
+      ],
+      "componentCount": 1,
+      "componentAreas": [
+        46404
+      ],
+      "scale": 1.103448275862069,
+      "outputBounds": [
+        16,
+        74,
+        368,
+        368
+      ],
+      "outputMargins": [
+        16,
+        74,
+        16,
+        16
+      ],
+      "crossesNominalCellBounds": {
+        "top": false,
+        "bottom": true,
+        "left": false,
+        "right": false
+      }
+    },
+    {
+      "index": 4,
+      "name": "playful_crouch",
+      "sourceBounds": [
+        64,
+        276,
+        347,
+        524
+      ],
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "nominalCell": [
+        0,
+        256,
+        384,
+        512
+      ],
+      "componentCount": 1,
+      "componentAreas": [
+        46344
+      ],
+      "scale": 1.243816254416961,
+      "outputBounds": [
+        16,
+        60,
+        368,
+        368
+      ],
+      "outputMargins": [
+        16,
+        60,
+        16,
+        16
+      ],
+      "crossesNominalCellBounds": {
+        "top": false,
+        "bottom": true,
+        "left": false,
+        "right": false
+      }
+    },
+    {
+      "index": 5,
+      "name": "sit_neutral",
+      "sourceBounds": [
+        480,
+        280,
+        747,
+        523
+      ],
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "nominalCell": [
+        384,
+        256,
+        768,
+        512
+      ],
+      "componentCount": 1,
+      "componentAreas": [
+        43940
+      ],
+      "scale": 1.3183520599250935,
+      "outputBounds": [
+        16,
+        48,
+        368,
+        368
+      ],
+      "outputMargins": [
+        16,
+        48,
+        16,
+        16
+      ],
+      "crossesNominalCellBounds": {
+        "top": false,
+        "bottom": true,
+        "left": false,
+        "right": false
+      }
+    },
+    {
+      "index": 6,
+      "name": "wave",
+      "sourceBounds": [
+        805,
+        271,
+        1109,
+        525
+      ],
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "nominalCell": [
+        768,
+        256,
+        1152,
+        512
+      ],
+      "componentCount": 1,
+      "componentAreas": [
+        45706
+      ],
+      "scale": 1.1578947368421053,
+      "outputBounds": [
+        16,
+        74,
+        368,
+        368
+      ],
+      "outputMargins": [
+        16,
+        74,
+        16,
+        16
+      ],
+      "crossesNominalCellBounds": {
+        "top": false,
+        "bottom": true,
+        "left": false,
+        "right": false
+      }
+    },
+    {
+      "index": 7,
+      "name": "jump_cheer",
+      "sourceBounds": [
+        1217,
+        267,
+        1494,
+        513
+      ],
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "nominalCell": [
+        1152,
+        256,
+        1536,
+        512
+      ],
+      "componentCount": 1,
+      "componentAreas": [
+        42877
+      ],
+      "scale": 1.2707581227436824,
+      "outputBounds": [
+        16,
+        55,
+        368,
+        368
+      ],
+      "outputMargins": [
+        16,
+        55,
+        16,
+        16
+      ],
+      "crossesNominalCellBounds": {
+        "top": false,
+        "bottom": true,
+        "left": false,
+        "right": false
+      }
+    },
+    {
+      "index": 8,
+      "name": "magic_cast",
+      "sourceBounds": [
+        48,
+        526,
+        357,
+        762
+      ],
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "nominalCell": [
+        0,
+        512,
+        384,
+        768
+      ],
+      "componentCount": 1,
+      "componentAreas": [
+        56860
+      ],
+      "scale": 1.13915857605178,
+      "outputBounds": [
+        16,
+        99,
+        368,
+        368
+      ],
+      "outputMargins": [
+        16,
+        99,
+        16,
+        16
+      ],
+      "crossesNominalCellBounds": {
+        "top": false,
+        "bottom": false,
+        "left": false,
+        "right": false
+      }
+    },
+    {
+      "index": 9,
+      "name": "sit_wave",
+      "sourceBounds": [
+        476,
+        522,
+        748,
+        763
+      ],
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "nominalCell": [
+        384,
+        512,
+        768,
+        768
+      ],
+      "componentCount": 1,
+      "componentAreas": [
+        42645
+      ],
+      "scale": 1.2941176470588236,
+      "outputBounds": [
+        16,
+        56,
+        368,
+        368
+      ],
+      "outputMargins": [
+        16,
+        56,
+        16,
+        16
+      ],
+      "crossesNominalCellBounds": {
+        "top": false,
+        "bottom": false,
+        "left": false,
+        "right": false
+      }
+    },
+    {
+      "index": 10,
+      "name": "walk_step",
+      "sourceBounds": [
+        827,
+        523,
+        1123,
+        764
+      ],
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "nominalCell": [
+        768,
+        512,
+        1152,
+        768
+      ],
+      "componentCount": 1,
+      "componentAreas": [
+        44851
+      ],
+      "scale": 1.1891891891891893,
+      "outputBounds": [
+        16,
+        81,
+        368,
+        368
+      ],
+      "outputMargins": [
+        16,
+        81,
+        16,
+        16
+      ],
+      "crossesNominalCellBounds": {
+        "top": false,
+        "bottom": false,
+        "left": false,
+        "right": false
+      }
+    },
+    {
+      "index": 11,
+      "name": "pounce",
+      "sourceBounds": [
+        1216,
+        511,
+        1469,
+        762
+      ],
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "nominalCell": [
+        1152,
+        512,
+        1536,
+        768
+      ],
+      "componentCount": 1,
+      "componentAreas": [
+        39650
+      ],
+      "scale": 1.391304347826087,
+      "outputBounds": [
+        16,
+        19,
+        368,
+        368
+      ],
+      "outputMargins": [
+        16,
+        19,
+        16,
+        16
+      ],
+      "crossesNominalCellBounds": {
+        "top": true,
+        "bottom": false,
+        "left": false,
+        "right": false
+      }
+    },
+    {
+      "index": 12,
+      "name": "yawn",
+      "sourceBounds": [
+        58,
+        758,
+        363,
+        1008
+      ],
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "nominalCell": [
+        0,
+        768,
+        384,
+        1024
+      ],
+      "componentCount": 1,
+      "componentAreas": [
+        48717
+      ],
+      "scale": 1.1540983606557378,
+      "outputBounds": [
+        16,
+        79,
+        368,
+        368
+      ],
+      "outputMargins": [
+        16,
+        79,
+        16,
+        16
+      ],
+      "crossesNominalCellBounds": {
+        "top": true,
+        "bottom": false,
+        "left": false,
+        "right": false
+      }
+    },
+    {
+      "index": 13,
+      "name": "sleep_curl",
+      "sourceBounds": [
+        432,
+        780,
+        738,
+        1000
+      ],
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "nominalCell": [
+        384,
+        768,
+        768,
+        1024
+      ],
+      "componentCount": 1,
+      "componentAreas": [
+        42692
+      ],
+      "scale": 1.1503267973856208,
+      "outputBounds": [
+        16,
+        115,
+        368,
+        368
+      ],
+      "outputMargins": [
+        16,
+        115,
+        16,
+        16
+      ],
+      "crossesNominalCellBounds": {
+        "top": false,
+        "bottom": false,
+        "left": false,
+        "right": false
+      }
+    },
+    {
+      "index": 14,
+      "name": "surprised",
+      "sourceBounds": [
+        825,
+        760,
+        1119,
+        1009
+      ],
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "nominalCell": [
+        768,
+        768,
+        1152,
+        1024
+      ],
+      "componentCount": 2,
+      "componentAreas": [
+        45002,
+        831
+      ],
+      "scale": 1.1972789115646258,
+      "outputBounds": [
+        16,
+        70,
+        368,
+        368
+      ],
+      "outputMargins": [
+        16,
+        70,
+        16,
+        16
+      ],
+      "crossesNominalCellBounds": {
+        "top": true,
+        "bottom": false,
+        "left": false,
+        "right": false
+      }
+    },
+    {
+      "index": 15,
+      "name": "snuggle",
+      "sourceBounds": [
+        1199,
+        767,
+        1478,
+        1007
+      ],
+      "sourceSize": [
+        1536,
+        1024
+      ],
+      "nominalCell": [
+        1152,
+        768,
+        1536,
+        1024
+      ],
+      "componentCount": 2,
+      "componentAreas": [
+        41540,
+        1567
+      ],
+      "scale": 1.2616487455197132,
+      "outputBounds": [
+        16,
+        65,
+        368,
+        368
+      ],
+      "outputMargins": [
+        16,
+        65,
+        16,
+        16
+      ],
+      "crossesNominalCellBounds": {
+        "top": true,
+        "bottom": false,
+        "left": false,
+        "right": false
+      }
+    }
+  ]
+}

@@ -46,6 +46,7 @@ class GooglePlayBillingRepository(
             "pet_taro_premium",
             "pet_menta_premium",
             "pet_tela_premium",
+            "pet_lumi_premium",
             // Consumable coin packs.
             "coins_small",
             "coins_medium",
