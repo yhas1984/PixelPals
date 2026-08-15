@@ -1,0 +1,41 @@
+{
+  "petId": "taro",
+  "status": "candidate",
+  "atlasSha256": "a7aa7019728e3ddb8bd2d1f0c87c321452031ea2ab46fb964290edada091f1fa",
+  "specSha256": "0d5e61b97371fc956891f741875858aa9de74fd9e24be9acd475d654f070fe87",
+  "assetValidation": {
+    "atlasValidator": "passed, 0 violations",
+    "requiredClips": [
+      "idle",
+      "walk",
+      "turn",
+      "hide",
+      "peek",
+      "front_social",
+      "touch",
+      "sleep",
+      "curiosity"
+    ]
+  },
+  "runtimeValidation": {
+    "pureJvm": "48 tests passed",
+    "lintDebug": "passed",
+    "assembleDebug": "passed",
+    "assembleReleaseR8": "passed, unsigned artifact",
+    "instrumentedApi26": "30/30 passed"
+  },
+  "visualReview": {
+    "lab": "opened on PixelPals_API26",
+    "reviewMatrix": {
+      "directions": ["right", "left"],
+      "speeds": [0.25, 1.0, 2.0]
+    },
+    "status": "candidate review in progress",
+    "approval": "pending user visual approval"
+  },
+  "promotion": {
+    "releaseBehavior": "TaroBehavior V1 remains active",
+    "debugBehavior": "TaroV2Behavior",
+    "productionPromotion": "blocked until visual approval and NE2213/API36 review"
+  }
+}
