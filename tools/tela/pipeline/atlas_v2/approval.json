@@ -1,0 +1,8 @@
+{
+  "status": "approved",
+  "approver": "User visual approval after NE2213/API36 review \u2014 Tela V2 climb eye transparency fixed",
+  "approvedAt": "2026-08-15T12:11:53+02:00",
+  "atlasSha256": "99514ad0f837c553df4860a2b8178542c171b4e451c5c6592773442c99259b8e",
+  "specSha256": "1eb6506ffebf959672487ca5eaa0a8349188f09165da5b57efd3fdb616b72d99",
+  "report": "tools/tela/pipeline/atlas_v2/quality_report.json"
+}

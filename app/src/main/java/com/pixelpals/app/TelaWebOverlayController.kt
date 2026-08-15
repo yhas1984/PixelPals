@@ -25,8 +25,8 @@ import kotlin.math.sin
 class TelaWebOverlayController(
     context: Context,
     private val windowManager: WindowManager,
-    private val screenWidth: Int,
-    private val screenHeight: Int,
+    private var screenWidth: Int,
+    private var screenHeight: Int,
 ) {
     private val density = context.resources.displayMetrics.density
     private val paddingPx = (12f * density).toInt().coerceAtLeast(4)
@@ -44,6 +44,13 @@ class TelaWebOverlayController(
 
     fun renderCornerWeb(state: TelaCornerWebState?) {
         cornerWebState = state
+        renderCurrent()
+    }
+
+    /** Recomputes the overlay viewport after rotation or display-size changes. */
+    fun updateViewport(width: Int, height: Int) {
+        screenWidth = width.coerceAtLeast(1)
+        screenHeight = height.coerceAtLeast(1)
         renderCurrent()
     }
 
@@ -132,7 +139,7 @@ class TelaWebOverlayController(
     ).apply {
         gravity = Gravity.TOP or Gravity.START
         softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -177,6 +184,7 @@ private class TelaWebView(context: Context) : View(context) {
     private var cornerWeb: TelaCornerWebState? = null
     private var originX = 0
     private var originY = 0
+    private val silkPath = Path()
 
     fun setGeometry(left: Int, top: Int) {
         originX = left
@@ -201,7 +209,8 @@ private class TelaWebView(context: Context) : View(context) {
 
             silkPaint.alpha = alpha
             silkPaint.strokeWidth = 2.2f * resources.displayMetrics.density
-            val path = Path().apply {
+            silkPath.reset()
+            silkPath.apply {
                 moveTo(anchorX, anchorY)
                 cubicTo(
                     anchorX + sway * 0.18f,
@@ -212,13 +221,13 @@ private class TelaWebView(context: Context) : View(context) {
                     targetY,
                 )
             }
-            canvas.drawPath(path, silkPaint)
+            canvas.drawPath(silkPath, silkPaint)
 
             highlightPaint.alpha = (alpha * 0.72f).toInt()
             highlightPaint.strokeWidth = 0.75f * resources.displayMetrics.density
             canvas.save()
             canvas.translate(1.3f * resources.displayMetrics.density, 0f)
-            canvas.drawPath(path, highlightPaint)
+            canvas.drawPath(silkPath, highlightPaint)
             canvas.restore()
 
             knotPaint.alpha = alpha

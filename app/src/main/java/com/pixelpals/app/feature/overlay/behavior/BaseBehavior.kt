@@ -38,6 +38,7 @@ abstract class BaseBehavior(
     protected val spriteFrameRects = mutableListOf<Rect>()
     protected var spriteSheetBitmap: Bitmap? = null
     protected var spriteSheetSpec: PetAtlasSpec? = null
+    protected var spriteAtlasDrawScale: Float = 1f
     protected var spriteBleedInsetPx: Int = 2
     protected var spriteFilterBitmap: Boolean = false
     protected val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { isFilterBitmap = true }
@@ -187,6 +188,7 @@ abstract class BaseBehavior(
                 spriteFrameRects.addAll(buildFrameRects(spec))
                 spriteBleedInsetPx = spec.renderHints.recommendedBleedInsetPx.coerceAtLeast(0)
                 spriteFilterBitmap = spec.renderHints.filterBitmap
+                spriteAtlasDrawScale = spec.renderHints.drawScale
             }
             isLoading = loadedSheet == null || spec == null
 
@@ -473,9 +475,6 @@ abstract class BaseBehavior(
         if (isLoading || (bitmap == null && (spriteSheet == null || srcRect == null))) return
 
         canvas.save()
-        canvas.translate(cx + bridge.renderOffsetX, cy + bridge.renderOffsetY)
-        canvas.rotate(bridge.renderRotation)
-        canvas.scale(bridge.renderScaleX, bridge.renderScaleY)
         // Tamaño de DIBUJO normalizado (todos los pets visibles al tamaño de Moki).
         // Normalización por frame: los frames "estirados" (contenido más alto que
         // el idle) se comprimen al alto del idle; los bajos (squash, sniff, dormir,
@@ -491,7 +490,17 @@ abstract class BaseBehavior(
         } else {
             1f
         }
-        val halfSize = bridge.petSpriteSize * bridge.spriteScale * frameScale / 2f
+        val halfSize = bridge.petSpriteSize * bridge.spriteScale * spriteAtlasDrawScale * frameScale / 2f
+        val atlasPivot = spriteSheetSpec?.pivot
+        val pivotOffsetX = if (atlasPivot != null && spriteSheetSpec != null) {
+            (0.5f - atlasPivot.x.toFloat() / spriteSheetSpec!!.frameWidth) * 2f * halfSize
+        } else 0f
+        val pivotOffsetY = if (atlasPivot != null && spriteSheetSpec != null) {
+            (0.5f - atlasPivot.y.toFloat() / spriteSheetSpec!!.frameHeight) * 2f * halfSize
+        } else 0f
+        canvas.translate(cx + bridge.renderOffsetX + pivotOffsetX, cy + bridge.renderOffsetY + pivotOffsetY)
+        canvas.rotate(bridge.renderRotation)
+        canvas.scale(bridge.renderScaleX, bridge.renderScaleY)
         when {
             bitmap != null -> canvas.drawBitmap(bitmap, null, RectF(-halfSize, -halfSize, halfSize, halfSize), paint)
             spriteSheet != null && srcRect != null -> {

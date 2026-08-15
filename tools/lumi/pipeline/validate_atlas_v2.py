@@ -4,18 +4,25 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
 from PIL import Image
 
 
 ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(ROOT / "tools"))
+from pet_pipeline import validate_atlas
 ATLAS_PATH = ROOT / "tools/lumi/pipeline/atlas_v2/lumi_motion_v2.png"
 SPEC_PATH = ROOT / "tools/lumi/pipeline/atlas_v2/lumi_motion_v2.json"
 FRAME_DIR = ROOT / "tools/lumi/pipeline/atlas_v2/frames"
 
 
 def main() -> int:
+    report = validate_atlas(ATLAS_PATH, SPEC_PATH)
+    if not report["passed"]:
+        print(json.dumps(report, indent=2))
+        return 1
     atlas = Image.open(ATLAS_PATH).convert("RGBA")
     spec = json.loads(SPEC_PATH.read_text(encoding="utf-8"))
     assert atlas.size == (3072, 1920), atlas.size

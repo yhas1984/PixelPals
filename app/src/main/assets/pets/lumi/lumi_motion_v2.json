@@ -16,6 +16,7 @@
     "innerTransparentPaddingPx": 16,
     "recommendedBleedInsetPx": 1,
     "filterBitmap": true,
+    "drawScale": 0.963,
     "backgroundRemoval": "largest_connected_rgba_component",
     "sourceCellCompositionPreserved": true
   },

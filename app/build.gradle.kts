@@ -86,7 +86,11 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            // CI and local validation may exercise the full R8/release package
+            // without production keystore credentials. Keep the release
+            // artifact unsigned until a keystore is explicitly configured.
             signingConfig = signingConfigs.getByName("release")
+                .takeIf { it.storeFile != null }
             // Sin IDs reales configurados, el release NO muestra anuncios.
             buildConfigField(
                 "boolean",

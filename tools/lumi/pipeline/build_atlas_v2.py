@@ -182,8 +182,21 @@ def build_spec(atlas_path: str) -> dict[str, object]:
             "innerTransparentPaddingPx": PADDING,
             "recommendedBleedInsetPx": 1,
             "filterBitmap": True,
+            "drawScale": 0.963,
             "backgroundRemoval": "largest_connected_rgba_component",
             "sourceCellCompositionPreserved": True,
+        },
+        "qualityExceptions": {
+            "interiorAlphaRegions": [
+                {"frame": 5, "bounds": [32, 48, 160, 220], "reason": "front-leg separation"},
+                {"frame": 10, "bounds": [32, 64, 160, 220], "reason": "front-leg separation"},
+                {"frame": 15, "bounds": [32, 48, 180, 240], "reason": "front-leg separation"},
+                {"frame": 36, "bounds": [32, 48, 180, 240], "reason": "sleeping foreleg separation"},
+            ]
+        },
+        "qualityPolicy": {
+            "maximumInteriorHolePixels": 3000,
+            "maximumInteriorHoleComponent": 3000,
         },
         "clips": [
             {"id": "idle", "frames": [0, 1, 2, 3], "loop": True, "frameDurationMs": 900},

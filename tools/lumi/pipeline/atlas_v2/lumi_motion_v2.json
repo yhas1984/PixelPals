@@ -16,8 +16,57 @@
     "innerTransparentPaddingPx": 16,
     "recommendedBleedInsetPx": 1,
     "filterBitmap": true,
+    "drawScale": 0.963,
     "backgroundRemoval": "largest_connected_rgba_component",
     "sourceCellCompositionPreserved": true
+  },
+  "qualityExceptions": {
+    "interiorAlphaRegions": [
+      {
+        "frame": 5,
+        "bounds": [
+          32,
+          48,
+          160,
+          220
+        ],
+        "reason": "front-leg separation"
+      },
+      {
+        "frame": 10,
+        "bounds": [
+          32,
+          64,
+          160,
+          220
+        ],
+        "reason": "front-leg separation"
+      },
+      {
+        "frame": 15,
+        "bounds": [
+          32,
+          48,
+          180,
+          240
+        ],
+        "reason": "front-leg separation"
+      },
+      {
+        "frame": 36,
+        "bounds": [
+          32,
+          48,
+          180,
+          240
+        ],
+        "reason": "sleeping foreleg separation"
+      }
+    ]
+  },
+  "qualityPolicy": {
+    "maximumInteriorHolePixels": 3000,
+    "maximumInteriorHoleComponent": 3000
   },
   "clips": [
     {
