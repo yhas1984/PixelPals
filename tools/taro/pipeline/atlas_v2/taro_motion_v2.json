@@ -1,7 +1,7 @@
 {
   "version": 2,
   "petId": "taro",
-  "atlasPath": "tools/taro/pipeline/atlas_v2/taro_motion_v2.png",
+  "atlasPath": "pets/taro/taro_motion_v2.png",
   "previewPath": "",
   "frameWidth": 384,
   "frameHeight": 384,

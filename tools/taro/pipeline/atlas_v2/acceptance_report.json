@@ -2,7 +2,7 @@
   "petId": "taro",
   "status": "candidate",
   "atlasSha256": "a7aa7019728e3ddb8bd2d1f0c87c321452031ea2ab46fb964290edada091f1fa",
-  "specSha256": "0d5e61b97371fc956891f741875858aa9de74fd9e24be9acd475d654f070fe87",
+  "specSha256": "1da369093df0293bc977e09d88e8f2649ff0d493983c517af3193202d9a59556",
   "assetValidation": {
     "atlasValidator": "passed, 0 violations",
     "requiredClips": [
@@ -34,6 +34,7 @@
     "approval": "pending user visual approval"
   },
   "promotion": {
+    "hashParity": "pipeline and debug PNG/JSON are byte-identical",
     "releaseBehavior": "TaroBehavior V1 remains active",
     "debugBehavior": "TaroV2Behavior",
     "productionPromotion": "blocked until visual approval and NE2213/API36 review"

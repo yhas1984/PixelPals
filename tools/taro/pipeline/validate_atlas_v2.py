@@ -15,6 +15,8 @@ sys.path.insert(0, str(ROOT / "tools"))
 from pet_pipeline import validate_atlas
 ATLAS_PATH = ROOT / "tools/taro/pipeline/atlas_v2/taro_motion_v2.png"
 SPEC_PATH = ROOT / "tools/taro/pipeline/atlas_v2/taro_motion_v2.json"
+DEBUG_ATLAS_PATH = ROOT / "app/src/debug/assets/pets/taro/taro_motion_v2.png"
+DEBUG_SPEC_PATH = ROOT / "app/src/debug/assets/pets/taro/taro_motion_v2.json"
 FRAME_DIR = ROOT / "tools/taro/pipeline/atlas_v2/frames"
 
 REQUIRED_CLIPS = {
@@ -30,7 +32,13 @@ REQUIRED_CLIPS = {
 }
 
 
+def assert_debug_assets_match_candidate() -> None:
+    assert DEBUG_ATLAS_PATH.read_bytes() == ATLAS_PATH.read_bytes()
+    assert DEBUG_SPEC_PATH.read_bytes() == SPEC_PATH.read_bytes()
+
+
 def main() -> int:
+    assert_debug_assets_match_candidate()
     report = validate_atlas(ATLAS_PATH, SPEC_PATH)
     if not report["passed"]:
         print(json.dumps(report, indent=2))
