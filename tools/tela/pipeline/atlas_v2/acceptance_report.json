@@ -1,0 +1,40 @@
+{
+  "petId": "tela",
+  "status": "accepted",
+  "acceptedAt": "2026-08-15T12:51:38+02:00",
+  "approver": "User visual approval after NE2213/API36 review",
+  "atlasSha256": "99514ad0f837c553df4860a2b8178542c171b4e451c5c6592773442c99259b8e",
+  "specSha256": "1eb6506ffebf959672487ca5eaa0a8349188f09165da5b57efd3fdb616b72d99",
+  "assetValidation": {
+    "pipelineTests": "5 passed",
+    "atlasValidator": "passed, 0 violations"
+  },
+  "buildValidation": {
+    "testDebugUnitTest": "passed",
+    "lintDebug": "passed",
+    "assembleDebug": "passed",
+    "assembleReleaseR8": "passed, unsigned artifact"
+  },
+  "instrumentedValidation": [
+    {
+      "device": "NE2213",
+      "api": 36,
+      "result": "29/29 passed",
+      "source": "device run before release-gate commit"
+    },
+    {
+      "device": "PixelPals_API26",
+      "api": 26,
+      "result": "29/29 passed"
+    }
+  ],
+  "soak": {
+    "durationSeconds": 1800,
+    "device": "PixelPals_API26",
+    "lastSampleSeconds": 1776,
+    "finalProcess": "alive",
+    "finalPetServiceRecordMatches": 2,
+    "fatalOrAnrCount": 0,
+    "result": "passed"
+  }
+}
