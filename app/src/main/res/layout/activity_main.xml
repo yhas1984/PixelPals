@@ -177,8 +177,10 @@
                     </LinearLayout>
                     <TextView
                         android:id="@+id/statusOverlay"
-                        android:layout_width="wrap_content"
+                        android:layout_width="82dp"
                         android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:gravity="center"
                         android:text="@string/permission_required"
                         android:textSize="12sp"
                         android:textStyle="bold" />
@@ -239,8 +241,10 @@
                     </LinearLayout>
                     <TextView
                         android:id="@+id/statusNotification"
-                        android:layout_width="wrap_content"
+                        android:layout_width="82dp"
                         android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:gravity="center"
                         android:text="@string/permission_required"
                         android:textSize="12sp"
                         android:textStyle="bold" />
@@ -301,8 +305,10 @@
                     </LinearLayout>
                     <TextView
                         android:id="@+id/statusUsage"
-                        android:layout_width="wrap_content"
+                        android:layout_width="82dp"
                         android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:gravity="center"
                         android:text="@string/permission_required"
                         android:textSize="12sp"
                         android:textStyle="bold" />

@@ -12,6 +12,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.viewpager2.adapter.FragmentStateAdapter
+import androidx.core.content.ContextCompat
 import com.google.android.gms.ads.AdListener
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
@@ -259,6 +260,8 @@ class StoreActivity : AppCompatActivity() {
 
     private fun edgeToEdge() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
+        window.statusBarColor = ContextCompat.getColor(this, R.color.surface_base)
+        window.navigationBarColor = ContextCompat.getColor(this, R.color.surface_base)
         WindowInsetsControllerCompat(window, window.decorView).apply {
             isAppearanceLightStatusBars = true
             isAppearanceLightNavigationBars = true

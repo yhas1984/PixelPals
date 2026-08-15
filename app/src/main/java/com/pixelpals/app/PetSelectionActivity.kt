@@ -249,6 +249,8 @@ class PetSelectionActivity : AppCompatActivity() {
 
     private fun edgeToEdge() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
+        window.statusBarColor = ContextCompat.getColor(this, R.color.surface_base)
+        window.navigationBarColor = ContextCompat.getColor(this, R.color.surface_base)
         WindowInsetsControllerCompat(window, window.decorView).apply {
             isAppearanceLightStatusBars = true
             isAppearanceLightNavigationBars = true
