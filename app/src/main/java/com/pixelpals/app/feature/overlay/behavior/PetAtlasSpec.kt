@@ -78,7 +78,8 @@ data class PetAtlasSpec(
                 renderHints = PetAtlasRenderHints(
                     innerTransparentPaddingPx = renderHintsJson?.optInt("innerTransparentPaddingPx", 0) ?: 0,
                     recommendedBleedInsetPx = renderHintsJson?.optInt("recommendedBleedInsetPx", 0) ?: 0,
-                    filterBitmap = renderHintsJson?.optBoolean("filterBitmap", false) ?: false
+                    filterBitmap = renderHintsJson?.optBoolean("filterBitmap", false) ?: false,
+                    drawScale = renderHintsJson?.optDouble("drawScale", 1.0)?.toFloat() ?: 1f,
                 ),
                 clips = clips,
                 frames = frames
@@ -86,6 +87,18 @@ data class PetAtlasSpec(
                 require(spec.frameWidth > 0 && spec.frameHeight > 0) { "Atlas frame dimensions must be positive" }
                 require(spec.columns > 0 && spec.rows > 0) { "Atlas grid dimensions must be positive" }
                 require(spec.frameCount in 1..(spec.columns * spec.rows)) { "Atlas frameCount exceeds its grid" }
+                require(spec.frames.map { it.index } == (0 until spec.frameCount).toList()) {
+                    "Atlas frame metadata must be contiguous"
+                }
+                require(spec.clips.map { it.id }.distinct().size == spec.clips.size) {
+                    "Atlas clip ids must be unique"
+                }
+                require(spec.pivot == null || (spec.pivot.x in 0..spec.frameWidth && spec.pivot.y in 0..spec.frameHeight)) {
+                    "Atlas pivot is outside its frame"
+                }
+                require(spec.renderHints.drawScale.isFinite() && spec.renderHints.drawScale > 0f) {
+                    "Atlas drawScale must be positive and finite"
+                }
                 require(spec.clips.all { clip ->
                     clip.frameDurationMs > 0 && clip.frames.isNotEmpty() &&
                         clip.frames.all { frame -> frame in 0 until spec.frameCount }
@@ -103,7 +116,9 @@ data class PetAtlasPivot(
 data class PetAtlasRenderHints(
     val innerTransparentPaddingPx: Int = 0,
     val recommendedBleedInsetPx: Int = 0,
-    val filterBitmap: Boolean = false
+    val filterBitmap: Boolean = false,
+    /** Multiplier applied to the canonical V2 draw size. */
+    val drawScale: Float = 1f,
 )
 
 data class PetClipSpec(

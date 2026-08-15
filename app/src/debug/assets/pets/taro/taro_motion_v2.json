@@ -16,8 +16,14 @@
     "innerTransparentPaddingPx": 16,
     "recommendedBleedInsetPx": 1,
     "filterBitmap": true,
+    "drawScale": 0.963,
     "backgroundRemoval": "exterior_white_flood_fill",
     "sourceCellCompositionPreserved": true
+  },
+  "qualityPolicy": {
+    "maximumInteriorHolePixels": 512,
+    "maximumInteriorHoleComponent": 256,
+    "maximumDetachedComponent": 192
   },
   "clips": [
     {

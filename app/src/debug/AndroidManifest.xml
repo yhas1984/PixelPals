@@ -26,6 +26,11 @@
             android:exported="true"
             android:label="@string/debug_tela_title"
             android:theme="@style/Theme.PixelPals" />
+        <activity
+            android:name=".debug.PetAtlasLabActivity"
+            android:exported="true"
+            android:label="PixelPals V2 Atlas Lab"
+            android:theme="@style/Theme.PixelPals" />
         <service
             android:name=".debug.LumiDebugOverlayService"
             android:exported="false"

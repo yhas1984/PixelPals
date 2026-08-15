@@ -223,8 +223,14 @@ def build_spec(atlas_path: str) -> dict[str, object]:
             "innerTransparentPaddingPx": PADDING,
             "recommendedBleedInsetPx": 1,
             "filterBitmap": True,
+            "drawScale": 0.963,
             "backgroundRemoval": "exterior_white_flood_fill",
             "sourceCellCompositionPreserved": True,
+        },
+        "qualityPolicy": {
+            "maximumInteriorHolePixels": 512,
+            "maximumInteriorHoleComponent": 256,
+            "maximumDetachedComponent": 192,
         },
         "clips": [
             {"id": "idle", "frames": list(range(0, 4)), "loop": True, "frameDurationMs": 900},

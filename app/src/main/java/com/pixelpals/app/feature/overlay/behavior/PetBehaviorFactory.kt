@@ -10,6 +10,7 @@ import com.pixelpals.app.core.motion.PetRandom
 object PetBehaviorFactory {
 
     fun create(petType: PetType, bridge: PetViewBridge, random: PetRandom = DefaultPetRandom()): PetBehavior {
+        BuildVariantPetBehaviorFactory.create(petType, bridge, random)?.let { return it }
         return when (petType) {
             PetType.BLOOP -> BloopBehavior(bridge, random)
             PetType.NUBE_MICHI -> NubeMichiBehavior(bridge, random)

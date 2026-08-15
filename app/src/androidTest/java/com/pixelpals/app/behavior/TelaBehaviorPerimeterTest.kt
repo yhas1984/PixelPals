@@ -20,7 +20,7 @@ import org.junit.runner.RunWith
  * las cuatro esquinas, los bordes y el centro de la pantalla.
  *
  * Constantes del TestPetBridge: screen 1080x2400, sprite 80, topInset 100,
- * bottomInset 200 → minY=160, maxY=2060, maxX=1000, ceilingY=170, floorY=2040.
+ * bottomInset 200 → minY=150, maxY=2020, maxX=1000.
  */
 @RunWith(AndroidJUnit4::class)
 class TelaBehaviorPerimeterTest {
@@ -58,6 +58,13 @@ class TelaBehaviorPerimeterTest {
     private fun toX(): Float = field("toX") as Float
     private fun toY(): Float = field("toY") as Float
     private fun facingRight(): Boolean = field("facingRight") as Boolean
+    private fun modeDuration(): Float = field("modeDuration") as Float
+
+    private fun setField(name: String, value: Any?) {
+        val f = TelaBehavior::class.java.getDeclaredField(name)
+        f.isAccessible = true
+        f.set(behavior, value)
+    }
 
     private fun field(target: TelaBehavior, name: String): Any? {
         val f = TelaBehavior::class.java.getDeclaredField(name)
@@ -74,46 +81,66 @@ class TelaBehaviorPerimeterTest {
 
     @Test
     fun topLeftCornerWalksTheCeilingToTheRight() {
-        placeAndDecide(x = 5, y = 165)
+        placeAndDecide(x = 5, y = 155)
         assertEquals("CEILING", modeName())
         assertEquals(980f, toX())
-        assertEquals(170f, toY())
+        assertEquals(150f, toY())
         assertTrue("hacia la derecha", facingRight())
     }
 
     @Test
     fun topRightCornerClimbsDownTheRightWall() {
-        placeAndDecide(x = 995, y = 165)
+        placeAndDecide(x = 995, y = 155)
         assertEquals("CLIMB", modeName())
         assertEquals(1000f, toX())
-        assertEquals(2040f, toY())
+        assertEquals(2020f, toY())
         assertTrue("pared derecha", facingRight())
     }
 
     @Test
     fun bottomRightCornerWalksTheFloorToTheLeft() {
-        placeAndDecide(x = 995, y = 2055)
+        placeAndDecide(x = 995, y = 2015)
         assertEquals("WALK", modeName())
         assertEquals(20f, toX())
-        assertEquals(2040f, toY())
+        assertEquals(2020f, toY())
         assertFalse("hacia la izquierda", facingRight())
     }
 
     @Test
     fun bottomLeftCornerClimbsUpTheLeftWall() {
-        placeAndDecide(x = 5, y = 2055)
+        placeAndDecide(x = 5, y = 2015)
         assertEquals("CLIMB", modeName())
         assertEquals(0f, toX())
-        assertEquals(170f, toY())
+        assertEquals(150f, toY())
         assertFalse("pared izquierda", facingRight())
     }
 
     @Test
     fun topEdgeKeepsTraversingRight() {
-        placeAndDecide(x = 500, y = 165)
+        placeAndDecide(x = 500, y = 155)
         assertEquals("CEILING", modeName())
         assertEquals(980f, toX())
-        assertEquals(170f, toY())
+        assertEquals(150f, toY())
+    }
+
+    @Test
+    fun ceilingClipKeepsHeadDownWithoutSecondVerticalFlip() {
+        instrumentation.runOnMainSync {
+            bridge.getWindowParams().apply {
+                x = 500
+                y = 150
+            }
+            setField("mode", TelaBehavior::class.java.getDeclaredClasses().first { it.simpleName == "Mode" }.enumConstants!!.first { (it as Enum<*>).name == "CEILING" })
+            setField("modeTimer", 0f)
+            setField("modeDuration", 1f)
+            setField("fromX", 500f)
+            setField("toX", 980f)
+        }
+        val update = TelaBehavior::class.java.getDeclaredMethod("updateCeiling", Float::class.javaPrimitiveType)
+        update.isAccessible = true
+        instrumentation.runOnMainSync { update.invoke(behavior, 0.05f) }
+        assertEquals("el atlas de techo ya está invertido", 1f, bridge.animScaleY, 0f)
+        assertEquals("sin giro extra", 0f, bridge.animRotation, 0f)
     }
 
     @Test
@@ -121,15 +148,15 @@ class TelaBehaviorPerimeterTest {
         placeAndDecide(x = 995, y = 1000)
         assertEquals("CLIMB", modeName())
         assertEquals(1000f, toX())
-        assertEquals(2040f, toY())
+        assertEquals(2020f, toY())
     }
 
     @Test
     fun bottomEdgeWalksLeft() {
-        placeAndDecide(x = 500, y = 2055)
+        placeAndDecide(x = 500, y = 2015)
         assertEquals("WALK", modeName())
         assertEquals(20f, toX())
-        assertEquals(2040f, toY())
+        assertEquals(2020f, toY())
     }
 
     @Test
@@ -137,7 +164,18 @@ class TelaBehaviorPerimeterTest {
         placeAndDecide(x = 5, y = 1000)
         assertEquals("CLIMB", modeName())
         assertEquals(0f, toX())
-        assertEquals(170f, toY())
+        assertEquals(150f, toY())
+    }
+
+    @Test
+    fun bothWallsUseADeliberateClimbDuration() {
+        placeAndDecide(x = 995, y = 1000)
+        assertEquals("CLIMB", modeName())
+        assertTrue("pared derecha más lenta", modeDuration() in 3.6f..5.2f)
+
+        placeAndDecide(x = 5, y = 1000)
+        assertEquals("CLIMB", modeName())
+        assertTrue("pared izquierda más lenta", modeDuration() in 3.6f..5.2f)
     }
 
     @Test
@@ -148,7 +186,7 @@ class TelaBehaviorPerimeterTest {
         val y = toY()
         assertTrue(
             "movimiento vertical local (y=$y)",
-            y == 1200f || y == 170f || y == 2040f
+            y == 1200f || y == 150f || y == 2020f
         )
     }
 
@@ -159,7 +197,7 @@ class TelaBehaviorPerimeterTest {
         instrumentation.runOnMainSync {
             webBridge.getWindowParams().apply {
                 x = 500
-                y = 165
+                y = 155
             }
             webBehavior.reset()
         }
@@ -178,7 +216,7 @@ class TelaBehaviorPerimeterTest {
         instrumentation.runOnMainSync {
             cornerBridge.getWindowParams().apply {
                 x = 5
-                y = 165
+                y = 155
             }
             cornerBehavior.reset()
         }

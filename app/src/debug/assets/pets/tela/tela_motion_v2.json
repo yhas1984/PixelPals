@@ -16,7 +16,132 @@
     "innerTransparentPaddingPx": 16,
     "recommendedBleedInsetPx": 1,
     "filterBitmap": true,
+    "drawScale": 0.963,
     "backgroundRemoval": "exterior_background_flood_fill"
+  },
+  "contactAnchors": [
+    {
+      "clip": "walk",
+      "bottomTolerance": 1,
+      "centerTolerance": 1,
+      "reason": "floor walk poses share a stable leg contact and pivot"
+    }
+  ],
+  "qualityExceptions": {
+    "interiorAlphaRegions": [
+      {
+        "frame": 1,
+        "bounds": [
+          50,
+          260,
+          95,
+          320
+        ],
+        "reason": "leg separation"
+      },
+      {
+        "frame": 3,
+        "bounds": [
+          230,
+          180,
+          270,
+          240
+        ],
+        "reason": "front leg separation"
+      },
+      {
+        "frame": 11,
+        "bounds": [
+          78,
+          206,
+          261,
+          352
+        ],
+        "reason": "floor-walk leg separation after matte cleanup"
+      },
+      {
+        "frame": 12,
+        "bounds": [
+          150,
+          60,
+          225,
+          160
+        ],
+        "reason": "wall-climb leg separation"
+      },
+      {
+        "frame": 13,
+        "bounds": [
+          140,
+          70,
+          230,
+          145
+        ],
+        "reason": "wall-climb leg separation"
+      },
+      {
+        "frame": 14,
+        "bounds": [
+          120,
+          70,
+          230,
+          140
+        ],
+        "reason": "wall-climb leg separation"
+      },
+      {
+        "frame": 15,
+        "bounds": [
+          130,
+          50,
+          240,
+          160
+        ],
+        "reason": "wall-climb leg separation"
+      },
+      {
+        "frame": 16,
+        "bounds": [
+          270,
+          155,
+          320,
+          205
+        ],
+        "reason": "ceiling leg separation"
+      },
+      {
+        "frame": 36,
+        "bounds": [
+          100,
+          220,
+          165,
+          270
+        ],
+        "reason": "sleeping leg separation"
+      },
+      {
+        "frame": 37,
+        "bounds": [
+          250,
+          140,
+          315,
+          210
+        ],
+        "reason": "sleeping leg separation"
+      }
+    ],
+    "disconnectedRegions": [
+      {
+        "frame": 14,
+        "bounds": [
+          175,
+          75,
+          205,
+          105
+        ],
+        "reason": "intentional facial mark"
+      }
+    ]
   },
   "clips": [
     {
@@ -305,6 +430,248 @@
     {
       "index": 39,
       "name": "sleep_03"
+    }
+  ],
+  "frameDetails": [
+    {
+      "index": 0,
+      "name": "idle_00",
+      "source": "tools/tela/pipeline/raw/01_idle_grounded.png",
+      "sourceCell": 0
+    },
+    {
+      "index": 1,
+      "name": "idle_01",
+      "source": "tools/tela/pipeline/raw/01_idle_grounded.png",
+      "sourceCell": 1
+    },
+    {
+      "index": 2,
+      "name": "idle_02",
+      "source": "tools/tela/pipeline/raw/01_idle_grounded.png",
+      "sourceCell": 2
+    },
+    {
+      "index": 3,
+      "name": "idle_03",
+      "source": "tools/tela/pipeline/raw/01_idle_grounded.png",
+      "sourceCell": 3
+    },
+    {
+      "index": 4,
+      "name": "walk_00",
+      "source": "tools/tela/pipeline/raw/02_floor_walk_a.png",
+      "sourceCell": 0
+    },
+    {
+      "index": 5,
+      "name": "walk_01",
+      "source": "tools/tela/pipeline/raw/02_floor_walk_a.png",
+      "sourceCell": 1
+    },
+    {
+      "index": 6,
+      "name": "walk_02",
+      "source": "tools/tela/pipeline/raw/02_floor_walk_a.png",
+      "sourceCell": 2
+    },
+    {
+      "index": 7,
+      "name": "walk_03",
+      "source": "tools/tela/pipeline/raw/02_floor_walk_a.png",
+      "sourceCell": 3
+    },
+    {
+      "index": 8,
+      "name": "walk_04",
+      "source": "tools/tela/pipeline/raw/03_floor_walk_b.png",
+      "sourceCell": 0
+    },
+    {
+      "index": 9,
+      "name": "walk_05",
+      "source": "tools/tela/pipeline/raw/03_floor_walk_b.png",
+      "sourceCell": 1
+    },
+    {
+      "index": 10,
+      "name": "walk_06",
+      "source": "tools/tela/pipeline/raw/03_floor_walk_b.png",
+      "sourceCell": 2
+    },
+    {
+      "index": 11,
+      "name": "walk_07",
+      "source": "tools/tela/pipeline/raw/03_floor_walk_b.png",
+      "sourceCell": 3
+    },
+    {
+      "index": 12,
+      "name": "climb_00",
+      "source": "tools/tela/pipeline/raw/04_wall_climb.png",
+      "sourceCell": 0
+    },
+    {
+      "index": 13,
+      "name": "climb_01",
+      "source": "tools/tela/pipeline/raw/04_wall_climb.png",
+      "sourceCell": 1
+    },
+    {
+      "index": 14,
+      "name": "climb_02",
+      "source": "tools/tela/pipeline/raw/04_wall_climb.png",
+      "sourceCell": 2
+    },
+    {
+      "index": 15,
+      "name": "climb_03",
+      "source": "tools/tela/pipeline/raw/04_wall_climb.png",
+      "sourceCell": 3
+    },
+    {
+      "index": 16,
+      "name": "ceiling_00",
+      "source": "tools/tela/pipeline/raw/05_ceiling_crawl.png",
+      "sourceCell": 0
+    },
+    {
+      "index": 17,
+      "name": "ceiling_01",
+      "source": "tools/tela/pipeline/raw/05_ceiling_crawl.png",
+      "sourceCell": 1
+    },
+    {
+      "index": 18,
+      "name": "ceiling_02",
+      "source": "tools/tela/pipeline/raw/05_ceiling_crawl.png",
+      "sourceCell": 2
+    },
+    {
+      "index": 19,
+      "name": "ceiling_03",
+      "source": "tools/tela/pipeline/raw/05_ceiling_crawl.png",
+      "sourceCell": 3
+    },
+    {
+      "index": 20,
+      "name": "web_descend_00",
+      "source": "tools/tela/pipeline/raw/06_web_descend.png",
+      "sourceCell": 0
+    },
+    {
+      "index": 21,
+      "name": "web_descend_01",
+      "source": "tools/tela/pipeline/raw/06_web_descend.png",
+      "sourceCell": 1
+    },
+    {
+      "index": 22,
+      "name": "web_descend_02",
+      "source": "tools/tela/pipeline/raw/06_web_descend.png",
+      "sourceCell": 2
+    },
+    {
+      "index": 23,
+      "name": "web_descend_03",
+      "source": "tools/tela/pipeline/raw/06_web_descend.png",
+      "sourceCell": 3
+    },
+    {
+      "index": 24,
+      "name": "web_hang_00",
+      "source": "tools/tela/pipeline/raw/07_web_hang.png",
+      "sourceCell": 0
+    },
+    {
+      "index": 25,
+      "name": "web_hang_01",
+      "source": "tools/tela/pipeline/raw/07_web_hang.png",
+      "sourceCell": 1
+    },
+    {
+      "index": 26,
+      "name": "web_hang_02",
+      "source": "tools/tela/pipeline/raw/07_web_hang.png",
+      "sourceCell": 2
+    },
+    {
+      "index": 27,
+      "name": "web_hang_03",
+      "source": "tools/tela/pipeline/raw/07_web_hang.png",
+      "sourceCell": 3
+    },
+    {
+      "index": 28,
+      "name": "web_ascend_00",
+      "source": "tools/tela/pipeline/raw/08_web_ascend.png",
+      "sourceCell": 0
+    },
+    {
+      "index": 29,
+      "name": "web_ascend_01",
+      "source": "tools/tela/pipeline/raw/08_web_ascend.png",
+      "sourceCell": 1
+    },
+    {
+      "index": 30,
+      "name": "web_ascend_02",
+      "source": "tools/tela/pipeline/raw/08_web_ascend.png",
+      "sourceCell": 2
+    },
+    {
+      "index": 31,
+      "name": "web_ascend_03",
+      "source": "tools/tela/pipeline/raw/08_web_ascend.png",
+      "sourceCell": 3
+    },
+    {
+      "index": 32,
+      "name": "land_touch_00",
+      "source": "tools/tela/pipeline/raw/09_land_touch.png",
+      "sourceCell": 0
+    },
+    {
+      "index": 33,
+      "name": "land_touch_01",
+      "source": "tools/tela/pipeline/raw/09_land_touch.png",
+      "sourceCell": 1
+    },
+    {
+      "index": 34,
+      "name": "land_touch_02",
+      "source": "tools/tela/pipeline/raw/09_land_touch.png",
+      "sourceCell": 2
+    },
+    {
+      "index": 35,
+      "name": "land_touch_03",
+      "source": "tools/tela/pipeline/raw/09_land_touch.png",
+      "sourceCell": 3
+    },
+    {
+      "index": 36,
+      "name": "sleep_00",
+      "source": "tools/tela/pipeline/raw/10_sleep.png",
+      "sourceCell": 0
+    },
+    {
+      "index": 37,
+      "name": "sleep_01",
+      "source": "tools/tela/pipeline/raw/10_sleep.png",
+      "sourceCell": 1
+    },
+    {
+      "index": 38,
+      "name": "sleep_02",
+      "source": "tools/tela/pipeline/raw/10_sleep.png",
+      "sourceCell": 2
+    },
+    {
+      "index": 39,
+      "name": "sleep_03",
+      "source": "tools/tela/pipeline/raw/10_sleep.png",
+      "sourceCell": 3
     }
   ]
 }
