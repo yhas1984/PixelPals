@@ -22,7 +22,8 @@
     "lintDebug": "passed",
     "assembleDebug": "passed",
     "assembleReleaseR8": "passed, unsigned artifact",
-    "instrumentedApi26": "30/30 passed"
+    "instrumentedApi26": "30/30 passed",
+    "instrumentedApi36": "blocked, adb reports no connected devices"
   },
   "visualReview": {
     "lab": "opened on PixelPals_API26",
@@ -30,7 +31,7 @@
       "directions": ["right", "left"],
       "speeds": [0.25, 1.0, 2.0]
     },
-    "status": "candidate review in progress",
+    "status": "blocked awaiting NE2213/API36 review",
     "approval": "pending user visual approval"
   },
   "promotion": {
