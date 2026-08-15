@@ -55,4 +55,41 @@ class PetViewTouchTest {
             }
         }
     }
+
+    @Test
+    fun tappingTaroEntersTheV2InteractionState() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        instrumentation.runOnMainSync {
+            val view = PetView(
+                context = instrumentation.targetContext,
+                screenWidth = 1_080,
+                screenHeight = 2_400,
+                petSpriteSize = 280,
+                petType = PetType.TARO,
+            )
+            view.layoutParams = WindowManager.LayoutParams(
+                560,
+                560,
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                PixelFormat.TRANSLUCENT,
+            ).apply {
+                x = 0
+                y = 0
+            }
+            val spec = View.MeasureSpec.makeMeasureSpec(560, View.MeasureSpec.EXACTLY)
+            view.measure(spec, spec)
+            view.layout(0, 0, 560, 560)
+            val down = MotionEvent.obtain(0L, 0L, MotionEvent.ACTION_DOWN, 280f, 280f, 0)
+            val up = MotionEvent.obtain(0L, 40L, MotionEvent.ACTION_UP, 280f, 280f, 0)
+            try {
+                view.onTouchEvent(down)
+                view.onTouchEvent(up)
+                assertEquals(PetState.INTERACTING, view.state)
+            } finally {
+                down.recycle()
+                up.recycle()
+            }
+        }
+    }
 }
