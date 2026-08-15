@@ -34,6 +34,9 @@ import com.pixelpals.app.feature.store.billing.BillingRepository
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.roundToInt
+import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.pixelpals.app.navigation.PixelPalsDestination
+import com.pixelpals.app.navigation.RootNavigation
 
 class StoreActivity : AppCompatActivity() {
 
@@ -59,6 +62,7 @@ class StoreActivity : AppCompatActivity() {
         selectedPet = selectedPetStore.load()
 
         applySystemBarsInsets()
+        setupRootNavigation()
         findViewById<View>(R.id.btnPrivacyOptions).setOnClickListener {
             consentManager.showPrivacyOptionsForm(this) { error ->
                 if (error != null) {
@@ -163,6 +167,7 @@ class StoreActivity : AppCompatActivity() {
             adListener = object : AdListener() {
                 override fun onAdLoaded() {
                     container.visibility = View.VISIBLE
+                    container.requestLayout()
                 }
 
                 override fun onAdFailedToLoad(adError: LoadAdError) {
@@ -175,13 +180,17 @@ class StoreActivity : AppCompatActivity() {
                 }
             }
         }
-        // A GONE container measures at 0dp, which makes the adaptive request invalid.
-        container.visibility = View.VISIBLE
-        container.addView(bannerView)
-        // El ancho del adaptive banner se expresa en dp y debe medirse tras el
-        // layout del contenedor (20dp de padding a cada lado).
+        container.visibility = View.GONE
+        container.addView(
+            bannerView,
+            FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+            ),
+        )
         container.post {
-            val widthDp = ((container.width - container.paddingLeft - container.paddingRight) /
+            val availableWidth = findViewById<View>(R.id.storeRoot).width
+            val widthDp = ((availableWidth - container.paddingLeft - container.paddingRight) /
                 resources.displayMetrics.density)
                 .roundToInt()
                 .coerceAtLeast(1)
@@ -191,6 +200,11 @@ class StoreActivity : AppCompatActivity() {
             bannerView.loadAd(AdRequest.Builder().build())
         }
         this.adView = bannerView
+    }
+
+    private fun setupRootNavigation() {
+        val navigation = findViewById<BottomNavigationView>(R.id.bottomNavigation)
+        RootNavigation.install(this, PixelPalsDestination.STORE, navigation)
     }
 
     /** Refresca el header (usado por las tabs tras cambios). */

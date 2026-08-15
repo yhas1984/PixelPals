@@ -1,109 +1,111 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/selectionScroll"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/selectionRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_gradient"
-    android:clipToPadding="false"
-    android:fillViewport="true"
-    android:paddingHorizontal="20dp"
-    android:paddingTop="0dp"
-    android:paddingBottom="28dp">
+    android:background="@drawable/bg_app_surface"
+    android:orientation="vertical">
 
-    <LinearLayout
+    <ScrollView
+        android:id="@+id/selectionScroll"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center_horizontal"
-        android:orientation="vertical"
-        android:paddingTop="44dp">
-
-        <TextView
-            android:id="@+id/titleSelect"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/choose_your_pet"
-            android:textColor="@color/text_on_accent"
-            android:textSize="34sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/txtSelectionSubtitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:layout_marginBottom="20dp"
-            android:gravity="center"
-            android:text="@string/choose_subtitle"
-            android:textColor="#E8F5FF"
-            android:textSize="14sp" />
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        android:paddingHorizontal="20dp">
 
         <LinearLayout
-            android:id="@+id/cardSelectionSummary"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:background="@drawable/bg_status_info"
-            android:elevation="4dp"
             android:orientation="vertical"
-            android:padding="18dp">
+            android:paddingTop="24dp"
+            android:paddingBottom="24dp">
 
             <TextView
-                android:id="@+id/txtCurrentMood"
+                android:id="@+id/titleSelect"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:text="@string/choose_your_pet"
                 android:textColor="@color/text_primary"
-                android:textSize="17sp"
+                android:textSize="30sp"
                 android:textStyle="bold" />
 
             <TextView
-                android:id="@+id/txtCatalogSummary"
-                android:accessibilityLiveRegion="polite"
+                android:id="@+id/txtSelectionSubtitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:textColor="@color/status_info_fg"
-                android:textSize="13sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/txtSelectionHint"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="16dp"
+                android:text="@string/choose_subtitle"
                 android:textColor="@color/text_secondary"
-                android:textSize="13sp" />
+                android:textSize="15sp" />
+
+            <LinearLayout
+                android:id="@+id/cardSelectionSummary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:background="@drawable/bg_status_info"
+                android:orientation="vertical"
+                android:padding="16dp">
+                <TextView
+                    android:id="@+id/txtCurrentMood"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/text_primary"
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
+                <TextView
+                    android:id="@+id/txtCatalogSummary"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:textColor="@color/status_info_fg"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+                <TextView
+                    android:id="@+id/txtSelectionHint"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="13sp" />
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/btnOpenStore"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginBottom="8dp"
+                android:backgroundTint="@color/surface_warm"
+                android:insetBottom="0dp"
+                android:insetTop="0dp"
+                android:text="@string/selection_open_store_button"
+                android:textAllCaps="false"
+                android:textColor="@color/text_primary"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btnOpenDashboard"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginBottom="16dp"
+                android:backgroundTint="@color/surface_subtle"
+                android:insetBottom="0dp"
+                android:insetTop="0dp"
+                android:text="@string/open_dashboard"
+                android:textAllCaps="false"
+                android:textColor="@color/text_primary"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:id="@+id/catalogContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
         </LinearLayout>
+    </ScrollView>
 
-        <Button
-            android:id="@+id/btnOpenStore"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginBottom="14dp"
-            android:backgroundTint="@color/coral_accent"
-            android:insetBottom="0dp"
-            android:insetTop="0dp"
-            android:text="@string/selection_open_store_button"
-            android:textAllCaps="false"
-            android:textColor="@color/text_on_accent"
-            android:textStyle="bold" />
-
-        <Button
-            android:id="@+id/btnOpenDashboard"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginBottom="16dp"
-            android:backgroundTint="@color/purple_soft"
-            android:insetBottom="0dp"
-            android:insetTop="0dp"
-            android:text="@string/open_dashboard"
-            android:textAllCaps="false"
-            android:textColor="@color/text_on_accent"
-            android:textStyle="bold" />
-
-        <LinearLayout
-            android:id="@+id/catalogContainer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical" />
-    </LinearLayout>
-</ScrollView>
+    <include layout="@layout/include_root_navigation" />
+</LinearLayout>

@@ -13,7 +13,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.pixelpals.app.PetService
 import com.pixelpals.app.R
@@ -54,7 +54,7 @@ class TreasureAlbumActivity : AppCompatActivity() {
         adapter = TreasureAdapter { treasure ->
             consumeTreasure(treasure)
         }
-        recyclerView.layoutManager = LinearLayoutManager(this)
+        recyclerView.layoutManager = GridLayoutManager(this, 2)
         recyclerView.adapter = adapter
         loadTreasureAlbum()
     }

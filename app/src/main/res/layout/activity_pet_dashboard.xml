@@ -3,26 +3,26 @@
     android:id="@+id/dashboardScroll"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_gradient"
+    android:background="@drawable/bg_app_surface"
     android:clipToPadding="false"
     android:fillViewport="true"
     android:paddingHorizontal="20dp"
     android:paddingTop="0dp"
-    android:paddingBottom="28dp">
+    android:paddingBottom="24dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingTop="44dp">
+        android:paddingTop="24dp">
 
         <TextView
             android:id="@+id/txtDashboardTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/dashboard_title"
-            android:textColor="@color/text_on_accent"
-            android:textSize="32sp"
+            android:textColor="@color/text_primary"
+            android:textSize="30sp"
             android:textStyle="bold" />
 
         <TextView
@@ -31,7 +31,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
             android:layout_marginBottom="20dp"
-            android:textColor="#E8F5FF"
+            android:textColor="@color/text_secondary"
             android:textSize="14sp" />
 
         <TextView
@@ -39,7 +39,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="18dp"
-            android:textColor="@color/text_on_accent"
+            android:textColor="@color/text_primary"
             android:textSize="15sp"
             android:textStyle="bold" />
 

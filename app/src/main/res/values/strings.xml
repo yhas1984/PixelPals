@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">PixelPals</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_pets">Pets</string>
+    <string name="nav_store">Store</string>
     <string name="subtitle">Your virtual pet companion ✨</string>
 
     <!-- Shared / Edge-to-edge -->

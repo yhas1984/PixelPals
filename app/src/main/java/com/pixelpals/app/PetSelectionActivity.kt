@@ -30,6 +30,9 @@ import com.pixelpals.app.status.PetMood
 import com.pixelpals.app.status.PetDashboardActivity
 import com.pixelpals.app.feature.store.StoreActivity
 import kotlinx.coroutines.launch
+import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.pixelpals.app.navigation.PixelPalsDestination
+import com.pixelpals.app.navigation.RootNavigation
 
 /**
  * PetSelectionActivity — Pantalla de selección de mascota.
@@ -63,6 +66,7 @@ class PetSelectionActivity : AppCompatActivity() {
         txtCatalogSummary = findViewById(R.id.txtCatalogSummary)
         txtSelectionHint = findViewById(R.id.txtSelectionHint)
         applySystemBarsInsets(findViewById(R.id.selectionScroll))
+        setupRootNavigation()
 
         findViewById<Button>(R.id.btnOpenStore).setOnClickListener {
             startActivity(Intent(this, StoreActivity::class.java))
@@ -70,6 +74,17 @@ class PetSelectionActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnOpenDashboard).setOnClickListener {
             startActivity(Intent(this, PetDashboardActivity::class.java))
         }
+    }
+
+    private fun setupRootNavigation() {
+        val navigation = findViewById<BottomNavigationView>(R.id.bottomNavigation)
+        RootNavigation.install(this, PixelPalsDestination.PETS, navigation)
+        ViewCompat.setOnApplyWindowInsetsListener(navigation) { view, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
+            view.setPadding(view.paddingLeft, view.paddingTop, view.paddingRight, bars.bottom)
+            insets
+        }
+        ViewCompat.requestApplyInsets(navigation)
     }
 
     override fun onResume() {

@@ -4,27 +4,28 @@
     <color name="dark_bg">#1A1A1A</color>
     <color name="dark_bg_mid">#121212</color>
     <color name="dark_bg_deep">#0A0A0A</color>
+    <color name="launcher_background">#6D4AFF</color>
 
     <!-- Pastel Surfaces -->
-    <color name="surface_base">#FFFDFE</color>
-    <color name="surface_elevated">#FFF7FC</color>
-    <color name="surface_tinted">#F7F1FF</color>
-    <color name="surface_subtle">#EEF9F6</color>
-    <color name="surface_warm">#FFF3EC</color>
+    <color name="surface_base">#FFF8F5</color>
+    <color name="surface_elevated">#FFFFFF</color>
+    <color name="surface_tinted">#F1ECFF</color>
+    <color name="surface_subtle">#EDF8F5</color>
+    <color name="surface_warm">#FFF0E6</color>
     <color name="surface_error">#FFF0F3</color>
 
     <!-- Strokes / Text -->
-    <color name="stroke_soft">#E9DDEA</color>
-    <color name="stroke_strong">#D8C4E0</color>
-    <color name="text_primary">#1E1A2E</color>
-    <color name="text_secondary">#665C7A</color>
+    <color name="stroke_soft">#E6DDEB</color>
+    <color name="stroke_strong">#CDBDDD</color>
+    <color name="text_primary">#211A2E</color>
+    <color name="text_secondary">#685E75</color>
     <color name="text_on_accent">#FFFDFE</color>
 
     <!-- Accent Colors -->
-    <color name="coral_accent">#FF7A7A</color>
-    <color name="golden_accent">#FFD46B</color>
-    <color name="purple_soft">#A78BFA</color>
-    <color name="teal_accent">#4CC9D8</color>
+    <color name="coral_accent">#C84A64</color>
+    <color name="golden_accent">#F2B843</color>
+    <color name="purple_soft">#6D4AFF</color>
+    <color name="teal_accent">#168C7A</color>
 
     <!-- Status Tones -->
     <color name="status_success_bg">#EAFBF1</color>
@@ -49,4 +50,5 @@
     <color name="white">#FFFFFF</color>
     <color name="text_dark">#FFFFFF</color>
     <color name="text_muted">#A0A0A0</color>
+    <color name="nav_item_tint">#685E75</color>
 </resources>

@@ -27,6 +27,9 @@ import com.pixelpals.app.databinding.ActivityMainBinding
 import com.pixelpals.app.feature.store.StoreActivity
 import com.pixelpals.app.feature.treasure.TreasureAlbumActivity
 import com.pixelpals.app.status.PetDashboardActivity
+import com.pixelpals.app.navigation.PixelPalsDestination
+import com.pixelpals.app.navigation.RootNavigation
+import com.google.android.material.bottomnavigation.BottomNavigationView
 
 /**
  * MainActivity — Pantalla de Onboarding y Permisos
@@ -68,6 +71,7 @@ class MainActivity : AppCompatActivity() {
 
         clearPetAfterTaskManagerStop()
         applySystemBarsInsets()
+        setupRootNavigation()
         setupLanguageSelector()
         setupClickListeners()
         animateEntrance()
@@ -151,6 +155,17 @@ class MainActivity : AppCompatActivity() {
             analytics.track("store_opened_from_main")
             startActivity(Intent(this, StoreActivity::class.java))
         }
+    }
+
+    private fun setupRootNavigation() {
+        val navigation = findViewById<BottomNavigationView>(R.id.bottomNavigation)
+        RootNavigation.install(this, PixelPalsDestination.HOME, navigation)
+        ViewCompat.setOnApplyWindowInsetsListener(navigation) { view, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
+            view.setPadding(view.paddingLeft, view.paddingTop, view.paddingRight, bars.bottom)
+            insets
+        }
+        ViewCompat.requestApplyInsets(navigation)
     }
 
     // ── Permissions ───────────────────────────────────────────
