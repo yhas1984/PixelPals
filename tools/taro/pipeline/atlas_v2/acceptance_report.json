@@ -31,13 +31,13 @@
       "directions": ["right", "left"],
       "speeds": [0.25, 1.0, 2.0]
     },
-    "status": "blocked awaiting NE2213/API36 review",
-    "approval": "pending user visual approval"
+    "status": "approved by user",
+    "approval": "explicit user visual approval received in chat on 2026-08-15"
   },
   "promotion": {
-    "hashParity": "pipeline and debug PNG/JSON are byte-identical",
-    "releaseBehavior": "TaroBehavior V1 remains active",
-    "debugBehavior": "TaroV2Behavior",
-    "productionPromotion": "blocked until visual approval and NE2213/API36 review"
+    "hashParity": "pipeline, debug and main PNG/JSON are byte-identical",
+    "releaseBehavior": "TaroBehavior V2",
+    "debugBehavior": "TaroBehavior V2",
+    "productionPromotion": "promoted to src/main after explicit user approval; API36 physical validation remains pending"
   }
 }

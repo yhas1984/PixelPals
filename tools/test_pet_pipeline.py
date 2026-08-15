@@ -117,6 +117,7 @@ class PetPipelineTest(unittest.TestCase):
         root = Path(__file__).resolve().parent.parent
         candidate = root / "tools/taro/pipeline/atlas_v2"
         debug = root / "app/src/debug/assets/pets/taro"
+        main = root / "app/src/main/assets/pets/taro"
         self.assertEqual(
             (candidate / "taro_motion_v2.png").read_bytes(),
             (debug / "taro_motion_v2.png").read_bytes(),
@@ -124,6 +125,14 @@ class PetPipelineTest(unittest.TestCase):
         self.assertEqual(
             (candidate / "taro_motion_v2.json").read_bytes(),
             (debug / "taro_motion_v2.json").read_bytes(),
+        )
+        self.assertEqual(
+            (candidate / "taro_motion_v2.png").read_bytes(),
+            (main / "taro_motion_v2.png").read_bytes(),
+        )
+        self.assertEqual(
+            (candidate / "taro_motion_v2.json").read_bytes(),
+            (main / "taro_motion_v2.json").read_bytes(),
         )
 
 
