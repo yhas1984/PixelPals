@@ -8,13 +8,11 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import com.pixelpals.app.PetService
 import com.pixelpals.app.R
-import com.pixelpals.app.core.analytics.AnalyticsTracker
-import com.pixelpals.app.core.domain.PetType
 import com.pixelpals.app.core.services.AppServices
 import com.pixelpals.app.data.catalog.Cosmetic
 import com.pixelpals.app.data.catalog.CosmeticCatalog
@@ -31,12 +29,12 @@ import kotlinx.coroutines.launch
 class CosmeticsTabFragment : Fragment() {
 
     private val repository: PixelPalsRepository by lazy { AppServices.repository(requireContext()) }
-    private val analytics: AnalyticsTracker by lazy { AppServices.analytics(requireContext()) }
+    private val analytics by lazy { AppServices.analytics(requireContext()) }
     private val selectedPetStore by lazy { SelectedPetStore(requireContext()) }
 
     private lateinit var root: LinearLayout
     private var renderJob: Job? = null
-    private var purchaseInFlight = false
+    private lateinit var storeActivity: StoreActivity
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -45,6 +43,7 @@ class CosmeticsTabFragment : Fragment() {
     ): View {
         val scroll = inflater.inflate(R.layout.fragment_store_scroll, container, false) as android.widget.ScrollView
         root = scroll.findViewById(R.id.scrollContent)
+        storeActivity = requireActivity() as StoreActivity
         renderCosmetics()
         return scroll
     }
@@ -123,60 +122,53 @@ class CosmeticsTabFragment : Fragment() {
         } else {
             ""
         }
-        btn.text = when {
-            isEquipped -> getString(R.string.store_equipped_button)
-            owned -> getString(R.string.store_equip_button)
-            else -> getString(R.string.store_buy_with_coins)
+        btn.text = when (StoreCatalogPolicy.cosmeticAction(owned, isEquipped)) {
+            CosmeticAction.EQUIPPED -> getString(R.string.store_equipped_button)
+            CosmeticAction.EQUIP -> getString(R.string.store_equip_button)
+            CosmeticAction.BUY -> getString(R.string.store_buy_with_coins)
         }
-        btn.isEnabled = !isEquipped && !purchaseInFlight
+        btn.isEnabled = !isEquipped && storeActivity.getStoreViewModel().uiState.value.activeActionId == null
         btn.setOnClickListener {
             // IMPORTANTE: se relee el pet seleccionado EN EL MOMENTO DEL CLIC.
             // Capturarlo en el render dejaba un petId obsoleto (p.ej. corgi) si el
             // usuario cambiaba de mascota en PetsTab con esta pestaña ya dibujada.
             val petType = selectedPetStore.load()
             if (repository.getEquippedCosmetic(petType.name.lowercase()) == cosmetic.id) return@setOnClickListener
-            if (owned) equipCosmetic(petType, cosmetic) else buyCosmetic(petType, cosmetic, btn)
+            if (owned) {
+                storeActivity.getStoreViewModel().equipCosmetic(cosmetic) { renderCosmetics() }
+            } else {
+                showPurchaseConfirmation(cosmetic)
+            }
         }
         return card
     }
 
-    private fun buyCosmetic(petType: PetType, cosmetic: Cosmetic, btn: Button) {
+    private fun showPurchaseConfirmation(cosmetic: Cosmetic) {
         val price = cosmetic.coinPrice ?: return
-        if (purchaseInFlight) return
-        purchaseInFlight = true
-        btn.isEnabled = false
-        lifecycleScope.launch {
-            val ok = repository.purchaseCosmeticWithCoins(petType.name.lowercase(), cosmetic.id)
-            purchaseInFlight = false
-            if (ok) {
-                analytics.track(
-                    "cosmetic_purchased",
-                    mapOf("cosmetic_id" to cosmetic.id, "price" to price.toString())
-                )
-                Toast.makeText(
-                    requireContext(),
-                    getString(R.string.cosmetic_unlocked_toast, cosmetic.displayName),
-                    Toast.LENGTH_SHORT
-                ).show()
-                equipCosmetic(petType, cosmetic)
-            } else {
-                Toast.makeText(
-                    requireContext(),
-                    getString(R.string.store_not_enough_coins),
-                    Toast.LENGTH_SHORT
-                ).show()
-                renderCosmetics()
-            }
+        val balance = storeActivity.getStoreViewModel().uiState.value.balance
+        if (balance < price) {
+            storeActivity.getStoreViewModel().setMessage(
+                getString(R.string.store_not_enough_coins),
+                isError = true,
+                canRetry = false,
+                canOpenCoins = true,
+            )
+            return
         }
-    }
-
-    private fun equipCosmetic(petType: PetType, cosmetic: Cosmetic) {
-        val petId = petType.name.lowercase()
-        repository.setEquippedCosmetic(petId, cosmetic.id)
-        analytics.track("cosmetic_equipped", mapOf("cosmetic_id" to cosmetic.id, "pet_id" to petId))
-        PetService.requestPetRefresh(requireContext())
-        (activity as? StoreActivity)?.refreshStoreHeader()
-        renderCosmetics()
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.store_confirm_purchase_title)
+            .setMessage(getString(R.string.store_confirm_cosmetic_purchase, cosmetic.displayName, price, balance - price))
+            .setNegativeButton(android.R.string.cancel, null)
+            .setPositiveButton(R.string.store_buy_button) { _, _ ->
+                storeActivity.getStoreViewModel().purchaseCosmetic(cosmetic) { ok ->
+                    if (ok) {
+                        analytics.track("cosmetic_purchased", mapOf("cosmetic_id" to cosmetic.id, "price" to price.toString()))
+                        Toast.makeText(requireContext(), getString(R.string.cosmetic_unlocked_toast, cosmetic.displayName), Toast.LENGTH_SHORT).show()
+                    }
+                    renderCosmetics()
+                }
+            }
+            .show()
     }
 
     private fun previewEmoji(effect: CosmeticEffect): String = when (effect) {

@@ -11,6 +11,9 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.Lifecycle
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.core.content.ContextCompat
 import com.google.android.gms.ads.AdListener
@@ -22,7 +25,6 @@ import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.RequestConfiguration
 import com.google.android.material.tabs.TabLayoutMediator
 import com.pixelpals.app.BuildConfig
-import com.pixelpals.app.PetService
 import com.pixelpals.app.R
 import com.pixelpals.app.core.analytics.AnalyticsTracker
 import com.pixelpals.app.core.ads.GoogleMobileAdsConsentManager
@@ -30,8 +32,9 @@ import com.pixelpals.app.core.domain.PetType
 import com.pixelpals.app.core.services.AppServices
 import com.pixelpals.app.data.catalog.CoinProduct
 import com.pixelpals.app.data.prefs.SelectedPetStore
-import com.pixelpals.app.data.repository.PixelPalsRepository
 import com.pixelpals.app.feature.store.billing.BillingRepository
+import com.pixelpals.app.feature.store.billing.PurchaseResult
+import com.pixelpals.app.feature.store.billing.RestoreResult
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.roundToInt
@@ -42,7 +45,6 @@ import com.pixelpals.app.navigation.RootNavigation
 class StoreActivity : AppCompatActivity() {
 
     private lateinit var selectedPetStore: SelectedPetStore
-    private val repository: PixelPalsRepository by lazy { AppServices.repository(this) }
     private val analytics: AnalyticsTracker by lazy { AppServices.analytics(this) }
     private val billing: BillingRepository by lazy { AppServices.billingRepository(this) }
     private val consentManager: GoogleMobileAdsConsentManager by lazy {
@@ -53,12 +55,16 @@ class StoreActivity : AppCompatActivity() {
     private var adView: AdView? = null
     private val mobileAdsInitialized = AtomicBoolean(false)
     private var purchaseInProgress = false
+    private lateinit var storeViewModel: StoreViewModel
+    private var bannerWidthDp: Int? = null
+    private var storeRetryAction: (() -> Unit)? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setTitle(R.string.store_title)
         edgeToEdge()
         setContentView(R.layout.activity_store)
+        storeViewModel = ViewModelProvider(this, StoreViewModel.Factory(application))[StoreViewModel::class.java]
         selectedPetStore = SelectedPetStore(this)
         selectedPet = selectedPetStore.load()
 
@@ -79,7 +85,7 @@ class StoreActivity : AppCompatActivity() {
             pager.adapter = StorePagerAdapter(this)
             TabLayoutMediator(tabs, pager) { tab, position ->
                 tab.text = when (position) {
-                    0 -> getString(R.string.store_tab_pets)
+                    0 -> getString(R.string.store_tab_premium)
                     1 -> getString(R.string.store_tab_cosmetics)
                     else -> getString(R.string.store_tab_coins)
                 }
@@ -89,16 +95,26 @@ class StoreActivity : AppCompatActivity() {
         refreshHeader()
         analytics.track("store_opened_v15")
         isStoreCreated = true
+        observeStoreState()
         lifecycleScope.launch {
-            billing.reconcilePurchases()
+            when (val result = billing.reconcilePurchases()) {
+                is RestoreResult.Failure -> storeViewModel.setMessage(result.reason, true)
+                RestoreResult.Unavailable -> Unit
+                RestoreResult.NothingToRestore -> Unit
+                is RestoreResult.Restored -> refreshHeader()
+            }
             refreshHeader()
         }
     }
 
     override fun onResume() {
         super.onResume()
-        // onCreate ya refrescó; en onResume solo si ya estábamos creados (retorno de compra).
-        if (isStoreCreated) refreshHeader()
+        // Al volver de Google Play, vuelve a leer la selección y el estado local
+        // para reflejar inmediatamente una compra restaurada o pendiente.
+        if (isStoreCreated) {
+            refreshHeader()
+            storeViewModel.refresh()
+        }
         adView?.resume()
     }
 
@@ -128,6 +144,34 @@ class StoreActivity : AppCompatActivity() {
             }
             updatePrivacyOptionsVisibility()
             if (consentManager.canRequestAds) initializeMobileAdsSdk()
+        }
+    }
+
+    private fun observeStoreState() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                storeViewModel.uiState.collect { state ->
+                    findViewById<TextView>(R.id.txtStoreWallet).text =
+                        getString(R.string.coins_wallet_format, state.balance)
+                    renderStoreState(state)
+                }
+            }
+        }
+    }
+
+    private fun renderStoreState(state: StoreUiState) {
+        val card = findViewById<View>(R.id.cardStoreState)
+        val progress = findViewById<View>(R.id.progressStoreLoading)
+        val status = findViewById<TextView>(R.id.txtStoreStatus)
+        val retry = findViewById<android.widget.Button>(R.id.btnStoreRetry)
+        card.visibility = if (state.isLoading || state.message != null) View.VISIBLE else View.GONE
+        progress.visibility = if (state.isLoading) View.VISIBLE else View.GONE
+        status.text = state.message.orEmpty()
+        status.setTextColor(ContextCompat.getColor(this, if (state.isError) R.color.red_error else R.color.status_info_fg))
+        retry.visibility = if (state.canRetry || state.canOpenCoins) View.VISIBLE else View.GONE
+        retry.setText(if (state.canOpenCoins) R.string.store_open_coins else R.string.selection_retry)
+        retry.setOnClickListener {
+            if (state.canOpenCoins) openCoinsTab() else storeRetryAction?.invoke() ?: storeViewModel.refresh()
         }
     }
 
@@ -162,9 +206,30 @@ class StoreActivity : AppCompatActivity() {
     /** Banner adaptativo cargado solo después de que UMP permita solicitar anuncios. */
     private fun setupBannerAd() {
         val container = findViewById<FrameLayout>(R.id.bannerAdContainer) ?: return
-        if (adView != null) return
-        val bannerView = AdView(this).apply {
+        container.post {
+            val widthDp = calculateBannerWidthDp(container)
+            if (adView != null && bannerWidthDp == widthDp) return@post
+            adView?.destroy()
+            container.removeAllViews()
+            bannerWidthDp = widthDp
+            val bannerView = createBannerView(container, widthDp)
+            container.visibility = View.GONE
+            container.addView(
+                bannerView,
+                FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    FrameLayout.LayoutParams.WRAP_CONTENT,
+                ),
+            )
+            bannerView.loadAd(AdRequest.Builder().build())
+            adView = bannerView
+        }
+    }
+
+    private fun createBannerView(container: FrameLayout, widthDp: Int): AdView {
+        return AdView(this).apply {
             setAdUnitId(BuildConfig.ADMOB_BANNER_AD_UNIT_ID)
+            setAdSize(AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(this@StoreActivity, widthDp))
             adListener = object : AdListener() {
                 override fun onAdLoaded() {
                     container.visibility = View.VISIBLE
@@ -181,26 +246,12 @@ class StoreActivity : AppCompatActivity() {
                 }
             }
         }
-        container.visibility = View.GONE
-        container.addView(
-            bannerView,
-            FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.WRAP_CONTENT,
-            ),
-        )
-        container.post {
-            val availableWidth = findViewById<View>(R.id.storeRoot).width
-            val widthDp = ((availableWidth - container.paddingLeft - container.paddingRight) /
-                resources.displayMetrics.density)
-                .roundToInt()
-                .coerceAtLeast(1)
-            bannerView.setAdSize(
-                AdSize.getLargeAnchoredAdaptiveBannerAdSize(this@StoreActivity, widthDp)
-            )
-            bannerView.loadAd(AdRequest.Builder().build())
-        }
-        this.adView = bannerView
+    }
+
+    private fun calculateBannerWidthDp(container: FrameLayout): Int {
+        val availableWidth = findViewById<View>(R.id.storeRoot).width
+        return ((availableWidth - container.paddingLeft - container.paddingRight) /
+            resources.displayMetrics.density).roundToInt().coerceAtLeast(1)
     }
 
     private fun setupRootNavigation() {
@@ -219,32 +270,21 @@ class StoreActivity : AppCompatActivity() {
             R.string.store_subtitle_format,
             getString(selectedPet.displayNameResId),
         )
-        lifecycleScope.launch {
-            val balance = repository.getCoinBalance(selectedPet)
-            findViewById<TextView>(R.id.txtStoreWallet).text = getString(R.string.coins_wallet_format, balance)
-            val equippedId = repository.getEquippedCosmetic(selectedPet.name.lowercase())
-            val equippedName = equippedId?.let { id ->
-                com.pixelpals.app.data.catalog.CosmeticCatalog.findById(this@StoreActivity, id)?.displayName
-            }
-            findViewById<TextView>(R.id.txtStoreHighlight).text = getString(
-                R.string.store_featured_message_format,
-                getString(selectedPet.displayNameResId),
-                equippedName ?: getString(R.string.store_owned_hint_default),
-            )
-        }
     }
 
     /** Starts a coin purchase; Billing owns fulfillment and the UI only reports the result. */
-    fun purchaseCoinPack(coinProduct: CoinProduct, onFinished: (Boolean) -> Unit = {}) {
+    fun purchaseCoinPack(coinProduct: CoinProduct, onFinished: (PurchaseResult) -> Unit = {}) {
         if (purchaseInProgress) {
-            onFinished(false)
+            onFinished(PurchaseResult.Unavailable)
             return
         }
         purchaseInProgress = true
+        storeViewModel.setCoinPurchaseActive(coinProduct.productId)
+        storeViewModel.setMessage(getString(R.string.store_loading))
         billing.launchPurchase(this, coinProduct.productId) { success ->
             runOnUiThread {
                 purchaseInProgress = false
-                if (success) {
+                if (success == PurchaseResult.Success) {
                     analytics.track("coins_purchased", mapOf("product_id" to coinProduct.productId))
                     Toast.makeText(
                         this@StoreActivity,
@@ -253,6 +293,7 @@ class StoreActivity : AppCompatActivity() {
                     ).show()
                     refreshHeader()
                 }
+                storeViewModel.handleCoinPurchase(success)
                 onFinished(success)
             }
         }
@@ -273,8 +314,21 @@ class StoreActivity : AppCompatActivity() {
         ViewCompat.setOnApplyWindowInsetsListener(view) { v, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(bars.left, bars.top, bars.right, bars.bottom)
+            if (v.width > 0 && adView != null && bannerWidthDp != calculateBannerWidthDp(findViewById(R.id.bannerAdContainer))) {
+                setupBannerAd()
+            }
             insets
         }
+    }
+
+    fun getStoreViewModel(): StoreViewModel = storeViewModel
+
+    fun openCoinsTab() {
+        findViewById<androidx.viewpager2.widget.ViewPager2>(R.id.storePager).setCurrentItem(2, true)
+    }
+
+    fun setStoreRetryAction(action: (() -> Unit)?) {
+        storeRetryAction = action
     }
 
     private class StorePagerAdapter(activity: AppCompatActivity) : FragmentStateAdapter(activity) {

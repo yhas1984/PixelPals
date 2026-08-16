@@ -24,7 +24,6 @@ import com.pixelpals.app.core.services.AppServices
 import com.pixelpals.app.core.analytics.AnalyticsTracker
 import com.pixelpals.app.data.prefs.SelectedPetStore
 import com.pixelpals.app.databinding.ActivityMainBinding
-import com.pixelpals.app.feature.store.StoreActivity
 import com.pixelpals.app.feature.treasure.TreasureAlbumActivity
 import com.pixelpals.app.status.PetDashboardActivity
 import com.pixelpals.app.navigation.PixelPalsDestination
@@ -151,10 +150,6 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, PetDashboardActivity::class.java))
         }
 
-        binding.btnStore.setOnClickListener {
-            analytics.track("store_opened_from_main")
-            startActivity(Intent(this, StoreActivity::class.java))
-        }
     }
 
     private fun setupRootNavigation() {
@@ -340,7 +335,6 @@ class MainActivity : AppCompatActivity() {
             binding.btnStopPet,
             binding.btnAlbum,
             binding.btnDashboard,
-            binding.btnStore
         )
         views.forEachIndexed { index, view ->
             view.alpha = 0f

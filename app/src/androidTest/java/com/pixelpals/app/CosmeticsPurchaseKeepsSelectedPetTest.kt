@@ -9,6 +9,9 @@ import android.widget.TextView
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.By
+import androidx.test.uiautomator.UiDevice
+import androidx.test.uiautomator.Until
 import com.pixelpals.app.core.domain.PetType
 import com.pixelpals.app.data.catalog.Cosmetic
 import com.pixelpals.app.data.catalog.CosmeticCatalog
@@ -35,6 +38,7 @@ import org.junit.runner.RunWith
 class CosmeticsPurchaseKeepsSelectedPetTest {
 
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
+    private val device = UiDevice.getInstance(instrumentation)
     private val context = instrumentation.targetContext
     private lateinit var repository: PixelPalsRepository
     private var scenario: ActivityScenario<StoreActivity>? = null
@@ -70,6 +74,9 @@ class CosmeticsPurchaseKeepsSelectedPetTest {
 
         val button = awaitCosmeticButton(cosmetic)
         instrumentation.runOnMainSync { button.performClick() }
+        val confirm = device.wait(Until.findObject(By.text(context.getString(R.string.store_buy_button))), 5_000)
+        checkNotNull(confirm) { "No apareció la confirmación de compra" }
+        confirm.click()
 
         awaitEquipped(petId = "tela", cosmeticId = cosmetic.id)
 

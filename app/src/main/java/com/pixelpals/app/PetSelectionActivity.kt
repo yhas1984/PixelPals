@@ -68,9 +68,6 @@ class PetSelectionActivity : AppCompatActivity() {
         applySystemBarsInsets(findViewById(R.id.selectionScroll))
         setupRootNavigation()
 
-        findViewById<Button>(R.id.btnOpenStore).setOnClickListener {
-            startActivity(Intent(this, StoreActivity::class.java))
-        }
         findViewById<Button>(R.id.btnOpenDashboard).setOnClickListener {
             startActivity(Intent(this, PetDashboardActivity::class.java))
         }

@@ -22,7 +22,7 @@
             android:layout_height="wrap_content"
             android:text="@string/store_title"
             android:textColor="@color/text_primary"
-            android:textSize="30sp"
+            android:textSize="26sp"
             android:textStyle="bold" />
 
         <TextView
@@ -34,19 +34,10 @@
             android:textSize="14sp" />
 
         <TextView
-            android:id="@+id/txtStoreHighlight"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:textColor="@color/status_info_fg"
-            android:textSize="13sp"
-            android:textStyle="bold" />
-
-        <TextView
             android:id="@+id/txtStoreWallet"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="8dp"
             android:background="@drawable/bg_card"
             android:padding="12dp"
             android:textColor="@color/text_primary"

@@ -323,6 +323,19 @@
     <string name="premium_pet_perk_diablillo">Includes mischievous reactions, high energy, and chaotic effects.</string>
     <string name="premium_pet_perk_lumi">Includes luminous magic, playful socials, and a premium motion set.</string>
     <string name="premium_pet_perk_default">Includes a unique personality, presence, and style.</string>
+    <string name="store_tab_premium">Premium</string>
+    <string name="store_all_premium_owned">You already own every premium pet.</string>
+    <string name="store_go_to_pets">Manage pets</string>
+    <string name="store_confirm_purchase_title">Confirm purchase</string>
+    <string name="store_confirm_pet_purchase">Unlock %1$s for %2$d coins? Your balance will be %3$d coins.</string>
+    <string name="store_confirm_cosmetic_purchase">Buy %1$s for %2$d coins? Your balance will be %3$d coins.</string>
+    <string name="store_purchase_cancelled">Purchase cancelled.</string>
+    <string name="store_purchase_pending">Purchase pending. Google Play will finish it shortly.</string>
+    <string name="store_billing_unavailable">Google Play products are unavailable. Check the Play installation and retry.</string>
+    <string name="store_purchase_failed">The purchase could not be completed.</string>
+    <string name="coins_purchase_success_generic">Coins added to your wallet.</string>
+    <string name="store_catalog_unavailable">Products are temporarily unavailable.</string>
+    <string name="store_open_coins">View coin packs</string>
 
     <string name="progress_level_baby">Baby</string>
     <string name="progress_level_child">Child</string>

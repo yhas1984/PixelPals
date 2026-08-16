@@ -11,72 +11,79 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.pixelpals.app.R
 import com.pixelpals.app.core.analytics.AnalyticsTracker
-import com.pixelpals.app.core.services.AppServices
 import com.pixelpals.app.data.catalog.CoinProduct
+import com.pixelpals.app.feature.store.billing.ProductCatalogResult
 import kotlinx.coroutines.launch
 
 class CoinsTabFragment : Fragment() {
-
-    private val analytics: AnalyticsTracker by lazy { AppServices.analytics(requireContext()) }
+    private val analytics: AnalyticsTracker by lazy { com.pixelpals.app.core.services.AppServices.analytics(requireContext()) }
+    private val cards: MutableMap<String, Pair<TextView, Button>> = mutableMapOf()
+    private lateinit var storeActivity: StoreActivity
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?,
-    ): View {
-        return inflater.inflate(
-            R.layout.fragment_store_scroll,
-            container,
-            false,
-        )
-    }
+    ): View = inflater.inflate(R.layout.fragment_store_scroll, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val scroll = view as android.widget.ScrollView
-        val root = scroll.findViewById<LinearLayout>(R.id.scrollContent)
-        val activity = requireActivity() as StoreActivity
-        val billing = AppServices.billingRepository(requireContext())
-        val lifecycleOwner = viewLifecycleOwner
-        val cards = mutableListOf<Triple<CoinProduct, TextView, Button>>()
+        storeActivity = requireActivity() as StoreActivity
+        val root = (view as android.widget.ScrollView).findViewById<LinearLayout>(R.id.scrollContent)
+        CoinProduct.CATALOG.forEach { pack -> root.addView(createPackCard(pack, root)) }
+        storeActivity.setStoreRetryAction { loadPrices() }
+        loadPrices()
+    }
 
-        CoinProduct.CATALOG.forEach { pack ->
-            val card = layoutInflater.inflate(R.layout.item_coin_pack, root, false)
-            card.findViewById<TextView>(R.id.txtCoinPackTitle).text = getString(pack.displayNameResId)
-            card.findViewById<TextView>(R.id.txtCoinPackSubtitle).text = getString(pack.subtitleResId)
-            val badge = card.findViewById<TextView>(R.id.txtCoinPackBadge)
-            if (pack.bestValueFlag) {
-                badge.visibility = View.VISIBLE
-                badge.text = getString(R.string.coins_pack_best_value)
-            } else {
-                badge.visibility = View.GONE
-            }
-            val price = card.findViewById<TextView>(R.id.txtCoinPackPrice)
-            val buyBtn = card.findViewById<Button>(R.id.btnCoinPackBuy)
-            buyBtn.isEnabled = false
-            buyBtn.setOnClickListener {
-                analytics.track("coin_pack_buy_tap", mapOf("product_id" to pack.productId))
-                buyBtn.isEnabled = false
-                activity.purchaseCoinPack(pack) {
-                    if (lifecycleOwner.lifecycle.currentState.isAtLeast(
-                            androidx.lifecycle.Lifecycle.State.CREATED
-                        )
-                    ) {
-                        buyBtn.isEnabled = price.text.isNotBlank()
+    private fun createPackCard(pack: CoinProduct, root: LinearLayout): View {
+        val card = layoutInflater.inflate(R.layout.item_coin_pack, root, false)
+        card.findViewById<TextView>(R.id.txtCoinPackTitle).text = getString(pack.displayNameResId)
+        card.findViewById<TextView>(R.id.txtCoinPackSubtitle).text = getString(pack.subtitleResId)
+        val badge = card.findViewById<TextView>(R.id.txtCoinPackBadge)
+        badge.visibility = if (pack.bestValueFlag) View.VISIBLE else View.GONE
+        if (pack.bestValueFlag) badge.text = getString(R.string.coins_pack_best_value)
+        val price = card.findViewById<TextView>(R.id.txtCoinPackPrice)
+        val buyButton = card.findViewById<Button>(R.id.btnCoinPackBuy)
+        buyButton.isEnabled = false
+        buyButton.setOnClickListener { purchasePack(pack) }
+        cards[pack.productId] = price to buyButton
+        return card
+    }
+
+    private fun loadPrices() {
+        storeActivity.getStoreViewModel().setMessage(getString(R.string.store_loading))
+        viewLifecycleOwner.lifecycleScope.launch {
+            when (val result = storeActivity.getStoreViewModel().loadCoinPrices(CoinProduct.CATALOG.map { it.productId })) {
+                is ProductCatalogResult.Available -> {
+                    cards.forEach { (productId, views) ->
+                        val price = result.prices[productId]
+                        views.first.text = price.orEmpty()
+                        views.second.isEnabled = price != null
                     }
+                    storeActivity.getStoreViewModel().setMessage(null)
+                }
+                is ProductCatalogResult.Unavailable,
+                is ProductCatalogResult.Failure -> {
+                    cards.values.forEach { views ->
+                        views.first.text = ""
+                        views.second.isEnabled = false
+                    }
+                    storeActivity.getStoreViewModel().setMessage(getString(R.string.store_catalog_unavailable), true)
                 }
             }
-            root.addView(card)
-            cards += Triple(pack, price, buyBtn)
         }
+    }
 
-        viewLifecycleOwner.lifecycleScope.launch {
-            val prices = billing.prefetch(CoinProduct.CATALOG.map { it.productId })
-            cards.forEach { (pack, price, buyBtn) ->
-                val formattedPrice = prices[pack.productId]
-                price.text = formattedPrice ?: getString(R.string.store_preview_price)
-                buyBtn.isEnabled = formattedPrice != null
-            }
-        }
+    private fun purchasePack(pack: CoinProduct) {
+        if (storeActivity.getStoreViewModel().uiState.value.activeActionId != null) return
+        analytics.track("coin_pack_buy_tap", mapOf("product_id" to pack.productId))
+        cards.values.forEach { it.second.isEnabled = false }
+        storeActivity.purchaseCoinPack(pack) { loadPrices() }
+    }
+
+    override fun onDestroyView() {
+        storeActivity.setStoreRetryAction(null)
+        cards.clear()
+        super.onDestroyView()
     }
 }

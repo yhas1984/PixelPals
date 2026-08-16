@@ -74,19 +74,6 @@
             </LinearLayout>
 
             <Button
-                android:id="@+id/btnOpenStore"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:layout_marginBottom="8dp"
-                android:backgroundTint="@color/surface_warm"
-                android:insetBottom="0dp"
-                android:insetTop="0dp"
-                android:text="@string/selection_open_store_button"
-                android:textAllCaps="false"
-                android:textColor="@color/text_primary"
-                android:textStyle="bold" />
-
-            <Button
                 android:id="@+id/btnOpenDashboard"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"

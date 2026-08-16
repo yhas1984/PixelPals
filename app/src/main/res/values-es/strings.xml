@@ -321,6 +321,19 @@
     <string name="premium_pet_perk_diablillo">Incluye reacciones traviesas, energía alta y efectos más caóticos.</string>
     <string name="premium_pet_perk_lumi">Incluye magia luminosa, saludos juguetones y un set de movimiento premium.</string>
     <string name="premium_pet_perk_default">Incluye personalidad, presencia y estilo únicos.</string>
+    <string name="store_tab_premium">Premium</string>
+    <string name="store_all_premium_owned">Ya tienes todas las mascotas premium.</string>
+    <string name="store_go_to_pets">Gestionar mascotas</string>
+    <string name="store_confirm_purchase_title">Confirmar compra</string>
+    <string name="store_confirm_pet_purchase">¿Desbloquear %1$s por %2$d monedas? Tu saldo quedará en %3$d monedas.</string>
+    <string name="store_confirm_cosmetic_purchase">¿Comprar %1$s por %2$d monedas? Tu saldo quedará en %3$d monedas.</string>
+    <string name="store_purchase_cancelled">Compra cancelada.</string>
+    <string name="store_purchase_pending">Compra pendiente. Google Play la terminará en breve.</string>
+    <string name="store_billing_unavailable">Los productos de Google Play no están disponibles. Comprueba la instalación desde Play y reintenta.</string>
+    <string name="store_purchase_failed">No se pudo completar la compra.</string>
+    <string name="coins_purchase_success_generic">Monedas añadidas a tu monedero.</string>
+    <string name="store_catalog_unavailable">Los productos no están disponibles temporalmente.</string>
+    <string name="store_open_coins">Ver packs de monedas</string>
 
     <string name="progress_level_baby">Bebé</string>
     <string name="progress_level_child">Niño</string>
