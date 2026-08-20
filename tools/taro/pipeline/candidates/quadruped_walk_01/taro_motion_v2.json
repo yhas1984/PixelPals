@@ -1,0 +1,582 @@
+{
+  "version": 2,
+  "petId": "taro",
+  "atlasPath": "pets/taro/taro_motion_v2.png",
+  "previewPath": "",
+  "frameWidth": 384,
+  "frameHeight": 384,
+  "columns": 8,
+  "rows": 5,
+  "frameCount": 40,
+  "pivot": {
+    "x": 192,
+    "y": 368
+  },
+  "renderHints": {
+    "innerTransparentPaddingPx": 16,
+    "recommendedBleedInsetPx": 1,
+    "filterBitmap": true,
+    "drawScale": 0.963,
+    "backgroundRemoval": "exterior_white_flood_fill",
+    "sourceCellCompositionPreserved": true,
+    "walkPosture": "quadruped",
+    "useFrameOccupancyNormalization": false
+  },
+  "qualityPolicy": {
+    "maximumInteriorHolePixels": 512,
+    "maximumInteriorHoleComponent": 256,
+    "maximumDetachedComponent": 192
+  },
+  "clips": [
+    {
+      "id": "idle",
+      "frames": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "loop": true,
+      "frameDurationMs": 900
+    },
+    {
+      "id": "walk",
+      "frames": [
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "loop": true,
+      "frameDurationMs": 420
+    },
+    {
+      "id": "turn",
+      "frames": [
+        12,
+        13,
+        14,
+        15
+      ],
+      "loop": false,
+      "frameDurationMs": 420
+    },
+    {
+      "id": "hide",
+      "frames": [
+        16,
+        17,
+        18,
+        19
+      ],
+      "loop": false,
+      "frameDurationMs": 650
+    },
+    {
+      "id": "peek",
+      "frames": [
+        20,
+        21,
+        22,
+        23
+      ],
+      "loop": false,
+      "frameDurationMs": 520
+    },
+    {
+      "id": "front_social",
+      "frames": [
+        24,
+        25,
+        26,
+        27
+      ],
+      "loop": false,
+      "frameDurationMs": 650
+    },
+    {
+      "id": "touch",
+      "frames": [
+        28,
+        29,
+        30,
+        31
+      ],
+      "loop": false,
+      "frameDurationMs": 360
+    },
+    {
+      "id": "sleep",
+      "frames": [
+        32,
+        33,
+        34,
+        35
+      ],
+      "loop": true,
+      "frameDurationMs": 1600
+    },
+    {
+      "id": "curiosity",
+      "frames": [
+        36,
+        37,
+        38,
+        39
+      ],
+      "loop": false,
+      "frameDurationMs": 700
+    }
+  ],
+  "frames": [
+    {
+      "index": 0,
+      "name": "idle_00"
+    },
+    {
+      "index": 1,
+      "name": "idle_01"
+    },
+    {
+      "index": 2,
+      "name": "idle_02"
+    },
+    {
+      "index": 3,
+      "name": "idle_03"
+    },
+    {
+      "index": 4,
+      "name": "walk_00",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/11_walk_quadruped_candidate_01.png",
+      "sourceCell": 0
+    },
+    {
+      "index": 5,
+      "name": "walk_01",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/11_walk_quadruped_candidate_01.png",
+      "sourceCell": 1
+    },
+    {
+      "index": 6,
+      "name": "walk_02",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/11_walk_quadruped_candidate_01.png",
+      "sourceCell": 2
+    },
+    {
+      "index": 7,
+      "name": "walk_03",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/11_walk_quadruped_candidate_01.png",
+      "sourceCell": 3
+    },
+    {
+      "index": 8,
+      "name": "walk_04",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/11_walk_quadruped_candidate_01.png",
+      "sourceCell": 4
+    },
+    {
+      "index": 9,
+      "name": "walk_05",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/11_walk_quadruped_candidate_01.png",
+      "sourceCell": 5
+    },
+    {
+      "index": 10,
+      "name": "walk_06",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/11_walk_quadruped_candidate_01.png",
+      "sourceCell": 6
+    },
+    {
+      "index": 11,
+      "name": "walk_07",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/11_walk_quadruped_candidate_01.png",
+      "sourceCell": 7
+    },
+    {
+      "index": 12,
+      "name": "turn_00"
+    },
+    {
+      "index": 13,
+      "name": "turn_01"
+    },
+    {
+      "index": 14,
+      "name": "turn_02"
+    },
+    {
+      "index": 15,
+      "name": "turn_03"
+    },
+    {
+      "index": 16,
+      "name": "hide_00"
+    },
+    {
+      "index": 17,
+      "name": "hide_01"
+    },
+    {
+      "index": 18,
+      "name": "hide_02"
+    },
+    {
+      "index": 19,
+      "name": "hide_03"
+    },
+    {
+      "index": 20,
+      "name": "peek_00"
+    },
+    {
+      "index": 21,
+      "name": "peek_01"
+    },
+    {
+      "index": 22,
+      "name": "peek_02"
+    },
+    {
+      "index": 23,
+      "name": "peek_03"
+    },
+    {
+      "index": 24,
+      "name": "front_social_00"
+    },
+    {
+      "index": 25,
+      "name": "front_social_01"
+    },
+    {
+      "index": 26,
+      "name": "front_social_02"
+    },
+    {
+      "index": 27,
+      "name": "front_social_03"
+    },
+    {
+      "index": 28,
+      "name": "touch_00"
+    },
+    {
+      "index": 29,
+      "name": "touch_01"
+    },
+    {
+      "index": 30,
+      "name": "touch_02"
+    },
+    {
+      "index": 31,
+      "name": "touch_03"
+    },
+    {
+      "index": 32,
+      "name": "sleep_00"
+    },
+    {
+      "index": 33,
+      "name": "sleep_01"
+    },
+    {
+      "index": 34,
+      "name": "sleep_02"
+    },
+    {
+      "index": 35,
+      "name": "sleep_03"
+    },
+    {
+      "index": 36,
+      "name": "curiosity_00"
+    },
+    {
+      "index": 37,
+      "name": "curiosity_01"
+    },
+    {
+      "index": 38,
+      "name": "curiosity_02"
+    },
+    {
+      "index": 39,
+      "name": "curiosity_03"
+    }
+  ],
+  "frameDetails": [
+    {
+      "index": 0,
+      "name": "idle_00",
+      "source": "tools/taro/pipeline/raw/01_idle_breathe.png",
+      "sourceCell": 0
+    },
+    {
+      "index": 1,
+      "name": "idle_01",
+      "source": "tools/taro/pipeline/raw/01_idle_breathe.png",
+      "sourceCell": 1
+    },
+    {
+      "index": 2,
+      "name": "idle_02",
+      "source": "tools/taro/pipeline/raw/01_idle_breathe.png",
+      "sourceCell": 2
+    },
+    {
+      "index": 3,
+      "name": "idle_03",
+      "source": "tools/taro/pipeline/raw/01_idle_breathe.png",
+      "sourceCell": 3
+    },
+    {
+      "index": 4,
+      "name": "walk_00",
+      "source": "tools/taro/pipeline/raw/02_walk_a.png",
+      "sourceCell": 0
+    },
+    {
+      "index": 5,
+      "name": "walk_01",
+      "source": "tools/taro/pipeline/raw/02_walk_a.png",
+      "sourceCell": 1
+    },
+    {
+      "index": 6,
+      "name": "walk_02",
+      "source": "tools/taro/pipeline/raw/02_walk_a.png",
+      "sourceCell": 2
+    },
+    {
+      "index": 7,
+      "name": "walk_03",
+      "source": "tools/taro/pipeline/raw/02_walk_a.png",
+      "sourceCell": 3
+    },
+    {
+      "index": 8,
+      "name": "walk_04",
+      "source": "tools/taro/pipeline/raw/03_walk_b.png",
+      "sourceCell": 0
+    },
+    {
+      "index": 9,
+      "name": "walk_05",
+      "source": "tools/taro/pipeline/raw/03_walk_b.png",
+      "sourceCell": 1
+    },
+    {
+      "index": 10,
+      "name": "walk_06",
+      "source": "tools/taro/pipeline/raw/03_walk_b.png",
+      "sourceCell": 2
+    },
+    {
+      "index": 11,
+      "name": "walk_07",
+      "source": "tools/taro/pipeline/raw/03_walk_b.png",
+      "sourceCell": 3
+    },
+    {
+      "index": 12,
+      "name": "turn_00",
+      "source": "tools/taro/pipeline/raw/04_turn_in_place.png",
+      "sourceCell": 0
+    },
+    {
+      "index": 13,
+      "name": "turn_01",
+      "source": "tools/taro/pipeline/raw/04_turn_in_place.png",
+      "sourceCell": 1
+    },
+    {
+      "index": 14,
+      "name": "turn_02",
+      "source": "tools/taro/pipeline/raw/04_turn_in_place.png",
+      "sourceCell": 2
+    },
+    {
+      "index": 15,
+      "name": "turn_03",
+      "source": "tools/taro/pipeline/raw/04_turn_in_place.png",
+      "sourceCell": 3
+    },
+    {
+      "index": 16,
+      "name": "hide_00",
+      "source": "tools/taro/pipeline/raw/05_hide_shell.png",
+      "sourceCell": 0
+    },
+    {
+      "index": 17,
+      "name": "hide_01",
+      "source": "tools/taro/pipeline/raw/05_hide_shell.png",
+      "sourceCell": 1
+    },
+    {
+      "index": 18,
+      "name": "hide_02",
+      "source": "tools/taro/pipeline/raw/05_hide_shell.png",
+      "sourceCell": 2
+    },
+    {
+      "index": 19,
+      "name": "hide_03",
+      "source": "tools/taro/pipeline/raw/05_hide_shell.png",
+      "sourceCell": 3
+    },
+    {
+      "index": 20,
+      "name": "peek_00",
+      "source": "tools/taro/pipeline/raw/06_peek_out.png",
+      "sourceCell": 0
+    },
+    {
+      "index": 21,
+      "name": "peek_01",
+      "source": "tools/taro/pipeline/raw/06_peek_out.png",
+      "sourceCell": 1
+    },
+    {
+      "index": 22,
+      "name": "peek_02",
+      "source": "tools/taro/pipeline/raw/06_peek_out.png",
+      "sourceCell": 2
+    },
+    {
+      "index": 23,
+      "name": "peek_03",
+      "source": "tools/taro/pipeline/raw/06_peek_out.png",
+      "sourceCell": 3
+    },
+    {
+      "index": 24,
+      "name": "front_social_00",
+      "source": "tools/taro/pipeline/raw/07_front_social.png",
+      "sourceCell": 0
+    },
+    {
+      "index": 25,
+      "name": "front_social_01",
+      "source": "tools/taro/pipeline/raw/07_front_social.png",
+      "sourceCell": 1
+    },
+    {
+      "index": 26,
+      "name": "front_social_02",
+      "source": "tools/taro/pipeline/raw/07_front_social.png",
+      "sourceCell": 2
+    },
+    {
+      "index": 27,
+      "name": "front_social_03",
+      "source": "tools/taro/pipeline/raw/07_front_social.png",
+      "sourceCell": 3
+    },
+    {
+      "index": 28,
+      "name": "touch_00",
+      "source": "tools/taro/pipeline/raw/08_touch_recover.png",
+      "sourceCell": 0
+    },
+    {
+      "index": 29,
+      "name": "touch_01",
+      "source": "tools/taro/pipeline/raw/08_touch_recover.png",
+      "sourceCell": 1
+    },
+    {
+      "index": 30,
+      "name": "touch_02",
+      "source": "tools/taro/pipeline/raw/08_touch_recover.png",
+      "sourceCell": 2
+    },
+    {
+      "index": 31,
+      "name": "touch_03",
+      "source": "tools/taro/pipeline/raw/08_touch_recover.png",
+      "sourceCell": 3
+    },
+    {
+      "index": 32,
+      "name": "sleep_00",
+      "source": "tools/taro/pipeline/raw/09_sleep.png",
+      "sourceCell": 0
+    },
+    {
+      "index": 33,
+      "name": "sleep_01",
+      "source": "tools/taro/pipeline/raw/09_sleep.png",
+      "sourceCell": 1
+    },
+    {
+      "index": 34,
+      "name": "sleep_02",
+      "source": "tools/taro/pipeline/raw/09_sleep.png",
+      "sourceCell": 2
+    },
+    {
+      "index": 35,
+      "name": "sleep_03",
+      "source": "tools/taro/pipeline/raw/09_sleep.png",
+      "sourceCell": 3
+    },
+    {
+      "index": 36,
+      "name": "curiosity_00",
+      "source": "tools/taro/pipeline/raw/10_garden_curiosity.png",
+      "sourceCell": 0
+    },
+    {
+      "index": 37,
+      "name": "curiosity_01",
+      "source": "tools/taro/pipeline/raw/10_garden_curiosity.png",
+      "sourceCell": 1
+    },
+    {
+      "index": 38,
+      "name": "curiosity_02",
+      "source": "tools/taro/pipeline/raw/10_garden_curiosity.png",
+      "sourceCell": 2
+    },
+    {
+      "index": 39,
+      "name": "curiosity_03",
+      "source": "tools/taro/pipeline/raw/10_garden_curiosity.png",
+      "sourceCell": 3
+    }
+  ],
+  "locomotion": {
+    "walk": {
+      "posture": "quadruped",
+      "cycleDisplacementPx": 141.12,
+      "plantFrames": [
+        4,
+        6,
+        8,
+        10
+      ]
+    }
+  },
+  "contactAnchors": [
+    {
+      "clip": "walk",
+      "bottomTolerance": 3,
+      "centerTolerance": 3
+    }
+  ]
+}

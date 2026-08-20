@@ -1,7 +1,7 @@
 {
   "version": 2,
   "petId": "taro",
-  "status": "candidate_pipeline",
+  "status": "runtime_v2_promoted",
   "characterBible": "tools/taro/TARO_CHARACTER_BIBLE_V2.md",
   "reviewChecklist": "tools/taro/REVIEW_CHECKLIST.md",
   "canonicalReference": "/home/yhas/Pictures/pixelpals_refs/taro.png",

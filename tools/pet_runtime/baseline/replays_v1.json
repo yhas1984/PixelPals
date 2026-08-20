@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "coordinateSpace": "logical sprite top-left pixels",
+  "scripts": [
+    {
+      "id": "tap",
+      "seed": 11,
+      "events": [
+        {"atMillis": 0, "type": "tap"}
+      ]
+    },
+    {
+      "id": "hold",
+      "seed": 12,
+      "events": [
+        {"atMillis": 500, "type": "hold_start"},
+        {"atMillis": 1200, "type": "hold_release"}
+      ]
+    },
+    {
+      "id": "slow_drag_release",
+      "seed": 13,
+      "events": [
+        {"atMillis": 0, "type": "drag_start", "pointerX": 224.0, "pointerY": 824.0, "grabX": 24.0, "grabY": 24.0},
+        {"atMillis": 350, "type": "drag_move", "pointerX": 300.0, "pointerY": 760.0},
+        {"atMillis": 700, "type": "drag_move", "pointerX": 380.0, "pointerY": 700.0},
+        {"atMillis": 900, "type": "release", "velocityX": 0.0, "velocityY": 0.0}
+      ]
+    },
+    {
+      "id": "fling_left",
+      "seed": 14,
+      "events": [
+        {"atMillis": 0, "type": "drag_start", "pointerX": 224.0, "pointerY": 824.0, "grabX": 24.0, "grabY": 24.0},
+        {"atMillis": 180, "type": "fling", "velocityX": -1800.0, "velocityY": -500.0}
+      ]
+    },
+    {
+      "id": "fling_right",
+      "seed": 15,
+      "events": [
+        {"atMillis": 0, "type": "drag_start", "pointerX": 224.0, "pointerY": 824.0, "grabX": 24.0, "grabY": 24.0},
+        {"atMillis": 180, "type": "fling", "velocityX": 1800.0, "velocityY": -500.0}
+      ]
+    },
+    {
+      "id": "fling_up",
+      "seed": 16,
+      "events": [
+        {"atMillis": 0, "type": "drag_start", "pointerX": 224.0, "pointerY": 824.0, "grabX": 24.0, "grabY": 24.0},
+        {"atMillis": 180, "type": "fling", "velocityX": 300.0, "velocityY": -1900.0}
+      ]
+    },
+    {
+      "id": "fling_down",
+      "seed": 17,
+      "events": [
+        {"atMillis": 0, "type": "drag_start", "pointerX": 224.0, "pointerY": 424.0, "grabX": 24.0, "grabY": 24.0},
+        {"atMillis": 180, "type": "fling", "velocityX": 300.0, "velocityY": 1900.0}
+      ]
+    },
+    {
+      "id": "cancel_active_drag",
+      "seed": 18,
+      "events": [
+        {"atMillis": 0, "type": "drag_start", "pointerX": 224.0, "pointerY": 824.0, "grabX": 24.0, "grabY": 24.0},
+        {"atMillis": 200, "type": "drag_move", "pointerX": 400.0, "pointerY": 600.0},
+        {"atMillis": 260, "type": "cancel"}
+      ]
+    },
+    {
+      "id": "pause_resume",
+      "seed": 19,
+      "events": [
+        {"atMillis": 0, "type": "pause"},
+        {"atMillis": 1000, "type": "resume"}
+      ]
+    },
+    {
+      "id": "bounds_rotation",
+      "seed": 20,
+      "events": [
+        {"atMillis": 0, "type": "environment", "bounds": [0, 920, 150, 2020]},
+        {"atMillis": 1000, "type": "environment", "bounds": [0, 2180, 150, 860]}
+      ]
+    },
+    {
+      "id": "hide_show",
+      "seed": 21,
+      "events": [
+        {"atMillis": 0, "type": "pause"},
+        {"atMillis": 800, "type": "resume"}
+      ]
+    }
+  ]
+}

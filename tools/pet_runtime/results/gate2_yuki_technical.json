@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-08-20",
+  "branch": "codex/pet-runtime-yuki-v2",
+  "baseCommit": "645517b697e144820825729c107b77530da2c61b",
+  "releaseImplementation": "YukiRuntimeBehavior",
+  "debugImplementation": "YukiRuntimeBehavior",
+  "productionChanged": true,
+  "approval": "explicit visual approval and authorization to continue received from the user on 2026-08-20",
+  "contract": {
+    "locomotion": "GROUND",
+    "walkSpeedPixelsPerSecond": 70,
+    "maximumFlingPixelsPerSecond": 1800,
+    "personality": ["curious", "dreamy"],
+    "thermalMeltEnterCelsius": 40,
+    "thermalMeltExitCelsius": 38,
+    "thermalHysteresis": true
+  },
+  "assets": {
+    "productionPngSha256": "dcc18b63d95fdba965013e163df5accb72e4afafe8a4af60d2e8c83abb83b7c1",
+    "productionManifestSha256": "d0632c1228f6324d0ea0c4f977d6f7f2e2ff1eaf4ab5777720230c5b7e2ee1b6",
+    "frameCount": 16,
+    "requiredClips": ["idle", "blink", "walk", "jump", "happy", "melt", "touch", "sleep"],
+    "productionAssetChanges": "none; the approved Runtime V2 uses the existing validated Yuki atlas",
+    "assetValidation": "16/16 Yuki frames passed as part of the 280-frame production asset validation"
+  },
+  "automatedValidation": {
+    "jvm": "89/89 passed after production promotion",
+    "yukiRuntimeBrain": "5/5 focused tests passed",
+    "pipeline": "6/6 passed",
+    "taroCanonicalAtlas": "40/40 frames passed",
+    "productionAssets": "280/280 frames passed with no orphaned or exact duplicate frames",
+    "lint": "0 errors; 135 warnings",
+    "assembleDebug": "passed after production promotion",
+    "releaseCompileAndR8": "passed after production promotion",
+    "ne2213Api36Instrumented": "40/40 passed after production promotion",
+    "signedReleasePackage": {
+      "status": "passed",
+      "artifact": "app/build/outputs/apk/release/app-release.apk",
+      "sha256": "b76e9fbbfed95ca2b69e4cfd03473bc71b016be556b54a3a5ef1f3186ed83e97",
+      "signatureScheme": "v2",
+      "signerCount": 1,
+      "certificateSubject": "CN=YmiyDev, O=YmiyDev, C=DO",
+      "certificateSha256": "83f35ea0c25d3e65f6aa2fa9fe03744b4a94e5a4cb4b6aa37722320b6af1b2a9"
+    }
+  },
+  "physicalDeviceValidation": {
+    "sourceReport": "gate1_yuki_technical.json",
+    "device": "NE2213",
+    "api": 36,
+    "tap": "passed; CURIOSITY/FLOOR selected the happy clip",
+    "hold": "passed; TOUCH/FLOOR selected the touch clip",
+    "drag": "passed; AIRBORNE/FLOOR selected jump with bounded vertical velocity",
+    "fling": "passed; recovered from AIRBORNE/FLOOR to IDLE/FLOOR",
+    "thermalEnter": "passed; 40 C entered MELT/FLOOR",
+    "thermalExit": "passed; 38 C exited MELT to IDLE/FLOOR",
+    "runtimeErrors": "crash buffer empty; no ANR observed",
+    "visualApproval": "passed by the user"
+  },
+  "promotion": {
+    "status": "complete",
+    "factory": "PetBehaviorFactory selects YukiRuntimeBehavior for every build variant",
+    "debugSubstitution": "removed; debug now follows the same main-factory route as release",
+    "assets": "unchanged and already production validated",
+    "rollback": "legacy YukiBehavior remains available for an atomic factory rollback"
+  },
+  "remainingGates": []
+}

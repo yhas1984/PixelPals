@@ -56,6 +56,13 @@ class PetBehaviorSmokeTest {
                     "$petType quedó atrapado en DRAGGING tras el fling",
                     bridge.state != PetState.DRAGGING
                 )
+                // El runtime puede encontrarse legítimamente en una reacción
+                // social autónoma al tomar esta instantánea. Lo que el contrato
+                // prohíbe es que INTERACTING no tenga una salida acotada.
+                repeat((8f / STEP_SECONDS).toInt()) {
+                    if (bridge.state != PetState.INTERACTING) return@repeat
+                    behavior.updateInteracting(STEP_SECONDS)
+                }
                 assertNotEquals("$petType left an interaction running", PetState.INTERACTING, bridge.state)
                 behavior.destroy()
             }
@@ -123,7 +130,7 @@ class PetBehaviorSmokeTest {
             PetType.GINGER to 15,
             PetType.YUKI to 15,
             PetType.PIRU to 15,
-            PetType.TARO to 15,
+            PetType.TARO to 39,
             PetType.MENTA to 15,
             PetType.TELA to 15,
             PetType.LUMI to 39,

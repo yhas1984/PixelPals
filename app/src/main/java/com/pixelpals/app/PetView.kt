@@ -72,9 +72,23 @@ class PetView(
     private val minimumFlingVelocity = ViewConfiguration.get(context).scaledMinimumFlingVelocity.toFloat()
     private val maximumFlingVelocity = ViewConfiguration.get(context).scaledMaximumFlingVelocity.toFloat()
     private val gestureRecognizer = PetGestureRecognizer(
-        PetGestureConfig(touchSlop, minimumFlingVelocity)
+        PetGestureConfig(
+            touchSlopPx = touchSlop,
+            minimumFlingVelocityPxPerSecond = minimumFlingVelocity,
+            longPressTimeoutMillis = ViewConfiguration.getLongPressTimeout().toLong(),
+        )
     )
     private var velocityTracker: VelocityTracker? = null
+    private var isTouchPending = false
+    private var behaviorOwnsTouch = false
+    private val holdRunnable: Runnable = Runnable {
+        if (!isTouchPending) return@Runnable
+        val gesture = gestureRecognizer.onTime(android.os.SystemClock.uptimeMillis())
+        if (gesture.type != PetGestureType.HOLD_STARTED) return@Runnable
+        isTouchPending = false
+        state = PetState.INTERACTING
+        behavior?.onHold()
+    }
 
     override var state = PetState.IDLE
     override var currentFrame = 0
@@ -551,6 +565,10 @@ class PetView(
         behavior?.onBatteryStatusChanged(percent, isCharging)
     }
 
+    fun onBatteryTemperatureChanged(temperatureCelsius: Float?) {
+        behavior?.onBatteryTemperatureChanged(temperatureCelsius)
+    }
+
     override fun onKeyboardChanged(visible: Boolean, height: Int) {
         keyboardHeightPx = if (visible) height.coerceAtLeast(0) else 0
         behavior?.onKeyboardVisibilityChanged(visible, height)
@@ -595,13 +613,17 @@ class PetView(
             }
         }
         maybeShowTimeGreeting()
-        when (state) {
-            PetState.IDLE -> behavior?.updateIdle(dt)
-            PetState.DRAGGING -> behavior?.updateDrag(dt)
-            PetState.FALLING -> updatePhysicsFalling(dt)
-            PetState.JUMPING -> behavior?.updateJumping(dt)
-            PetState.INTERACTING -> behavior?.updateInteracting(dt)
-            else -> behavior?.updateAutonomous(dt)
+        // While the pointer is inside touchSlop the pet stays planted. This
+        // preserves the exact grab point and prevents a jump when drag starts.
+        if (!isTouchPending) {
+            when (state) {
+                PetState.IDLE -> behavior?.updateIdle(dt)
+                PetState.DRAGGING -> behavior?.updateDrag(dt)
+                PetState.FALLING -> updatePhysicsFalling(dt)
+                PetState.JUMPING -> behavior?.updateJumping(dt)
+                PetState.INTERACTING -> behavior?.updateInteracting(dt)
+                else -> behavior?.updateAutonomous(dt)
+            }
         }
 
         if (treasureReactionTimer > 0f) {
@@ -664,14 +686,15 @@ class PetView(
             behavior?.reset()
             return
         }
-        val event = PetPhysics.step(body, dt, bounds, physicsProfileFor(petType))
+        val result = PetPhysics.step(body, dt, bounds, physicsProfileFor(petType))
+        physicsBody = result.body
         val params = getWindowParams() ?: return
-        params.x = body.x.roundToInt()
-        params.y = body.y.roundToInt()
+        params.x = result.body.x.roundToInt()
+        params.y = result.body.y.roundToInt()
         updateWindowLayout(params)
         animScaleY = 1.15f
         animScaleX = 0.9f
-        if (event == PhysicsEvent.SETTLED) {
+        if (result.event == PhysicsEvent.SETTLED) {
             physicsBody = null
             state = PetState.IDLE
             behavior?.reset()
@@ -791,14 +814,18 @@ class PetView(
             MotionEvent.ACTION_DOWN -> {
                 // El view es 2x el sprite (espacio para cosméticos): solo capturamos
                 // toques cerca del sprite para no bloquear la app de debajo.
-                val dx = event.x - width / 2f
-                val dy = event.y - height / 2f
-                val touchRadius = petSpriteSize * spriteScale * 0.55f
-                if (dx * dx + dy * dy > touchRadius * touchRadius) return false
+                val alphaHit = behavior?.hitTest(event.x, event.y, width, height)
+                if (alphaHit == false) return false
+                if (alphaHit == null) {
+                    val dx = event.x - width / 2f
+                    val dy = event.y - height / 2f
+                    val touchRadius = petSpriteSize * spriteScale * 0.55f
+                    if (dx * dx + dy * dy > touchRadius * touchRadius) return false
+                }
 
-                if (behavior?.onTouchDown(event.rawX, event.rawY) == true) return true
-
-                gestureRecognizer.onDown(event.rawX, event.rawY)
+                behaviorOwnsTouch = behavior?.onTouchDown(event.rawX, event.rawY) == true
+                if (behaviorOwnsTouch) return true
+                gestureRecognizer.onDown(event.rawX, event.rawY, event.eventTime)
                 velocityTracker?.recycle()
                 velocityTracker = VelocityTracker.obtain()
                 addMovementToVelocityTracker(event)
@@ -807,55 +834,90 @@ class PetView(
                 initialTouchX = event.rawX
                 initialTouchY = event.rawY
                 physicsBody = null
-                state = PetState.DRAGGING
+                isTouchPending = true
+                frameHandler.removeCallbacks(holdRunnable)
+                frameHandler.postDelayed(holdRunnable, ViewConfiguration.getLongPressTimeout().toLong())
                 return true
             }
             MotionEvent.ACTION_MOVE -> {
+                if (behaviorOwnsTouch) return true
                 addMovementToVelocityTracker(event)
-                if (state == PetState.DRAGGING) {
-                    gestureRecognizer.onMove(event.rawX, event.rawY)
-                    params.x = (initialX + (event.rawX - initialTouchX).toInt())
-                        .coerceIn(bounds.left, bounds.right)
-                    params.y = (initialY + (event.rawY - initialTouchY).toInt())
-                        .coerceIn(bounds.top, bounds.floor)
-                    updateWindowLayout(params)
+                val gesture = gestureRecognizer.onMove(event.rawX, event.rawY, event.eventTime)
+                if (gesture.type == PetGestureType.DRAG_STARTED) {
+                    isTouchPending = false
+                    frameHandler.removeCallbacks(holdRunnable)
+                    state = PetState.DRAGGING
+                    behavior?.onDragStart(
+                        pointerX = event.rawX,
+                        pointerY = event.rawY,
+                        grabOffsetX = initialTouchX - initialX,
+                        grabOffsetY = initialTouchY - initialY,
+                    )
+                }
+                if (state == PetState.DRAGGING && gesture.type != PetGestureType.NONE) {
+                    if (behavior?.usesRuntimeInput == true) {
+                        behavior?.onDragMove(event.rawX, event.rawY)
+                    } else {
+                        params.x = (initialX + (event.rawX - initialTouchX).toInt())
+                            .coerceIn(bounds.left, bounds.right)
+                        params.y = (initialY + (event.rawY - initialTouchY).toInt())
+                            .coerceIn(bounds.top, bounds.floor)
+                        updateWindowLayout(params)
+                    }
                 }
                 return true
             }
             MotionEvent.ACTION_UP -> {
+                if (behaviorOwnsTouch) {
+                    behaviorOwnsTouch = false
+                    behavior?.onTouchUp()
+                    return true
+                }
+                frameHandler.removeCallbacks(holdRunnable)
+                isTouchPending = false
                 addMovementToVelocityTracker(event)
                 if (behavior?.onTouchUp() == true) {
                     gestureRecognizer.onCancel()
                     recycleVelocityTracker()
                     return true
                 }
-                if (state == PetState.DRAGGING) {
-                    velocityTracker?.computeCurrentVelocity(1000, maximumFlingVelocity)
-                    val flingVX = velocityTracker?.xVelocity ?: 0f
-                    val flingVY = velocityTracker?.yVelocity ?: 0f
-                    val gesture = gestureRecognizer.onUp(flingVX, flingVY)
-                    if (gesture.type == PetGestureType.TAP) {
-                        performClick()
-                    } else {
-                        if (gesture.type == PetGestureType.FLING) {
-                            behavior?.onFling(flingVX, flingVY)
+                velocityTracker?.computeCurrentVelocity(1000, maximumFlingVelocity)
+                val flingVX = velocityTracker?.xVelocity ?: 0f
+                val flingVY = velocityTracker?.yVelocity ?: 0f
+                val gesture = gestureRecognizer.onUp(flingVX, flingVY, event.eventTime)
+                when (gesture.type) {
+                    PetGestureType.TAP -> performClick()
+                    PetGestureType.FLING,
+                    PetGestureType.RELEASE,
+                    -> {
+                        if (behavior?.usesRuntimeInput == true) {
+                            if (gesture.type == PetGestureType.FLING) {
+                                behavior?.onFling(flingVX, flingVY)
+                            } else {
+                                behavior?.onRelease(flingVX, flingVY)
+                            }
+                        } else {
+                            if (gesture.type == PetGestureType.FLING) behavior?.onFling(flingVX, flingVY)
                         }
-                        // Pets sin onFling propio (Piru, Taro, Menta, Tela, Yuki) o un
-                        // soltado sin fling: la física compartida por especie reemplaza
-                        // el antiguo salto a IDLE (pose congelada en el aire).
-                        if (state == PetState.DRAGGING) {
+                        if (behavior?.usesRuntimeInput != true && state == PetState.DRAGGING) {
                             launchPhysics(
                                 if (gesture.type == PetGestureType.FLING) flingVX else 0f,
-                                if (gesture.type == PetGestureType.FLING) flingVY else 0f
+                                if (gesture.type == PetGestureType.FLING) flingVY else 0f,
                             )
                         }
                     }
+                    PetGestureType.HOLD_RELEASED -> behavior?.onHoldReleased()
+                    else -> Unit
                 }
                 recycleVelocityTracker()
                 return true
             }
             MotionEvent.ACTION_CANCEL -> {
+                frameHandler.removeCallbacks(holdRunnable)
+                isTouchPending = false
+                behaviorOwnsTouch = false
                 gestureRecognizer.onCancel()
+                behavior?.onGestureCancelled()
                 physicsBody = null
                 state = PetState.IDLE
                 behavior?.reset()
@@ -872,6 +934,9 @@ class PetView(
     }
 
     override fun onDetachedFromWindow() {
+        frameHandler.removeCallbacks(holdRunnable)
+        isTouchPending = false
+        behaviorOwnsTouch = false
         recycleVelocityTracker()
         progress.flush()
         behavior?.destroy()

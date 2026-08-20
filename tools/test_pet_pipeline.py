@@ -113,9 +113,10 @@ class PetPipelineTest(unittest.TestCase):
                 f"climb frame {frame['index']} has a face alpha slit",
             )
 
-    def test_taro_debug_assets_match_candidate(self):
+    def test_taro_full_quadruped_candidate_is_promoted_atomically(self):
         root = Path(__file__).resolve().parent.parent
-        candidate = root / "tools/taro/pipeline/atlas_v2"
+        approved = root / "tools/taro/pipeline/atlas_v2"
+        candidate = root / "tools/taro/pipeline/candidates/quadruped_full_02"
         debug = root / "app/src/debug/assets/pets/taro"
         main = root / "app/src/main/assets/pets/taro"
         self.assertEqual(
@@ -128,11 +129,37 @@ class PetPipelineTest(unittest.TestCase):
         )
         self.assertEqual(
             (candidate / "taro_motion_v2.png").read_bytes(),
+            (approved / "taro_motion_v2.png").read_bytes(),
+        )
+        self.assertEqual(
+            (candidate / "taro_motion_v2.json").read_bytes(),
+            (approved / "taro_motion_v2.json").read_bytes(),
+        )
+        self.assertEqual(
+            (candidate / "taro_motion_v2.png").read_bytes(),
             (main / "taro_motion_v2.png").read_bytes(),
         )
         self.assertEqual(
             (candidate / "taro_motion_v2.json").read_bytes(),
             (main / "taro_motion_v2.json").read_bytes(),
+        )
+        report = validate_atlas(
+            candidate / "taro_motion_v2.png",
+            candidate / "taro_motion_v2.json",
+        )
+        self.assertTrue(report["passed"], report["violations"])
+        spec = json.loads((candidate / "taro_motion_v2.json").read_text(encoding="utf-8"))
+        self.assertEqual(spec["renderHints"]["posture"], "quadruped")
+        self.assertEqual(spec["renderHints"]["walkPosture"], "quadruped")
+        self.assertTrue(all(frame["poseClass"] == "quadruped" for frame in spec["frames"]))
+        self.assertTrue(all(frame["poseClass"] == "quadruped" for frame in spec["frameDetails"]))
+        self.assertEqual(
+            [frame["source"] for frame in spec["frames"]],
+            [frame["source"] for frame in spec["frameDetails"]],
+        )
+        self.assertEqual(
+            [frame["sourceCell"] for frame in spec["frames"]],
+            [frame["sourceCell"] for frame in spec["frameDetails"]],
         )
 
 

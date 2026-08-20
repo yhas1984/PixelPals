@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "tool": "built-in image_gen",
+  "createdAt": "2026-08-20",
+  "identityReference": "tools/taro/pipeline/raw/11_walk_quadruped_candidate_01.png",
+  "sheets": [
+    {
+      "path": "tools/taro/pipeline/raw/12_quadruped_idle_turn_curiosity_sleep_01.png",
+      "sha256": "d31aa164e217b8c29b259ad46c488c8e658a91fc112bf7de9b464423e0311e20",
+      "sourceOutput": "/home/yhas/.codex/generated_images/01a00270-60bb-7893-a254-fce47c6c98f7/exec-edc2a03f-a671-48ba-a197-084fb8528e2b.png",
+      "prompt": "Create a production animation pose sheet for Taro, using the referenced quadruped baby turtle as the exact identity reference. One single square PNG with a transparent background, arranged as a precise 4 columns by 4 rows grid (16 equal cells), no gutters crossing the characters, no text, no labels, no ground, no cast shadows, no glow, no outline, no particles. Every cell contains exactly one complete full-body Taro, centered with generous transparent padding, same camera, scale, lighting, shell pattern, orange shell rim, lime-green skin, large blue-green eyes, facial proportions and premium polished 3D style. Taro must remain a believable normal quadruped turtle in every cell: horizontal shell, belly close to the ground, four limbs supporting or naturally tucking the body, never upright, never bipedal, never humanoid. Rows are animation sequences read left to right: Row 1: 4-frame calm idle breathing loop in right-facing side profile; feet planted, only subtle head, eyelid and breathing motion. Row 2: 4-frame turn-in-place sequence from right-facing side profile through front three-quarter views toward the opposite direction; body stays low, no standing, stable contact. Row 3: 4-frame curiosity sequence in right-facing side profile; gently stretch neck, tilt head, look upward, then return, all four feet remain grounded. Row 4: 4-frame sleep sequence in right-facing side profile; relax lower, tuck head and limbs partly toward shell, end peacefully sleeping on the ground. Maintain temporal continuity between adjacent cells and a consistent contact line within every row. Transparent RGBA only; crisp clean alpha edges, no green spill, no matte residue."
+    },
+    {
+      "path": "tools/taro/pipeline/raw/13_quadruped_hide_peek_touch_social_01.png",
+      "sha256": "467f845941f445d743f1d853528adce758e3cfdd1fd572d11be5cdb0c28b27d9",
+      "sourceOutput": "/home/yhas/.codex/generated_images/01a00270-60bb-7893-a254-fce47c6c98f7/exec-ec818eb1-b082-4e7e-96cf-0f686e7d5318.png",
+      "prompt": "Create the second production animation pose sheet for the exact same Taro shown in both references. One single square PNG with transparent background, precise 4 columns by 4 rows grid (16 equal cells), no text, no labels, no ground, no cast shadows, no glow, no outline, no particles. Every cell contains exactly one complete full-body Taro, centered with generous transparent padding, identical camera, scale, soft premium 3D lighting, shell pattern, orange rim, lime-green skin, large blue-green eyes and facial proportions. Match the quadruped anatomy and materials from the newest 4x4 reference exactly. Taro must remain a believable normal quadruped turtle in every cell: horizontal shell, belly low, limbs naturally on the ground or retracting into the shell. Never upright, never bipedal, never humanoid, never standing on hind legs. Rows are animation sequences read left to right: Row 1: 4-frame hide sequence in right-facing side profile; Taro lowers and retracts head and all limbs naturally into the shell, without rotating the camera. Row 2: 4-frame peek sequence continuing from hidden shell; eyes and head cautiously emerge, then forelegs return, ending in the same low right-facing quadruped posture. Row 3: 4-frame affectionate touch reaction in right-facing side profile; gently lean head into an imaginary petting hand, close eyes and smile, then relax; body remains low and supported, no external hand shown. Row 4: 4-frame front-social greeting; turn the head and chest slightly toward camera while the shell stays low and horizontal, cheerful expression, a tiny friendly forefoot gesture is allowed but at least three limbs remain planted and Taro never stands vertically. Keep stable contact lines and smooth temporal continuity within every row. Transparent RGBA only; crisp clean alpha edges, no matte residue or colored spill."
+    }
+  ],
+  "candidate": {
+    "pngSha256": "fc5947213900e218a177f38b2ac4a508baac2bc320d6efeacceb3b414d379085",
+    "manifestSha256": "1f9f226de8ea3d13ec2a82dc379d3e381f255a5e0d114759e77a73ed7cee738f"
+  },
+  "pipelineNote": "The built-in tool returned RGB checkerboards. build_quadruped_full_candidate.py reconstructs real alpha with border-connected neutral-background removal and discards the one-pixel baked fringe before validation."
+}

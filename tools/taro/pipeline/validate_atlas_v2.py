@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import sys
 from pathlib import Path
 
@@ -20,6 +21,9 @@ DEBUG_SPEC_PATH = ROOT / "app/src/debug/assets/pets/taro/taro_motion_v2.json"
 MAIN_ATLAS_PATH = ROOT / "app/src/main/assets/pets/taro/taro_motion_v2.png"
 MAIN_SPEC_PATH = ROOT / "app/src/main/assets/pets/taro/taro_motion_v2.json"
 FRAME_DIR = ROOT / "tools/taro/pipeline/atlas_v2/frames"
+WALK_CANDIDATE_DIR = ROOT / "tools/taro/pipeline/candidates/quadruped_walk_01"
+FULL_CANDIDATE_DIR = ROOT / "tools/taro/pipeline/candidates/quadruped_full_02"
+FULL_CANDIDATE_SOURCE = FULL_CANDIDATE_DIR / "source.json"
 
 REQUIRED_CLIPS = {
     "idle",
@@ -34,15 +38,17 @@ REQUIRED_CLIPS = {
 }
 
 
-def assert_runtime_assets_match_candidate() -> None:
-    assert DEBUG_ATLAS_PATH.read_bytes() == ATLAS_PATH.read_bytes()
-    assert DEBUG_SPEC_PATH.read_bytes() == SPEC_PATH.read_bytes()
-    assert MAIN_ATLAS_PATH.read_bytes() == ATLAS_PATH.read_bytes()
-    assert MAIN_SPEC_PATH.read_bytes() == SPEC_PATH.read_bytes()
+def assert_runtime_assets_match_expected_variant() -> None:
+    promoted_atlas = (FULL_CANDIDATE_DIR / "taro_motion_v2.png").read_bytes()
+    promoted_spec = (FULL_CANDIDATE_DIR / "taro_motion_v2.json").read_bytes()
+    for runtime_atlas in (ATLAS_PATH, DEBUG_ATLAS_PATH, MAIN_ATLAS_PATH):
+        assert runtime_atlas.read_bytes() == promoted_atlas, runtime_atlas
+    for runtime_spec in (SPEC_PATH, DEBUG_SPEC_PATH, MAIN_SPEC_PATH):
+        assert runtime_spec.read_bytes() == promoted_spec, runtime_spec
 
 
 def main() -> int:
-    assert_runtime_assets_match_candidate()
+    assert_runtime_assets_match_expected_variant()
     report = validate_atlas(ATLAS_PATH, SPEC_PATH)
     if not report["passed"]:
         print(json.dumps(report, indent=2))
@@ -72,7 +78,40 @@ def main() -> int:
         margins = (bounds[0], bounds[1], 384 - bounds[2], 384 - bounds[3])
         assert min(margins) >= 16, (frame, margins)
 
-    print(f"TARO_V2_ATLAS_OK frames={spec['frameCount']} size={atlas.width}x{atlas.height}")
+    for candidate_dir in (WALK_CANDIDATE_DIR, FULL_CANDIDATE_DIR):
+        candidate_atlas = candidate_dir / "taro_motion_v2.png"
+        candidate_spec_path = candidate_dir / "taro_motion_v2.json"
+        if not candidate_atlas.exists():
+            continue
+        candidate_report = validate_atlas(candidate_atlas, candidate_spec_path)
+        assert candidate_report["passed"], candidate_report["violations"]
+        candidate_spec = json.loads(candidate_spec_path.read_text(encoding="utf-8"))
+        assert candidate_spec["renderHints"]["walkPosture"] == "quadruped"
+        expected_frames = range(40) if candidate_dir == FULL_CANDIDATE_DIR else range(4, 12)
+        for index in expected_frames:
+            assert candidate_spec["frames"][index]["poseClass"] == "quadruped"
+        if candidate_dir == FULL_CANDIDATE_DIR:
+            assert candidate_spec["renderHints"]["posture"] == "quadruped"
+            assert len(candidate_spec["frameDetails"]) == 40
+            for index in range(40):
+                runtime_frame = candidate_spec["frames"][index]
+                provenance_frame = candidate_spec["frameDetails"][index]
+                assert provenance_frame["poseClass"] == "quadruped"
+                assert provenance_frame["source"] == runtime_frame["source"]
+                assert provenance_frame["sourceCell"] == runtime_frame["sourceCell"]
+            source = json.loads(FULL_CANDIDATE_SOURCE.read_text(encoding="utf-8"))
+            assert source["candidate"]["pngSha256"] == hashlib.sha256(
+                candidate_atlas.read_bytes()
+            ).hexdigest()
+            assert source["candidate"]["manifestSha256"] == hashlib.sha256(
+                candidate_spec_path.read_bytes()
+            ).hexdigest()
+
+    print(
+        f"TARO_V2_ATLAS_OK frames={spec['frameCount']} size={atlas.width}x{atlas.height} "
+        f"quadrupedWalkCandidate={WALK_CANDIDATE_DIR.exists()} "
+        f"quadrupedFullCandidate={FULL_CANDIDATE_DIR.exists()}"
+    )
     return 0
 
 

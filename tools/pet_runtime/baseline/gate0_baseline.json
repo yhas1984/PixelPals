@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-08-20",
+  "baseCommit": "645517b697e144820825729c107b77530da2c61b",
+  "productionChanged": false,
+  "pets": {
+    "taro": {
+      "implementation": "TaroBehavior/TaroV2Controller",
+      "physics": "GROUND",
+      "declaredWalkSpeedPxPerSecond": 42.0,
+      "legacyWalkDurationClampSeconds": [3.0, 9.0],
+      "clips": ["idle", "walk", "turn", "hide", "peek", "front_social", "touch", "sleep", "curiosity"],
+      "tapRoute": ["touch", "hide", "peek", "front_social", "idle"],
+      "contact": "PetBounds.floor",
+      "pngSha256": "a7aa7019728e3ddb8bd2d1f0c87c321452031ea2ab46fb964290edada091f1fa",
+      "manifestSha256": "1da369093df0293bc977e09d88e8f2649ff0d493983c517af3193202d9a59556"
+    },
+    "tela": {
+      "implementation": "TelaBehavior",
+      "physics": "EDGE",
+      "surfaces": ["FLOOR", "LEFT_WALL", "CEILING", "RIGHT_WALL", "SILK"],
+      "climbDurationSeconds": [3.6, 5.2],
+      "clips": ["idle", "walk", "climb", "ceiling", "web_descend", "web_hang", "web_ascend", "land_touch", "happy", "touch", "sleep"],
+      "contact": "PetBounds perimeter",
+      "pngSha256": "99514ad0f837c553df4860a2b8178542c171b4e451c5c6592773442c99259b8e",
+      "manifestSha256": "1eb6506ffebf959672487ca5eaa0a8349188f09165da5b57efd3fdb616b72d99"
+    },
+    "yuki": {
+      "implementation": "YukiBehavior",
+      "physics": "GROUND",
+      "declaredWalkSpeedPxPerSecond": 70.0,
+      "meltThresholdCelsius": 40.0,
+      "legacyHasTemperatureHysteresis": false,
+      "clips": ["idle", "blink", "walk", "jump", "happy", "melt", "touch", "sleep"],
+      "contact": "PetBounds.floor",
+      "pngSha256": "dcc18b63d95fdba965013e163df5accb72e4afafe8a4af60d2e8c83abb83b7c1",
+      "manifestSha256": "d0632c1228f6324d0ea0c4f977d6f7f2e2ff1eaf4ab5777720230c5b7e2ee1b6"
+    }
+  },
+  "devices": {
+    "ne2213": {
+      "api": 36,
+      "physicalSize": "1440x3216",
+      "physicalDensity": 480,
+      "overrideDensity": 640,
+      "runtimeDragReleaseSmoke": "passed",
+      "crashAndAnrScan": "passed",
+      "fullInstrumentedSuite": "40/40 passed on 2026-08-20 after stopping the release overlay"
+    },
+    "api26": {
+      "device": "PixelPals_API_26/emulator-5556",
+      "physicalSize": "1080x1920",
+      "density": 420,
+      "fullInstrumentedSuite": "40/40 passed on 2026-08-20",
+      "environmentNote": "Pixel Launcher and System UI ANR dialogs were dismissed before the clean run"
+    }
+  }
+}
