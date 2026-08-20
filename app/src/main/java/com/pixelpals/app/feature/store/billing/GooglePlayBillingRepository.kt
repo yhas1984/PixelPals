@@ -22,6 +22,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
@@ -64,6 +65,7 @@ class GooglePlayBillingRepository(
     private data class PurchaseProcessingResult(
         val eligible: Boolean,
         val newlyGranted: Int,
+        val processingFailed: Boolean = false,
     )
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -72,7 +74,7 @@ class GooglePlayBillingRepository(
     private var purchaseCallbackToken = 0
     private var purchaseInProgress = false
     private var activeProductId: String? = null
-    private var onPurchaseFinished: ((Boolean) -> Unit)? = null
+    private var onPurchaseFinished: ((PurchaseResult) -> Unit)? = null
 
     private val billingClient: BillingClient = BillingClient.newBuilder(context)
         .setListener(this)
@@ -81,13 +83,15 @@ class GooglePlayBillingRepository(
         )
         .build()
 
-    override suspend fun prefetch(productIds: List<String>): Map<String, String> {
+    override suspend fun prefetch(productIds: List<String>): ProductCatalogResult {
         val whitelisted = productIds.distinct().filter(ALLOWED_PRODUCT_IDS::contains)
-        if (whitelisted.isEmpty()) return emptyMap()
+        if (whitelisted.isEmpty()) return ProductCatalogResult.Unavailable("No hay productos configurados")
 
         val setup = withTimeoutOrNull(BILLING_TIMEOUT_MS) { ensureConnected() }
-            ?: return emptyMap()
-        if (setup.responseCode != BillingClient.BillingResponseCode.OK) return emptyMap()
+            ?: return ProductCatalogResult.Unavailable("Billing no respondió a tiempo")
+        if (setup.responseCode != BillingClient.BillingResponseCode.OK) {
+            return ProductCatalogResult.Unavailable(setup.debugMessage.ifBlank { "Google Play no está disponible" })
+        }
         whitelisted.forEach { productCache.remove(it) }
 
         val params = QueryProductDetailsParams.newBuilder().setProductList(
@@ -99,8 +103,10 @@ class GooglePlayBillingRepository(
             }
         ).build()
         val result = withTimeoutOrNull(BILLING_TIMEOUT_MS) { queryProductDetails(params) }
-            ?: return emptyMap()
-        if (result.first.responseCode != BillingClient.BillingResponseCode.OK) return emptyMap()
+            ?: return ProductCatalogResult.Unavailable("Google Play no respondió")
+        if (result.first.responseCode != BillingClient.BillingResponseCode.OK) {
+            return ProductCatalogResult.Failure(result.first.debugMessage.ifBlank { "No se pudieron cargar los productos" })
+        }
 
         result.second.forEach { details ->
             val offer = selectOffer(details.oneTimePurchaseOfferDetailsList)
@@ -121,33 +127,39 @@ class GooglePlayBillingRepository(
             }
         }
 
-        return whitelisted.mapNotNull { productId ->
+        val prices = whitelisted.mapNotNull { productId ->
             productCache[productId]?.let { productId to it.formattedPrice }
         }.toMap()
+        val missingProductIds: Set<String> = whitelisted.filterNot(prices::containsKey).toSet()
+        return if (prices.isEmpty()) {
+            ProductCatalogResult.Unavailable("Los productos no están disponibles en Google Play")
+        } else {
+            ProductCatalogResult.Available(prices, missingProductIds)
+        }
     }
 
     override fun launchPurchase(
         activity: Activity,
         productId: String,
-        onFinished: (Boolean) -> Unit,
+        onFinished: (PurchaseResult) -> Unit,
     ) {
         if (purchaseInProgress) {
-            onFinished(false)
+            onFinished(PurchaseResult.Unavailable)
             return
         }
         val cached = productCache[productId] ?: run {
-            onFinished(false)
+            onFinished(PurchaseResult.Unavailable)
             return
         }
 
         purchaseInProgress = true
         activeProductId = productId
         val callbackId = ++purchaseCallbackToken
-        onPurchaseFinished = { success ->
+        onPurchaseFinished = { result ->
             if (callbackId == purchaseCallbackToken) {
                 purchaseInProgress = false
                 activeProductId = null
-                onFinished(success)
+                onFinished(result)
             }
         }
 
@@ -163,27 +175,35 @@ class GooglePlayBillingRepository(
             .build()
         val result = billingClient.launchBillingFlow(activity, params)
         if (result.responseCode != BillingClient.BillingResponseCode.OK) {
-            finishPurchase(callbackId, false)
+            finishPurchase(callbackId, PurchaseResult.Failure(result.debugMessage.ifBlank { "No se pudo abrir Google Play" }))
+            return
+        }
+        scope.launch {
+            delay(BILLING_TIMEOUT_MS * 3)
+            finishPurchase(callbackId, PurchaseResult.Failure("Google Play no confirmó la compra"))
         }
     }
 
-    override suspend fun reconcilePurchases(): Int {
+    override suspend fun reconcilePurchases(): RestoreResult {
         val setup = withTimeoutOrNull(BILLING_TIMEOUT_MS) { ensureConnected() }
-            ?: return 0
-        if (setup.responseCode != BillingClient.BillingResponseCode.OK) return 0
+            ?: return RestoreResult.Unavailable
+        if (setup.responseCode != BillingClient.BillingResponseCode.OK) return RestoreResult.Unavailable
 
         val result = withTimeoutOrNull(BILLING_TIMEOUT_MS) { queryPurchases() }
-            ?: return 0
-        if (result.first.responseCode != BillingClient.BillingResponseCode.OK) return 0
+            ?: return RestoreResult.Unavailable
+        if (result.first.responseCode != BillingClient.BillingResponseCode.OK) return RestoreResult.Failure(result.first.debugMessage)
 
         var restored = 0
+        val activeProductIds = mutableSetOf<String>()
         result.second.forEach { purchase ->
             if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {
+                activeProductIds += purchase.products.filterNot(::isConsumable)
                 restored += processPurchase(purchase, "reconcile").newlyGranted
             }
         }
+        repository.reconcilePlayEntitlements(activeProductIds)
         analytics.track("store_reconcile", mapOf("granted_count" to restored.toString()))
-        return restored
+        return if (restored > 0) RestoreResult.Restored(restored) else RestoreResult.NothingToRestore
     }
 
     override fun onPurchasesUpdated(
@@ -192,23 +212,30 @@ class GooglePlayBillingRepository(
     ) {
         val callbackId = purchaseCallbackToken
         if (billingResult.responseCode == BillingClient.BillingResponseCode.USER_CANCELED) {
-            return finishPurchase(callbackId, false)
+            return finishPurchase(callbackId, PurchaseResult.Cancelled)
         }
         if (billingResult.responseCode != BillingClient.BillingResponseCode.OK || purchases.isNullOrEmpty()) {
-            return finishPurchase(callbackId, false)
+            return finishPurchase(
+                callbackId,
+                PurchaseResult.Failure(billingResult.debugMessage.ifBlank { "La compra no se completó" })
+            )
         }
 
         scope.launch {
             var newlyGranted = 0
             var eligible = false
+            var pending = false
+            var processingFailed = false
             purchases.forEach { purchase ->
                 when (purchase.purchaseState) {
                     Purchase.PurchaseState.PURCHASED -> {
                         val result = processPurchase(purchase, "billing")
                         newlyGranted += result.newlyGranted
                         eligible = eligible || result.eligible
+                        processingFailed = processingFailed || result.processingFailed
                     }
                     Purchase.PurchaseState.PENDING -> {
+                        pending = true
                         analytics.track("store_purchase_pending", emptyMap())
                     }
                     else -> Unit
@@ -223,7 +250,17 @@ class GooglePlayBillingRepository(
             val matchesActiveRequest = purchases.any { purchase ->
                 activeProductId?.let(purchase.products::contains) == true
             }
-            if (matchesActiveRequest) finishPurchase(callbackId, eligible)
+            if (matchesActiveRequest) {
+                finishPurchase(
+                    callbackId,
+                    when {
+                        pending -> PurchaseResult.Pending
+                        processingFailed -> PurchaseResult.Failure("No se pudo confirmar el consumo")
+                        eligible -> PurchaseResult.Success
+                        else -> PurchaseResult.Failure("La compra no contiene un producto válido")
+                    }
+                )
+            }
         }
     }
 
@@ -235,17 +272,30 @@ class GooglePlayBillingRepository(
             return PurchaseProcessingResult(eligible = false, newlyGranted = 0)
         }
 
-        var eligible = false
+        val eligibleProductIds: List<String> = purchase.products.filter(::isWhitelisted)
+        if (eligibleProductIds.isEmpty()) {
+            return PurchaseProcessingResult(eligible = false, newlyGranted = 0)
+        }
+        val hasConsumable: Boolean = eligibleProductIds.any(::isConsumable)
+        val hasNonConsumable: Boolean = eligibleProductIds.anyNot(::isConsumable)
+        if (hasConsumable) {
+            val result = withTimeoutOrNull(BILLING_TIMEOUT_MS) { consumeSafely(purchase) }
+                ?: errorResult("Consume timed out")
+            val consumed = result.responseCode == BillingClient.BillingResponseCode.OK ||
+                result.responseCode == BillingClient.BillingResponseCode.ITEM_NOT_OWNED
+            analytics.track("store_consume", mapOf("code" to result.responseCode.toString()))
+            if (!consumed) {
+                return PurchaseProcessingResult(
+                    eligible = true,
+                    newlyGranted = 0,
+                    processingFailed = true,
+                )
+            }
+            repository.markPlayPurchaseConsumed(purchase.purchaseToken)
+        }
+
         var newlyGranted = 0
-        var hasConsumable = false
-        var hasNonConsumable = false
-
-        purchase.products.forEach { productId ->
-            if (!isWhitelisted(productId)) return@forEach
-            eligible = true
-            val isConsumable = CoinProduct.CATALOG.any { it.productId == productId }
-            if (isConsumable) hasConsumable = true else hasNonConsumable = true
-
+        eligibleProductIds.forEach { productId ->
             if (
                 repository.grantPlayPurchaseOnce(
                     purchaseToken = purchase.purchaseToken,
@@ -264,21 +314,8 @@ class GooglePlayBillingRepository(
             repository.markPlayPurchaseSeen(purchase.purchaseToken, productId)
         }
 
-        if (!eligible) return PurchaseProcessingResult(eligible = false, newlyGranted = 0)
-
-        if (hasConsumable) {
-            val result = withTimeoutOrNull(BILLING_TIMEOUT_MS) { consumeSafely(purchase) }
-                ?: errorResult("Consume timed out")
-            val consumed = result.responseCode == BillingClient.BillingResponseCode.OK ||
-                result.responseCode == BillingClient.BillingResponseCode.ITEM_NOT_OWNED
-            analytics.track("store_consume", mapOf("code" to result.responseCode.toString()))
-            if (consumed) repository.markPlayPurchaseConsumed(purchase.purchaseToken)
-        }
-
         if (hasNonConsumable) {
-            purchase.products.filterNot { productId ->
-                CoinProduct.CATALOG.any { it.productId == productId }
-            }.filter(::isWhitelisted).forEach { productId ->
+            eligibleProductIds.filterNot(::isConsumable).forEach { productId ->
                 if (purchase.isAcknowledged) {
                     repository.markPlayPurchaseAcknowledged(purchase.purchaseToken, productId)
                 } else {
@@ -298,6 +335,11 @@ class GooglePlayBillingRepository(
 
         return PurchaseProcessingResult(eligible = true, newlyGranted = newlyGranted)
     }
+
+    private fun isConsumable(productId: String): Boolean =
+        CoinProduct.CATALOG.any { it.productId == productId }
+
+    private fun List<String>.anyNot(predicate: (String) -> Boolean): Boolean = any { !predicate(it) }
 
     private suspend fun consumeSafely(purchase: Purchase): BillingResult =
         suspendCancellableCoroutine { cont ->
@@ -373,9 +415,9 @@ class GooglePlayBillingRepository(
         }
     }
 
-    private fun finishPurchase(token: Int, success: Boolean) {
+    private fun finishPurchase(token: Int, result: PurchaseResult) {
         if (token != purchaseCallbackToken) return
-        onPurchaseFinished?.invoke(success)
+        onPurchaseFinished?.invoke(result)
         onPurchaseFinished = null
     }
 

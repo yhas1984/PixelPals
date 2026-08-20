@@ -13,6 +13,8 @@ import com.pixelpals.app.BuildConfig
 /** Keeps the UMP flow in one place so ads cannot bypass consent gating. */
 class GoogleMobileAdsConsentManager private constructor(context: Context) {
     private val consentInformation = UserMessagingPlatform.getConsentInformation(context)
+    private var isGatheringConsent: Boolean = false
+    private val pendingConsentCallbacks: MutableList<(FormError?) -> Unit> = mutableListOf()
 
     val canRequestAds: Boolean
         get() = consentInformation.canRequestAds()
@@ -23,6 +25,13 @@ class GoogleMobileAdsConsentManager private constructor(context: Context) {
 
     @MainThread
     fun gatherConsent(activity: Activity, onComplete: (FormError?) -> Unit) {
+        if (canRequestAds) {
+            onComplete(null)
+            return
+        }
+        pendingConsentCallbacks += onComplete
+        if (isGatheringConsent) return
+        isGatheringConsent = true
         val parametersBuilder = ConsentRequestParameters.Builder()
         if (BuildConfig.DEBUG) {
             val debugSettingsBuilder = ConsentDebugSettings.Builder(activity)
@@ -41,10 +50,18 @@ class GoogleMobileAdsConsentManager private constructor(context: Context) {
             activity,
             parametersBuilder.build(),
             {
-                UserMessagingPlatform.loadAndShowConsentFormIfRequired(activity, onComplete)
+                UserMessagingPlatform.loadAndShowConsentFormIfRequired(activity, ::completeConsent)
             },
-            onComplete,
+            ::completeConsent,
         )
+    }
+
+    @MainThread
+    private fun completeConsent(error: FormError?) {
+        isGatheringConsent = false
+        val callbacks: List<(FormError?) -> Unit> = pendingConsentCallbacks.toList()
+        pendingConsentCallbacks.clear()
+        callbacks.forEach { callback -> callback(error) }
     }
 
     @MainThread

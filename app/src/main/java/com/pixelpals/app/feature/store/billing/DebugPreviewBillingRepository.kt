@@ -41,11 +41,13 @@ class DebugPreviewBillingRepository(
         "pet_lumi_premium" to "€3.99",
     )
 
-    override suspend fun prefetch(productIds: List<String>): Map<String, String> {
-        return productIds.distinct().associateWith { id -> fakePrices[id] ?: "€0.99" }
+    override suspend fun prefetch(productIds: List<String>): ProductCatalogResult {
+        return ProductCatalogResult.Available(
+            productIds.distinct().associateWith { id -> fakePrices[id] ?: "€0.99" }
+        )
     }
 
-    override fun launchPurchase(activity: Activity, productId: String, onFinished: (Boolean) -> Unit) {
+    override fun launchPurchase(activity: Activity, productId: String, onFinished: (PurchaseResult) -> Unit) {
         scope.launch {
             // Simula latencia de Play (300-600ms) para que el botón se vea en "loading".
             delay((300L..600L).random())
@@ -53,9 +55,10 @@ class DebugPreviewBillingRepository(
                 repository.grantCoinPack(coinProduct, petType = null, source = "debug_preview")
             } ?: repository.grantOwnedProduct(productId, source = "debug_preview")
             analytics.track("store_purchase_granted", mapOf("product_id" to productId, "source" to "debug_preview"))
-            withContext(Dispatchers.Main) { onFinished(true) }
+            withContext(Dispatchers.Main) { onFinished(PurchaseResult.Success) }
         }
     }
 
-    override suspend fun reconcilePurchases(): Int = withContext(Dispatchers.IO) { 0 }
+    override suspend fun reconcilePurchases(): RestoreResult =
+        withContext(Dispatchers.IO) { RestoreResult.NothingToRestore }
 }

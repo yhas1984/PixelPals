@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">PixelPals</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_pets">Pets</string>
+    <string name="nav_store">Store</string>
     <string name="subtitle">Your virtual pet companion ✨</string>
 
     <!-- Shared / Edge-to-edge -->
@@ -36,6 +39,7 @@
     <string name="open_treasure_album">🏆 Treasure Album</string>
     <string name="pet_launched">Your pet is now exploring! 🐕</string>
     <string name="overlay_needed">Overlay permission is needed first</string>
+    <string name="notification_needed">Allow notifications before starting your pet.</string>
 
     <!-- Pet Selection -->
     <string name="choose_your_pet">Choose Your Pet</string>
@@ -243,6 +247,7 @@
     <!-- Cosmetics (V1.6) -->
     <string name="store_tab_cosmetics">Cosmetics</string>
     <string name="store_buy_with_coins">Buy</string>
+    <string name="store_buy_cosmetic_with_coins">Buy · %1$d coins</string>
     <string name="store_equip_button">Equip</string>
     <string name="store_equipped_button">Equipped</string>
     <string name="cosmetic_unlocked_toast">%1$s unlocked!</string>
@@ -251,6 +256,8 @@
     <!-- Premium pets with coins (V1.7) -->
     <string name="store_buy_pet_with_coins">Unlock for 🪙 %1$d</string>
     <string name="store_insufficient_coins">Not enough coins!</string>
+    <string name="store_insufficient_coins_detail">Earn coins in the daily care routine or get a coin pack.</string>
+    <string name="store_product_unavailable">Unavailable</string>
 
     <!-- Store categories (V1.7) -->
     <string name="store_category_tints">Tints</string>
@@ -320,6 +327,19 @@
     <string name="premium_pet_perk_diablillo">Includes mischievous reactions, high energy, and chaotic effects.</string>
     <string name="premium_pet_perk_lumi">Includes luminous magic, playful socials, and a premium motion set.</string>
     <string name="premium_pet_perk_default">Includes a unique personality, presence, and style.</string>
+    <string name="store_tab_premium">Premium</string>
+    <string name="store_all_premium_owned">You already own every premium pet.</string>
+    <string name="store_go_to_pets">Manage pets</string>
+    <string name="store_confirm_purchase_title">Confirm purchase</string>
+    <string name="store_confirm_pet_purchase">Unlock %1$s for %2$d coins? Your balance will be %3$d coins.</string>
+    <string name="store_confirm_cosmetic_purchase">Buy %1$s for %2$d coins? Your balance will be %3$d coins.</string>
+    <string name="store_purchase_cancelled">Purchase cancelled.</string>
+    <string name="store_purchase_pending">Purchase pending. Google Play will finish it shortly.</string>
+    <string name="store_billing_unavailable">Google Play products are unavailable. Check the Play installation and retry.</string>
+    <string name="store_purchase_failed">The purchase could not be completed.</string>
+    <string name="coins_purchase_success_generic">Coins added to your wallet.</string>
+    <string name="store_catalog_unavailable">Products are temporarily unavailable.</string>
+    <string name="store_open_coins">View coin packs</string>
 
     <string name="progress_level_baby">Baby</string>
     <string name="progress_level_child">Child</string>

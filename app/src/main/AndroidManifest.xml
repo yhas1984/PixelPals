@@ -31,7 +31,7 @@
         android:theme="@style/Theme.PixelPals"
         tools:targetApi="36">
 
-        <!-- AdMob (banner adaptativo en la tienda) -->
+        <!-- AdMob (App Open desde el tercer uso y banner no inmersivo en tienda) -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="${adMobAppId}" />
@@ -50,6 +50,7 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:launchMode="singleTop"
             android:theme="@style/Theme.PixelPals">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -62,6 +63,7 @@
             android:name=".PetSelectionActivity"
             android:exported="false"
             android:label="@string/choose_your_pet"
+            android:noHistory="true"
             android:theme="@style/Theme.PixelPals" />
 
         <activity
@@ -74,6 +76,7 @@
             android:name=".feature.store.StoreActivity"
             android:exported="false"
             android:theme="@style/Theme.PixelPals"
+            android:noHistory="true"
             android:label="@string/store_title" />
 
         <!-- Pet Foreground Service -->

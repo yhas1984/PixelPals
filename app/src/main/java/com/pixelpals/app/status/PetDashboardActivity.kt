@@ -19,11 +19,13 @@ import com.pixelpals.app.core.services.AppServices
 import com.pixelpals.app.core.domain.PetType
 import com.pixelpals.app.data.repository.PixelPalsRepository
 import com.pixelpals.app.PetService
+import com.pixelpals.app.MainActivity
 import com.pixelpals.app.R
 import com.pixelpals.app.data.prefs.SelectedPetStore
 import com.pixelpals.app.status.PetMood
 import com.pixelpals.app.status.PetPersonality
-import com.pixelpals.app.feature.store.StoreActivity
+import com.pixelpals.app.navigation.PixelPalsDestination
+import com.pixelpals.app.navigation.StoreSection
 import kotlinx.coroutines.launch
 
 class PetDashboardActivity : AppCompatActivity() {
@@ -100,7 +102,14 @@ class PetDashboardActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnPlay).setOnClickListener { performCare(CareAction.PLAY) }
         findViewById<Button>(R.id.btnRest).setOnClickListener { performCare(CareAction.REST) }
         findViewById<Button>(R.id.btnDashboardStore).setOnClickListener {
-            startActivity(Intent(this, StoreActivity::class.java))
+            startActivity(
+                MainActivity.createIntent(
+                    this,
+                    PixelPalsDestination.STORE,
+                    StoreSection.PREMIUM,
+                ),
+            )
+            finish()
         }
         btnDashboardRetry.setOnClickListener { lifecycleScope.launch { refreshDashboard(applyCheckIn = false) } }
     }
@@ -332,6 +341,8 @@ class PetDashboardActivity : AppCompatActivity() {
 
     private fun edgeToEdge() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
+        window.statusBarColor = ContextCompat.getColor(this, R.color.surface_base)
+        window.navigationBarColor = ContextCompat.getColor(this, R.color.surface_base)
         WindowInsetsControllerCompat(window, window.decorView).apply {
             isAppearanceLightStatusBars = true
             isAppearanceLightNavigationBars = true

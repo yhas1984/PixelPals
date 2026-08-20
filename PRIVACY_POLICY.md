@@ -1,118 +1,105 @@
-# Privacy Policy / Politica de Privacidad
+# PixelPals Privacy Policy
 
-Last updated: 2026-03-27  
-Ultima actualizacion: 2026-03-27
+**Last updated: 2026-08-20**
 
----
+PixelPals is a virtual-pet app intended for a general audience aged 13 and
+older. This policy explains the local permissions and the third-party services
+used by the app.
 
-## English
+## Data stored on the device
 
-### 1. Overview
-ScreenPets is a virtual pet app for Android.  
-This policy explains what data is processed, why permissions are requested, and how users can control those permissions.
+PixelPals stores pet selection, progress, cosmetic ownership, coin balance,
+album state, and overlay preferences locally in the app database and
+preferences. This data is used to run the app and is removed when the app is
+uninstalled or its storage is cleared.
 
-### 2. Data Collection
-ScreenPets is designed to work with local device data and settings.
+## Permissions
 
-- We do not sell personal data.
-- We do not read messages, passwords, or private text from other apps.
-- We do not intentionally collect sensitive personal information.
+- **Display over other apps (`SYSTEM_ALERT_WINDOW`)** is used only to draw the
+  floating pet overlay.
+- **Notifications (`POST_NOTIFICATIONS`)** are used for the foreground-service
+  notification when overlay mode is enabled.
+- **Usage access (`PACKAGE_USAGE_STATS`)** is optional and is used to pause or
+  adapt the pet when the foreground app changes. PixelPals reads app-usage
+  event types and timestamps locally; it does not upload the names or content
+  of other apps.
 
-### 3. Local Storage
-The app stores gameplay and app state locally on the device, such as:
+## Advertising and consent
 
-- selected pet
-- treasure album progress
-- interaction and activity counters
-- optional local movement metadata
+The store may display a non-immersive banner and the app may display an App
+Open advertisement after the third app use, at most once per process. Ads are
+provided by Google Mobile Ads (AdMob). The User Messaging Platform (UMP) asks
+for consent where required and exposes the privacy-options form. Depending on
+consent and regional rules, the AdMob SDK may process or share IP address,
+device/account identifiers, ad interactions, diagnostics, and product
+interaction information for advertising, measurement, security, and fraud
+prevention. PixelPals does not sell personal data or use it for independent
+profiling.
 
-This data is used only to provide app functionality.
+## Purchases
 
-### 4. Permissions
+Coin-pack purchases are processed by Google Play Billing. PixelPals stores only
+the local entitlement and balance needed to deliver the purchase. Google Play
+may retain transaction and account information under its own privacy policy.
 
-#### Display over other apps (`SYSTEM_ALERT_WINDOW`)
-Used only to render the floating pet above other apps.  
-Without this permission, the floating overlay feature is unavailable or limited.
+## Choices and contact
 
-#### Notifications (`POST_NOTIFICATIONS`)
-Used to provide app notifications on Android 13+ when applicable.
-
-### 5. Foreground Service
-ScreenPets uses a foreground service to keep the virtual pet active while overlay mode is enabled.
-
-### 6. Data Sharing
-We do not share personal user data with third parties for sale or profiling.
-
-### 7. User Controls
-Users can:
-
-- revoke permissions at any time from Android Settings
-- stop the overlay service from within the app
-- uninstall the app to remove local app data
-
-### 8. Children
-This app is intended for a general audience. If local laws require parental supervision, users should follow local requirements.
-
-### 9. Policy Updates
-This policy may be updated to reflect new features or legal requirements.  
-The updated date will be changed when modifications are published.
-
-### 10. Contact
-For privacy questions, contact the developer through the public repository or support channels provided with the app listing.
+You can revoke overlay, notification, or usage-access permissions in Android
+Settings, stop the overlay in PixelPals, manage ad consent from the store's
+privacy-options action, or uninstall the app. For privacy questions, contact
+the developer through the support channel linked from the Google Play listing.
 
 ---
 
-## Espanol
+# Política de privacidad de PixelPals
 
-### 1. Resumen
-ScreenPets es una app de mascotas virtuales para Android.  
-Esta politica explica que datos se procesan, por que se solicitan permisos y como el usuario puede controlarlos.
+**Última actualización: 2026-08-20**
 
-### 2. Recoleccion de datos
-ScreenPets esta disenada para funcionar con datos y configuraciones locales del dispositivo.
+PixelPals es una aplicación de mascotas virtuales dirigida a público general
+de 13 años o más. Esta política explica los permisos locales y los servicios
+de terceros utilizados por la aplicación.
 
-- No vendemos datos personales.
-- No leemos mensajes, contrasenas ni texto privado de otras apps.
-- No recopilamos intencionalmente informacion personal sensible.
+## Datos guardados en el dispositivo
 
-### 3. Almacenamiento local
-La app guarda estado de juego y configuracion localmente en el dispositivo, por ejemplo:
+PixelPals guarda localmente la mascota seleccionada, el progreso, la propiedad
+de cosméticos, el saldo de monedas, el álbum y las preferencias del overlay.
+Se usan para ejecutar la aplicación y se eliminan al desinstalarla o borrar su
+almacenamiento.
 
-- mascota seleccionada
-- progreso del album de tesoros
-- contadores de actividad e interacciones
-- metadatos locales opcionales para funciones de movimiento
+## Permisos
 
-Estos datos se usan solo para proveer funcionalidad de la app.
+- **Mostrar sobre otras aplicaciones (`SYSTEM_ALERT_WINDOW`)** solo dibuja la
+  mascota flotante.
+- **Notificaciones (`POST_NOTIFICATIONS`)** muestra la notificación del
+  servicio en primer plano cuando el overlay está activo.
+- **Acceso de uso (`PACKAGE_USAGE_STATS`)** es opcional y permite pausar o
+  adaptar la mascota cuando cambia la aplicación en primer plano. PixelPals
+  lee localmente tipos de eventos y marcas de tiempo; no sube nombres ni
+  contenido de otras aplicaciones.
 
-### 4. Permisos
+## Publicidad y consentimiento
 
-#### Mostrar sobre otras apps (`SYSTEM_ALERT_WINDOW`)
-Se usa exclusivamente para dibujar la mascota flotante sobre otras apps.  
-Sin este permiso, la funcionalidad de superposicion no estara disponible o sera limitada.
+La tienda puede mostrar un banner no inmersivo y la aplicación puede mostrar
+un anuncio App Open desde el tercer uso, como máximo una vez por proceso. Los
+anuncios los proporciona Google Mobile Ads (AdMob). User Messaging Platform
+(UMP) solicita consentimiento cuando corresponde y ofrece el formulario de
+opciones de privacidad. Según el consentimiento y la región, el SDK de AdMob
+puede procesar o compartir IP, identificadores del dispositivo o cuenta,
+interacciones con anuncios, diagnósticos e interacciones con productos para
+publicidad, medición, seguridad y prevención de fraude. PixelPals no vende
+datos personales ni los usa para crear perfiles independientes.
 
-#### Notificaciones (`POST_NOTIFICATIONS`)
-Se usa para notificaciones de la app en Android 13+ cuando corresponda.
+## Compras
 
-### 5. Servicio en primer plano
-ScreenPets usa un servicio en primer plano para mantener activa la mascota virtual cuando el modo overlay esta habilitado.
+Los packs de monedas se procesan con Google Play Billing. PixelPals guarda solo
+los derechos y el saldo local necesarios para entregar la compra. Google Play
+puede conservar datos de transacción y cuenta según su propia política de
+privacidad.
 
-### 6. Comparticion de datos
-No compartimos datos personales con terceros para venta o perfilado.
+## Opciones de control y contacto
 
-### 7. Control del usuario
-El usuario puede:
-
-- revocar permisos en cualquier momento desde Ajustes de Android
-- detener el servicio overlay desde la app
-- desinstalar la app para eliminar sus datos locales
-
-### 8. Menores
-La app esta dirigida a publico general. Si la normativa local exige supervision parental, debe cumplirse dicha normativa.
-
-### 9. Actualizaciones de la politica
-Esta politica puede actualizarse por nuevas funciones o requisitos legales.  
-La fecha de actualizacion se modificara al publicar cambios.
-
-### 10. Contacto
-Para consultas de privacidad, contacta al desarrollador por el repositorio publico o los canales de soporte de la ficha de la app.
+Puedes revocar permisos de overlay, notificaciones o acceso de uso desde los
+Ajustes de Android, detener el overlay en PixelPals, gestionar el consentimiento
+de anuncios desde la opción de privacidad de la tienda o desinstalar la app.
+Para consultas de privacidad, utiliza el canal de soporte enlazado desde la
+ficha de Google Play.
