@@ -47,8 +47,8 @@ Cada mascota tiene lógica de movimiento propia, animaciones, interacción táct
 
 Definidas en [`app/build.gradle.kts`](app/build.gradle.kts):
 
-- `versionName`: `1.9.0`
-- `versionCode`: `13` (Play exige subir el código en cada nuevo envío)
+- `versionName`: `2.1.0`
+- `versionCode`: `16` (Play exige subir el código en cada nuevo envío)
 
 ### Requisitos
 
@@ -95,10 +95,12 @@ Tests:
 
 ### Publicidad (AdMob)
 
-La tienda muestra un **banner adaptativo no inmersivo** al pie (`StoreActivity`). Funcionamiento por build:
+La app muestra un **App Open desde el tercer uso, como máximo una vez por proceso**, y la tienda conserva un **banner adaptativo no inmersivo** al pie (`StoreFragment`; `StoreActivity` solo redirige por compatibilidad). El App Open nunca se dispara al mostrar mascotas ni al abrir el overlay flotante. Funcionamiento por build:
 
-- **Debug**: siempre habilitado con los **IDs de prueba de Google** (no requieren cuenta AdMob).
-- **Release**: solo se muestran anuncios si existen los IDs reales; si no, la tienda se renderiza igual sin banner.
+- **Debug**: banner habilitado con el **ID de prueba de Google**; App Open usa su ID de prueba solo cuando se activa con `-Ppixelpals.ads.debugAppOpen=true` (por defecto queda apagado para que las pruebas instrumentadas sean deterministas).
+- **Release**: App Open usa `pixelpals.admob.appOpenId` o el ID real configurado y respeta la frecuencia desde el tercer uso; el banner solo aparece si se configura su unidad.
+
+No existe una compra de monedas para eliminar anuncios; la tienda solo contiene mascotas premium, cosméticos y packs de monedas.
 
 Para activar anuncios reales:
 
@@ -109,6 +111,7 @@ Para activar anuncios reales:
 ```properties
 pixelpals.admob.appId=ca-app-pub-XXXXXXXXXXXXXXXX~XXXXXXXX
 pixelpals.admob.bannerId=ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXX
+pixelpals.admob.appOpenId=ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXX
 ```
 
 3b. **app-ads.txt**: sube el archivo [`app-ads.txt`](app-ads.txt) (en la raíz del repo) a un dominio web propio y verifícalo en AdMob (**Settings → Website verification**). En apps Android este archivo NO puede ir dentro del APK: Google lo lee desde `https://tu-dominio.com/app-ads.txt`.
@@ -186,8 +189,8 @@ Each pet has its own movement logic, animation set, touch interactions, equippab
 
 Defined in [`app/build.gradle.kts`](app/build.gradle.kts):
 
-- `versionName`: `1.9.0`
-- `versionCode`: `13` (Play requires a higher code for each new upload)
+- `versionName`: `2.1.0`
+- `versionCode`: `16` (Play requires a higher code for each new upload)
 
 ### Requirements
 
@@ -237,17 +240,20 @@ Tests:
 Current Play policy requires **minimum target API 36**; this project uses `targetSdk 36`.
 
 - Build: `./gradlew :app:bundleRelease`
-- Unsigned output is usually `app-release.aab` in the folder above.
+- The release task requires the configured release keystore and writes
+  `app/build/outputs/bundle/release/app-release.aab`.
 - **Do not upload** an AAB signed only with the **debug** key; Play will reject it.
 - Sign with your **release keystore** (or configure `signingConfigs.release` in Gradle and use Play App Signing).
 - Each upload needs a **higher `versionCode`** than the last one accepted in the console.
 
 ### Advertising (AdMob)
 
-The store shows a **non-intrusive adaptive banner** at the bottom (`StoreActivity`). Behavior per build:
+The app shows an **App Open ad from the third use, at most once per process**, and the store shows a **non-intrusive adaptive banner** at the bottom (`StoreFragment`; `StoreActivity` is a compatibility redirect). The App Open ad is never triggered when pets are rendered or when the floating overlay opens. Behavior per build:
 
-- **Debug**: always enabled with **Google test IDs** (no AdMob account required).
-- **Release**: ads are shown only when real IDs exist; otherwise the store renders the same without a banner.
+- **Debug**: the banner is enabled with its **Google test ID**; App Open uses its test ID only when enabled with `-Ppixelpals.ads.debugAppOpen=true` (off by default so instrumentation remains deterministic).
+- **Release**: App Open uses `pixelpals.admob.appOpenId` or the configured production unit and respects the third-use frequency; the banner is shown only when its unit is configured.
+
+There is no coin purchase to remove ads; the store only contains premium pets, cosmetics, and coin packs.
 
 To enable real ads:
 
@@ -258,6 +264,7 @@ To enable real ads:
 ```properties
 pixelpals.admob.appId=ca-app-pub-XXXXXXXXXXXXXXXX~XXXXXXXX
 pixelpals.admob.bannerId=ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXX
+pixelpals.admob.appOpenId=ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXX
 ```
 
 3b. **app-ads.txt**: host the [`app-ads.txt`](app-ads.txt) file (repo root) on your own web domain and verify it in AdMob (**Settings → Website verification**). For Android apps this file CANNOT ship inside the APK: Google reads it from `https://your-domain.com/app-ads.txt`.

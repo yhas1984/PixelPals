@@ -119,5 +119,4 @@
         android:paddingHorizontal="16dp"
         android:visibility="gone" />
 
-    <include layout="@layout/include_root_navigation" />
 </LinearLayout>

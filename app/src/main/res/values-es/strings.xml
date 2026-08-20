@@ -39,6 +39,7 @@
     <string name="open_treasure_album">🏆 Álbum de tesoros</string>
     <string name="pet_launched">¡Tu mascota está explorando! 🐕</string>
     <string name="overlay_needed">Se necesita el permiso de superposición primero</string>
+    <string name="notification_needed">Permite las notificaciones antes de iniciar tu mascota.</string>
 
     <!-- Selección de Mascota -->
     <string name="choose_your_pet">Elige tu Mascota</string>
@@ -244,6 +245,7 @@
     <!-- Cosmetics (V1.6) -->
     <string name="store_tab_cosmetics">Cosméticos</string>
     <string name="store_buy_with_coins">Comprar</string>
+    <string name="store_buy_cosmetic_with_coins">Comprar · %1$d monedas</string>
     <string name="store_equip_button">Equipar</string>
     <string name="store_equipped_button">Equipado</string>
     <string name="cosmetic_unlocked_toast">¡%1$s desbloqueado!</string>
@@ -252,6 +254,8 @@
     <!-- Premium pets with coins (V1.7) -->
     <string name="store_buy_pet_with_coins">Desbloquear por 🪙 %1$d</string>
     <string name="store_insufficient_coins">¡Monedas insuficientes!</string>
+    <string name="store_insufficient_coins_detail">Gana monedas cuidando a tu mascota o consigue un pack.</string>
+    <string name="store_product_unavailable">No disponible</string>
 
     <!-- Store categories (V1.7) -->
     <string name="store_category_tints">Tintes</string>

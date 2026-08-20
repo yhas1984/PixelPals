@@ -9,7 +9,10 @@ interface BillingRepository {
 }
 
 sealed interface ProductCatalogResult {
-    data class Available(val prices: Map<String, String>) : ProductCatalogResult
+    data class Available(
+        val prices: Map<String, String>,
+        val missingProductIds: Set<String> = emptySet(),
+    ) : ProductCatalogResult
     data class Unavailable(val reason: String) : ProductCatalogResult
     data class Failure(val reason: String) : ProductCatalogResult
 }

@@ -11,8 +11,9 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.pixelpals.app.core.domain.PetType
 import com.pixelpals.app.data.prefs.SelectedPetStore
 import com.pixelpals.app.database.AppDatabase
-import com.pixelpals.app.feature.store.StoreActivity
-import kotlinx.coroutines.runBlocking
+import com.pixelpals.app.feature.store.StoreFragment
+import com.pixelpals.app.navigation.PixelPalsDestination
+import com.pixelpals.app.navigation.StoreSection
 import org.junit.After
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -23,7 +24,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class StorePremiumTabTest {
     private val context: Context = InstrumentationRegistry.getInstrumentation().targetContext
-    private var scenario: ActivityScenario<StoreActivity>? = null
+    private var scenario: ActivityScenario<MainActivity>? = null
 
     @Before
     fun setUp() {
@@ -40,43 +41,53 @@ class StorePremiumTabTest {
 
     @Test
     fun premiumTabDoesNotOfferBasePetSelection() {
-        scenario = ActivityScenario.launch(StoreActivity::class.java)
-        scenario!!.onActivity { activity ->
-            val pager = activity.findViewById<androidx.viewpager2.widget.ViewPager2>(R.id.storePager)
-            pager.setCurrentItem(0, false)
-        }
+        scenario = ActivityScenario.launch(
+            MainActivity.createIntent(context, PixelPalsDestination.STORE, StoreSection.PREMIUM),
+        )
         awaitStateReady()
         scenario!!.onActivity { activity ->
-            val root = activity.findViewById<View>(R.id.scrollContent)
-            val texts = collectTexts(root)
+            val root: View = activity.findViewById(R.id.storeList)
+            val texts: List<String> = collectTexts(root)
             assertFalse(texts.contains("Corgi"))
             assertTrue(texts.any { it.contains("Unlock") || it.contains("Desbloquear") })
-            assertTrue(collectButtons(root).none { it.text.toString() == "Select" || it.text.toString() == "Seleccionar" })
+            assertTrue(
+                collectButtons(root).none {
+                    it.text.toString() == "Select" || it.text.toString() == "Seleccionar"
+                },
+            )
         }
     }
 
     private fun awaitStateReady() {
-        val deadline = System.currentTimeMillis() + 10_000
+        val deadline: Long = System.currentTimeMillis() + 10_000
         while (System.currentTimeMillis() < deadline) {
-            var ready = false
-            scenario!!.onActivity { ready = !it.getStoreViewModel().uiState.value.isLoading }
-            if (ready) return
+            var isReady: Boolean = false
+            scenario!!.onActivity { activity ->
+                val store: StoreFragment = activity.supportFragmentManager
+                    .findFragmentByTag(PixelPalsDestination.STORE.fragmentTag) as StoreFragment
+                isReady = !store.getStoreViewModel().uiState.value.isInitialLoading
+            }
+            if (isReady) return
             Thread.sleep(100)
         }
-        throw AssertionError("La tienda no terminó de cargar")
+        throw AssertionError("The store did not finish loading")
     }
 
     private fun collectTexts(view: View): List<String> {
         val result = mutableListOf<String>()
         if (view is TextView && view.text.isNotBlank()) result += view.text.toString()
-        if (view is ViewGroup) for (index in 0 until view.childCount) result += collectTexts(view.getChildAt(index))
+        if (view is ViewGroup) {
+            for (index: Int in 0 until view.childCount) result += collectTexts(view.getChildAt(index))
+        }
         return result
     }
 
     private fun collectButtons(view: View): List<Button> {
         val result = mutableListOf<Button>()
         if (view is Button) result += view
-        if (view is ViewGroup) for (index in 0 until view.childCount) result += collectButtons(view.getChildAt(index))
+        if (view is ViewGroup) {
+            for (index: Int in 0 until view.childCount) result += collectButtons(view.getChildAt(index))
+        }
         return result
     }
 }

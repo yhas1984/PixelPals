@@ -30,9 +30,9 @@ ATLASES = {
     "moki": ("MokiBehavior.kt", "pets/moki/moki_sheet_v1.json"),
     "yuki": ("YukiBehavior.kt", "pets/yuki/yuki_sheet_v1.json"),
     "piru": ("PiruBehavior.kt", "pets/piru/piru_sheet_v1.json"),
-    "taro": ("TaroBehavior.kt", "pets/taro/taro_sheet_v1.json"),
+    "taro": ("TaroBehavior.kt", "pets/taro/taro_motion_v2.json"),
     "menta": ("MentaBehavior.kt", "pets/menta/menta_sheet_v1.json"),
-    "tela": ("TelaBehavior.kt", "pets/tela/tela_sheet_v1.json"),
+    "tela": ("TelaBehavior.kt", "pets/tela/tela_motion_v2.json"),
     "lumi": ("LumiBehavior.kt", "pets/lumi/lumi_motion_v2.json"),
 }
 

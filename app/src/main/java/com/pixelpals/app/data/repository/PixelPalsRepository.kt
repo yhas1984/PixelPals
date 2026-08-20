@@ -28,6 +28,13 @@ import androidx.room.withTransaction
 import kotlin.math.max
 import kotlin.math.min
 
+sealed interface CoinSpendResult {
+    data object Purchased : CoinSpendResult
+    data object AlreadyOwned : CoinSpendResult
+    data object InsufficientFunds : CoinSpendResult
+    data class Failure(val reason: String) : CoinSpendResult
+}
+
 class PixelPalsRepository(context: Context, database: AppDatabase? = null) {
     private val appContext: Context = context.applicationContext
     private val db = database ?: AppDatabase.getDatabase(appContext)
@@ -73,18 +80,22 @@ class PixelPalsRepository(context: Context, database: AppDatabase? = null) {
 
     /** true si el cosmético (por productId) ya fue comprado. */
     suspend fun isCosmeticOwned(productId: String): Boolean =
-        db.ownedProductDao().getByProductId(productId) != null
+        db.ownedProductDao().getByProductId(productId)?.let(::isEligibleEntitlement) == true
 
-    /** Compra un cosmético con monedas del MONEDERO GLOBAL. Devuelve true si se completó. */
-    suspend fun purchaseCosmeticWithCoins(petId: String, cosmeticId: String): Boolean {
+    /** Compra un cosmético con monedas del monedero global de forma idempotente. */
+    suspend fun purchaseCosmeticWithCoins(petId: String, cosmeticId: String): CoinSpendResult {
         ensureWalletMigrated()
         val cosmetic = com.pixelpals.app.data.catalog.CosmeticCatalog.findById(appContext, cosmeticId)
-            ?: return false
-        val price = cosmetic.coinPrice ?: return false
+            ?: return CoinSpendResult.Failure("Unknown cosmetic")
+        val price = cosmetic.coinPrice ?: return CoinSpendResult.Failure("Cosmetic has no coin price")
         return db.withTransaction {
-            if (db.ownedProductDao().getByProductId(cosmetic.productId) != null) return@withTransaction true
+            if (db.ownedProductDao().getByProductId(cosmetic.productId)
+                    ?.let(::isEligibleEntitlement) == true
+            ) {
+                return@withTransaction CoinSpendResult.AlreadyOwned
+            }
             val wallet = ensureBondEntity(walletId)
-            if (wallet.softCurrency < price) return@withTransaction false
+            if (wallet.softCurrency < price) return@withTransaction CoinSpendResult.InsufficientFunds
             db.petBondDao().upsert(wallet.copy(softCurrency = wallet.softCurrency - price))
             db.ownedProductDao().upsert(
                 com.pixelpals.app.database.OwnedProductEntity(
@@ -94,7 +105,7 @@ class PixelPalsRepository(context: Context, database: AppDatabase? = null) {
                     purchasedAt = System.currentTimeMillis(),
                 )
             )
-            true
+            CoinSpendResult.Purchased
         }
     }
 
@@ -397,6 +408,16 @@ class PixelPalsRepository(context: Context, database: AppDatabase? = null) {
         db.processedPurchaseDao().markAcknowledged(purchaseToken, productId)
     }
 
+    suspend fun reconcilePlayEntitlements(activeProductIds: Set<String>) {
+        db.withTransaction {
+            if (activeProductIds.isEmpty()) {
+                db.ownedProductDao().deletePlayEntitlements()
+            } else {
+                db.ownedProductDao().deletePlayEntitlementsNotIn(activeProductIds.toList())
+            }
+        }
+    }
+
     private suspend fun grantOwnedProductInternal(productId: String, source: String) {
         val productType = when {
             productId.startsWith("acc_") -> "accessory"
@@ -426,16 +447,21 @@ class PixelPalsRepository(context: Context, database: AppDatabase? = null) {
 
     /**
      * Compra un pet premium con monedas del MONEDERO GLOBAL.
-     * Devuelve true si se completó (tenía monedas y el pet no estaba desbloqueado).
+     * Devuelve un resultado tipado y nunca descuenta dos veces el mismo derecho.
      */
-    suspend fun purchasePetWithCoins(petType: PetType): Boolean {
+    suspend fun purchasePetWithCoins(petType: PetType): CoinSpendResult {
         ensureWalletMigrated()
-        val productId = premiumPetProductIds[petType] ?: return false
-        val price = premiumPetCoinPrices[petType] ?: return false
-        if (isProductOwned(productId)) return false
+        val productId = premiumPetProductIds[petType]
+            ?: return CoinSpendResult.Failure("Pet is not purchasable")
+        val price = premiumPetCoinPrices[petType]
+            ?: return CoinSpendResult.Failure("Pet has no coin price")
         return db.withTransaction {
+            val existing = db.ownedProductDao().getByProductId(productId)
+            if (existing?.let(::isEligibleEntitlement) == true) {
+                return@withTransaction CoinSpendResult.AlreadyOwned
+            }
             val wallet = ensureBondEntity(walletId)
-            if (wallet.softCurrency < price) return@withTransaction false
+            if (wallet.softCurrency < price) return@withTransaction CoinSpendResult.InsufficientFunds
             db.petBondDao().upsert(wallet.copy(softCurrency = wallet.softCurrency - price))
             db.ownedProductDao().upsert(
                 OwnedProductEntity(
@@ -445,7 +471,7 @@ class PixelPalsRepository(context: Context, database: AppDatabase? = null) {
                     purchasedAt = System.currentTimeMillis(),
                 )
             )
-            true
+            CoinSpendResult.Purchased
         }
     }
 

@@ -45,6 +45,7 @@ class PetService : Service() {
         const val ACTION_REFRESH_PET = "com.pixelpals.app.ACTION_REFRESH_PET"
         const val ACTION_DEBUG_TELA_WEB = "com.pixelpals.app.ACTION_DEBUG_TELA_WEB"
         const val ACTION_DEBUG_TELA_CORNER_WEB = "com.pixelpals.app.ACTION_DEBUG_TELA_CORNER_WEB"
+        const val EXTRA_PET_TYPE = "pet_type"
         private const val EXTRA_REFRESH_MESSAGE = "REFRESH_MESSAGE"
         private const val EXTRA_REFRESH_CELEBRATE = "REFRESH_CELEBRATE"
         private const val PET_SIZE_DP = 80
@@ -68,7 +69,7 @@ class PetService : Service() {
             selectedPetStore.save(petType)
             selectedPetStore.setPetEnabled(true)
             val intent = Intent(context, PetService::class.java).apply {
-                putExtra(PetSelectionActivity.EXTRA_PET_TYPE, petType.name)
+                putExtra(EXTRA_PET_TYPE, petType.name)
             }
             runCatching { ContextCompat.startForegroundService(context, intent) }
                 .onFailure {
@@ -97,7 +98,7 @@ class PetService : Service() {
             selectedPetStore.setPetEnabled(true)
             val intent = Intent(context, PetService::class.java).apply {
                 action = ACTION_DEBUG_TELA_WEB
-                putExtra(PetSelectionActivity.EXTRA_PET_TYPE, PetType.TELA.name)
+                putExtra(EXTRA_PET_TYPE, PetType.TELA.name)
             }
             runCatching { ContextCompat.startForegroundService(context, intent) }
                 .onFailure { Log.w(TAG, "Tela web test start failed", it) }
@@ -109,7 +110,7 @@ class PetService : Service() {
             selectedPetStore.setPetEnabled(true)
             val intent = Intent(context, PetService::class.java).apply {
                 action = ACTION_DEBUG_TELA_CORNER_WEB
-                putExtra(PetSelectionActivity.EXTRA_PET_TYPE, PetType.TELA.name)
+                putExtra(EXTRA_PET_TYPE, PetType.TELA.name)
             }
             runCatching { ContextCompat.startForegroundService(context, intent) }
                 .onFailure { Log.w(TAG, "Tela corner web test start failed", it) }
@@ -266,7 +267,7 @@ class PetService : Service() {
             }
         }
 
-        val petTypeName = intent?.getStringExtra(PetSelectionActivity.EXTRA_PET_TYPE)
+        val petTypeName = intent?.getStringExtra(EXTRA_PET_TYPE)
         if (petTypeName != null) {
             currentPetType = try { PetType.valueOf(petTypeName) } catch (e: Exception) { selectedPetStore.load() }
             selectedPetStore.save(currentPetType)

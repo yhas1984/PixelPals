@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
+import androidx.recyclerview.widget.RecyclerView
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -19,7 +20,12 @@ import com.pixelpals.app.data.catalog.CosmeticEffect
 import com.pixelpals.app.data.prefs.SelectedPetStore
 import com.pixelpals.app.data.repository.PixelPalsRepository
 import com.pixelpals.app.database.AppDatabase
-import com.pixelpals.app.feature.store.StoreActivity
+import com.pixelpals.app.feature.store.CosmeticsTabFragment
+import com.pixelpals.app.feature.store.CosmeticCatalogAdapter
+import com.pixelpals.app.feature.store.CosmeticCatalogRow
+import com.pixelpals.app.feature.store.StoreFragment
+import com.pixelpals.app.navigation.PixelPalsDestination
+import com.pixelpals.app.navigation.StoreSection
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -28,20 +34,13 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/**
- * Regresión del bug "comprar un flotante hace aparecer a Corgi": la pestaña de
- * cosméticos capturaba el petId al dibujar las tarjetas; si el usuario cambiaba
- * de mascota después, el clic equipaba/compraba sobre el pet viejo y re-cambiaba
- * el overlay a Corgi. El clic debe releer la selección persistida.
- */
 @RunWith(AndroidJUnit4::class)
 class CosmeticsPurchaseKeepsSelectedPetTest {
-
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private val device = UiDevice.getInstance(instrumentation)
     private val context = instrumentation.targetContext
     private lateinit var repository: PixelPalsRepository
-    private var scenario: ActivityScenario<StoreActivity>? = null
+    private var scenario: ActivityScenario<MainActivity>? = null
 
     @Before
     fun setUp() {
@@ -49,7 +48,6 @@ class CosmeticsPurchaseKeepsSelectedPetTest {
         context.getSharedPreferences("pixelpals_cosmetics", Context.MODE_PRIVATE).edit().clear().commit()
         context.getSharedPreferences("pixelpals_selection", Context.MODE_PRIVATE).edit().clear().commit()
         repository = PixelPalsRepository(context)
-        // El usuario ya tenía TELA seleccionada (desde PetsTab / selección).
         SelectedPetStore(context).save(PetType.TELA)
         runBlocking { repository.grantCoins(petType = null, amount = 2_000) }
     }
@@ -63,64 +61,69 @@ class CosmeticsPurchaseKeepsSelectedPetTest {
 
     @Test
     fun buyingAFloatCosmeticEquipsItOnTheSelectedPetNotCorgi() {
-        val cosmetic = CosmeticCatalog.all(context)
+        val cosmetic: Cosmetic = CosmeticCatalog.all(context)
             .first { it.effect is CosmeticEffect.FloatEffect }
-
-        scenario = ActivityScenario.launch(StoreActivity::class.java)
-        scenario!!.onActivity { activity ->
-            val pager = activity.findViewById<androidx.viewpager2.widget.ViewPager2>(R.id.storePager)
-            pager.setCurrentItem(1, false)
-        }
-
-        val button = awaitCosmeticButton(cosmetic)
+        scenario = ActivityScenario.launch(
+            MainActivity.createIntent(context, PixelPalsDestination.STORE, StoreSection.COSMETICS),
+        )
+        val button: Button = awaitCosmeticButton(cosmetic)
         instrumentation.runOnMainSync { button.performClick() }
-        val confirm = device.wait(Until.findObject(By.text(context.getString(R.string.store_buy_button))), 5_000)
-        checkNotNull(confirm) { "No apareció la confirmación de compra" }
+        val confirm = device.wait(
+            Until.findObject(By.res("android", "button1")),
+            5_000,
+        )
+        checkNotNull(confirm) { "Purchase confirmation was not displayed" }
         confirm.click()
-
         awaitEquipped(petId = "tela", cosmeticId = cosmetic.id)
-
-        // El cosmético quedó equipado en TELA (la selección real)…
         assertEquals(cosmetic.id, repository.getEquippedCosmetic("tela"))
-        // …y no se aplicó al Corgi (el petId obsoleto del bug).
         assertNull(repository.getEquippedCosmetic("corgi"))
     }
 
     private fun awaitCosmeticButton(cosmetic: Cosmetic): Button {
-        val deadline = System.currentTimeMillis() + 20_000
+        val deadline: Long = System.currentTimeMillis() + 20_000
         while (System.currentTimeMillis() < deadline) {
             instrumentation.waitForIdleSync()
             var found: Button? = null
             scenario!!.onActivity { activity ->
-                found = findCosmeticButton(activity.findViewById(R.id.scrollContent), cosmetic)
+                val store: StoreFragment = activity.supportFragmentManager
+                    .findFragmentByTag(PixelPalsDestination.STORE.fragmentTag) as StoreFragment
+                val cosmetics: CosmeticsTabFragment = store.childFragmentManager.fragments
+                    .filterIsInstance<CosmeticsTabFragment>()
+                    .first()
+                val list: RecyclerView = cosmetics.requireView().findViewById(R.id.storeList)
+                val catalogAdapter: CosmeticCatalogAdapter = list.adapter as CosmeticCatalogAdapter
+                val targetPosition: Int = catalogAdapter.currentList.indexOfFirst { row ->
+                    row is CosmeticCatalogRow.Item && row.cosmetic.id == cosmetic.id
+                }
+                if (targetPosition >= 0) list.scrollToPosition(targetPosition)
+                found = findCosmeticButton(list, cosmetic)
             }
-            val result = found
-            if (result != null) return result
+            found?.let { return it }
             Thread.sleep(150)
         }
-        throw AssertionError("No se renderizó el botón del cosmético ${cosmetic.id}")
+        throw AssertionError("Cosmetic action was not rendered for ${cosmetic.id}")
     }
 
     private fun findCosmeticButton(root: View, cosmetic: Cosmetic): Button? {
         if (root is Button && root.id == R.id.btnCosmeticAction) {
-            val card = root.parent as? ViewGroup
-            val title = card?.findViewById<TextView>(R.id.txtCosmeticTitle)
+            val card: ViewGroup? = root.parent as? ViewGroup
+            val title: TextView? = card?.findViewById(R.id.txtCosmeticTitle)
             if (title?.text.toString() == cosmetic.displayName) return root
         }
         if (root is ViewGroup) {
-            for (i in 0 until root.childCount) {
-                findCosmeticButton(root.getChildAt(i), cosmetic)?.let { return it }
+            for (index: Int in 0 until root.childCount) {
+                findCosmeticButton(root.getChildAt(index), cosmetic)?.let { return it }
             }
         }
         return null
     }
 
     private fun awaitEquipped(petId: String, cosmeticId: String) {
-        val deadline = System.currentTimeMillis() + 20_000
+        val deadline: Long = System.currentTimeMillis() + 20_000
         while (System.currentTimeMillis() < deadline) {
             if (repository.getEquippedCosmetic(petId) == cosmeticId) return
             Thread.sleep(150)
         }
-        throw AssertionError("El cosmético $cosmeticId no quedó equipado en $petId")
+        throw AssertionError("Cosmetic $cosmeticId was not equipped on $petId")
     }
 }

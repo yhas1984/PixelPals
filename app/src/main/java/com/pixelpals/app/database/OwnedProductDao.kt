@@ -15,4 +15,13 @@ interface OwnedProductDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(entity: OwnedProductEntity)
+
+    @Query("DELETE FROM owned_product WHERE source IN ('billing', 'reconcile')")
+    suspend fun deletePlayEntitlements()
+
+    @Query(
+        "DELETE FROM owned_product WHERE source IN ('billing', 'reconcile') " +
+            "AND productId NOT IN (:activeProductIds)"
+    )
+    suspend fun deletePlayEntitlementsNotIn(activeProductIds: List<String>)
 }
