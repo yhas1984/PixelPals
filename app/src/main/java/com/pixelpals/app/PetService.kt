@@ -537,7 +537,12 @@ class PetService : Service() {
                 val isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
                     status == BatteryManager.BATTERY_STATUS_FULL
                 val percent = ((level * 100f) / scale).toInt().coerceIn(0, 100)
+                val rawTemperature = intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, Int.MIN_VALUE)
+                val temperatureCelsius = rawTemperature
+                    .takeUnless { it == Int.MIN_VALUE }
+                    ?.div(10f)
                 petView?.onBatteryChanged(percent, isCharging)
+                petView?.onBatteryTemperatureChanged(temperatureCelsius)
             }
         }
         try {

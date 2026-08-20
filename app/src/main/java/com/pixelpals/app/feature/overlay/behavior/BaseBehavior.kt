@@ -21,6 +21,7 @@ import kotlinx.coroutines.*
 import kotlin.math.sin
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.cos
 
 /**
  * BaseBehavior — Motor de movimiento y comportamiento.
@@ -38,10 +39,13 @@ abstract class BaseBehavior(
     protected val spriteFrameRects = mutableListOf<Rect>()
     protected var spriteSheetBitmap: Bitmap? = null
     protected var spriteSheetSpec: PetAtlasSpec? = null
+    private var spriteHitMask: PetAlphaHitMask? = null
     protected var spriteAtlasDrawScale: Float = 1f
     protected var spriteBleedInsetPx: Int = 2
     protected var spriteFilterBitmap: Boolean = false
     protected val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { isFilterBitmap = true }
+    private val spriteDestinationRect = RectF()
+    private val spriteInsetSourceRect = Rect()
     protected val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     protected var isLoading = true
 
@@ -171,18 +175,24 @@ abstract class BaseBehavior(
                         }
                         if (atlasBitmap != null) ATLAS_CACHE.put(spec.atlasPath, atlasBitmap)
                     }
-                    Triple(spec, atlasBitmap, null as Exception?)
+                    var hitMask = HIT_MASK_CACHE.get(spec.atlasPath)
+                    if (hitMask == null && atlasBitmap != null) {
+                        hitMask = PetAlphaHitMask.fromBitmap(atlasBitmap, spec)
+                        HIT_MASK_CACHE.put(spec.atlasPath, hitMask)
+                    }
+                    AtlasLoadResult(spec, atlasBitmap, hitMask, null)
                 } catch (e: Exception) {
-                    Triple(null, null, e)
+                    AtlasLoadResult(null, null, null, e)
                 }
             }
 
-            val spec = result.first
-            val loadedSheet = result.second
-            val error = result.third
+            val spec = result.spec
+            val loadedSheet = result.bitmap
+            val error = result.error
 
             spriteSheetSpec = spec
             spriteSheetBitmap = loadedSheet
+            spriteHitMask = result.hitMask
             spriteFrameRects.clear()
             if (spec != null) {
                 spriteFrameRects.addAll(buildFrameRects(spec))
@@ -480,16 +490,7 @@ abstract class BaseBehavior(
         // el idle) se comprimen al alto del idle; los bajos (squash, sniff, dormir,
         // gatear) se mantienen a su tamaño natural. Así ningún frame se dibuja más
         // alto que la referencia y las posturas bajas siguen leyéndose como bajas.
-        val frameFrac = if (frameIdx >= 0 && frameIdx < bridge.spriteFrameContentFractions.size) {
-            bridge.spriteFrameContentFractions[frameIdx]
-        } else {
-            0f
-        }
-        val frameScale = if (frameFrac > 0f && bridge.spriteIdleContentFraction > 0f) {
-            (bridge.spriteIdleContentFraction / frameFrac).coerceAtMost(1f)
-        } else {
-            1f
-        }
+        val frameScale = frameOccupancyScale(frameIdx)
         val halfSize = bridge.petSpriteSize * bridge.spriteScale * spriteAtlasDrawScale * frameScale / 2f
         val atlasPivot = spriteSheetSpec?.pivot
         val pivotOffsetX = if (atlasPivot != null && spriteSheetSpec != null) {
@@ -501,10 +502,10 @@ abstract class BaseBehavior(
         canvas.translate(cx + bridge.renderOffsetX + pivotOffsetX, cy + bridge.renderOffsetY + pivotOffsetY)
         canvas.rotate(bridge.renderRotation)
         canvas.scale(bridge.renderScaleX, bridge.renderScaleY)
+        spriteDestinationRect.set(-halfSize, -halfSize, halfSize, halfSize)
         when {
-            bitmap != null -> canvas.drawBitmap(bitmap, null, RectF(-halfSize, -halfSize, halfSize, halfSize), paint)
+            bitmap != null -> canvas.drawBitmap(bitmap, null, spriteDestinationRect, paint)
             spriteSheet != null && srcRect != null -> {
-                val dstRect = RectF(-halfSize, -halfSize, halfSize, halfSize)
                 val bleedInset = spriteBleedInsetPx.coerceAtLeast(0)
                 // Clamp contra el tamaño REAL del atlas: un spec desalineado con
                 // su PNG no debe provocar un drawBitmap fuera de rango (crash).
@@ -515,15 +516,50 @@ abstract class BaseBehavior(
                 val right = (srcRect.right - bleedInset).coerceAtLeast(srcRect.left).coerceAtMost(sheetWidth)
                 val bottom = (srcRect.bottom - bleedInset).coerceAtLeast(srcRect.top).coerceAtMost(sheetHeight)
                 if (right > left && bottom > top) {
-                    val insetSrcRect = Rect(left, top, right, bottom)
+                    spriteInsetSourceRect.set(left, top, right, bottom)
                     val previousFilter = paint.isFilterBitmap
                     paint.isFilterBitmap = spriteFilterBitmap
-                    canvas.drawBitmap(spriteSheet, insetSrcRect, dstRect, paint)
+                    canvas.drawBitmap(spriteSheet, spriteInsetSourceRect, spriteDestinationRect, paint)
                     paint.isFilterBitmap = previousFilter
                 }
             }
         }
         canvas.restore()
+    }
+
+    override fun hitTest(localX: Float, localY: Float, viewWidth: Int, viewHeight: Int): Boolean? {
+        val spec = spriteSheetSpec ?: return null
+        val mask = spriteHitMask ?: return null
+        val frameIndex = bridge.currentFrame.coerceIn(0, spec.frameCount - 1)
+        val frameScale = frameOccupancyScale(frameIndex)
+        val halfSize = bridge.petSpriteSize * bridge.spriteScale * spriteAtlasDrawScale * frameScale / 2f
+        if (halfSize <= 0f) return false
+        val pivot = spec.pivot
+        val pivotOffsetX = pivot?.let { (0.5f - it.x.toFloat() / spec.frameWidth) * 2f * halfSize } ?: 0f
+        val pivotOffsetY = pivot?.let { (0.5f - it.y.toFloat() / spec.frameHeight) * 2f * halfSize } ?: 0f
+        val translatedX = localX - (viewWidth / 2f + bridge.renderOffsetX + pivotOffsetX)
+        val translatedY = localY - (viewHeight / 2f + bridge.renderOffsetY + pivotOffsetY)
+        val radians = Math.toRadians((-bridge.renderRotation).toDouble())
+        val unrotatedX = translatedX * cos(radians).toFloat() - translatedY * sin(radians).toFloat()
+        val unrotatedY = translatedX * sin(radians).toFloat() + translatedY * cos(radians).toFloat()
+        val scaleX = bridge.renderScaleX
+        val scaleY = bridge.renderScaleY
+        if (kotlin.math.abs(scaleX) < MINIMUM_HIT_SCALE || kotlin.math.abs(scaleY) < MINIMUM_HIT_SCALE) return false
+        val spriteX = unrotatedX / scaleX
+        val spriteY = unrotatedY / scaleY
+        val frameX = (((spriteX / halfSize) + 1f) * 0.5f * spec.frameWidth).toInt()
+        val frameY = (((spriteY / halfSize) + 1f) * 0.5f * spec.frameHeight).toInt()
+        return mask.isOpaque(frameIndex, frameX, frameY)
+    }
+
+    private fun frameOccupancyScale(frameIndex: Int): Float {
+        if (spriteSheetSpec?.renderHints?.useFrameOccupancyNormalization == false) return 1f
+        val frameFraction = bridge.spriteFrameContentFractions.getOrNull(frameIndex) ?: 0f
+        return if (frameFraction > 0f && bridge.spriteIdleContentFraction > 0f) {
+            (bridge.spriteIdleContentFraction / frameFraction).coerceAtMost(1f)
+        } else {
+            1f
+        }
     }
 
     private fun moodColorFilter(): ColorMatrixColorFilter? {
@@ -568,6 +604,7 @@ abstract class BaseBehavior(
             spriteSheetBitmap?.recycle()
         }
         spriteSheetBitmap = null
+        spriteHitMask = null
     }
 
     private companion object {
@@ -586,6 +623,10 @@ abstract class BaseBehavior(
             override fun sizeOf(key: String, value: Bitmap): Int = value.byteCount.coerceAtLeast(1)
         }
 
+        val HIT_MASK_CACHE = object : LruCache<String, PetAlphaHitMask>(HIT_MASK_CACHE_MAX_BYTES) {
+            override fun sizeOf(key: String, value: PetAlphaHitMask): Int = value.byteCount.coerceAtLeast(1)
+        }
+
         private val DIRTY_COLOR_FILTER = ColorMatrixColorFilter(
             ColorMatrix().apply { setSaturation(0.85f) }
         )
@@ -596,7 +637,16 @@ abstract class BaseBehavior(
 
         private const val FRAME_CACHE_MAX_BYTES = 24 * 1024 * 1024
         private const val ATLAS_CACHE_MAX_BYTES = 64 * 1024 * 1024
+        private const val HIT_MASK_CACHE_MAX_BYTES = 8 * 1024 * 1024
+        private const val MINIMUM_HIT_SCALE = 0.01f
 
         fun cacheKey(resId: Int, size: Int): Long = (resId.toLong() shl 32) or size.toLong()
     }
 }
+
+private data class AtlasLoadResult(
+    val spec: PetAtlasSpec?,
+    val bitmap: Bitmap?,
+    val hitMask: PetAlphaHitMask?,
+    val error: Exception?,
+)

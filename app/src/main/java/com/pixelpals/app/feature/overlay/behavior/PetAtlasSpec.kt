@@ -80,6 +80,8 @@ data class PetAtlasSpec(
                     recommendedBleedInsetPx = renderHintsJson?.optInt("recommendedBleedInsetPx", 0) ?: 0,
                     filterBitmap = renderHintsJson?.optBoolean("filterBitmap", false) ?: false,
                     drawScale = renderHintsJson?.optDouble("drawScale", 1.0)?.toFloat() ?: 1f,
+                    useFrameOccupancyNormalization =
+                        renderHintsJson?.optBoolean("useFrameOccupancyNormalization", true) ?: true,
                 ),
                 clips = clips,
                 frames = frames
@@ -119,6 +121,8 @@ data class PetAtlasRenderHints(
     val filterBitmap: Boolean = false,
     /** Multiplier applied to the canonical V2 draw size. */
     val drawScale: Float = 1f,
+    /** Legacy fallback for atlases whose camera scale was not normalized at build time. */
+    val useFrameOccupancyNormalization: Boolean = true,
 )
 
 data class PetClipSpec(

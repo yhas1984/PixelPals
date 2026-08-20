@@ -12,6 +12,9 @@ import android.view.MotionEvent
  */
 interface PetBehavior {
 
+    /** True when this behavior, rather than PetView, owns drag and release physics. */
+    val usesRuntimeInput: Boolean get() = false
+
     /** Update idle animation */
     fun updateIdle(dt: Float)
 
@@ -29,6 +32,18 @@ interface PetBehavior {
 
     /** Trigger interaction on tap */
     fun onInteract()
+
+    /** Trigger the pet-specific response to a deliberate press and hold. */
+    fun onHold() { onInteract() }
+    fun onHoldReleased() {}
+
+    fun onDragStart(pointerX: Float, pointerY: Float, grabOffsetX: Float, grabOffsetY: Float) {}
+    fun onDragMove(pointerX: Float, pointerY: Float) {}
+    fun onRelease(velocityX: Float, velocityY: Float) {}
+    fun onGestureCancelled() {}
+
+    /** Returns null while no alpha mask is available, allowing the legacy fallback. */
+    fun hitTest(localX: Float, localY: Float, viewWidth: Int, viewHeight: Int): Boolean? = null
 
     /** Update interaction animation */
     fun updateInteracting(dt: Float)
@@ -52,6 +67,7 @@ interface PetBehavior {
     fun destroy() {}
     fun onTreasureConsumed(emoji: String) {}
     fun onBatteryStatusChanged(percent: Int, isCharging: Boolean) {}
+    fun onBatteryTemperatureChanged(temperatureCelsius: Float?) {}
     fun onKeyboardVisibilityChanged(visible: Boolean, height: Int) {}
     fun onAirplaneModeChanged(isAirplane: Boolean) {}
 }

@@ -12,3 +12,11 @@ class DefaultPetRandom(private val random: Random = Random.Default) : PetRandom 
     override fun nextFloat(): Float = random.nextFloat()
     override fun nextInt(from: Int, until: Int): Int = random.nextInt(from, until)
 }
+
+/** Stable random source for replayable brains and the debug laboratory. */
+class SeededPetRandom(seed: Int) : PetRandom {
+    private val random: Random = Random(seed)
+
+    override fun nextFloat(): Float = random.nextFloat()
+    override fun nextInt(from: Int, until: Int): Int = random.nextInt(from, until)
+}

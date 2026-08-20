@@ -1,8 +1,8 @@
 {
   "petId": "taro",
-  "status": "candidate",
-  "atlasSha256": "a7aa7019728e3ddb8bd2d1f0c87c321452031ea2ab46fb964290edada091f1fa",
-  "specSha256": "1da369093df0293bc977e09d88e8f2649ff0d493983c517af3193202d9a59556",
+  "status": "promoted",
+  "atlasSha256": "fc5947213900e218a177f38b2ac4a508baac2bc320d6efeacceb3b414d379085",
+  "specSha256": "1f9f226de8ea3d13ec2a82dc379d3e381f255a5e0d114759e77a73ed7cee738f",
   "assetValidation": {
     "atlasValidator": "passed, 0 violations",
     "requiredClips": [
@@ -18,26 +18,28 @@
     ]
   },
   "runtimeValidation": {
-    "pureJvm": "48 tests passed",
-    "lintDebug": "passed",
+    "pureJvm": "84/84 tests passed",
+    "lintDebug": "passed with 0 errors and 136 warnings",
     "assembleDebug": "passed",
-    "assembleReleaseR8": "passed, unsigned artifact",
-    "instrumentedApi26": "30/30 passed",
-    "instrumentedApi36": "blocked, adb reports no connected devices"
+    "releaseCompileAndR8": "passed; signed packaging requires the external release storeFile",
+    "instrumentedApi26": "40/40 passed before promotion",
+    "instrumentedApi36": "40/40 passed after promotion",
+    "soakApi36": "30 uninterrupted minutes passed; 0.00% janky frames"
   },
   "visualReview": {
-    "lab": "opened on PixelPals_API26",
+    "lab": "opened on NE2213/API 36",
     "reviewMatrix": {
       "directions": ["right", "left"],
       "speeds": [0.25, 1.0, 2.0]
     },
     "status": "approved by user",
-    "approval": "explicit user visual approval received in chat on 2026-08-15"
+    "approval": "explicit visual and production-promotion approval received in chat on 2026-08-20"
   },
   "promotion": {
     "hashParity": "pipeline, debug and main PNG/JSON are byte-identical",
-    "releaseBehavior": "TaroBehavior V2",
-    "debugBehavior": "TaroBehavior V2",
-    "productionPromotion": "promoted to src/main after explicit user approval; API36 physical validation remains pending"
+    "releaseBehavior": "TaroRuntimeBehavior",
+    "debugBehavior": "TaroRuntimeBehavior",
+    "rollbackBehavior": "legacy TaroBehavior retained",
+    "productionPromotion": "promoted atomically after API 36 technical, visual, performance and soak approval"
   }
 }

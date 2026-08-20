@@ -44,4 +44,22 @@ class PetGestureRecognizerTest {
         recognizer.onDown(100f, 100f)
         assertEquals(PetGestureType.TAP, recognizer.onUp(0f, 0f).type)
     }
+
+    @Test
+    fun holdStartsOnlyAfterTheConfiguredTimeout() {
+        recognizer.onDown(100f, 100f, eventTimeMillis = 1_000L)
+
+        assertEquals(PetGestureType.NONE, recognizer.onTime(1_499L).type)
+        assertEquals(PetGestureType.HOLD_STARTED, recognizer.onTime(1_500L).type)
+        assertEquals(PetGestureType.HOLD_RELEASED, recognizer.onUp(0f, 0f, 1_600L).type)
+    }
+
+    @Test
+    fun dragPreventsTapAndHoldFromCompleting() {
+        recognizer.onDown(100f, 100f, eventTimeMillis = 1_000L)
+        assertEquals(PetGestureType.DRAG_STARTED, recognizer.onMove(120f, 100f, 1_100L).type)
+
+        assertEquals(PetGestureType.NONE, recognizer.onTime(2_000L).type)
+        assertEquals(PetGestureType.RELEASE, recognizer.onUp(0f, 0f, 2_000L).type)
+    }
 }

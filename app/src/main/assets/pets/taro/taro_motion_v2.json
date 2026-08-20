@@ -17,8 +17,11 @@
     "recommendedBleedInsetPx": 1,
     "filterBitmap": true,
     "drawScale": 0.963,
-    "backgroundRemoval": "exterior_white_flood_fill",
-    "sourceCellCompositionPreserved": true
+    "backgroundRemoval": "checker_exterior_flood_and_fringe_erosion",
+    "sourceCellCompositionPreserved": true,
+    "posture": "quadruped",
+    "walkPosture": "quadruped",
+    "useFrameOccupancyNormalization": false
   },
   "qualityPolicy": {
     "maximumInteriorHolePixels": 512,
@@ -133,405 +136,624 @@
   "frames": [
     {
       "index": 0,
-      "name": "idle_00"
+      "name": "idle_00",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/12_quadruped_idle_turn_curiosity_sleep_01.png",
+      "sourceCell": 0
     },
     {
       "index": 1,
-      "name": "idle_01"
+      "name": "idle_01",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/12_quadruped_idle_turn_curiosity_sleep_01.png",
+      "sourceCell": 1
     },
     {
       "index": 2,
-      "name": "idle_02"
+      "name": "idle_02",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/12_quadruped_idle_turn_curiosity_sleep_01.png",
+      "sourceCell": 2
     },
     {
       "index": 3,
-      "name": "idle_03"
+      "name": "idle_03",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/12_quadruped_idle_turn_curiosity_sleep_01.png",
+      "sourceCell": 3
     },
     {
       "index": 4,
-      "name": "walk_00"
+      "name": "walk_00",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/11_walk_quadruped_candidate_01.png",
+      "sourceCell": 0
     },
     {
       "index": 5,
-      "name": "walk_01"
+      "name": "walk_01",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/11_walk_quadruped_candidate_01.png",
+      "sourceCell": 1
     },
     {
       "index": 6,
-      "name": "walk_02"
+      "name": "walk_02",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/11_walk_quadruped_candidate_01.png",
+      "sourceCell": 2
     },
     {
       "index": 7,
-      "name": "walk_03"
+      "name": "walk_03",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/11_walk_quadruped_candidate_01.png",
+      "sourceCell": 3
     },
     {
       "index": 8,
-      "name": "walk_04"
+      "name": "walk_04",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/11_walk_quadruped_candidate_01.png",
+      "sourceCell": 4
     },
     {
       "index": 9,
-      "name": "walk_05"
+      "name": "walk_05",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/11_walk_quadruped_candidate_01.png",
+      "sourceCell": 5
     },
     {
       "index": 10,
-      "name": "walk_06"
+      "name": "walk_06",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/11_walk_quadruped_candidate_01.png",
+      "sourceCell": 6
     },
     {
       "index": 11,
-      "name": "walk_07"
+      "name": "walk_07",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/11_walk_quadruped_candidate_01.png",
+      "sourceCell": 7
     },
     {
       "index": 12,
-      "name": "turn_00"
+      "name": "turn_00",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/12_quadruped_idle_turn_curiosity_sleep_01.png",
+      "sourceCell": 4
     },
     {
       "index": 13,
-      "name": "turn_01"
+      "name": "turn_01",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/12_quadruped_idle_turn_curiosity_sleep_01.png",
+      "sourceCell": 5
     },
     {
       "index": 14,
-      "name": "turn_02"
+      "name": "turn_02",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/12_quadruped_idle_turn_curiosity_sleep_01.png",
+      "sourceCell": 6
     },
     {
       "index": 15,
-      "name": "turn_03"
+      "name": "turn_03",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/12_quadruped_idle_turn_curiosity_sleep_01.png",
+      "sourceCell": 7
     },
     {
       "index": 16,
-      "name": "hide_00"
+      "name": "hide_00",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/13_quadruped_hide_peek_touch_social_01.png",
+      "sourceCell": 0
     },
     {
       "index": 17,
-      "name": "hide_01"
+      "name": "hide_01",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/13_quadruped_hide_peek_touch_social_01.png",
+      "sourceCell": 1
     },
     {
       "index": 18,
-      "name": "hide_02"
+      "name": "hide_02",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/13_quadruped_hide_peek_touch_social_01.png",
+      "sourceCell": 2
     },
     {
       "index": 19,
-      "name": "hide_03"
+      "name": "hide_03",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/13_quadruped_hide_peek_touch_social_01.png",
+      "sourceCell": 3
     },
     {
       "index": 20,
-      "name": "peek_00"
+      "name": "peek_00",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/13_quadruped_hide_peek_touch_social_01.png",
+      "sourceCell": 4
     },
     {
       "index": 21,
-      "name": "peek_01"
+      "name": "peek_01",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/13_quadruped_hide_peek_touch_social_01.png",
+      "sourceCell": 5
     },
     {
       "index": 22,
-      "name": "peek_02"
+      "name": "peek_02",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/13_quadruped_hide_peek_touch_social_01.png",
+      "sourceCell": 6
     },
     {
       "index": 23,
-      "name": "peek_03"
+      "name": "peek_03",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/13_quadruped_hide_peek_touch_social_01.png",
+      "sourceCell": 7
     },
     {
       "index": 24,
-      "name": "front_social_00"
+      "name": "front_social_00",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/13_quadruped_hide_peek_touch_social_01.png",
+      "sourceCell": 12
     },
     {
       "index": 25,
-      "name": "front_social_01"
+      "name": "front_social_01",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/13_quadruped_hide_peek_touch_social_01.png",
+      "sourceCell": 13
     },
     {
       "index": 26,
-      "name": "front_social_02"
+      "name": "front_social_02",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/13_quadruped_hide_peek_touch_social_01.png",
+      "sourceCell": 14
     },
     {
       "index": 27,
-      "name": "front_social_03"
+      "name": "front_social_03",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/13_quadruped_hide_peek_touch_social_01.png",
+      "sourceCell": 15
     },
     {
       "index": 28,
-      "name": "touch_00"
+      "name": "touch_00",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/13_quadruped_hide_peek_touch_social_01.png",
+      "sourceCell": 8
     },
     {
       "index": 29,
-      "name": "touch_01"
+      "name": "touch_01",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/13_quadruped_hide_peek_touch_social_01.png",
+      "sourceCell": 9
     },
     {
       "index": 30,
-      "name": "touch_02"
+      "name": "touch_02",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/13_quadruped_hide_peek_touch_social_01.png",
+      "sourceCell": 10
     },
     {
       "index": 31,
-      "name": "touch_03"
+      "name": "touch_03",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/13_quadruped_hide_peek_touch_social_01.png",
+      "sourceCell": 11
     },
     {
       "index": 32,
-      "name": "sleep_00"
+      "name": "sleep_00",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/12_quadruped_idle_turn_curiosity_sleep_01.png",
+      "sourceCell": 12
     },
     {
       "index": 33,
-      "name": "sleep_01"
+      "name": "sleep_01",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/12_quadruped_idle_turn_curiosity_sleep_01.png",
+      "sourceCell": 13
     },
     {
       "index": 34,
-      "name": "sleep_02"
+      "name": "sleep_02",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/12_quadruped_idle_turn_curiosity_sleep_01.png",
+      "sourceCell": 14
     },
     {
       "index": 35,
-      "name": "sleep_03"
+      "name": "sleep_03",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/12_quadruped_idle_turn_curiosity_sleep_01.png",
+      "sourceCell": 15
     },
     {
       "index": 36,
-      "name": "curiosity_00"
+      "name": "curiosity_00",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/12_quadruped_idle_turn_curiosity_sleep_01.png",
+      "sourceCell": 8
     },
     {
       "index": 37,
-      "name": "curiosity_01"
+      "name": "curiosity_01",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/12_quadruped_idle_turn_curiosity_sleep_01.png",
+      "sourceCell": 9
     },
     {
       "index": 38,
-      "name": "curiosity_02"
+      "name": "curiosity_02",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/12_quadruped_idle_turn_curiosity_sleep_01.png",
+      "sourceCell": 10
     },
     {
       "index": 39,
-      "name": "curiosity_03"
+      "name": "curiosity_03",
+      "poseClass": "quadruped",
+      "source": "tools/taro/pipeline/raw/12_quadruped_idle_turn_curiosity_sleep_01.png",
+      "sourceCell": 11
     }
   ],
   "frameDetails": [
     {
       "index": 0,
       "name": "idle_00",
-      "source": "tools/taro/pipeline/raw/01_idle_breathe.png",
-      "sourceCell": 0
+      "source": "tools/taro/pipeline/raw/12_quadruped_idle_turn_curiosity_sleep_01.png",
+      "sourceCell": 0,
+      "poseClass": "quadruped"
     },
     {
       "index": 1,
       "name": "idle_01",
-      "source": "tools/taro/pipeline/raw/01_idle_breathe.png",
-      "sourceCell": 1
+      "source": "tools/taro/pipeline/raw/12_quadruped_idle_turn_curiosity_sleep_01.png",
+      "sourceCell": 1,
+      "poseClass": "quadruped"
     },
     {
       "index": 2,
       "name": "idle_02",
-      "source": "tools/taro/pipeline/raw/01_idle_breathe.png",
-      "sourceCell": 2
+      "source": "tools/taro/pipeline/raw/12_quadruped_idle_turn_curiosity_sleep_01.png",
+      "sourceCell": 2,
+      "poseClass": "quadruped"
     },
     {
       "index": 3,
       "name": "idle_03",
-      "source": "tools/taro/pipeline/raw/01_idle_breathe.png",
-      "sourceCell": 3
+      "source": "tools/taro/pipeline/raw/12_quadruped_idle_turn_curiosity_sleep_01.png",
+      "sourceCell": 3,
+      "poseClass": "quadruped"
     },
     {
       "index": 4,
       "name": "walk_00",
-      "source": "tools/taro/pipeline/raw/02_walk_a.png",
-      "sourceCell": 0
+      "source": "tools/taro/pipeline/raw/11_walk_quadruped_candidate_01.png",
+      "sourceCell": 0,
+      "poseClass": "quadruped"
     },
     {
       "index": 5,
       "name": "walk_01",
-      "source": "tools/taro/pipeline/raw/02_walk_a.png",
-      "sourceCell": 1
+      "source": "tools/taro/pipeline/raw/11_walk_quadruped_candidate_01.png",
+      "sourceCell": 1,
+      "poseClass": "quadruped"
     },
     {
       "index": 6,
       "name": "walk_02",
-      "source": "tools/taro/pipeline/raw/02_walk_a.png",
-      "sourceCell": 2
+      "source": "tools/taro/pipeline/raw/11_walk_quadruped_candidate_01.png",
+      "sourceCell": 2,
+      "poseClass": "quadruped"
     },
     {
       "index": 7,
       "name": "walk_03",
-      "source": "tools/taro/pipeline/raw/02_walk_a.png",
-      "sourceCell": 3
+      "source": "tools/taro/pipeline/raw/11_walk_quadruped_candidate_01.png",
+      "sourceCell": 3,
+      "poseClass": "quadruped"
     },
     {
       "index": 8,
       "name": "walk_04",
-      "source": "tools/taro/pipeline/raw/03_walk_b.png",
-      "sourceCell": 0
+      "source": "tools/taro/pipeline/raw/11_walk_quadruped_candidate_01.png",
+      "sourceCell": 4,
+      "poseClass": "quadruped"
     },
     {
       "index": 9,
       "name": "walk_05",
-      "source": "tools/taro/pipeline/raw/03_walk_b.png",
-      "sourceCell": 1
+      "source": "tools/taro/pipeline/raw/11_walk_quadruped_candidate_01.png",
+      "sourceCell": 5,
+      "poseClass": "quadruped"
     },
     {
       "index": 10,
       "name": "walk_06",
-      "source": "tools/taro/pipeline/raw/03_walk_b.png",
-      "sourceCell": 2
+      "source": "tools/taro/pipeline/raw/11_walk_quadruped_candidate_01.png",
+      "sourceCell": 6,
+      "poseClass": "quadruped"
     },
     {
       "index": 11,
       "name": "walk_07",
-      "source": "tools/taro/pipeline/raw/03_walk_b.png",
-      "sourceCell": 3
+      "source": "tools/taro/pipeline/raw/11_walk_quadruped_candidate_01.png",
+      "sourceCell": 7,
+      "poseClass": "quadruped"
     },
     {
       "index": 12,
       "name": "turn_00",
-      "source": "tools/taro/pipeline/raw/04_turn_in_place.png",
-      "sourceCell": 0
+      "source": "tools/taro/pipeline/raw/12_quadruped_idle_turn_curiosity_sleep_01.png",
+      "sourceCell": 4,
+      "poseClass": "quadruped"
     },
     {
       "index": 13,
       "name": "turn_01",
-      "source": "tools/taro/pipeline/raw/04_turn_in_place.png",
-      "sourceCell": 1
+      "source": "tools/taro/pipeline/raw/12_quadruped_idle_turn_curiosity_sleep_01.png",
+      "sourceCell": 5,
+      "poseClass": "quadruped"
     },
     {
       "index": 14,
       "name": "turn_02",
-      "source": "tools/taro/pipeline/raw/04_turn_in_place.png",
-      "sourceCell": 2
+      "source": "tools/taro/pipeline/raw/12_quadruped_idle_turn_curiosity_sleep_01.png",
+      "sourceCell": 6,
+      "poseClass": "quadruped"
     },
     {
       "index": 15,
       "name": "turn_03",
-      "source": "tools/taro/pipeline/raw/04_turn_in_place.png",
-      "sourceCell": 3
+      "source": "tools/taro/pipeline/raw/12_quadruped_idle_turn_curiosity_sleep_01.png",
+      "sourceCell": 7,
+      "poseClass": "quadruped"
     },
     {
       "index": 16,
       "name": "hide_00",
-      "source": "tools/taro/pipeline/raw/05_hide_shell.png",
-      "sourceCell": 0
+      "source": "tools/taro/pipeline/raw/13_quadruped_hide_peek_touch_social_01.png",
+      "sourceCell": 0,
+      "poseClass": "quadruped"
     },
     {
       "index": 17,
       "name": "hide_01",
-      "source": "tools/taro/pipeline/raw/05_hide_shell.png",
-      "sourceCell": 1
+      "source": "tools/taro/pipeline/raw/13_quadruped_hide_peek_touch_social_01.png",
+      "sourceCell": 1,
+      "poseClass": "quadruped"
     },
     {
       "index": 18,
       "name": "hide_02",
-      "source": "tools/taro/pipeline/raw/05_hide_shell.png",
-      "sourceCell": 2
+      "source": "tools/taro/pipeline/raw/13_quadruped_hide_peek_touch_social_01.png",
+      "sourceCell": 2,
+      "poseClass": "quadruped"
     },
     {
       "index": 19,
       "name": "hide_03",
-      "source": "tools/taro/pipeline/raw/05_hide_shell.png",
-      "sourceCell": 3
+      "source": "tools/taro/pipeline/raw/13_quadruped_hide_peek_touch_social_01.png",
+      "sourceCell": 3,
+      "poseClass": "quadruped"
     },
     {
       "index": 20,
       "name": "peek_00",
-      "source": "tools/taro/pipeline/raw/06_peek_out.png",
-      "sourceCell": 0
+      "source": "tools/taro/pipeline/raw/13_quadruped_hide_peek_touch_social_01.png",
+      "sourceCell": 4,
+      "poseClass": "quadruped"
     },
     {
       "index": 21,
       "name": "peek_01",
-      "source": "tools/taro/pipeline/raw/06_peek_out.png",
-      "sourceCell": 1
+      "source": "tools/taro/pipeline/raw/13_quadruped_hide_peek_touch_social_01.png",
+      "sourceCell": 5,
+      "poseClass": "quadruped"
     },
     {
       "index": 22,
       "name": "peek_02",
-      "source": "tools/taro/pipeline/raw/06_peek_out.png",
-      "sourceCell": 2
+      "source": "tools/taro/pipeline/raw/13_quadruped_hide_peek_touch_social_01.png",
+      "sourceCell": 6,
+      "poseClass": "quadruped"
     },
     {
       "index": 23,
       "name": "peek_03",
-      "source": "tools/taro/pipeline/raw/06_peek_out.png",
-      "sourceCell": 3
+      "source": "tools/taro/pipeline/raw/13_quadruped_hide_peek_touch_social_01.png",
+      "sourceCell": 7,
+      "poseClass": "quadruped"
     },
     {
       "index": 24,
       "name": "front_social_00",
-      "source": "tools/taro/pipeline/raw/07_front_social.png",
-      "sourceCell": 0
+      "source": "tools/taro/pipeline/raw/13_quadruped_hide_peek_touch_social_01.png",
+      "sourceCell": 12,
+      "poseClass": "quadruped"
     },
     {
       "index": 25,
       "name": "front_social_01",
-      "source": "tools/taro/pipeline/raw/07_front_social.png",
-      "sourceCell": 1
+      "source": "tools/taro/pipeline/raw/13_quadruped_hide_peek_touch_social_01.png",
+      "sourceCell": 13,
+      "poseClass": "quadruped"
     },
     {
       "index": 26,
       "name": "front_social_02",
-      "source": "tools/taro/pipeline/raw/07_front_social.png",
-      "sourceCell": 2
+      "source": "tools/taro/pipeline/raw/13_quadruped_hide_peek_touch_social_01.png",
+      "sourceCell": 14,
+      "poseClass": "quadruped"
     },
     {
       "index": 27,
       "name": "front_social_03",
-      "source": "tools/taro/pipeline/raw/07_front_social.png",
-      "sourceCell": 3
+      "source": "tools/taro/pipeline/raw/13_quadruped_hide_peek_touch_social_01.png",
+      "sourceCell": 15,
+      "poseClass": "quadruped"
     },
     {
       "index": 28,
       "name": "touch_00",
-      "source": "tools/taro/pipeline/raw/08_touch_recover.png",
-      "sourceCell": 0
+      "source": "tools/taro/pipeline/raw/13_quadruped_hide_peek_touch_social_01.png",
+      "sourceCell": 8,
+      "poseClass": "quadruped"
     },
     {
       "index": 29,
       "name": "touch_01",
-      "source": "tools/taro/pipeline/raw/08_touch_recover.png",
-      "sourceCell": 1
+      "source": "tools/taro/pipeline/raw/13_quadruped_hide_peek_touch_social_01.png",
+      "sourceCell": 9,
+      "poseClass": "quadruped"
     },
     {
       "index": 30,
       "name": "touch_02",
-      "source": "tools/taro/pipeline/raw/08_touch_recover.png",
-      "sourceCell": 2
+      "source": "tools/taro/pipeline/raw/13_quadruped_hide_peek_touch_social_01.png",
+      "sourceCell": 10,
+      "poseClass": "quadruped"
     },
     {
       "index": 31,
       "name": "touch_03",
-      "source": "tools/taro/pipeline/raw/08_touch_recover.png",
-      "sourceCell": 3
+      "source": "tools/taro/pipeline/raw/13_quadruped_hide_peek_touch_social_01.png",
+      "sourceCell": 11,
+      "poseClass": "quadruped"
     },
     {
       "index": 32,
       "name": "sleep_00",
-      "source": "tools/taro/pipeline/raw/09_sleep.png",
-      "sourceCell": 0
+      "source": "tools/taro/pipeline/raw/12_quadruped_idle_turn_curiosity_sleep_01.png",
+      "sourceCell": 12,
+      "poseClass": "quadruped"
     },
     {
       "index": 33,
       "name": "sleep_01",
-      "source": "tools/taro/pipeline/raw/09_sleep.png",
-      "sourceCell": 1
+      "source": "tools/taro/pipeline/raw/12_quadruped_idle_turn_curiosity_sleep_01.png",
+      "sourceCell": 13,
+      "poseClass": "quadruped"
     },
     {
       "index": 34,
       "name": "sleep_02",
-      "source": "tools/taro/pipeline/raw/09_sleep.png",
-      "sourceCell": 2
+      "source": "tools/taro/pipeline/raw/12_quadruped_idle_turn_curiosity_sleep_01.png",
+      "sourceCell": 14,
+      "poseClass": "quadruped"
     },
     {
       "index": 35,
       "name": "sleep_03",
-      "source": "tools/taro/pipeline/raw/09_sleep.png",
-      "sourceCell": 3
+      "source": "tools/taro/pipeline/raw/12_quadruped_idle_turn_curiosity_sleep_01.png",
+      "sourceCell": 15,
+      "poseClass": "quadruped"
     },
     {
       "index": 36,
       "name": "curiosity_00",
-      "source": "tools/taro/pipeline/raw/10_garden_curiosity.png",
-      "sourceCell": 0
+      "source": "tools/taro/pipeline/raw/12_quadruped_idle_turn_curiosity_sleep_01.png",
+      "sourceCell": 8,
+      "poseClass": "quadruped"
     },
     {
       "index": 37,
       "name": "curiosity_01",
-      "source": "tools/taro/pipeline/raw/10_garden_curiosity.png",
-      "sourceCell": 1
+      "source": "tools/taro/pipeline/raw/12_quadruped_idle_turn_curiosity_sleep_01.png",
+      "sourceCell": 9,
+      "poseClass": "quadruped"
     },
     {
       "index": 38,
       "name": "curiosity_02",
-      "source": "tools/taro/pipeline/raw/10_garden_curiosity.png",
-      "sourceCell": 2
+      "source": "tools/taro/pipeline/raw/12_quadruped_idle_turn_curiosity_sleep_01.png",
+      "sourceCell": 10,
+      "poseClass": "quadruped"
     },
     {
       "index": 39,
       "name": "curiosity_03",
-      "source": "tools/taro/pipeline/raw/10_garden_curiosity.png",
-      "sourceCell": 3
+      "source": "tools/taro/pipeline/raw/12_quadruped_idle_turn_curiosity_sleep_01.png",
+      "sourceCell": 11,
+      "poseClass": "quadruped"
+    }
+  ],
+  "locomotion": {
+    "walk": {
+      "posture": "quadruped",
+      "cycleDisplacementPx": 141.12,
+      "plantFrames": [
+        4,
+        6,
+        8,
+        10
+      ]
+    }
+  },
+  "contactAnchors": [
+    {
+      "clip": "idle",
+      "bottomTolerance": 3,
+      "centerTolerance": 3
+    },
+    {
+      "clip": "walk",
+      "bottomTolerance": 3,
+      "centerTolerance": 3
+    },
+    {
+      "clip": "turn",
+      "bottomTolerance": 3,
+      "centerTolerance": 3
+    },
+    {
+      "clip": "hide",
+      "bottomTolerance": 3,
+      "centerTolerance": 3
+    },
+    {
+      "clip": "peek",
+      "bottomTolerance": 3,
+      "centerTolerance": 3
+    },
+    {
+      "clip": "front_social",
+      "bottomTolerance": 3,
+      "centerTolerance": 3
+    },
+    {
+      "clip": "touch",
+      "bottomTolerance": 3,
+      "centerTolerance": 3
+    },
+    {
+      "clip": "sleep",
+      "bottomTolerance": 3,
+      "centerTolerance": 3
+    },
+    {
+      "clip": "curiosity",
+      "bottomTolerance": 3,
+      "centerTolerance": 3
     }
   ]
 }

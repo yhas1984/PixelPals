@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-08-20",
+  "branch": "codex/pet-runtime-yuki-v2",
+  "baseCommit": "645517b697e144820825729c107b77530da2c61b",
+  "releaseImplementation": "YukiBehavior legacy implementation",
+  "debugImplementation": "YukiRuntimeBehavior candidate",
+  "productionChanged": false,
+  "approval": "technical candidate only; explicit user visual approval is still required before release promotion",
+  "contract": {
+    "locomotion": "GROUND",
+    "walkSpeedPixelsPerSecond": 70,
+    "maximumFlingPixelsPerSecond": 1800,
+    "personality": ["curious", "dreamy"],
+    "thermalMeltEnterCelsius": 40,
+    "thermalMeltExitCelsius": 38,
+    "thermalHysteresis": true
+  },
+  "assets": {
+    "productionPngSha256": "dcc18b63d95fdba965013e163df5accb72e4afafe8a4af60d2e8c83abb83b7c1",
+    "productionManifestSha256": "d0632c1228f6324d0ea0c4f977d6f7f2e2ff1eaf4ab5777720230c5b7e2ee1b6",
+    "frameCount": 16,
+    "requiredClips": ["idle", "blink", "walk", "jump", "happy", "melt", "touch", "sleep"],
+    "assetValidation": "16/16 Yuki frames passed as part of the 280-frame production asset validation"
+  },
+  "automatedValidation": {
+    "jvm": "89/89 passed",
+    "yukiRuntimeBrain": "5/5 focused tests passed, including thermal hysteresis, bounds, interactions, fling recovery and clip reachability",
+    "pipeline": "6/6 passed",
+    "productionAssets": "280/280 frames passed",
+    "lint": "0 errors; 135 warnings",
+    "assembleDebug": "passed",
+    "releaseCompileAndR8": "passed; signed packageRelease still requires the external release storeFile",
+    "ne2213Api36YukiSmoke": "passed with the debug YukiRuntimeBehavior candidate active"
+  },
+  "physicalDeviceValidation": {
+    "device": "NE2213",
+    "api": 36,
+    "activity": "PetAtlasLabActivity",
+    "implementation": "YukiRuntimeBehavior debug candidate",
+    "pid": 32571,
+    "focusStable": true,
+    "tap": "passed; CURIOSITY/FLOOR selected the happy clip",
+    "hold": "passed; TOUCH/FLOOR selected the touch clip",
+    "drag": "passed; AIRBORNE/FLOOR selected jump with bounded vertical velocity",
+    "fling": "passed; AIRBORNE/FLOOR used bounded velocity and recovered to IDLE/FLOOR",
+    "thermalEnter": "passed; 40 C entered MELT/FLOOR and selected the melt clip",
+    "thermalExit": "passed; 38 C exited MELT and returned to IDLE/FLOOR",
+    "runtimeErrors": "crash buffer empty; no ANR observed"
+  },
+  "currentFramePerformance": {
+    "device": "NE2213",
+    "api": 36,
+    "viewRoots": [
+      {
+        "framesRendered": 27339,
+        "jankyFrames": 10,
+        "jankyFramePercent": 0.04,
+        "frameTimeMillis": {"p50": 6, "p90": 7, "p95": 8, "p99": 9},
+        "missedVsync": 7,
+        "frameDeadlineMissed": 10
+      },
+      {
+        "framesRendered": 26791,
+        "jankyFrames": 3,
+        "jankyFramePercent": 0.01,
+        "frameTimeMillis": {"p50": 6, "p90": 7, "p95": 8, "p99": 9},
+        "missedVsync": 2,
+        "frameDeadlineMissed": 3
+      }
+    ],
+    "memory": {
+      "totalPssKilobytes": 79433,
+      "totalRssKilobytes": 200968,
+      "totalSwapPssKilobytes": 38224
+    },
+    "result": "passed for Gate 1 interactive physical validation; no endurance soak claimed"
+  },
+  "promotion": {
+    "status": "blocked pending explicit visual approval",
+    "releaseFactory": "PetBehaviorFactory continues to select YukiBehavior",
+    "debugFactory": "BuildVariantPetBehaviorFactory selects YukiRuntimeBehavior",
+    "rollback": "release behavior and production assets remain unchanged"
+  },
+  "remainingGates": [
+    "User visual approval on the physical NE2213 review",
+    "Explicit authorization to promote YukiRuntimeBehavior to the release factory",
+    "Post-promotion full instrumented regression and release verification"
+  ]
+}

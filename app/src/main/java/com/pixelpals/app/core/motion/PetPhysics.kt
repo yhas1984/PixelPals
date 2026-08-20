@@ -72,11 +72,16 @@ data class PhysicsConfig(
 
 /** Cuerpo físico en coordenadas LÓGICAS del sprite (esquina superior izquierda). */
 data class PhysicsBody(
-    var x: Float,
-    var y: Float,
-    var velocityX: Float,
-    var velocityY: Float
-)
+    val x: Float,
+    val y: Float,
+    val velocityX: Float,
+    val velocityY: Float
+) {
+    init {
+        require(x.isFinite() && y.isFinite()) { "Physics position must be finite" }
+        require(velocityX.isFinite() && velocityY.isFinite()) { "Physics velocity must be finite" }
+    }
+}
 
 enum class PhysicsEvent {
     /** El cuerpo sigue en movimiento. */
@@ -85,6 +90,11 @@ enum class PhysicsEvent {
     /** El cuerpo se detuvo (y se reacopló al perímetro si el perfil lo exige). */
     SETTLED
 }
+
+data class PhysicsStepResult(
+    val body: PhysicsBody,
+    val event: PhysicsEvent,
+)
 
 /**
  * Motor físico puro (sin dependencias de Android): integración semiimplícita,
@@ -97,63 +107,58 @@ object PetPhysics {
         dt: Float,
         bounds: PetBounds,
         profile: PhysicsProfile
-    ): PhysicsEvent {
+    ): PhysicsStepResult {
+        require(dt >= 0f && dt.isFinite()) { "Physics delta must be finite and non-negative" }
         val config = profile.config
-        body.velocityY += config.gravity * dt
-
         val dragFactor = (1f - config.airDrag * dt).coerceAtLeast(0f)
-        body.velocityX *= dragFactor
-        body.velocityY *= dragFactor
-
-        body.x += body.velocityX * dt
-        body.y += body.velocityY * dt
-
-        if (body.x < bounds.left) {
-            body.x = bounds.left.toFloat()
-            body.velocityX = -body.velocityX * config.bounceX
-        } else if (body.x > bounds.right) {
-            body.x = bounds.right.toFloat()
-            body.velocityX = -body.velocityX * config.bounceX
+        var velocityX: Float = body.velocityX * dragFactor
+        var velocityY: Float = (body.velocityY + config.gravity * dt) * dragFactor
+        var positionX: Float = body.x + velocityX * dt
+        var positionY: Float = body.y + velocityY * dt
+        if (positionX < bounds.left) {
+            positionX = bounds.left.toFloat()
+            velocityX = -velocityX * config.bounceX
+        } else if (positionX > bounds.right) {
+            positionX = bounds.right.toFloat()
+            velocityX = -velocityX * config.bounceX
         }
-
-        if (body.y < bounds.top) {
-            body.y = bounds.top.toFloat()
-            body.velocityY = -body.velocityY * config.bounceY
-        } else if (body.y > bounds.floor) {
-            body.y = bounds.floor.toFloat()
-            if (body.velocityY > 0f) {
-                body.velocityY = -body.velocityY * config.bounceY
-                body.velocityX *= (1f - config.groundFriction * dt).coerceAtLeast(0f)
+        if (positionY < bounds.top) {
+            positionY = bounds.top.toFloat()
+            velocityY = -velocityY * config.bounceY
+        } else if (positionY > bounds.floor) {
+            positionY = bounds.floor.toFloat()
+            if (velocityY > 0f) {
+                velocityY = -velocityY * config.bounceY
+                velocityX *= (1f - config.groundFriction * dt).coerceAtLeast(0f)
             }
         }
-
-        val speed = hypot(body.velocityX, body.velocityY)
-        val onFloor = body.y >= bounds.floor - 1f
-        val settled = if (config.requireFloorToRest) {
+        val speed: Float = hypot(velocityX, velocityY)
+        val onFloor: Boolean = positionY >= bounds.floor - 1f
+        val isSettled: Boolean = if (config.requireFloorToRest) {
             onFloor && speed < config.restVelocity
         } else {
             speed < config.restVelocity
         }
-        if (!settled) return PhysicsEvent.MOVING
-
-        if (config.snapToEdge) snapToNearestEdge(body, bounds)
-        return PhysicsEvent.SETTLED
+        val movingBody: PhysicsBody = PhysicsBody(positionX, positionY, velocityX, velocityY)
+        if (!isSettled) return PhysicsStepResult(movingBody, PhysicsEvent.MOVING)
+        val settledBody: PhysicsBody = if (config.snapToEdge) snapToNearestEdge(movingBody, bounds) else {
+            movingBody.copy(velocityX = 0f, velocityY = 0f)
+        }
+        return PhysicsStepResult(settledBody, PhysicsEvent.SETTLED)
     }
 
     /** Reacopla el cuerpo al lado del perímetro más cercano (trepadoras). */
-    private fun snapToNearestEdge(body: PhysicsBody, bounds: PetBounds) {
+    private fun snapToNearestEdge(body: PhysicsBody, bounds: PetBounds): PhysicsBody {
         val left = body.x - bounds.left
         val right = bounds.right - body.x
         val top = body.y - bounds.top
         val bottom = bounds.floor - body.y
         val minDistance = minOf(left, right, top, bottom)
-        when (minDistance) {
-            left -> body.x = bounds.left.toFloat()
-            right -> body.x = bounds.right.toFloat()
-            top -> body.y = bounds.top.toFloat()
-            else -> body.y = bounds.floor.toFloat()
+        return when (minDistance) {
+            left -> body.copy(x = bounds.left.toFloat(), velocityX = 0f, velocityY = 0f)
+            right -> body.copy(x = bounds.right.toFloat(), velocityX = 0f, velocityY = 0f)
+            top -> body.copy(y = bounds.top.toFloat(), velocityX = 0f, velocityY = 0f)
+            else -> body.copy(y = bounds.floor.toFloat(), velocityX = 0f, velocityY = 0f)
         }
-        body.velocityX = 0f
-        body.velocityY = 0f
     }
 }

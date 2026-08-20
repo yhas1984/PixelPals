@@ -5,7 +5,7 @@ import com.pixelpals.app.core.motion.PetAnimationClip
 import com.pixelpals.app.core.motion.PetAnimationPlayer
 import com.pixelpals.app.core.motion.PetRandom
 
-/** Production behavior for Taro's approved V2 atlas. */
+/** Legacy rollback behavior retained until the Runtime V2 release is established. */
 internal class TaroBehavior(
     bridge: PetViewBridge,
     override val random: PetRandom,

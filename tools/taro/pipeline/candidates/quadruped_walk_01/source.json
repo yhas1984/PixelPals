@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "candidate": "quadruped_walk_01",
+  "createdAt": "2026-08-20",
+  "generator": "integrated image_gen",
+  "source": "tools/taro/pipeline/raw/11_walk_quadruped_candidate_01.png",
+  "sourceSha256": "4efe3493bcc5054de57965e6be07e316fcb480351f14e7143e36a9e739125bd7",
+  "references": [
+    "tools/taro/pipeline/atlas_v2/frames/taro_12_turn_00.png",
+    "tools/taro/pipeline/atlas_v2/taro_motion_v2_preview.png"
+  ],
+  "prompt": "Create one clean 4-by-2 sprite pose sheet containing exactly eight sequential walk-cycle poses of Taro, all shown in right-facing side profile and walking naturally like a real quadruped turtle. Preserve the approved face, eyes, colors, shell pattern, proportions, rendering style, camera and lighting. In every pose the torso and shell remain low and nearly horizontal, the belly stays close to the ground, the head projects forward, and all four legs function as turtle legs. Alternate diagonal leg pairs through contact, passing, lift and plant phases. Use equal square cells, consistent scale and baseline, generous transparent padding, no shadows, floor, labels, grid, text or watermark. Never use an upright, bipedal or humanoid posture and never duplicate, detach or omit limbs."
+}

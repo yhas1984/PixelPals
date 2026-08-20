@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-08-20",
+  "branch": "codex/pet-runtime-yuki-v2",
+  "baseCommit": "645517b697e144820825729c107b77530da2c61b",
+  "releaseImplementation": "TaroRuntimeBehavior with the approved fully quadruped 40-frame atlas",
+  "debugImplementation": "TaroRuntimeBehavior with the approved fully quadruped 40-frame atlas",
+  "locomotionTuning": {
+    "walkSpeedPixelsPerSecond": 42,
+    "runtimeMotionSpeedMultiplier": 2,
+    "effectiveWalkSpeedPixelsPerSecond": 84,
+    "animationFrameDurationScaledByRuntime": true,
+    "releaseImplementationChanged": true
+  },
+  "productionChanged": true,
+  "approval": "explicit visual and production-promotion approval received from the user on 2026-08-20",
+  "assets": {
+    "productionPngSha256": "fc5947213900e218a177f38b2ac4a508baac2bc320d6efeacceb3b414d379085",
+    "productionManifestSha256": "1f9f226de8ea3d13ec2a82dc379d3e381f255a5e0d114759e77a73ed7cee738f",
+    "debugCandidatePngSha256": "fc5947213900e218a177f38b2ac4a508baac2bc320d6efeacceb3b414d379085",
+    "debugCandidateManifestSha256": "1f9f226de8ea3d13ec2a82dc379d3e381f255a5e0d114759e77a73ed7cee738f",
+    "posture": "quadruped in every clip",
+    "assetValidation": "40/40 frames passed"
+  },
+  "automatedValidation": {
+    "jvm": "84/84 passed after production promotion",
+    "pipeline": "6/6 passed",
+    "productionAssets": "280/280 frames passed",
+    "lint": "0 errors; 136 warnings",
+    "assembleDebug": "passed",
+    "releaseCompileAndR8": "passed after production promotion",
+    "signedReleasePackage": {
+      "status": "passed",
+      "artifact": "app/build/outputs/apk/release/app-release.apk",
+      "sha256": "b76e9fbbfed95ca2b69e4cfd03473bc71b016be556b54a3a5ef1f3186ed83e97",
+      "signatureScheme": "v2",
+      "signerCount": 1,
+      "certificateSubject": "CN=YmiyDev, O=YmiyDev, C=DO",
+      "certificateSha256": "83f35ea0c25d3e65f6aa2fa9fe03744b4a94e5a4cb4b6aa37722320b6af1b2a9"
+    },
+    "api26Instrumented": "40/40 passed",
+    "ne2213Api36Instrumented": "40/40 passed"
+  },
+  "physicalDeviceValidation": {
+    "device": "NE2213",
+    "api": 36,
+    "overlayPermission": "allowed",
+    "transparentHitMask": "passed; a touch outside the opaque silhouette reached the launcher",
+    "tap": "touch -> hide -> peek -> front_social -> idle completed",
+    "hold": "completed once with social response",
+    "drag": {
+      "fingerDeltaPx": [-89, -552],
+      "windowDeltaPx": [-87, -540],
+      "maximumVisualLagPx": 12,
+      "result": "passed"
+    },
+    "fling": {
+      "beforeWindow": [338, 2604],
+      "airborneWindow": [710, 149],
+      "recoveredWindow": [249, 2604],
+      "result": "passed; recovered inside floor bounds"
+    },
+    "posture": "quadruped during autonomous movement, interaction, drag, airborne and recovery",
+    "runtimeErrors": "no crash, ANR, BadTokenException or orphan overlay observed"
+  },
+  "currentFramePerformance": {
+    "device": "NE2213",
+    "api": 36,
+    "implementation": "Taro PetRuntime in PetAtlasLabActivity",
+    "framesRendered": 221466,
+    "jankyFrames": 0,
+    "jankyFramePercent": 0.0,
+    "frameTimeMillis": {
+      "p50": 6,
+      "p90": 7,
+      "p95": 8,
+      "p99": 8
+    },
+    "missedVsync": 0,
+    "slowUiThread": 0,
+    "slowBitmapUploads": 0,
+    "frameDeadlineMissed": 0,
+    "result": "passed"
+  },
+  "priorSoakTrial": {
+    "device": "NE2213",
+    "api": 36,
+    "continuousForegroundMinutes": 23,
+    "interruptedAtMinute": 24,
+    "interruption": "another application took foreground focus",
+    "pidStable": true,
+    "pssKilobytesRange": [74403, 75915],
+    "rssKilobytesRange": [76666, 78251],
+    "crashOrAnrObserved": false,
+    "result": "partial; repeat an uninterrupted 30-minute run"
+  },
+  "soakValidation": {
+    "device": "NE2213",
+    "api": 36,
+    "implementation": "Taro PetRuntime in PetAtlasLabActivity",
+    "continuousForegroundMinutes": 30,
+    "foregroundSamples": 31,
+    "pid": 20385,
+    "pidStable": true,
+    "focusStable": true,
+    "pssKilobytesRange": [74126, 84360],
+    "pssKilobytesFinal": 74835,
+    "rssKilobytesRange": [76557, 80158],
+    "crashOrAnrObserved": false,
+    "result": "passed"
+  },
+  "promotion": {
+    "status": "complete",
+    "factory": "PetBehaviorFactory selects TaroRuntimeBehavior for every build variant",
+    "assetParity": "full candidate, canonical pipeline, debug and main PNG/JSON are byte-identical",
+    "rollback": "legacy TaroBehavior remains available for an atomic factory rollback"
+  },
+  "remainingGates": []
+}
