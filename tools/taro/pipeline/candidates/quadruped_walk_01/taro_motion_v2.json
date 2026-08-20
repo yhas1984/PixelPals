@@ -40,6 +40,14 @@
       "frameDurationMs": 900
     },
     {
+      "id": "idle_front",
+      "frames": [
+        24
+      ],
+      "loop": true,
+      "frameDurationMs": 900
+    },
+    {
       "id": "walk",
       "frames": [
         4,
@@ -63,7 +71,7 @@
         15
       ],
       "loop": false,
-      "frameDurationMs": 420
+      "frameDurationMs": 300
     },
     {
       "id": "hide",
@@ -74,7 +82,7 @@
         19
       ],
       "loop": false,
-      "frameDurationMs": 650
+      "frameDurationMs": 300
     },
     {
       "id": "peek",
@@ -85,7 +93,7 @@
         23
       ],
       "loop": false,
-      "frameDurationMs": 520
+      "frameDurationMs": 280
     },
     {
       "id": "front_social",
@@ -96,7 +104,7 @@
         27
       ],
       "loop": false,
-      "frameDurationMs": 650
+      "frameDurationMs": 350
     },
     {
       "id": "touch",
@@ -107,7 +115,7 @@
         31
       ],
       "loop": false,
-      "frameDurationMs": 360
+      "frameDurationMs": 220
     },
     {
       "id": "sleep",
@@ -129,7 +137,7 @@
         39
       ],
       "loop": false,
-      "frameDurationMs": 700
+      "frameDurationMs": 360
     }
   ],
   "frames": [

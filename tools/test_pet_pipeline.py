@@ -149,10 +149,39 @@ class PetPipelineTest(unittest.TestCase):
         )
         self.assertTrue(report["passed"], report["violations"])
         spec = json.loads((candidate / "taro_motion_v2.json").read_text(encoding="utf-8"))
-        self.assertEqual(spec["renderHints"]["posture"], "quadruped")
+        self.assertEqual(spec["renderHints"]["posture"], "quadruped_with_front_playful_social")
         self.assertEqual(spec["renderHints"]["walkPosture"], "quadruped")
-        self.assertTrue(all(frame["poseClass"] == "quadruped" for frame in spec["frames"]))
-        self.assertTrue(all(frame["poseClass"] == "quadruped" for frame in spec["frameDetails"]))
+        expected_pose_classes = ["playful_front" if index in range(24, 28) else "quadruped" for index in range(40)]
+        self.assertEqual([frame["poseClass"] for frame in spec["frames"]], expected_pose_classes)
+        self.assertEqual([frame["poseClass"] for frame in spec["frameDetails"]], expected_pose_classes)
+        playful_clips = {
+            clip["id"]: clip
+            for clip in spec["clips"]
+            if str(clip["id"]).startswith("playful_")
+        }
+        self.assertEqual(
+            playful_clips,
+            {
+                "playful_wave": {
+                    "id": "playful_wave",
+                    "frames": [24, 25, 25, 24],
+                    "loop": False,
+                    "frameDurationMs": 300,
+                },
+                "playful_delight": {
+                    "id": "playful_delight",
+                    "frames": [24, 26, 26, 24],
+                    "loop": False,
+                    "frameDurationMs": 300,
+                },
+                "playful_surprise": {
+                    "id": "playful_surprise",
+                    "frames": [24, 27, 27, 24],
+                    "loop": False,
+                    "frameDurationMs": 300,
+                },
+            },
+        )
         self.assertEqual(
             [frame["source"] for frame in spec["frames"]],
             [frame["source"] for frame in spec["frameDetails"]],

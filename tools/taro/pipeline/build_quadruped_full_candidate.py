@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build a fully quadruped Taro candidate without modifying production assets."""
+"""Build Taro's runtime candidate with quadruped locomotion and playful social frames."""
 
 from __future__ import annotations
 
@@ -24,6 +24,7 @@ from pet_pipeline import validate_atlas, write_previews
 WALK_SHEET = ROOT / "tools/taro/pipeline/raw/11_walk_quadruped_candidate_01.png"
 CALM_SHEET = ROOT / "tools/taro/pipeline/raw/12_quadruped_idle_turn_curiosity_sleep_01.png"
 SOCIAL_SHEET = ROOT / "tools/taro/pipeline/raw/13_quadruped_hide_peek_touch_social_01.png"
+PLAYFUL_SHEET = ROOT / "tools/taro/taro_atlas_preview.png"
 BASE_ATLAS = ROOT / "app/src/main/assets/pets/taro/taro_motion_v2.png"
 BASE_SPEC = ROOT / "app/src/main/assets/pets/taro/taro_motion_v2.json"
 CANDIDATE_DIR = ROOT / "tools/taro/pipeline/candidates/quadruped_full_02"
@@ -53,6 +54,8 @@ SOCIAL_FRAME_ROWS = (
     (28, 29, 30, 31),
     (24, 25, 26, 27),
 )
+PLAYFUL_RUNTIME_FRAMES = (24, 25, 26, 27)
+PLAYFUL_SOURCE_CELLS = (8, 9, 10, 11)
 
 
 def exterior_mask(matches_background: np.ndarray) -> np.ndarray:
@@ -150,6 +153,23 @@ def remove_checker_background(cell: Image.Image) -> Image.Image:
     return Image.fromarray(rgba, "RGBA")
 
 
+def tighten_alpha(cell: Image.Image) -> Image.Image:
+    """Remove one remaining checker fringe from the supplied preview poses."""
+    rgba = np.asarray(cell.convert("RGBA")).copy()
+    mask = rgba[:, :, 3] > 8
+    padded = np.pad(mask, 1, constant_values=False)
+    eroded = np.ones_like(mask, dtype=bool)
+    for delta_y in range(3):
+        for delta_x in range(3):
+            eroded &= padded[
+                delta_y : delta_y + mask.shape[0],
+                delta_x : delta_x + mask.shape[1],
+            ]
+    rgba[:, :, 3] = eroded.astype(np.uint8) * 255
+    rgba[~eroded, :3] = 0
+    return Image.fromarray(rgba, "RGBA")
+
+
 def fixed_cells(sheet_path: Path, columns: int, rows: int, has_alpha: bool) -> list[Image.Image]:
     sheet = Image.open(sheet_path)
     cell_width = sheet.width // columns
@@ -226,6 +246,19 @@ def all_frames() -> tuple[dict[int, Image.Image], dict[int, tuple[Path, int]]]:
                 frames[frame_index] = group[source_cell]
                 sources[frame_index] = (sheet_path, source_cell)
 
+    playful = fixed_cells(PLAYFUL_SHEET, 4, 4, has_alpha=False)
+    playful_group = normalize_group(
+        [tighten_alpha(playful[index]) for index in PLAYFUL_SOURCE_CELLS],
+        "playful_front",
+    )
+    for frame_index, source_cell, frame in zip(
+        PLAYFUL_RUNTIME_FRAMES,
+        PLAYFUL_SOURCE_CELLS,
+        playful_group,
+    ):
+        frames[frame_index] = frame
+        sources[frame_index] = (PLAYFUL_SHEET, source_cell)
+
     if set(frames) != set(range(40)):
         raise ValueError(f"Quadruped candidate does not cover frames: {sorted(set(range(40)) - set(frames))}")
     return frames, sources
@@ -244,7 +277,7 @@ def build_spec(sources: dict[int, tuple[Path, int]]) -> dict[str, object]:
     spec["atlasPath"] = "pets/taro/taro_motion_v2.png"
     render_hints = spec.setdefault("renderHints", {})
     if isinstance(render_hints, dict):
-        render_hints["posture"] = "quadruped"
+        render_hints["posture"] = "quadruped_with_front_playful_social"
         render_hints["walkPosture"] = "quadruped"
         render_hints["useFrameOccupancyNormalization"] = False
         render_hints["backgroundRemoval"] = "checker_exterior_flood_and_fringe_erosion"
@@ -273,7 +306,9 @@ def build_spec(sources: dict[int, tuple[Path, int]]) -> dict[str, object]:
             for index, frame in enumerate(details):
                 if isinstance(frame, dict):
                     source_path, source_cell = sources[index]
-                    frame["poseClass"] = "quadruped"
+                    frame["poseClass"] = (
+                        "playful_front" if index in PLAYFUL_RUNTIME_FRAMES else "quadruped"
+                    )
                     frame["source"] = str(source_path.relative_to(ROOT))
                     frame["sourceCell"] = source_cell
     return spec

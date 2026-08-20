@@ -27,10 +27,27 @@
     "hide",
     "peek",
     "front_social",
+    "playful_wave",
+    "playful_delight",
+    "playful_surprise",
     "touch",
     "sleep",
     "curiosity"
   ],
+  "playfulBehavior": {
+    "idleClip": "idle_front",
+    "compatibilityAlias": "front_social",
+    "cooldownSeconds": [20, 30],
+    "gestures": {
+      "hold": "playful_wave",
+      "autonomous": "playful_delight",
+      "tapAfterPeek": "playful_surprise"
+    },
+    "eligibleMoods": ["HAPPY", "EXCITED"],
+    "minimumInteractionEnergy": 40,
+    "minimumAutonomousEnergy": 55,
+    "autonomousWeight": 0.08
+  },
   "promotionGates": [
     "technical_atlas_validation_passed",
     "visual_identity_review_passed",
