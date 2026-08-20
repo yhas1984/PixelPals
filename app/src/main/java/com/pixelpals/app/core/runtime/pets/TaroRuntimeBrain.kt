@@ -106,7 +106,7 @@ class TaroRuntimeBrain(
             TaroRuntimeMode.IDLE -> if (advanced.elapsedSeconds >= state.durationSeconds) {
                 beginAutonomous(advanced, context)
             } else {
-                output(advanced, "idle")
+                output(advanced, "idle_front")
             }
             TaroRuntimeMode.WALK -> updateWalk(advanced, context)
             TaroRuntimeMode.TURN -> if (context.playback.isFinished) {
@@ -243,7 +243,7 @@ class TaroRuntimeBrain(
             elapsedSeconds = 0f,
             durationSeconds = 3f + random.nextFloat() * 4f,
         ),
-        "idle",
+        "idle_front",
         position,
     )
 
@@ -264,7 +264,7 @@ class TaroRuntimeBrain(
     )
 
     private fun clipFor(mode: TaroRuntimeMode): String = when (mode) {
-        TaroRuntimeMode.IDLE -> "idle"
+        TaroRuntimeMode.IDLE -> "idle_front"
         TaroRuntimeMode.WALK -> "walk"
         TaroRuntimeMode.TURN -> "turn"
         TaroRuntimeMode.TOUCH -> "touch"

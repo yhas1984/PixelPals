@@ -486,19 +486,19 @@
     {
       "index": 24,
       "bbox": [
-        54,
-        149,
-        329,
-        368
+        66,
+        49,
+        320,
+        367
       ],
       "margins": [
-        54,
-        149,
-        55,
-        16
+        66,
+        49,
+        64,
+        17
       ],
-      "interiorTransparentPixels": 206,
-      "largestInteriorComponent": 184,
+      "interiorTransparentPixels": 17,
+      "largestInteriorComponent": 1,
       "detachedComponentPixels": 2,
       "neutralShadowPixels": 0,
       "lightGroundShadowPixels": 0
@@ -506,61 +506,61 @@
     {
       "index": 25,
       "bbox": [
-        56,
-        152,
-        327,
-        368
+        60,
+        51,
+        323,
+        367
       ],
       "margins": [
-        56,
-        152,
-        57,
-        16
+        60,
+        51,
+        61,
+        17
       ],
-      "interiorTransparentPixels": 16,
-      "largestInteriorComponent": 4,
-      "detachedComponentPixels": 2,
+      "interiorTransparentPixels": 18,
+      "largestInteriorComponent": 1,
+      "detachedComponentPixels": 5,
       "neutralShadowPixels": 0,
       "lightGroundShadowPixels": 0
     },
     {
       "index": 26,
       "bbox": [
-        55,
-        136,
-        328,
-        368
+        72,
+        67,
+        311,
+        366
       ],
       "margins": [
-        55,
-        136,
-        56,
-        16
+        72,
+        67,
+        73,
+        18
       ],
-      "interiorTransparentPixels": 14,
-      "largestInteriorComponent": 2,
-      "detachedComponentPixels": 2,
+      "interiorTransparentPixels": 12,
+      "largestInteriorComponent": 1,
+      "detachedComponentPixels": 1,
       "neutralShadowPixels": 0,
       "lightGroundShadowPixels": 0
     },
     {
       "index": 27,
       "bbox": [
-        65,
-        136,
-        318,
-        368
+        70,
+        55,
+        313,
+        367
       ],
       "margins": [
-        65,
-        136,
-        66,
-        16
+        70,
+        55,
+        71,
+        17
       ],
-      "interiorTransparentPixels": 13,
-      "largestInteriorComponent": 6,
+      "interiorTransparentPixels": 10,
+      "largestInteriorComponent": 1,
       "detachedComponentPixels": 2,
-      "neutralShadowPixels": 0,
+      "neutralShadowPixels": 1,
       "lightGroundShadowPixels": 0
     },
     {

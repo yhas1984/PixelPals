@@ -27,6 +27,7 @@ FULL_CANDIDATE_SOURCE = FULL_CANDIDATE_DIR / "source.json"
 
 REQUIRED_CLIPS = {
     "idle",
+    "idle_front",
     "walk",
     "turn",
     "hide",
@@ -89,14 +90,20 @@ def main() -> int:
         assert candidate_spec["renderHints"]["walkPosture"] == "quadruped"
         expected_frames = range(40) if candidate_dir == FULL_CANDIDATE_DIR else range(4, 12)
         for index in expected_frames:
-            assert candidate_spec["frames"][index]["poseClass"] == "quadruped"
+            expected_pose = (
+                "playful_front"
+                if candidate_dir == FULL_CANDIDATE_DIR and index in range(24, 28)
+                else "quadruped"
+            )
+            assert candidate_spec["frames"][index]["poseClass"] == expected_pose
         if candidate_dir == FULL_CANDIDATE_DIR:
-            assert candidate_spec["renderHints"]["posture"] == "quadruped"
+            assert candidate_spec["renderHints"]["posture"] == "quadruped_with_front_playful_social"
             assert len(candidate_spec["frameDetails"]) == 40
             for index in range(40):
                 runtime_frame = candidate_spec["frames"][index]
                 provenance_frame = candidate_spec["frameDetails"][index]
-                assert provenance_frame["poseClass"] == "quadruped"
+                expected_pose = "playful_front" if index in range(24, 28) else "quadruped"
+                assert provenance_frame["poseClass"] == expected_pose
                 assert provenance_frame["source"] == runtime_frame["source"]
                 assert provenance_frame["sourceCell"] == runtime_frame["sourceCell"]
             source = json.loads(FULL_CANDIDATE_SOURCE.read_text(encoding="utf-8"))

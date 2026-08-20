@@ -19,6 +19,7 @@ object TaroRuntimeDefinition {
         atlasSpecPath = "pets/taro/taro_motion_v2.json",
         requiredClips = setOf(
             "idle",
+            "idle_front",
             "walk",
             "turn",
             "hide",

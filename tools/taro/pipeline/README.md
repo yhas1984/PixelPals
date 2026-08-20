@@ -21,9 +21,8 @@ python3 tools/taro/pipeline/validate_atlas_v2.py
 ```
 
 The builder writes the candidate atlas, individual frames, review preview, and
-debug copy under `app/src/debug/assets/pets/taro/`. The fully quadruped
-candidate was promoted to `src/main` after the API 36 device gates and explicit
-visual approval on 2026-08-20.
+debug copy under `app/src/debug/assets/pets/taro/`. Locomotion remains fully
+quadruped; the social response uses the approved front-facing playful poses.
 
 ## Quadruped walk candidate
 
@@ -39,10 +38,10 @@ python3 tools/taro/pipeline/build_quadruped_walk_candidate.py --publish-debug
 The second command publishes the same validated PNG and JSON to `src/debug`
 only. Historical candidates remain isolated for provenance and rollback.
 
-## Full quadruped candidate
+## Full runtime candidate
 
-The follow-up candidate keeps every clip in normal turtle anatomy so idle and
-interaction transitions cannot make Taro stand upright:
+The runtime candidate keeps locomotion and recovery in normal turtle anatomy,
+while the front-social transition can use the playful front-facing poses:
 
 ```bash
 python3 tools/taro/pipeline/build_quadruped_full_candidate.py

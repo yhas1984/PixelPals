@@ -20,6 +20,14 @@ class TaroRuntimeBrainTest {
     private val bounds = PetBounds.compute(1_080, 2_400, 160, 100, 200)
 
     @Test
+    fun idleUsesTheStaticFrontFacingClip() {
+        val runtime = runtime(SequenceRandom())
+
+        assertEquals("idle_front", runtime.dispatch(PetEvent.Resumed).clipId)
+        assertEquals("idle_front", runtime.dispatch(PetEvent.Tick(0.5f)).clipId)
+    }
+
+    @Test
     fun tapRunsTheCompleteApprovedSequence() {
         val runtime = runtime(SequenceRandom())
 
@@ -27,7 +35,7 @@ class TaroRuntimeBrainTest {
         assertEquals("hide", runtime.dispatch(PetEvent.Tick(1.5f)).clipId)
         assertEquals("peek", runtime.dispatch(PetEvent.Tick(2.7f)).clipId)
         assertEquals("front_social", runtime.dispatch(PetEvent.Tick(2.2f)).clipId)
-        assertEquals("idle", runtime.dispatch(PetEvent.Tick(2.7f)).clipId)
+        assertEquals("idle_front", runtime.dispatch(PetEvent.Tick(2.7f)).clipId)
     }
 
     @Test
@@ -43,9 +51,11 @@ class TaroRuntimeBrainTest {
         )
 
         assertEquals("touch", runtime.dispatch(PetEvent.Tap).clipId)
-        // touch is 4 x 0.36s in the manifest; at 2x it completes in 0.72s.
-        assertEquals("hide", runtime.dispatch(PetEvent.Tick(0.75f)).clipId)
-        assertEquals(0.36f, clips().first { it.id == "touch" }.frameDurationSeconds, 0.001f)
+        // touch is 4 x 0.22s in the manifest; at 2x it completes in 0.44s.
+        assertEquals("hide", runtime.dispatch(PetEvent.Tick(0.5f)).clipId)
+        // hide is 4 x 0.30s in the manifest; at 2x it completes in 0.60s.
+        assertEquals("peek", runtime.dispatch(PetEvent.Tick(0.75f)).clipId)
+        assertEquals(0.22f, clips().first { it.id == "touch" }.frameDurationSeconds, 0.001f)
     }
 
     @Test
@@ -110,7 +120,7 @@ class TaroRuntimeBrainTest {
 
     @Test
     fun everyApprovedClipIsReachable() {
-        val reached = linkedSetOf("idle")
+        val reached = linkedSetOf("idle", "idle_front")
         val tapRuntime = runtime(SequenceRandom())
         reached += tapRuntime.dispatch(PetEvent.Tap).clipId
         reached += tapRuntime.dispatch(PetEvent.Tick(1.5f)).clipId
@@ -139,14 +149,15 @@ class TaroRuntimeBrainTest {
 
     private fun clips(): List<PetAnimationClip> = listOf(
         clip("idle", 4, true, 0.9f),
+        clip("idle_front", 1, true, 0.9f),
         clip("walk", 8, true, 0.42f),
-        clip("turn", 4, false, 0.42f),
-        clip("hide", 4, false, 0.65f),
-        clip("peek", 4, false, 0.52f),
-        clip("front_social", 4, false, 0.65f),
-        clip("touch", 4, false, 0.36f),
+        clip("turn", 4, false, 0.3f),
+        clip("hide", 4, false, 0.3f),
+        clip("peek", 4, false, 0.28f),
+        clip("front_social", 4, false, 0.35f),
+        clip("touch", 4, false, 0.22f),
         clip("sleep", 4, true, 1.6f),
-        clip("curiosity", 4, false, 0.7f),
+        clip("curiosity", 4, false, 0.36f),
     )
 
     private fun clip(id: String, count: Int, loop: Boolean, duration: Float): PetAnimationClip =

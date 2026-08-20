@@ -1,12 +1,13 @@
 {
   "petId": "taro",
-  "status": "promoted",
-  "atlasSha256": "fc5947213900e218a177f38b2ac4a508baac2bc320d6efeacceb3b414d379085",
-  "specSha256": "1f9f226de8ea3d13ec2a82dc379d3e381f255a5e0d114759e77a73ed7cee738f",
+  "status": "candidate_updated_pending_visual_verification",
+  "atlasSha256": "cbf3ee064d381f43dcd626c68799713d92bc063e83ae534caff6f7c85c509887",
+  "specSha256": "7b5ca3ed34d77bcdec8ff53d9b189c8fb8c299c79017c6e79183de5d4309e384",
   "assetValidation": {
     "atlasValidator": "passed, 0 violations",
     "requiredClips": [
       "idle",
+      "idle_front",
       "walk",
       "turn",
       "hide",
@@ -32,14 +33,14 @@
       "directions": ["right", "left"],
       "speeds": [0.25, 1.0, 2.0]
     },
-    "status": "approved by user",
-    "approval": "explicit visual and production-promotion approval received in chat on 2026-08-20"
+    "status": "pending user visual verification",
+    "approval": "front playful frames 8-11 from taro_atlas_preview selected; device approval pending"
   },
   "promotion": {
     "hashParity": "pipeline, debug and main PNG/JSON are byte-identical",
     "releaseBehavior": "TaroRuntimeBehavior",
     "debugBehavior": "TaroRuntimeBehavior",
     "rollbackBehavior": "legacy TaroBehavior retained",
-    "productionPromotion": "promoted atomically after API 36 technical, visual, performance and soak approval"
+    "productionPromotion": "runtime assets updated with front playful social frames; device re-verification pending"
   }
 }

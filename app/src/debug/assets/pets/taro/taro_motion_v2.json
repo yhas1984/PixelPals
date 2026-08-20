@@ -19,7 +19,7 @@
     "drawScale": 0.963,
     "backgroundRemoval": "checker_exterior_flood_and_fringe_erosion",
     "sourceCellCompositionPreserved": true,
-    "posture": "quadruped",
+    "posture": "quadruped_with_front_playful_social",
     "walkPosture": "quadruped",
     "useFrameOccupancyNormalization": false
   },
@@ -36,6 +36,14 @@
         1,
         2,
         3
+      ],
+      "loop": true,
+      "frameDurationMs": 900
+    },
+    {
+      "id": "idle_front",
+      "frames": [
+        24
       ],
       "loop": true,
       "frameDurationMs": 900
@@ -64,7 +72,7 @@
         15
       ],
       "loop": false,
-      "frameDurationMs": 420
+      "frameDurationMs": 300
     },
     {
       "id": "hide",
@@ -75,7 +83,7 @@
         19
       ],
       "loop": false,
-      "frameDurationMs": 650
+      "frameDurationMs": 300
     },
     {
       "id": "peek",
@@ -86,7 +94,7 @@
         23
       ],
       "loop": false,
-      "frameDurationMs": 520
+      "frameDurationMs": 280
     },
     {
       "id": "front_social",
@@ -97,7 +105,7 @@
         27
       ],
       "loop": false,
-      "frameDurationMs": 650
+      "frameDurationMs": 350
     },
     {
       "id": "touch",
@@ -108,7 +116,7 @@
         31
       ],
       "loop": false,
-      "frameDurationMs": 360
+      "frameDurationMs": 220
     },
     {
       "id": "sleep",
@@ -130,7 +138,7 @@
         39
       ],
       "loop": false,
-      "frameDurationMs": 700
+      "frameDurationMs": 360
     }
   ],
   "frames": [
@@ -305,30 +313,30 @@
     {
       "index": 24,
       "name": "front_social_00",
-      "poseClass": "quadruped",
-      "source": "tools/taro/pipeline/raw/13_quadruped_hide_peek_touch_social_01.png",
-      "sourceCell": 12
+      "poseClass": "playful_front",
+      "source": "tools/taro/taro_atlas_preview.png",
+      "sourceCell": 8
     },
     {
       "index": 25,
       "name": "front_social_01",
-      "poseClass": "quadruped",
-      "source": "tools/taro/pipeline/raw/13_quadruped_hide_peek_touch_social_01.png",
-      "sourceCell": 13
+      "poseClass": "playful_front",
+      "source": "tools/taro/taro_atlas_preview.png",
+      "sourceCell": 9
     },
     {
       "index": 26,
       "name": "front_social_02",
-      "poseClass": "quadruped",
-      "source": "tools/taro/pipeline/raw/13_quadruped_hide_peek_touch_social_01.png",
-      "sourceCell": 14
+      "poseClass": "playful_front",
+      "source": "tools/taro/taro_atlas_preview.png",
+      "sourceCell": 10
     },
     {
       "index": 27,
       "name": "front_social_03",
-      "poseClass": "quadruped",
-      "source": "tools/taro/pipeline/raw/13_quadruped_hide_peek_touch_social_01.png",
-      "sourceCell": 15
+      "poseClass": "playful_front",
+      "source": "tools/taro/taro_atlas_preview.png",
+      "sourceCell": 11
     },
     {
       "index": 28,
@@ -587,30 +595,30 @@
     {
       "index": 24,
       "name": "front_social_00",
-      "source": "tools/taro/pipeline/raw/13_quadruped_hide_peek_touch_social_01.png",
-      "sourceCell": 12,
-      "poseClass": "quadruped"
+      "source": "tools/taro/taro_atlas_preview.png",
+      "sourceCell": 8,
+      "poseClass": "playful_front"
     },
     {
       "index": 25,
       "name": "front_social_01",
-      "source": "tools/taro/pipeline/raw/13_quadruped_hide_peek_touch_social_01.png",
-      "sourceCell": 13,
-      "poseClass": "quadruped"
+      "source": "tools/taro/taro_atlas_preview.png",
+      "sourceCell": 9,
+      "poseClass": "playful_front"
     },
     {
       "index": 26,
       "name": "front_social_02",
-      "source": "tools/taro/pipeline/raw/13_quadruped_hide_peek_touch_social_01.png",
-      "sourceCell": 14,
-      "poseClass": "quadruped"
+      "source": "tools/taro/taro_atlas_preview.png",
+      "sourceCell": 10,
+      "poseClass": "playful_front"
     },
     {
       "index": 27,
       "name": "front_social_03",
-      "source": "tools/taro/pipeline/raw/13_quadruped_hide_peek_touch_social_01.png",
-      "sourceCell": 15,
-      "poseClass": "quadruped"
+      "source": "tools/taro/taro_atlas_preview.png",
+      "sourceCell": 11,
+      "poseClass": "playful_front"
     },
     {
       "index": 28,
@@ -712,6 +720,11 @@
   "contactAnchors": [
     {
       "clip": "idle",
+      "bottomTolerance": 3,
+      "centerTolerance": 3
+    },
+    {
+      "clip": "idle_front",
       "bottomTolerance": 3,
       "centerTolerance": 3
     },

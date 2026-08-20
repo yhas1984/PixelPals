@@ -15,11 +15,11 @@
   "productionChanged": true,
   "approval": "explicit visual and production-promotion approval received from the user on 2026-08-20",
   "assets": {
-    "productionPngSha256": "fc5947213900e218a177f38b2ac4a508baac2bc320d6efeacceb3b414d379085",
-    "productionManifestSha256": "1f9f226de8ea3d13ec2a82dc379d3e381f255a5e0d114759e77a73ed7cee738f",
-    "debugCandidatePngSha256": "fc5947213900e218a177f38b2ac4a508baac2bc320d6efeacceb3b414d379085",
-    "debugCandidateManifestSha256": "1f9f226de8ea3d13ec2a82dc379d3e381f255a5e0d114759e77a73ed7cee738f",
-    "posture": "quadruped in every clip",
+    "productionPngSha256": "cbf3ee064d381f43dcd626c68799713d92bc063e83ae534caff6f7c85c509887",
+    "productionManifestSha256": "7b5ca3ed34d77bcdec8ff53d9b189c8fb8c299c79017c6e79183de5d4309e384",
+    "debugCandidatePngSha256": "cbf3ee064d381f43dcd626c68799713d92bc063e83ae534caff6f7c85c509887",
+    "debugCandidateManifestSha256": "7b5ca3ed34d77bcdec8ff53d9b189c8fb8c299c79017c6e79183de5d4309e384",
+    "posture": "quadruped locomotion with front playful social frames",
     "assetValidation": "40/40 frames passed"
   },
   "automatedValidation": {
@@ -46,7 +46,7 @@
     "api": 36,
     "overlayPermission": "allowed",
     "transparentHitMask": "passed; a touch outside the opaque silhouette reached the launcher",
-    "tap": "touch -> hide -> peek -> front_social -> idle completed",
+    "tap": "touch -> hide -> peek -> front_social -> idle_front completed",
     "hold": "completed once with social response",
     "drag": {
       "fingerDeltaPx": [-89, -552],
@@ -60,7 +60,7 @@
       "recoveredWindow": [249, 2604],
       "result": "passed; recovered inside floor bounds"
     },
-    "posture": "quadruped during autonomous movement, interaction, drag, airborne and recovery",
+    "posture": "quadruped during locomotion, drag, airborne and recovery; front playful social pose during social response",
     "runtimeErrors": "no crash, ANR, BadTokenException or orphan overlay observed"
   },
   "currentFramePerformance": {
