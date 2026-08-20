@@ -11,6 +11,7 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
+import androidx.test.uiautomator.StaleObjectException
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.Until
 import com.pixelpals.app.core.domain.PetType
@@ -73,10 +74,24 @@ class CosmeticsPurchaseKeepsSelectedPetTest {
             5_000,
         )
         checkNotNull(confirm) { "Purchase confirmation was not displayed" }
-        confirm.click()
+        clickDialogButtonWithRetry()
         awaitEquipped(petId = "tela", cosmeticId = cosmetic.id)
         assertEquals(cosmetic.id, repository.getEquippedCosmetic("tela"))
         assertNull(repository.getEquippedCosmetic("corgi"))
+    }
+
+    private fun clickDialogButtonWithRetry() {
+        val deadline: Long = System.currentTimeMillis() + 5_000
+        while (System.currentTimeMillis() < deadline) {
+            try {
+                device.findObject(By.res("android", "button1"))?.click()
+                return
+            } catch (_: StaleObjectException) {
+                instrumentation.waitForIdleSync()
+            }
+            Thread.sleep(100)
+        }
+        throw AssertionError("Purchase confirmation could not be clicked")
     }
 
     private fun awaitCosmeticButton(cosmetic: Cosmetic): Button {

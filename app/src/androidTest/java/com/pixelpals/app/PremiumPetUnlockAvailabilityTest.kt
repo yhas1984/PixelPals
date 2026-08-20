@@ -68,10 +68,8 @@ class PremiumPetUnlockAvailabilityTest {
         scenario!!.onActivity { activity -> activity.navigate(PixelPalsDestination.PETS) }
         awaitOwnedPet(petName)
         val expectedAction: String = context.getString(R.string.selection_choose_button)
-        scenario!!.onActivity { activity ->
-            val button: Button = requireNotNull(findPetButton(activity.findViewById(R.id.catalogList), petName))
-            assertEquals(expectedAction, button.text.toString())
-        }
+        val button: Button = awaitSelectionButton(petName)
+        assertEquals(expectedAction, button.text.toString())
     }
 
     private fun awaitStoreReady() {
@@ -96,6 +94,23 @@ class PremiumPetUnlockAvailabilityTest {
                 row.item.displayName == petName && row.item.state == com.pixelpals.app.data.catalog.CatalogItemState.OWNED
             }
         }
+    }
+
+    private fun awaitSelectionButton(petName: String): Button {
+        var result: Button? = null
+        awaitCondition("Unlocked pet action was not rendered in Mascotas") { activity ->
+            val list: RecyclerView = activity.findViewById(R.id.catalogList)
+            val adapter: PetCatalogAdapter = list.adapter as? PetCatalogAdapter
+                ?: return@awaitCondition false
+            val targetPosition: Int = adapter.currentList.indexOfFirst { row ->
+                row.item.displayName == petName
+            }
+            if (targetPosition < 0) return@awaitCondition false
+            list.scrollToPosition(targetPosition)
+            result = findPetButton(list, petName)
+            result != null
+        }
+        return requireNotNull(result)
     }
 
     private fun awaitPetButton(listId: Int, petName: String): Button {
