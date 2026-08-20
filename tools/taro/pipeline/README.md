@@ -22,7 +22,8 @@ python3 tools/taro/pipeline/validate_atlas_v2.py
 
 The builder writes the candidate atlas, individual frames, review preview, and
 debug copy under `app/src/debug/assets/pets/taro/`. Locomotion remains fully
-quadruped; the social response uses the approved front-facing playful poses.
+quadruped. The approved front-facing poses are exposed as one-shot wave,
+delight, and surprise clips; `front_social` remains a compatibility alias.
 
 ## Quadruped walk candidate
 
@@ -40,8 +41,9 @@ only. Historical candidates remain isolated for provenance and rollback.
 
 ## Full runtime candidate
 
-The runtime candidate keeps locomotion and recovery in normal turtle anatomy,
-while the front-social transition can use the playful front-facing poses:
+The runtime candidate keeps locomotion and recovery in normal turtle anatomy.
+The runtime selects the front-facing gestures contextually and applies a
+20-30 second cooldown so they never form a social animation loop:
 
 ```bash
 python3 tools/taro/pipeline/build_quadruped_full_candidate.py

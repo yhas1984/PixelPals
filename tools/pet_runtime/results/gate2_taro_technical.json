@@ -16,38 +16,40 @@
   "approval": "explicit visual and production-promotion approval received from the user on 2026-08-20",
   "assets": {
     "productionPngSha256": "cbf3ee064d381f43dcd626c68799713d92bc063e83ae534caff6f7c85c509887",
-    "productionManifestSha256": "7b5ca3ed34d77bcdec8ff53d9b189c8fb8c299c79017c6e79183de5d4309e384",
+    "productionManifestSha256": "7e755f40d3001266c87b0237a314bc47d74e9a229740e6ae62cd29d39893990b",
     "debugCandidatePngSha256": "cbf3ee064d381f43dcd626c68799713d92bc063e83ae534caff6f7c85c509887",
-    "debugCandidateManifestSha256": "7b5ca3ed34d77bcdec8ff53d9b189c8fb8c299c79017c6e79183de5d4309e384",
+    "debugCandidateManifestSha256": "7e755f40d3001266c87b0237a314bc47d74e9a229740e6ae62cd29d39893990b",
     "posture": "quadruped locomotion with front playful social frames",
     "assetValidation": "40/40 frames passed"
   },
   "automatedValidation": {
-    "jvm": "84/84 passed after production promotion",
+    "jvm": "100/100 passed after contextual playful behavior update; TaroRuntimeBrainTest 17/17",
     "pipeline": "6/6 passed",
     "productionAssets": "280/280 frames passed",
     "lint": "0 errors; 136 warnings",
     "assembleDebug": "passed",
     "releaseCompileAndR8": "passed after production promotion",
-    "signedReleasePackage": {
+    "signedReleaseBundle": {
       "status": "passed",
-      "artifact": "app/build/outputs/apk/release/app-release.apk",
-      "sha256": "b76e9fbbfed95ca2b69e4cfd03473bc71b016be556b54a3a5ef1f3186ed83e97",
-      "signatureScheme": "v2",
+      "artifact": "app/build/outputs/bundle/release/PixelPals-v18-2.2.0.aab",
+      "sha256": "aba33ea10bf97a24cf75fc20416539a24d603cd20236cd104fe84d7886c34dee",
+      "signatureFormat": "JAR",
       "signerCount": 1,
       "certificateSubject": "CN=YmiyDev, O=YmiyDev, C=DO",
+      "certificateSha1": "94:F4:F7:B7:4B:EE:E3:F0:31:A3:46:BA:55:19:23:D1:26:45:8F:C8",
       "certificateSha256": "83f35ea0c25d3e65f6aa2fa9fe03744b4a94e5a4cb4b6aa37722320b6af1b2a9"
     },
     "api26Instrumented": "40/40 passed",
-    "ne2213Api36Instrumented": "40/40 passed"
+    "ne2213Api36Instrumented": "PetViewTouchTest 2/2 passed after contextual behavior update"
   },
   "physicalDeviceValidation": {
     "device": "NE2213",
     "api": 36,
     "overlayPermission": "allowed",
     "transparentHitMask": "passed; a touch outside the opaque silhouette reached the launcher",
-    "tap": "touch -> hide -> peek -> front_social -> idle_front completed",
-    "hold": "completed once with social response",
+    "tap": "touch -> hide -> peek -> playful_surprise -> idle_front; JVM sequence verified",
+    "hold": "playful_wave once when eligible, then idle_front with cooldown; JVM sequence verified",
+    "autonomous": "playful_delight only when happy or excited with energy >=55 and cooldown exhausted",
     "drag": {
       "fingerDeltaPx": [-89, -552],
       "windowDeltaPx": [-87, -540],
@@ -60,7 +62,7 @@
       "recoveredWindow": [249, 2604],
       "result": "passed; recovered inside floor bounds"
     },
-    "posture": "quadruped during locomotion, drag, airborne and recovery; front playful social pose during social response",
+    "posture": "quadruped during locomotion, drag, airborne and recovery; static front idle with contextual one-shot playful gestures",
     "runtimeErrors": "no crash, ANR, BadTokenException or orphan overlay observed"
   },
   "currentFramePerformance": {
@@ -110,10 +112,12 @@
     "result": "passed"
   },
   "promotion": {
-    "status": "complete",
+    "status": "implementation_complete_pending_user_visual_timing_confirmation",
     "factory": "PetBehaviorFactory selects TaroRuntimeBehavior for every build variant",
     "assetParity": "full candidate, canonical pipeline, debug and main PNG/JSON are byte-identical",
     "rollback": "legacy TaroBehavior remains available for an atomic factory rollback"
   },
-  "remainingGates": []
+  "remainingGates": [
+    "user_visual_confirmation_of_contextual_playful_timing"
+  ]
 }

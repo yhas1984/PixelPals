@@ -19,7 +19,7 @@
   ],
   "candidate": {
     "pngSha256": "cbf3ee064d381f43dcd626c68799713d92bc063e83ae534caff6f7c85c509887",
-    "manifestSha256": "7b5ca3ed34d77bcdec8ff53d9b189c8fb8c299c79017c6e79183de5d4309e384"
+    "manifestSha256": "7e755f40d3001266c87b0237a314bc47d74e9a229740e6ae62cd29d39893990b"
   },
   "pipelineNote": "The built-in tool returned RGB checkerboards. build_quadruped_full_candidate.py reconstructs real alpha with border-connected neutral-background removal and discards the one-pixel baked fringe before validation."
 }

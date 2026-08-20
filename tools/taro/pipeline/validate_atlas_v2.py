@@ -33,6 +33,9 @@ REQUIRED_CLIPS = {
     "hide",
     "peek",
     "front_social",
+    "playful_wave",
+    "playful_delight",
+    "playful_surprise",
     "touch",
     "sleep",
     "curiosity",
@@ -63,6 +66,31 @@ def main() -> int:
     assert len(spec["frames"]) == 40
     assert len(list(FRAME_DIR.glob("taro_*.png"))) == 40
     assert {clip["id"] for clip in spec["clips"]} == REQUIRED_CLIPS
+    playful_clips = {
+        clip["id"]: clip
+        for clip in spec["clips"]
+        if str(clip["id"]).startswith("playful_")
+    }
+    assert playful_clips == {
+        "playful_wave": {
+            "id": "playful_wave",
+            "frames": [24, 25, 25, 24],
+            "loop": False,
+            "frameDurationMs": 300,
+        },
+        "playful_delight": {
+            "id": "playful_delight",
+            "frames": [24, 26, 26, 24],
+            "loop": False,
+            "frameDurationMs": 300,
+        },
+        "playful_surprise": {
+            "id": "playful_surprise",
+            "frames": [24, 27, 27, 24],
+            "loop": False,
+            "frameDurationMs": 300,
+        },
+    }
 
     indices = [int(frame["index"]) for frame in spec["frames"]]
     assert indices == list(range(40)), indices

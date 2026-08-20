@@ -108,6 +108,39 @@
       "frameDurationMs": 350
     },
     {
+      "id": "playful_wave",
+      "frames": [
+        24,
+        25,
+        25,
+        24
+      ],
+      "loop": false,
+      "frameDurationMs": 300
+    },
+    {
+      "id": "playful_delight",
+      "frames": [
+        24,
+        26,
+        26,
+        24
+      ],
+      "loop": false,
+      "frameDurationMs": 300
+    },
+    {
+      "id": "playful_surprise",
+      "frames": [
+        24,
+        27,
+        27,
+        24
+      ],
+      "loop": false,
+      "frameDurationMs": 300
+    },
+    {
       "id": "touch",
       "frames": [
         28,
@@ -750,6 +783,21 @@
     },
     {
       "clip": "front_social",
+      "bottomTolerance": 3,
+      "centerTolerance": 3
+    },
+    {
+      "clip": "playful_wave",
+      "bottomTolerance": 3,
+      "centerTolerance": 3
+    },
+    {
+      "clip": "playful_delight",
+      "bottomTolerance": 3,
+      "centerTolerance": 3
+    },
+    {
+      "clip": "playful_surprise",
       "bottomTolerance": 3,
       "centerTolerance": 3
     },

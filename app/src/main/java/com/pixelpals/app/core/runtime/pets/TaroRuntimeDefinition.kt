@@ -25,6 +25,9 @@ object TaroRuntimeDefinition {
             "hide",
             "peek",
             "front_social",
+            "playful_wave",
+            "playful_delight",
+            "playful_surprise",
             "touch",
             "sleep",
             "curiosity",
@@ -51,7 +54,7 @@ object TaroRuntimeDefinition {
             playfulness = 0.42f,
         ),
         bondBehaviors = listOf(
-            PetBondBehavior(PetBondStage.CLOSE, "front_social"),
+            PetBondBehavior(PetBondStage.CLOSE, "playful_wave"),
             PetBondBehavior(PetBondStage.TRUSTED, "trusted_hold"),
             PetBondBehavior(PetBondStage.SOULMATE, "soulmate_greeting"),
         ),

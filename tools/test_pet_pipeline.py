@@ -154,6 +154,34 @@ class PetPipelineTest(unittest.TestCase):
         expected_pose_classes = ["playful_front" if index in range(24, 28) else "quadruped" for index in range(40)]
         self.assertEqual([frame["poseClass"] for frame in spec["frames"]], expected_pose_classes)
         self.assertEqual([frame["poseClass"] for frame in spec["frameDetails"]], expected_pose_classes)
+        playful_clips = {
+            clip["id"]: clip
+            for clip in spec["clips"]
+            if str(clip["id"]).startswith("playful_")
+        }
+        self.assertEqual(
+            playful_clips,
+            {
+                "playful_wave": {
+                    "id": "playful_wave",
+                    "frames": [24, 25, 25, 24],
+                    "loop": False,
+                    "frameDurationMs": 300,
+                },
+                "playful_delight": {
+                    "id": "playful_delight",
+                    "frames": [24, 26, 26, 24],
+                    "loop": False,
+                    "frameDurationMs": 300,
+                },
+                "playful_surprise": {
+                    "id": "playful_surprise",
+                    "frames": [24, 27, 27, 24],
+                    "loop": False,
+                    "frameDurationMs": 300,
+                },
+            },
+        )
         self.assertEqual(
             [frame["source"] for frame in spec["frames"]],
             [frame["source"] for frame in spec["frameDetails"]],
