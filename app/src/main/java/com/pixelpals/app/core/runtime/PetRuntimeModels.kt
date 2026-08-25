@@ -1,5 +1,6 @@
 package com.pixelpals.app.core.runtime
 
+import com.pixelpals.app.core.care.PetCondition
 import com.pixelpals.app.core.motion.PetBounds
 import com.pixelpals.app.status.PetMood
 
@@ -102,6 +103,7 @@ data class PetRuntimeStatus(
     val hunger: Int,
     val hygiene: Int,
     val bond: Int,
+    val condition: PetCondition = PetCondition.HEALTHY,
 ) {
     init {
         require(health in 0..100) { "Health must be between zero and one hundred" }

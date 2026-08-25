@@ -29,6 +29,8 @@ import androidx.core.content.ContextCompat
 import com.pixelpals.app.status.PetDashboardActivity
 import com.pixelpals.app.feature.overlay.behavior.TelaCornerWebState
 import com.pixelpals.app.feature.overlay.behavior.TelaSilkState
+import com.pixelpals.app.notifications.PetCareNotificationManager
+import com.pixelpals.app.notifications.PetCareNotificationScheduler
 
 class PetService : Service() {
 
@@ -76,10 +78,12 @@ class PetService : Service() {
                     selectedPetStore.setPetEnabled(false)
                     Log.w(TAG, "Pet service start failed", it)
                 }
+            PetCareNotificationScheduler.schedule(context)
         }
 
         fun stopPet(context: Context) {
             SelectedPetStore(context).setPetEnabled(false)
+            PetCareNotificationScheduler.cancel(context)
             context.stopService(Intent(context, PetService::class.java))
         }
 
@@ -194,6 +198,8 @@ class PetService : Service() {
         selectedPetStore = SelectedPetStore(this)
         currentPetType = selectedPetStore.load()
         createNotificationChannel()
+        PetCareNotificationManager.createChannel(this)
+        if (selectedPetStore.isPetEnabled()) PetCareNotificationScheduler.schedule(this)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -237,6 +243,7 @@ class PetService : Service() {
             }
             ACTION_STOP -> {
                 selectedPetStore.setPetEnabled(false)
+                PetCareNotificationScheduler.cancel(this)
                 stopForeground(STOP_FOREGROUND_REMOVE)
                 stopSelf()
                 return START_NOT_STICKY
@@ -294,6 +301,7 @@ class PetService : Service() {
             return START_NOT_STICKY
         }
         ensureOverlayReady()
+        PetCareNotificationScheduler.schedule(this)
 
         return START_NOT_STICKY
     }

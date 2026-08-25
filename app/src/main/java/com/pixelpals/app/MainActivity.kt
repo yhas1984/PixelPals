@@ -99,17 +99,6 @@ class MainActivity : AppCompatActivity(), RootNavigator {
         super.onSaveInstanceState(outState)
     }
 
-    override fun onPostResume() {
-        super.onPostResume()
-        appOpenAdController.start(this)
-        appOpenAdController.onActivityResumed(this)
-    }
-
-    override fun onPause() {
-        appOpenAdController.onActivityPaused(this)
-        super.onPause()
-    }
-
     override fun onUserInteraction() {
         super.onUserInteraction()
         appOpenAdController.onUserInteraction()

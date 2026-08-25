@@ -1,10 +1,13 @@
 # PixelPals Privacy Policy
 
-**Last updated: 2026-08-20**
+**Last updated: 2026-08-24**
 
 PixelPals is a virtual-pet app intended for a general audience aged 13 and
 older. This policy explains the local permissions and the third-party services
 used by the app.
+
+**Developer:** Youssef Aboultaif
+**Privacy contact:** [ymiy2021@gmail.com](mailto:ymiy2021@gmail.com)
 
 ## Data stored on the device
 
@@ -47,17 +50,20 @@ may retain transaction and account information under its own privacy policy.
 You can revoke overlay, notification, or usage-access permissions in Android
 Settings, stop the overlay in PixelPals, manage ad consent from the store's
 privacy-options action, or uninstall the app. For privacy questions, contact
-the developer through the support channel linked from the Google Play listing.
+Youssef Aboultaif at [ymiy2021@gmail.com](mailto:ymiy2021@gmail.com).
 
 ---
 
 # Política de privacidad de PixelPals
 
-**Última actualización: 2026-08-20**
+**Última actualización: 2026-08-24**
 
 PixelPals es una aplicación de mascotas virtuales dirigida a público general
 de 13 años o más. Esta política explica los permisos locales y los servicios
 de terceros utilizados por la aplicación.
+
+**Desarrollador:** Youssef Aboultaif
+**Contacto de privacidad:** [ymiy2021@gmail.com](mailto:ymiy2021@gmail.com)
 
 ## Datos guardados en el dispositivo
 
@@ -101,5 +107,5 @@ privacidad.
 Puedes revocar permisos de overlay, notificaciones o acceso de uso desde los
 Ajustes de Android, detener el overlay en PixelPals, gestionar el consentimiento
 de anuncios desde la opción de privacidad de la tienda o desinstalar la app.
-Para consultas de privacidad, utiliza el canal de soporte enlazado desde la
-ficha de Google Play.
+Para consultas de privacidad, contacta con Youssef Aboultaif en
+[ymiy2021@gmail.com](mailto:ymiy2021@gmail.com).

@@ -9,5 +9,6 @@ data class TreasureItem(
     val emoji: String,
     val count: Int,
     val firstFoundAt: Long,
-    val lastFoundAt: Long
+    val lastFoundAt: Long,
+    val totalFound: Int = count,
 )

@@ -242,6 +242,7 @@ open class RuntimePetBehavior<S : PetBrainState>(
         hunger = hunger.coerceIn(0, 100),
         hygiene = hygiene.coerceIn(0, 100),
         bond = bond.coerceIn(0, 100),
+        condition = condition,
     )
 
     private companion object {

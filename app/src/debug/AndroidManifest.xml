@@ -49,5 +49,12 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="debug floating Taro sprite trial" />
         </service>
+        <receiver
+            android:name=".debug.CareStateDebugReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.pixelpals.app.debug.SET_CARE_STATE" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

@@ -25,6 +25,9 @@ import com.pixelpals.app.feature.treasure.TreasureAlbumActivity
 import com.pixelpals.app.navigation.PixelPalsDestination
 import com.pixelpals.app.navigation.RootNavigator
 import com.pixelpals.app.status.PetDashboardActivity
+import com.pixelpals.app.notifications.PetCareNotificationManager
+import com.pixelpals.app.notifications.PetCareNotificationScheduler
+import com.pixelpals.app.notifications.PetCareReminderPreferences
 
 class HomeFragment : Fragment() {
     companion object {
@@ -36,6 +39,9 @@ class HomeFragment : Fragment() {
         get() = requireNotNull(bindingReference)
     private val analytics: AnalyticsTracker by lazy { AppServices.analytics(requireContext()) }
     private val selectedPetStore: SelectedPetStore by lazy { SelectedPetStore(requireContext()) }
+    private val careReminderPreferences: PetCareReminderPreferences by lazy {
+        PetCareReminderPreferences(requireContext())
+    }
     private var hasAnimated: Boolean = false
     private var isNotificationRequestAutomatic: Boolean = false
 
@@ -71,6 +77,7 @@ class HomeFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         configureLanguageSelector()
         configureActions()
+        configureCareReminders()
         updatePermissionUi()
         if (!hasAnimated) {
             animateEntrance()
@@ -81,6 +88,7 @@ class HomeFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         PetService.refreshNotificationChannel(requireContext())
+        PetCareNotificationManager.createChannel(requireContext())
         updatePermissionUi()
     }
 
@@ -130,6 +138,24 @@ class HomeFragment : Fragment() {
         binding.btnDashboard.setOnClickListener {
             analytics.track("dashboard_opened_from_main")
             startActivity(Intent(requireContext(), PetDashboardActivity::class.java))
+        }
+    }
+
+    private fun configureCareReminders() {
+        binding.switchCareReminders.isChecked = careReminderPreferences.isEnabled()
+        binding.switchCareReminders.setOnCheckedChangeListener { _, isChecked ->
+            careReminderPreferences.setEnabled(isChecked)
+            refreshCareReminderSchedule()
+            updatePermissionUi()
+            analytics.track("care_reminders_changed", mapOf("enabled" to isChecked.toString()))
+        }
+    }
+
+    private fun refreshCareReminderSchedule() {
+        if (careReminderPreferences.isEnabled() && selectedPetStore.isPetEnabled()) {
+            PetCareNotificationScheduler.schedule(requireContext())
+        } else {
+            PetCareNotificationScheduler.cancel(requireContext())
         }
     }
 
@@ -255,11 +281,14 @@ class HomeFragment : Fragment() {
         )
         binding.statusNotification.setTextColor(color)
         binding.iconNotification.setColorFilter(color)
+        binding.btnNotification.visibility = if (isGranted) View.GONE else View.VISIBLE
         binding.btnNotification.isEnabled = !isGranted
-        binding.btnNotification.alpha = if (isGranted) 0.5f else 1f
         binding.btnNotification.text = getString(
             if (isGranted) R.string.permission_granted else R.string.grant_permission,
         )
+        binding.switchCareReminders.isEnabled = isGranted
+        binding.switchCareReminders.alpha = if (isGranted) 1f else 0.5f
+        binding.txtCareReminderSummary.alpha = if (isGranted) 1f else 0.5f
     }
 
     private fun updateUsageCard(isGranted: Boolean) {

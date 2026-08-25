@@ -26,8 +26,8 @@ android {
         applicationId = "com.pixelpals.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 18
-        versionName = "2.2.0"
+        versionCode = 20
+        versionName = "2.3.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // AdMob: IDs de PRUEBA de Google por defecto. Para ads reales define
@@ -45,7 +45,7 @@ android {
         val adMobBannerId = configuredAdMobBannerId
             ?: "ca-app-pub-3940256099942544/9214589741"
         val adMobAppOpenId = configuredAdMobAppOpenId
-            ?: "ca-app-pub-3940256099942544/9257395920052544"
+            ?: "ca-app-pub-3940256099942544/9257395921"
         val bannerAdsConfigured = !configuredAdMobAppId.isNullOrBlank() &&
             !configuredAdMobBannerId.isNullOrBlank()
         val appOpenAdsConfigured = !configuredAdMobAppId.isNullOrBlank() &&
@@ -95,16 +95,20 @@ android {
         debug {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
+            val instrumentationBuildRequested = gradle.startParameter.taskNames.any { taskName ->
+                taskName.contains("androidTest", ignoreCase = true) ||
+                    taskName.contains("connected", ignoreCase = true)
+            }
             val debugAppOpenEnabled =
                 (project.findProperty("pixelpals.ads.debugAppOpen") as String?)
                     ?.toBooleanStrictOrNull()
                     ?: System.getenv("PIXELPALS_DEBUG_APP_OPEN")?.toBooleanStrictOrNull()
-                    ?: false
+                    ?: !instrumentationBuildRequested
             // Los anuncios de prueba de Google funcionan sin cuenta AdMob.
             buildConfigField("boolean", "ADS_ENABLED", "true")
             buildConfigField("boolean", "BANNER_ADS_ENABLED", "true")
-            // Se activa bajo demanda para que ActivityScenario y las pruebas
-            // instrumentadas no queden bloqueadas por una pantalla de anuncio.
+            // Las instalaciones debug muestran siempre la unidad de prueba. Solo
+            // se desactiva automáticamente al construir pruebas instrumentadas.
             buildConfigField(
                 "boolean",
                 "APP_OPEN_ADS_ENABLED",
@@ -113,7 +117,7 @@ android {
             buildConfigField(
                 "String",
                 "ADMOB_APP_OPEN_AD_UNIT_ID",
-                "\"ca-app-pub-3940256099942544/9257395920052544\"",
+                "\"ca-app-pub-3940256099942544/9257395921\"",
             )
         }
         release {
@@ -128,13 +132,14 @@ android {
             // solo desde el tercer uso, una vez por proceso.
             val releaseAdMobAppId = ((project.findProperty("pixelpals.admob.appId") as String?)
                 ?: System.getenv("PIXELPALS_ADMOB_APP_ID"))
-                ?: "ca-app-pub-7237195189489154~2239951807"
+                ?: "ca-app-pub-7237195189489154~5341119255"
             val releaseAdMobAppOpenId =
                 ((project.findProperty("pixelpals.admob.appOpenId") as String?)
                     ?: System.getenv("PIXELPALS_ADMOB_APP_OPEN_ID"))
-                    ?: "ca-app-pub-7237195189489154/7797576411"
+                    ?: "ca-app-pub-7237195189489154/2748569339"
             val releaseAdMobBannerId = (project.findProperty("pixelpals.admob.bannerId") as String?)
                 ?: System.getenv("PIXELPALS_ADMOB_BANNER_ID")
+                ?: "ca-app-pub-7237195189489154/7396436951"
             manifestPlaceholders["adMobAppId"] = releaseAdMobAppId
             buildConfigField(
                 "String",
@@ -187,6 +192,7 @@ android {
         viewBinding = true
         buildConfig = true
     }
+
 }
 
 dependencies {
@@ -197,7 +203,9 @@ dependencies {
     // Material Design 3
     implementation("com.google.android.material:material:1.14.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.11.0")
+    implementation("androidx.lifecycle:lifecycle-process:2.11.0")
     implementation("androidx.recyclerview:recyclerview:1.4.0")
+    implementation("androidx.work:work-runtime-ktx:2.11.2")
 
     // ConstraintLayout
     implementation("androidx.constraintlayout:constraintlayout:2.2.2")
@@ -213,12 +221,14 @@ dependencies {
     testImplementation("androidx.test:core:1.7.0")
     testImplementation("androidx.test:runner:1.7.0")
     testImplementation("androidx.room:room-testing:$roomVersion")
+    testImplementation("androidx.work:work-testing:2.11.2")
     testImplementation("org.json:json:20240303")
 
     androidTestImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test:core:1.7.0")
     androidTestImplementation("androidx.test:runner:1.7.0")
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
     androidTestImplementation("androidx.test.uiautomator:uiautomator:2.3.0")
     androidTestImplementation("androidx.room:room-testing:$roomVersion")
 

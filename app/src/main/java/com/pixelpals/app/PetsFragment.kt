@@ -197,6 +197,7 @@ class PetsFragment : Fragment() {
             CareAction.PLAY -> R.string.action_play
             CareAction.REST -> R.string.action_rest
             CareAction.CHECK_IN -> R.string.action_check_in
+            CareAction.MEDICINE -> R.string.action_medicine
         },
     )
 }

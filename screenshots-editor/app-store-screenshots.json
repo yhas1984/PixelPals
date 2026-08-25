@@ -1,12 +1,12 @@
 {
   "schemaVersion": 2,
   "appName": "PixelPals",
-  "themeId": "ocean-fresh",
+  "themeId": "dark-bold",
   "connectedCanvas": true,
   "locales": [
-    "en"
+    "es"
   ],
-  "locale": "en",
+  "locale": "es",
   "device": "android",
   "orientation": "portrait",
   "appIcon": "/app-icon.png",
@@ -17,12 +17,12 @@
         "id": "s_pxlpals_01",
         "layout": "hero",
         "label": {
-          "en": "MEET YOUR NEW FRIEND"
+          "es": "TU COMPAÑERO DE CADA DÍA"
         },
         "headline": {
-          "en": "A pet that\nlives on\nyour screen"
+          "es": "Una mascota\nque vive en\ntu pantalla"
         },
-        "screenshot": "/screenshots/android/phone/en/06.png",
+        "screenshot": "/screenshots/android/phone/{locale}/08.png",
         "transforms": {
           "caption": {
             "x": 86,
@@ -47,12 +47,12 @@
         "id": "s_pxlpals_02",
         "layout": "device-top",
         "label": {
-          "en": "CHOOSE YOUR COMPANION"
+          "es": "ENCUENTRA A TU COMPAÑERO"
         },
         "headline": {
-          "en": "Eight pals,\none is yours"
+          "es": "Ocho mascotas.\nUna es para ti."
         },
-        "screenshot": "/screenshots/android/phone/en/04.png",
+        "screenshot": "/screenshots/android/phone/{locale}/04.png",
         "transforms": {
           "caption": {
             "x": 86,
@@ -76,12 +76,12 @@
         "id": "s_pxlpals_03",
         "layout": "device-bottom",
         "label": {
-          "en": "MAKE IT UNIQUE"
+          "es": "HAZLA SOLO TUYA"
         },
         "headline": {
-          "en": "Make them\nall your own"
+          "es": "Dale tu estilo\na cada aventura"
         },
-        "screenshot": "/screenshots/android/phone/en/03.png",
+        "screenshot": "/screenshots/android/phone/{locale}/03.png",
         "transforms": {
           "caption": {
             "x": 86,
@@ -105,12 +105,12 @@
         "id": "s_pxlpals_04",
         "layout": "device-top",
         "label": {
-          "en": "CARE & GROW"
+          "es": "COLECCIONA CADA MOMENTO"
         },
         "headline": {
-          "en": "Every day\nyou grow closer"
+          "es": "Cada hallazgo\ncuenta una historia"
         },
-        "screenshot": "/screenshots/android/phone/en/07.png",
+        "screenshot": "/screenshots/android/phone/{locale}/05.png",
         "transforms": {
           "caption": {
             "x": 86,
@@ -127,95 +127,6 @@
             "height": 1170,
             "rotation": 0,
             "zIndex": 3
-          }
-        },
-        "inverted": true
-      },
-      {
-        "id": "s_pxlpals_05",
-        "layout": "two-devices",
-        "label": {
-          "en": "UNLOCK THE CREW"
-        },
-        "headline": {
-          "en": "Every friend\nhas a story"
-        },
-        "screenshot": "/screenshots/android/phone/en/05.png",
-        "transforms": {
-          "caption": {
-            "x": 86,
-            "y": 90,
-            "width": 907,
-            "height": 380,
-            "rotation": 0,
-            "zIndex": 4
-          },
-          "device": {
-            "x": 60,
-            "y": 850,
-            "width": 480,
-            "height": 1040,
-            "rotation": -5,
-            "zIndex": 3
-          },
-          "deviceSecondary": {
-            "x": 560,
-            "y": 930,
-            "width": 430,
-            "height": 932,
-            "rotation": 6,
-            "zIndex": 2
-          }
-        },
-        "screenshotSecondary": "/screenshots/android/phone/en/06.png"
-      },
-      {
-        "id": "s_pxlpals_06",
-        "layout": "device-bottom",
-        "label": {
-          "en": "ALWAYS WITH YOU"
-        },
-        "headline": {
-          "en": "Walks on top\nof every app"
-        },
-        "screenshot": "/screenshots/android/phone/en/08.png",
-        "transforms": {
-          "caption": {
-            "x": 86,
-            "y": 90,
-            "width": 907,
-            "height": 400,
-            "rotation": 0,
-            "zIndex": 4
-          },
-          "device": {
-            "x": 240,
-            "y": 540,
-            "width": 600,
-            "height": 1300,
-            "rotation": 0,
-            "zIndex": 3
-          }
-        }
-      },
-      {
-        "id": "s_pxlpals_07",
-        "layout": "no-device",
-        "label": {
-          "en": "YOUR PET, YOUR RULES"
-        },
-        "headline": {
-          "en": "Feed them\nPlay with them\nDress them up"
-        },
-        "screenshot": "",
-        "transforms": {
-          "caption": {
-            "x": 86,
-            "y": 500,
-            "width": 907,
-            "height": 800,
-            "rotation": 0,
-            "zIndex": 4
           }
         },
         "inverted": true

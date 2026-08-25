@@ -38,6 +38,9 @@ import com.pixelpals.app.status.CareAction
 import com.pixelpals.app.status.PetMood
 import com.pixelpals.app.status.PetPersonality
 import com.pixelpals.app.status.PetStatusSnapshot
+import com.pixelpals.app.feature.treasure.TreasureDiscoveryResult
+import com.pixelpals.app.notifications.PetCareNotificationManager
+import com.pixelpals.app.notifications.PetCareNotificationScheduler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -280,7 +283,7 @@ class PetView(
 
     init {
         uiScope.launch {
-            petStatus = repository.getStatusSnapshot(petType)
+            updatePetStatus(repository.getStatusSnapshot(petType))
             reloadCosmetic()
             showBubble(welcomeBubble())
             invalidate()
@@ -418,7 +421,9 @@ class PetView(
     override fun trackInteraction() {
         progress.trackInteraction()
         uiScope.launch {
-            petStatus = repository.recordInteraction(petType)
+            updatePetStatus(repository.recordInteraction(petType))
+            PetCareNotificationManager.cancel(context)
+            PetCareNotificationScheduler.schedule(context)
             analytics.track(
                 "pet_interaction",
                 mapOf(
@@ -427,8 +432,8 @@ class PetView(
                     "bond" to petStatus.bond.toString()
                 )
             )
-            repository.maybeAwardTreasureFromInteraction(petType)?.let { treasure ->
-                showBubble(treasure)
+            repository.maybeAwardTreasureFromInteraction(petType)?.let { result ->
+                handleTreasureDiscovery(result, "interaction")
             } ?: run {
                 if (Random.nextFloat() < 0.45f) {
                     showBubble(interactionBubble())
@@ -475,11 +480,41 @@ class PetView(
         playHaptic(35)
         treasureReactionTimer = treasureReactionDuration
         behavior?.onTreasureConsumed(emoji)
+        uiScope.launch { updatePetStatus(repository.getStatusSnapshot(petType)) }
+    }
+
+    private suspend fun handleTreasureDiscovery(
+        result: TreasureDiscoveryResult,
+        source: String,
+    ): Unit {
+        showBubble(result.emoji)
+        updatePetStatus(repository.getStatusSnapshot(petType))
+        analytics.track(
+            "treasure_discovered",
+            mapOf(
+                "pet_id" to petType.name.lowercase(),
+                "treasure_id" to result.treasureId,
+                "source" to source,
+                "new" to result.isNewDiscovery.toString(),
+                "coins" to result.coinsGained.toString(),
+                "bond" to result.bondGained.toString(),
+            ),
+        )
+        result.milestone?.let { milestone ->
+            analytics.track(
+                "treasure_milestone_reached",
+                mapOf(
+                    "pet_id" to petType.name.lowercase(),
+                    "milestone" to milestone.milestone.toString(),
+                    "badge" to milestone.name.lowercase(),
+                ),
+            )
+        }
     }
 
     fun refreshFromRepository(message: String?, celebrate: Boolean) {
         uiScope.launch {
-            petStatus = repository.getStatusSnapshot(petType)
+            updatePetStatus(repository.getStatusSnapshot(petType))
             reloadCosmetic()
             if (!message.isNullOrBlank()) showBubble(message)
             if (celebrate) {
@@ -546,7 +581,9 @@ class PetView(
 
     override fun recordCareAction(action: CareAction) {
         uiScope.launch {
-            petStatus = repository.applyCareAction(petType, action)
+            updatePetStatus(repository.applyCareAction(petType, action))
+            PetCareNotificationManager.cancel(context)
+            PetCareNotificationScheduler.schedule(context)
             showBubble(
                 careActionBubble(action)
             )
@@ -587,9 +624,9 @@ class PetView(
             progress.flush()
             activeSecondsAccumulator -= 60f
             uiScope.launch {
-                petStatus = repository.recordActiveMinute(petType)
-                repository.maybeAwardTreasureFromActiveMinute(petType)?.let { treasure ->
-                    showBubble(treasure)
+                updatePetStatus(repository.recordActiveMinute(petType))
+                repository.maybeAwardTreasureFromActiveMinute(petType)?.let { result ->
+                    handleTreasureDiscovery(result, "active_minute")
                 }
             }
         }
@@ -762,6 +799,23 @@ class PetView(
         return options.random()
     }
 
+    private fun updatePetStatus(updated: PetStatusSnapshot) {
+        val previous: PetStatusSnapshot = petStatus
+        petStatus = updated
+        behavior?.onStatusChanged(previous, updated)
+        if (previous.condition != updated.condition) {
+            analytics.track(
+                "pet_condition_changed",
+                mapOf(
+                    "pet_id" to updated.petId,
+                    "from" to previous.condition.name.lowercase(),
+                    "to" to updated.condition.name.lowercase(),
+                ),
+            )
+        }
+        invalidate()
+    }
+
     private fun careActionBubble(action: CareAction): String {
         return when (action) {
             CareAction.FEED -> listOf("🍓", "🍪", "😋").random()
@@ -769,6 +823,7 @@ class PetView(
             CareAction.PLAY -> listOf("🎉", "💫", "😄").random()
             CareAction.REST -> listOf("💤", "🌙", "☁️").random()
             CareAction.CHECK_IN -> listOf("💖", "✨", "😊").random()
+            CareAction.MEDICINE -> listOf("💊", "💛", "🤗").random()
         }
     }
 

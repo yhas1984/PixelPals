@@ -3,6 +3,7 @@ import com.pixelpals.app.core.domain.PetState
 
 import android.graphics.Canvas
 import android.view.MotionEvent
+import com.pixelpals.app.status.PetStatusSnapshot
 
 /**
  * PetBehavior — Interface for pet-specific behaviors.
@@ -70,4 +71,5 @@ interface PetBehavior {
     fun onBatteryTemperatureChanged(temperatureCelsius: Float?) {}
     fun onKeyboardVisibilityChanged(visible: Boolean, height: Int) {}
     fun onAirplaneModeChanged(isAirplane: Boolean) {}
+    fun onStatusChanged(previous: PetStatusSnapshot, current: PetStatusSnapshot) {}
 }
