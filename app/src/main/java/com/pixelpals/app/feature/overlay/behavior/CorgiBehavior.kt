@@ -71,8 +71,14 @@ class CorgiBehavior(
         currentSpeed = approach(currentSpeed, targetSpeed, bridge.petSpriteSize * 1.9f * dt)
         val previousX = params.x
         val proposedX = params.x + (walkDirection * currentSpeed * dt).toInt()
+        val shouldReverse = CorgiEdgeMotion.shouldReverse(
+            positionX = params.x,
+            proposedX = proposedX,
+            maxX = maxX,
+            direction = walkDirection,
+        )
         params.x = proposedX.coerceIn(0, maxX)
-        if (proposedX != params.x || params.x == 0 || params.x == maxX) {
+        if (shouldReverse) {
             walkDirection *= -1f
             currentSpeed *= 0.72f
         }

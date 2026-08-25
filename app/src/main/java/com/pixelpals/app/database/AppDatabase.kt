@@ -15,8 +15,10 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         DailyTaskStateEntity::class,
         OwnedProductEntity::class,
         ProcessedPurchaseEntity::class,
+        PetCareNotificationEntity::class,
+        TreasureCollectionStateEntity::class,
     ],
-    version = 6,
+    version = 8,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -26,6 +28,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun dailyTaskStateDao(): DailyTaskStateDao
     abstract fun ownedProductDao(): OwnedProductDao
     abstract fun processedPurchaseDao(): ProcessedPurchaseDao
+    abstract fun petCareNotificationDao(): PetCareNotificationDao
+    abstract fun treasureCollectionStateDao(): TreasureCollectionStateDao
 
     companion object {
         @Volatile
@@ -153,6 +157,61 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /** v6 -> v7: reversible illness state and anti-spam care notification ledger. */
+        val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `pet_status` ADD COLUMN `condition` TEXT NOT NULL DEFAULT 'HEALTHY'")
+                db.execSQL("ALTER TABLE `pet_status` ADD COLUMN `conditionStartedAt` INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE `pet_status` ADD COLUMN `criticalNeedsStartedAt` INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE `pet_status` ADD COLUMN `recoveryProgress` INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE `pet_status` ADD COLUMN `lastCareAt` INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE `pet_status` ADD COLUMN `lastMedicineAt` INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE `pet_bond` ADD COLUMN `illnessRecoveries` INTEGER NOT NULL DEFAULT 0")
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `pet_care_notification_state` (
+                        `petId` TEXT NOT NULL,
+                        `lastNotificationType` TEXT NOT NULL,
+                        `lastSentAt` INTEGER NOT NULL,
+                        `sentDay` TEXT NOT NULL,
+                        `sentCount` INTEGER NOT NULL,
+                        `snoozedUntil` INTEGER NOT NULL,
+                        PRIMARY KEY(`petId`)
+                    )
+                    """.trimIndent()
+                )
+            }
+        }
+
+        /** v7 -> v8: permanent treasure collection, milestones, and daily pet gifts. */
+        val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `treasures` ADD COLUMN `totalFound` INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("UPDATE `treasures` SET `totalFound` = `count`")
+                db.execSQL("ALTER TABLE `pet_bond` ADD COLUMN `lastTreasureGiftDay` TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE `pet_bond` ADD COLUMN `treasuresGifted` INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE `pet_bond` ADD COLUMN `favoriteTreasuresGifted` INTEGER NOT NULL DEFAULT 0")
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `treasure_collection_state` (
+                        `id` INTEGER NOT NULL,
+                        `lastRewardedMilestone` INTEGER NOT NULL,
+                        `completedAt` INTEGER NOT NULL,
+                        `finalCollectorPetId` TEXT NOT NULL,
+                        PRIMARY KEY(`id`)
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    INSERT OR IGNORE INTO `treasure_collection_state`
+                    (`id`, `lastRewardedMilestone`, `completedAt`, `finalCollectorPetId`)
+                    VALUES (1, 0, 0, '')
+                    """.trimIndent()
+                )
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -166,6 +225,8 @@ abstract class AppDatabase : RoomDatabase() {
                     MIGRATION_3_4,
                     MIGRATION_4_5,
                     MIGRATION_5_6,
+                    MIGRATION_6_7,
+                    MIGRATION_7_8,
                 )
                 .build()
                 INSTANCE = instance

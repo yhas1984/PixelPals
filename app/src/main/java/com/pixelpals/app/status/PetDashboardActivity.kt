@@ -1,6 +1,7 @@
 package com.pixelpals.app.status
 
 import android.content.Intent
+import android.content.Context
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
@@ -16,6 +17,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
 import com.pixelpals.app.core.services.AppServices
+import com.pixelpals.app.core.care.PetCondition
 import com.pixelpals.app.core.domain.PetType
 import com.pixelpals.app.data.repository.PixelPalsRepository
 import com.pixelpals.app.PetService
@@ -26,15 +28,32 @@ import com.pixelpals.app.status.PetMood
 import com.pixelpals.app.status.PetPersonality
 import com.pixelpals.app.navigation.PixelPalsDestination
 import com.pixelpals.app.navigation.StoreSection
+import com.pixelpals.app.notifications.PetCareNotificationManager
+import com.pixelpals.app.notifications.PetCareNotificationScheduler
+import com.pixelpals.app.feature.treasure.TreasureAlbumActivity
+import com.pixelpals.app.feature.treasure.TreasureBadge
+import com.pixelpals.app.feature.treasure.TreasureCollectionSummary
 import kotlinx.coroutines.launch
 
 class PetDashboardActivity : AppCompatActivity() {
+    companion object {
+        private const val EXTRA_SUGGESTED_ACTION: String = "suggested_care_action"
+        private const val EXTRA_SOURCE: String = "care_source"
+
+        fun createIntent(context: Context, action: CareAction? = null, source: String? = null): Intent =
+            Intent(context, PetDashboardActivity::class.java).apply {
+                action?.let { putExtra(EXTRA_SUGGESTED_ACTION, it.name) }
+                source?.let { putExtra(EXTRA_SOURCE, it) }
+            }
+    }
+
     private lateinit var selectedPetStore: SelectedPetStore
     private val repository: PixelPalsRepository by lazy { AppServices.repository(this) }
     private val analytics by lazy { AppServices.analytics(this) }
 
     private lateinit var selectedPet: PetType
 
+    private lateinit var txtDashboardTitle: TextView
     private lateinit var txtDashboardSubtitle: TextView
     private lateinit var txtCompanionLine: TextView
     private lateinit var txtMoodSummary: TextView
@@ -57,6 +76,17 @@ class PetDashboardActivity : AppCompatActivity() {
     private lateinit var txtDashboardState: TextView
     private lateinit var progressDashboardLoading: ProgressBar
     private lateinit var btnDashboardRetry: Button
+    private lateinit var cardPetCondition: LinearLayout
+    private lateinit var txtConditionTitle: TextView
+    private lateinit var txtConditionDetail: TextView
+    private lateinit var progressRecovery: ProgressBar
+    private lateinit var btnMedicine: Button
+    private lateinit var txtCollectionProgress: TextView
+    private lateinit var txtCollectionBadge: TextView
+    private lateinit var txtCollectionGiftStatus: TextView
+    private lateinit var progressCollection: ProgressBar
+    private var requestedCareAction: CareAction? = null
+    private var hasRenderedDashboard: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,13 +95,31 @@ class PetDashboardActivity : AppCompatActivity() {
         setContentView(R.layout.activity_pet_dashboard)
         selectedPetStore = SelectedPetStore(this)
         selectedPet = selectedPetStore.load()
+        requestedCareAction = intent.getStringExtra(EXTRA_SUGGESTED_ACTION)
+            ?.let { value -> CareAction.entries.firstOrNull { it.name == value } }
+        if (intent.getStringExtra(EXTRA_SOURCE) == "care_notification") {
+            PetCareNotificationManager.cancel(this)
+            analytics.track(
+                "care_notification_opened",
+                mapOf("pet_id" to selectedPet.name.lowercase()),
+            )
+        }
         bindViews()
+        updateDashboardTitle()
         applySystemBarsInsets()
         setupActions()
         lifecycleScope.launch { refreshDashboard(applyCheckIn = true) }
     }
 
+    override fun onResume(): Unit {
+        super.onResume()
+        if (hasRenderedDashboard) {
+            lifecycleScope.launch { refreshDashboard(applyCheckIn = false) }
+        }
+    }
+
     private fun bindViews() {
+        txtDashboardTitle = findViewById(R.id.txtDashboardTitle)
         txtDashboardSubtitle = findViewById(R.id.txtDashboardSubtitle)
         txtCompanionLine = findViewById(R.id.txtCompanionLine)
         txtMoodSummary = findViewById(R.id.txtMoodSummary)
@@ -94,6 +142,24 @@ class PetDashboardActivity : AppCompatActivity() {
         txtDashboardState = findViewById(R.id.txtDashboardState)
         progressDashboardLoading = findViewById(R.id.progressDashboardLoading)
         btnDashboardRetry = findViewById(R.id.btnDashboardRetry)
+        cardPetCondition = findViewById(R.id.cardPetCondition)
+        txtConditionTitle = findViewById(R.id.txtConditionTitle)
+        txtConditionDetail = findViewById(R.id.txtConditionDetail)
+        progressRecovery = findViewById(R.id.progressRecovery)
+        btnMedicine = findViewById(R.id.btnMedicine)
+        txtCollectionProgress = findViewById(R.id.txtCollectionProgress)
+        txtCollectionBadge = findViewById(R.id.txtCollectionBadge)
+        txtCollectionGiftStatus = findViewById(R.id.txtCollectionGiftStatus)
+        progressCollection = findViewById(R.id.progressCollection)
+    }
+
+    private fun updateDashboardTitle(): Unit {
+        val dashboardTitle: String = getString(
+            R.string.dashboard_title_format,
+            getString(selectedPet.displayNameResId),
+        )
+        title = dashboardTitle
+        txtDashboardTitle.text = dashboardTitle
     }
 
     private fun setupActions() {
@@ -101,6 +167,7 @@ class PetDashboardActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnClean).setOnClickListener { performCare(CareAction.CLEAN) }
         findViewById<Button>(R.id.btnPlay).setOnClickListener { performCare(CareAction.PLAY) }
         findViewById<Button>(R.id.btnRest).setOnClickListener { performCare(CareAction.REST) }
+        btnMedicine.setOnClickListener { performCare(CareAction.MEDICINE) }
         findViewById<Button>(R.id.btnDashboardStore).setOnClickListener {
             startActivity(
                 MainActivity.createIntent(
@@ -111,16 +178,22 @@ class PetDashboardActivity : AppCompatActivity() {
             )
             finish()
         }
+        findViewById<Button>(R.id.btnDashboardCollection).setOnClickListener {
+            startActivity(Intent(this, TreasureAlbumActivity::class.java))
+        }
         btnDashboardRetry.setOnClickListener { lifecycleScope.launch { refreshDashboard(applyCheckIn = false) } }
     }
 
     private fun performCare(action: CareAction) {
         lifecycleScope.launch {
+            requestedCareAction = null
             showLoadingState(getString(R.string.dashboard_loading))
             runCatching {
                 val before = repository.getStatusSnapshot(selectedPet)
                 val memoriesBefore = repository.getMemories(selectedPet).map { it.id }.toSet()
                 val after = repository.applyCareAction(selectedPet, action)
+                PetCareNotificationManager.cancel(this@PetDashboardActivity)
+                PetCareNotificationScheduler.schedule(this@PetDashboardActivity)
                 val newMemory = repository.getMemories(selectedPet).firstOrNull { it.id !in memoriesBefore }
                 analytics.track(
                     "dashboard_action",
@@ -164,6 +237,7 @@ class PetDashboardActivity : AppCompatActivity() {
                 }
             }
             renderDashboard()
+            PetCareNotificationScheduler.schedule(this@PetDashboardActivity)
         }.onFailure {
             showErrorState(getString(R.string.dashboard_error))
         }
@@ -171,6 +245,8 @@ class PetDashboardActivity : AppCompatActivity() {
 
     private suspend fun renderDashboard() {
         val snapshot = repository.getStatusSnapshot(selectedPet)
+        val collection = repository.getTreasureCollection(selectedPet)
+        val coinBalance = repository.getCoinBalance(selectedPet)
         val tasks = repository.getDailyTasks(selectedPet)
         val memories = repository.getMemories(selectedPet)
 
@@ -178,7 +254,7 @@ class PetDashboardActivity : AppCompatActivity() {
             R.string.dashboard_subtitle_format,
             getString(selectedPet.displayNameResId),
             snapshot.careStreakDays,
-            snapshot.softCurrency
+            coinBalance
         )
         txtCompanionLine.text = getString(
             R.string.dashboard_companion_line_format,
@@ -212,6 +288,8 @@ class PetDashboardActivity : AppCompatActivity() {
         progressHunger.progress = snapshot.hunger
         progressHygiene.progress = snapshot.hygiene
         progressBond.progress = snapshot.bond
+        renderCondition(snapshot)
+        renderCollection(collection.summary)
 
         tasksContainer.removeAllViews()
         tasks.forEach { task ->
@@ -263,7 +341,71 @@ class PetDashboardActivity : AppCompatActivity() {
         cardDashboardState.setBackgroundResource(R.drawable.bg_status_success)
         progressDashboardLoading.visibility = View.GONE
         btnDashboardRetry.visibility = View.GONE
-        updateActionButtonEmphasis(snapshot.dominantSuggestion)
+        updateActionButtonEmphasis(requestedCareAction ?: snapshot.dominantSuggestion)
+        hasRenderedDashboard = true
+    }
+
+    private fun renderCollection(summary: TreasureCollectionSummary): Unit {
+        txtCollectionProgress.text = getString(
+            R.string.treasure_collection_progress,
+            summary.discoveredCount,
+            summary.totalCount,
+        )
+        progressCollection.max = summary.totalCount
+        progressCollection.progress = summary.discoveredCount
+        txtCollectionBadge.text = getString(
+            R.string.treasure_collection_badge_format,
+            getString(treasureBadgeResource(summary.badge)),
+        )
+        val petName: String = getString(selectedPet.displayNameResId)
+        txtCollectionGiftStatus.text = getString(
+            when {
+                !summary.isPetActive -> R.string.treasure_collection_gift_inactive
+                summary.hasGiftedToday -> R.string.treasure_collection_gift_used
+                else -> R.string.treasure_collection_gift_available
+            },
+            petName,
+        )
+    }
+
+    private fun treasureBadgeResource(badge: TreasureBadge): Int = when (badge) {
+        TreasureBadge.NONE -> R.string.treasure_badge_none
+        TreasureBadge.BRONZE -> R.string.treasure_badge_bronze
+        TreasureBadge.SILVER -> R.string.treasure_badge_silver
+        TreasureBadge.GOLD -> R.string.treasure_badge_gold
+        TreasureBadge.LEGENDARY -> R.string.treasure_badge_legendary
+    }
+
+    private fun renderCondition(snapshot: PetStatusSnapshot) {
+        if (snapshot.condition == PetCondition.HEALTHY) {
+            cardPetCondition.visibility = View.GONE
+            return
+        }
+        cardPetCondition.visibility = View.VISIBLE
+        txtConditionTitle.text = getString(conditionTitle(snapshot.condition))
+        txtConditionDetail.text = getString(conditionDetail(snapshot.condition))
+        val showsRecovery = snapshot.condition == PetCondition.SICK || snapshot.condition == PetCondition.RECOVERING
+        progressRecovery.visibility = if (showsRecovery) View.VISIBLE else View.GONE
+        progressRecovery.progress = snapshot.recoveryProgress
+        btnMedicine.visibility = if (showsRecovery) View.VISIBLE else View.GONE
+        btnMedicine.isEnabled = snapshot.medicineAvailableAt == 0L || System.currentTimeMillis() >= snapshot.medicineAvailableAt
+        btnMedicine.text = getString(if (btnMedicine.isEnabled) R.string.action_medicine else R.string.action_medicine_later)
+    }
+
+    private fun conditionTitle(condition: PetCondition): Int = when (condition) {
+        PetCondition.HEALTHY -> R.string.condition_healthy_title
+        PetCondition.AT_RISK -> R.string.condition_at_risk_title
+        PetCondition.SICK -> R.string.condition_sick_title
+        PetCondition.RECOVERING -> R.string.condition_recovering_title
+        PetCondition.HIBERNATING -> R.string.condition_hibernating_title
+    }
+
+    private fun conditionDetail(condition: PetCondition): Int = when (condition) {
+        PetCondition.HEALTHY -> R.string.condition_healthy_detail
+        PetCondition.AT_RISK -> R.string.condition_at_risk_detail
+        PetCondition.SICK -> R.string.condition_sick_detail
+        PetCondition.RECOVERING -> R.string.condition_recovering_detail
+        PetCondition.HIBERNATING -> R.string.condition_hibernating_detail
     }
 
     private fun updateActionButtonEmphasis(recommended: CareAction) {
@@ -271,7 +413,8 @@ class PetDashboardActivity : AppCompatActivity() {
             CareAction.FEED to findViewById<Button>(R.id.btnFeed),
             CareAction.CLEAN to findViewById<Button>(R.id.btnClean),
             CareAction.PLAY to findViewById<Button>(R.id.btnPlay),
-            CareAction.REST to findViewById<Button>(R.id.btnRest)
+            CareAction.REST to findViewById<Button>(R.id.btnRest),
+            CareAction.MEDICINE to btnMedicine
         )
         buttons.forEach { (action, button) ->
             button.alpha = if (action == recommended) 1f else 0.78f
@@ -335,6 +478,7 @@ class PetDashboardActivity : AppCompatActivity() {
                 CareAction.PLAY -> R.string.care_bubble_play
                 CareAction.REST -> R.string.care_bubble_rest
                 CareAction.CHECK_IN -> R.string.care_bubble_check_in
+                CareAction.MEDICINE -> R.string.care_bubble_medicine
             }
         )
     }
@@ -389,6 +533,7 @@ class PetDashboardActivity : AppCompatActivity() {
                 CareAction.PLAY -> R.string.action_play
                 CareAction.REST -> R.string.action_rest
                 CareAction.CHECK_IN -> R.string.action_check_in
+                CareAction.MEDICINE -> R.string.action_medicine
             }
         )
     }

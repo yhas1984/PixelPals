@@ -5,13 +5,16 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
+import androidx.recyclerview.widget.RecyclerView
 import androidx.test.core.app.ActivityScenario
+import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.action.ViewActions.click
+import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
+import androidx.test.espresso.matcher.ViewMatchers.withId
+import androidx.test.espresso.matcher.RootMatchers.isDialog
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import androidx.test.uiautomator.By
-import androidx.test.uiautomator.UiDevice
-import androidx.test.uiautomator.Until
-import androidx.recyclerview.widget.RecyclerView
 import com.pixelpals.app.core.domain.PetType
 import com.pixelpals.app.data.prefs.SelectedPetStore
 import com.pixelpals.app.data.repository.PixelPalsRepository
@@ -29,7 +32,6 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class PremiumPetUnlockAvailabilityTest {
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
-    private val device = UiDevice.getInstance(instrumentation)
     private val context: Context = instrumentation.targetContext
     private lateinit var repository: PixelPalsRepository
     private var scenario: ActivityScenario<MainActivity>? = null
@@ -57,12 +59,10 @@ class PremiumPetUnlockAvailabilityTest {
         awaitStoreReady()
         val storeButton: Button = awaitPetButton(R.id.storeList, petName)
         instrumentation.runOnMainSync { storeButton.performClick() }
-        val confirmation: Boolean = device.wait(
-            Until.findObject(By.res("android", "button1")),
-            5_000,
-        ) != null
-        check(confirmation) { "Premium purchase confirmation was not displayed" }
-        device.findObject(By.res("android", "button1")).click()
+        onView(withId(android.R.id.button1))
+            .inRoot(isDialog())
+            .check(matches(isDisplayed()))
+            .perform(click())
         awaitStoreDoesNotContain(R.id.storeList, petName)
 
         scenario!!.onActivity { activity -> activity.navigate(PixelPalsDestination.PETS) }

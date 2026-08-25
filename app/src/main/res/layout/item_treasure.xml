@@ -4,47 +4,63 @@
     android:layout_height="wrap_content"
     android:layout_margin="6dp"
     android:background="@drawable/bg_card"
-    android:elevation="4dp"
-    android:gravity="center_horizontal"
+    android:elevation="3dp"
+    android:foreground="?attr/selectableItemBackground"
+    android:minHeight="238dp"
     android:orientation="vertical"
-    android:padding="14dp"
-    android:minHeight="156dp">
+    android:padding="14dp">
 
     <TextView
         android:id="@+id/tvEmoji"
-        android:layout_width="64dp"
-        android:layout_height="64dp"
+        android:layout_width="58dp"
+        android:layout_height="58dp"
+        android:layout_gravity="center_horizontal"
         android:background="@drawable/bg_status_info"
         android:gravity="center"
         android:text="@string/treasure_placeholder_emoji"
         android:textColor="@color/text_primary"
-        android:textSize="30sp" />
+        android:textSize="29sp" />
 
-    <LinearLayout
+    <TextView
+        android:id="@+id/tvTreasureName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
-        android:orientation="vertical">
+        android:gravity="center"
+        android:maxLines="2"
+        android:textColor="@color/text_primary"
+        android:textSize="15sp"
+        android:textStyle="bold" />
 
-        <TextView
-            android:id="@+id/tvCount"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/treasure_count_format"
-            android:textColor="@color/text_primary"
-            android:gravity="center"
-            android:textSize="17sp"
-            android:textStyle="bold" />
+    <TextView
+        android:id="@+id/tvTreasureStory"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:maxLines="4"
+        android:textColor="@color/text_secondary"
+        android:textSize="12sp" />
 
-        <TextView
-            android:id="@+id/tvDate"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:gravity="center"
-            android:text="@string/treasure_last_found_format"
-            android:textColor="@color/text_secondary"
-            android:textSize="14sp" />
-    </LinearLayout>
+    <TextView
+        android:id="@+id/tvCount"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:textColor="@color/text_primary"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tvFavorite"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:gravity="center"
+        android:textColor="@color/status_info_fg"
+        android:textSize="11sp"
+        android:textStyle="bold" />
 
 </LinearLayout>

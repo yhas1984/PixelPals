@@ -13,9 +13,11 @@ import android.util.LruCache
 import android.view.View
 import androidx.annotation.StringRes
 import com.pixelpals.app.core.domain.PetState
+import com.pixelpals.app.core.care.PetCondition
 import com.pixelpals.app.core.motion.PetBounds
 import com.pixelpals.app.core.motion.PetRandom
 import com.pixelpals.app.status.PetMood
+import com.pixelpals.app.status.PetStatusSnapshot
 import org.json.JSONObject
 import kotlinx.coroutines.*
 import kotlin.math.sin
@@ -279,7 +281,7 @@ abstract class BaseBehavior(
     protected fun applyMovement(dt: Float) {
         val params = bridge.getWindowParams() ?: return
 
-        val adjustedDt = dt * moodSpeedMultiplier()
+        val adjustedDt = dt * moodSpeedMultiplier() * conditionSpeedMultiplier()
         carryX += velX * adjustedDt
         carryY += velY * adjustedDt
 
@@ -342,6 +344,27 @@ abstract class BaseBehavior(
         if (!targetX.isFinite()) targetX = 0f
         if (!targetY.isFinite()) targetY = 0f
         if (!decisionTimer.isFinite()) decisionTimer = 0f
+    }
+
+    private fun conditionSpeedMultiplier(): Float = when (bridge.petStatus.condition) {
+        PetCondition.HEALTHY -> 1f
+        PetCondition.AT_RISK -> 0.9f
+        PetCondition.SICK -> 0.62f
+        PetCondition.RECOVERING -> 0.82f + bridge.petStatus.recoveryProgress / 560f
+        PetCondition.HIBERNATING -> 0.35f
+    }
+
+    override fun onStatusChanged(previous: PetStatusSnapshot, current: PetStatusSnapshot) {
+        if (previous.condition == current.condition) return
+        val bubble: String = when (current.condition) {
+            PetCondition.HEALTHY -> "💛✨"
+            PetCondition.AT_RISK -> "🥺"
+            PetCondition.SICK -> "🤒"
+            PetCondition.RECOVERING -> "💛"
+            PetCondition.HIBERNATING -> "💤"
+        }
+        bridge.showBubble(bubble)
+        bridge.invalidate()
     }
 
     override fun updateDrag(dt: Float) {
@@ -500,7 +523,8 @@ abstract class BaseBehavior(
             (0.5f - atlasPivot.y.toFloat() / spriteSheetSpec!!.frameHeight) * 2f * halfSize
         } else 0f
         canvas.translate(cx + bridge.renderOffsetX + pivotOffsetX, cy + bridge.renderOffsetY + pivotOffsetY)
-        canvas.rotate(bridge.renderRotation)
+        val conditionRotation = if (bridge.petStatus.condition == PetCondition.SICK) sin(time * 18f) * 2.2f else 0f
+        canvas.rotate(bridge.renderRotation + conditionRotation)
         canvas.scale(bridge.renderScaleX, bridge.renderScaleY)
         spriteDestinationRect.set(-halfSize, -halfSize, halfSize, halfSize)
         when {
@@ -563,6 +587,8 @@ abstract class BaseBehavior(
     }
 
     private fun moodColorFilter(): ColorMatrixColorFilter? {
+        if (bridge.petStatus.condition == PetCondition.SICK) return SICK_COLOR_FILTER
+        if (bridge.petStatus.condition == PetCondition.HIBERNATING) return SLEEPY_COLOR_FILTER
         return when (currentMood()) {
             PetMood.DIRTY -> DIRTY_COLOR_FILTER
             PetMood.SLEEPY -> SLEEPY_COLOR_FILTER
@@ -633,6 +659,13 @@ abstract class BaseBehavior(
 
         private val SLEEPY_COLOR_FILTER = ColorMatrixColorFilter(
             ColorMatrix().apply { setScale(0.92f, 0.92f, 1.02f, 1f) }
+        )
+
+        private val SICK_COLOR_FILTER = ColorMatrixColorFilter(
+            ColorMatrix().apply {
+                setSaturation(0.52f)
+                postConcat(ColorMatrix().apply { setScale(0.82f, 0.9f, 0.86f, 1f) })
+            }
         )
 
         private const val FRAME_CACHE_MAX_BYTES = 24 * 1024 * 1024

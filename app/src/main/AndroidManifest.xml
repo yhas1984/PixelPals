@@ -21,6 +21,7 @@
     <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
+        android:name=".PixelPalsApplication"
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -90,6 +91,10 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="@string/fgs_special_use_subtype" />
         </service>
+
+        <receiver
+            android:name=".notifications.PetCareNotificationReceiver"
+            android:exported="false" />
 
         <!-- Treasure Album UI -->
         <activity

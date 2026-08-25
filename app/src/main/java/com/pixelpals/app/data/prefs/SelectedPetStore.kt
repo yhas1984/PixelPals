@@ -7,13 +7,24 @@ class SelectedPetStore(context: Context) {
     private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     fun save(type: PetType) {
-        prefs.edit().putString(KEY_SELECTED_PET, type.name).apply()
+        val previous: String? = prefs.getString(KEY_SELECTED_PET, null)
+        prefs.edit().apply {
+            putString(KEY_SELECTED_PET, type.name)
+            if (previous != type.name) putLong(KEY_SELECTED_AT, System.currentTimeMillis())
+        }.apply()
     }
 
     fun setPetEnabled(enabled: Boolean) {
+        val wasEnabled: Boolean = isPetEnabled()
         prefs.edit().apply {
             putBoolean(KEY_PET_ENABLED, enabled)
-            if (enabled) putLong(KEY_PET_ENABLED_AT, System.currentTimeMillis()) else remove(KEY_PET_ENABLED_AT)
+            if (enabled) {
+                val now: Long = System.currentTimeMillis()
+                putLong(KEY_PET_ENABLED_AT, now)
+                if (!wasEnabled) putLong(KEY_SELECTED_AT, now)
+            } else {
+                remove(KEY_PET_ENABLED_AT)
+            }
         }.commit()
     }
 
@@ -27,6 +38,11 @@ class SelectedPetStore(context: Context) {
         return prefs.getLong(KEY_PET_ENABLED_AT, 0L).takeIf { it > 0L }
     }
 
+    fun getSelectedAt(): Long? {
+        if (!prefs.contains(KEY_SELECTED_AT)) return null
+        return prefs.getLong(KEY_SELECTED_AT, 0L).takeIf { it > 0L }
+    }
+
     fun load(default: PetType = PetType.CORGI): PetType {
         val raw = prefs.getString(KEY_SELECTED_PET, null) ?: return default
         return runCatching { PetType.valueOf(raw) }.getOrElse { default }
@@ -37,5 +53,6 @@ class SelectedPetStore(context: Context) {
         private const val KEY_SELECTED_PET = "selected_pet"
         private const val KEY_PET_ENABLED = "pet_enabled"
         private const val KEY_PET_ENABLED_AT = "pet_enabled_at"
+        private const val KEY_SELECTED_AT = "selected_at"
     }
 }

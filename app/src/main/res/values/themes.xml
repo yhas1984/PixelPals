@@ -7,7 +7,8 @@
         <item name="colorSecondary">@color/coral_accent</item>
         <item name="colorSecondaryContainer">@color/surface_warm</item>
         <item name="colorTertiary">@color/teal_accent</item>
-        <item name="android:fontFamily">sans</item>
+        <item name="fontFamily">sans-serif-rounded</item>
+        <item name="android:fontFamily">sans-serif-rounded</item>
         <item name="android:statusBarColor">@color/surface_base</item>
         <item name="android:navigationBarColor">@color/surface_base</item>
         <item name="android:windowLightStatusBar">true</item>

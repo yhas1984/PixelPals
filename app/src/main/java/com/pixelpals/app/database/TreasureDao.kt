@@ -5,7 +5,6 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
-import androidx.room.Delete
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -26,6 +25,4 @@ interface TreasureDao {
     @Update
     suspend fun updateTreasure(treasure: TreasureItem): Int
 
-    @Delete
-    suspend fun deleteTreasure(treasure: TreasureItem): Int
 }

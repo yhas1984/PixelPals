@@ -8,12 +8,14 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import androidx.test.core.app.ActivityScenario
+import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.action.ViewActions.click
+import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
+import androidx.test.espresso.matcher.ViewMatchers.withId
+import androidx.test.espresso.matcher.RootMatchers.isDialog
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import androidx.test.uiautomator.By
-import androidx.test.uiautomator.StaleObjectException
-import androidx.test.uiautomator.UiDevice
-import androidx.test.uiautomator.Until
 import com.pixelpals.app.core.domain.PetType
 import com.pixelpals.app.data.catalog.Cosmetic
 import com.pixelpals.app.data.catalog.CosmeticCatalog
@@ -38,7 +40,6 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class CosmeticsPurchaseKeepsSelectedPetTest {
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
-    private val device = UiDevice.getInstance(instrumentation)
     private val context = instrumentation.targetContext
     private lateinit var repository: PixelPalsRepository
     private var scenario: ActivityScenario<MainActivity>? = null
@@ -69,29 +70,13 @@ class CosmeticsPurchaseKeepsSelectedPetTest {
         )
         val button: Button = awaitCosmeticButton(cosmetic)
         instrumentation.runOnMainSync { button.performClick() }
-        val confirm = device.wait(
-            Until.findObject(By.res("android", "button1")),
-            5_000,
-        )
-        checkNotNull(confirm) { "Purchase confirmation was not displayed" }
-        clickDialogButtonWithRetry()
+        onView(withId(android.R.id.button1))
+            .inRoot(isDialog())
+            .check(matches(isDisplayed()))
+            .perform(click())
         awaitEquipped(petId = "tela", cosmeticId = cosmetic.id)
         assertEquals(cosmetic.id, repository.getEquippedCosmetic("tela"))
         assertNull(repository.getEquippedCosmetic("corgi"))
-    }
-
-    private fun clickDialogButtonWithRetry() {
-        val deadline: Long = System.currentTimeMillis() + 5_000
-        while (System.currentTimeMillis() < deadline) {
-            try {
-                device.findObject(By.res("android", "button1"))?.click()
-                return
-            } catch (_: StaleObjectException) {
-                instrumentation.waitForIdleSync()
-            }
-            Thread.sleep(100)
-        }
-        throw AssertionError("Purchase confirmation could not be clicked")
     }
 
     private fun awaitCosmeticButton(cosmetic: Cosmetic): Button {

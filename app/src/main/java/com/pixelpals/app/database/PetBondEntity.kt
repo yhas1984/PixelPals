@@ -16,4 +16,8 @@ data class PetBondEntity(
     val lastTreasureInteractionMilestone: Int = 0,
     val lastTreasureActiveMilestone: Int = 0,
     val activeMinutes: Int = 0,
+    val illnessRecoveries: Int = 0,
+    val lastTreasureGiftDay: String = "",
+    val treasuresGifted: Int = 0,
+    val favoriteTreasuresGifted: Int = 0,
 )

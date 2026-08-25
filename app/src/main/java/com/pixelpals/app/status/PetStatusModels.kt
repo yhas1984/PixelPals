@@ -1,5 +1,7 @@
 package com.pixelpals.app.status
 
+import com.pixelpals.app.core.care.PetCondition
+
 enum class PetMood {
     HAPPY,
     SLEEPY,
@@ -14,7 +16,8 @@ enum class CareAction {
     CLEAN,
     PLAY,
     REST,
-    CHECK_IN
+    CHECK_IN,
+    MEDICINE,
 }
 
 enum class PetPersonality {
@@ -39,7 +42,11 @@ data class PetStatusSnapshot(
     val careStreakDays: Int,
     val softCurrency: Int,
     val dominantSuggestion: CareAction,
-    val memoriesUnlocked: Int
+    val memoriesUnlocked: Int,
+    val condition: PetCondition = PetCondition.HEALTHY,
+    val recoveryProgress: Int = 0,
+    val medicineAvailableAt: Long = 0L,
+    val lastInteractionAt: Long = 0L,
 )
 
 data class DailyTask(

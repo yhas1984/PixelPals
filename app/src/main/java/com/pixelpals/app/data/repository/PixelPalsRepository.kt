@@ -3,6 +3,11 @@ package com.pixelpals.app.data.repository
 import android.content.Context
 import com.pixelpals.app.BuildConfig
 import com.pixelpals.app.R
+import com.pixelpals.app.core.care.PetCareState
+import com.pixelpals.app.core.care.PetCondition
+import com.pixelpals.app.core.care.PetNeedsEngine
+import com.pixelpals.app.core.care.SystemTimeProvider
+import com.pixelpals.app.core.care.TimeProvider
 import com.pixelpals.app.core.domain.PetType
 import com.pixelpals.app.data.catalog.CatalogItemState
 import com.pixelpals.app.data.catalog.PetCatalogItem
@@ -13,6 +18,15 @@ import com.pixelpals.app.database.PetBondEntity
 import com.pixelpals.app.database.PetStatusEntity
 import com.pixelpals.app.database.ProcessedPurchaseEntity
 import com.pixelpals.app.database.TreasureItem
+import com.pixelpals.app.database.TreasureCollectionStateEntity
+import com.pixelpals.app.data.prefs.SelectedPetStore
+import com.pixelpals.app.feature.treasure.TreasureBadge
+import com.pixelpals.app.feature.treasure.TreasureCatalog
+import com.pixelpals.app.feature.treasure.TreasureCollection
+import com.pixelpals.app.feature.treasure.TreasureCollectionItem
+import com.pixelpals.app.feature.treasure.TreasureCollectionSummary
+import com.pixelpals.app.feature.treasure.TreasureDiscoveryResult
+import com.pixelpals.app.feature.treasure.TreasureGiftResult
 import com.pixelpals.app.status.CareAction
 import com.pixelpals.app.status.DailyTask
 import com.pixelpals.app.status.MemoryMoment
@@ -35,11 +49,18 @@ sealed interface CoinSpendResult {
     data class Failure(val reason: String) : CoinSpendResult
 }
 
-class PixelPalsRepository(context: Context, database: AppDatabase? = null) {
+class PixelPalsRepository(
+    context: Context,
+    database: AppDatabase? = null,
+    timeProvider: TimeProvider = SystemTimeProvider,
+) {
     private val appContext: Context = context.applicationContext
     private val db = database ?: AppDatabase.getDatabase(appContext)
     private val cosmeticPrefs = appContext.getSharedPreferences("pixelpals_cosmetics", Context.MODE_PRIVATE)
     private val coinPrefs = appContext.getSharedPreferences("pixelpals_coins", Context.MODE_PRIVATE)
+    private val selectedPetStore = SelectedPetStore(appContext)
+    private val timeProvider: TimeProvider = timeProvider
+    private val petNeedsEngine = PetNeedsEngine(timeProvider)
 
     /** Monedero GLOBAL: las monedas son del jugador, no del pet (v1.6+). */
     private val walletId = "wallet"
@@ -115,33 +136,29 @@ class PixelPalsRepository(context: Context, database: AppDatabase? = null) {
 
     suspend fun getStatusSnapshot(petId: String): PetStatusSnapshot {
         val statusEntity = ensureStatusEntity(petId)
-        val bondEntity = ensureBondEntity(petId)
-        val decayed = applyDecay(statusEntity)
-        // Solo persistir si el decay modificó algo (evita escrituras redundantes).
-        if (decayed != statusEntity) {
-            db.petStatusDao().upsert(decayed)
+        var bondEntity = ensureBondEntity(petId)
+        val reconciled = reconcileStatus(statusEntity)
+        if (reconciled != statusEntity) {
+            db.petStatusDao().upsert(reconciled)
         }
-        return toSnapshot(decayed, bondEntity)
+        if (hasRecovered(statusEntity, reconciled)) {
+            bondEntity = bondEntity.copy(illnessRecoveries = bondEntity.illnessRecoveries + 1)
+            db.petBondDao().upsert(bondEntity)
+        }
+        return toSnapshot(reconciled, bondEntity)
     }
 
     suspend fun recordActiveMinute(petType: PetType): PetStatusSnapshot {
         val petId = petIdOf(petType)
         val bond = ensureBondEntity(petId)
         db.petBondDao().upsert(bond.copy(activeMinutes = bond.activeMinutes + 1))
-        return applyMutation(petId) {
-            copy(
-                hunger = (hunger - 2).coerceAtLeast(0),
-                hygiene = (hygiene - 1).coerceAtLeast(0),
-                energy = (energy - 1).coerceAtLeast(0),
-                lastUpdatedAt = System.currentTimeMillis()
-            )
-        }
+        return getStatusSnapshot(petId)
     }
 
     suspend fun recordInteraction(petType: PetType): PetStatusSnapshot {
         val petId = petIdOf(petType)
         return db.withTransaction {
-            val currentStatus = applyDecay(ensureStatusEntity(petId))
+            val currentStatus = reconcileStatus(ensureStatusEntity(petId))
             val currentBond = ensureBondEntity(petId)
             if (
                 currentBond.bondPoints > 0 &&
@@ -152,9 +169,7 @@ class PixelPalsRepository(context: Context, database: AppDatabase? = null) {
             applyMutation(petId) {
                 copy(
                     energy = (energy + 2).coerceAtMost(100),
-                    hunger = (hunger - 1).coerceAtLeast(0),
                     lastInteractionAt = System.currentTimeMillis(),
-                    lastUpdatedAt = System.currentTimeMillis()
                 )
             }
             db.petBondDao().upsert(
@@ -176,25 +191,19 @@ class PixelPalsRepository(context: Context, database: AppDatabase? = null) {
         val petId = petIdOf(petType)
         val taskId = taskIdFor(action)
         return db.withTransaction {
-            val isFirstCompletionToday = db.dailyTaskStateDao()
+            val isRewardEligible = action != CareAction.MEDICINE
+            val isFirstCompletionToday = isRewardEligible && db.dailyTaskStateDao()
                 .getTasksForDay(petId, todayKey())
                 .none { it.taskId == taskId }
             if (action == CareAction.CHECK_IN && !isFirstCompletionToday) {
                 return@withTransaction getStatusSnapshot(petId)
             }
             val currentBond = ensureBondEntity(petId)
-            applyMutation(petId) {
-                when (action) {
-                    CareAction.FEED -> copy(hunger = (hunger + 18).coerceAtMost(100), health = (health + 4).coerceAtMost(100))
-                    CareAction.CLEAN -> copy(hygiene = (hygiene + 20).coerceAtMost(100), health = (health + 2).coerceAtMost(100))
-                    CareAction.PLAY -> copy(energy = (energy - 6).coerceAtLeast(0), hunger = (hunger - 4).coerceAtLeast(0), health = (health + 5).coerceAtMost(100))
-                    CareAction.REST -> copy(energy = (energy + 20).coerceAtMost(100), health = (health + 3).coerceAtMost(100))
-                    CareAction.CHECK_IN -> copy(health = (health + 1).coerceAtMost(100))
-                }.copy(
-                    lastInteractionAt = System.currentTimeMillis(),
-                    lastUpdatedAt = System.currentTimeMillis()
-                )
-            }
+            val currentStatus = reconcileStatus(ensureStatusEntity(petId))
+            val caredStatus = petNeedsEngine.applyCare(currentStatus.toCareState(), action)
+                .toEntity(currentStatus)
+                .normalizeMood()
+            db.petStatusDao().upsert(caredStatus)
             if (isFirstCompletionToday) {
                 val nextBondPoints = (currentBond.bondPoints + CARE_BOND_REWARD).coerceAtMost(100)
                 db.petBondDao().upsert(
@@ -204,6 +213,12 @@ class PixelPalsRepository(context: Context, database: AppDatabase? = null) {
                     )
                 )
                 completeDailyTask(petId, action)
+            }
+            if (hasRecovered(currentStatus, caredStatus)) {
+                val recoveryBond = ensureBondEntity(petId)
+                db.petBondDao().upsert(
+                    recoveryBond.copy(illnessRecoveries = recoveryBond.illnessRecoveries + 1)
+                )
             }
             getStatusSnapshot(petId)
         }
@@ -310,6 +325,21 @@ class PixelPalsRepository(context: Context, database: AppDatabase? = null) {
                 "streak_7",
                 appContext.getString(R.string.memory_streak_7_title),
                 appContext.getString(R.string.memory_streak_7_subtitle),
+            )
+        }
+        if (bond.illnessRecoveries > 0) {
+            memories += MemoryMoment(
+                "first_recovery",
+                appContext.getString(R.string.memory_first_recovery_title),
+                appContext.getString(R.string.memory_first_recovery_subtitle),
+            )
+        }
+        val collectionState: TreasureCollectionStateEntity? = db.treasureCollectionStateDao().getState()
+        if (collectionState?.finalCollectorPetId == petId && collectionState.completedAt > 0L) {
+            memories += MemoryMoment(
+                "treasure_collection_complete",
+                appContext.getString(R.string.memory_treasure_collection_title),
+                appContext.getString(R.string.memory_treasure_collection_subtitle),
             )
         }
         return memories
@@ -592,7 +622,7 @@ class PixelPalsRepository(context: Context, database: AppDatabase? = null) {
         petId: String,
         mutation: PetStatusEntity.() -> PetStatusEntity
     ): PetStatusSnapshot = db.withTransaction {
-        val current = applyDecay(ensureStatusEntity(petId))
+        val current = reconcileStatus(ensureStatusEntity(petId))
         val mutated = mutation(current).normalizeMood()
         db.petStatusDao().upsert(mutated)
         toSnapshot(mutated, ensureBondEntity(petId))
@@ -600,12 +630,17 @@ class PixelPalsRepository(context: Context, database: AppDatabase? = null) {
 
     private fun PetStatusEntity.normalizeMood(): PetStatusEntity {
         val resolvedMood = deriveMood(this)
-        val resolvedHealth = ((energy + hunger + hygiene) / 3).coerceIn(20, 100)
+        val resolvedHealth = ((energy + satiety + hygiene) / 3).coerceIn(20, 100)
         return copy(health = resolvedHealth, mood = resolvedMood.name)
     }
 
     private suspend fun ensureStatusEntity(petId: String): PetStatusEntity {
-        return db.petStatusDao().getByPetId(petId) ?: PetStatusEntity(petId = petId).normalizeMood().also {
+        val now = timeProvider.getCurrentTimeMillis()
+        return db.petStatusDao().getByPetId(petId) ?: PetStatusEntity(
+            petId = petId,
+            lastUpdatedAt = now,
+            lastInteractionAt = now,
+        ).normalizeMood().also {
             db.petStatusDao().upsert(it)
         }
     }
@@ -616,42 +651,34 @@ class PixelPalsRepository(context: Context, database: AppDatabase? = null) {
         }
     }
 
-    private fun applyDecay(entity: PetStatusEntity): PetStatusEntity {
-        val now = System.currentTimeMillis()
-        val hours = max(0L, ChronoUnit.HOURS.between(epochMillisToDateTime(entity.lastUpdatedAt), epochMillisToDateTime(now)))
-        if (hours == 0L) return entity.normalizeMood()
-        val hunger = (entity.hunger - (hours * 3)).toInt().coerceAtLeast(0)
-        val hygiene = (entity.hygiene - (hours * 2)).toInt().coerceAtLeast(0)
-        val energy = (entity.energy - hours.toInt()).coerceAtLeast(0)
-        return entity.copy(
-            hunger = hunger,
-            hygiene = hygiene,
-            energy = energy,
-            lastUpdatedAt = now
-        ).normalizeMood()
-    }
-
     private fun toSnapshot(status: PetStatusEntity, bond: PetBondEntity): PetStatusSnapshot {
         val bondLevel = bond.bondPoints.coerceIn(0, 100)
         val mood = runCatching { PetMood.valueOf(status.mood) }.getOrElse { deriveMood(status) }
+        val condition = runCatching { PetCondition.valueOf(status.condition) }.getOrDefault(PetCondition.HEALTHY)
         return PetStatusSnapshot(
             petId = status.petId,
             health = status.health,
             energy = status.energy,
-            hunger = status.hunger,
+            hunger = status.satiety,
             hygiene = status.hygiene,
             bond = bondLevel,
             mood = mood,
             careStreakDays = bond.careStreakDays,
             softCurrency = bond.softCurrency,
             dominantSuggestion = dominantSuggestionFor(status, mood),
-            memoriesUnlocked = max(bond.memoriesUnlocked, memoryCountForBond(bondLevel))
+            memoriesUnlocked = max(bond.memoriesUnlocked, memoryCountForBond(bondLevel)),
+            condition = condition,
+            recoveryProgress = status.recoveryProgress,
+            medicineAvailableAt = petNeedsEngine.getMedicineAvailableAt(status.toCareState()),
+            lastInteractionAt = status.lastInteractionAt,
         )
     }
 
     private fun dominantSuggestionFor(status: PetStatusEntity, mood: PetMood): CareAction {
+        val condition = runCatching { PetCondition.valueOf(status.condition) }.getOrDefault(PetCondition.HEALTHY)
         return when {
-            status.hunger < 45 -> CareAction.FEED
+            condition == PetCondition.SICK && timeProvider.getCurrentTimeMillis() >= petNeedsEngine.getMedicineAvailableAt(status.toCareState()) -> CareAction.MEDICINE
+            status.satiety < 45 -> CareAction.FEED
             status.hygiene < 50 -> CareAction.CLEAN
             status.energy < 45 -> CareAction.REST
             mood == PetMood.BORED -> CareAction.PLAY
@@ -662,20 +689,24 @@ class PixelPalsRepository(context: Context, database: AppDatabase? = null) {
     private fun deriveMood(entity: PetStatusEntity): PetMood {
         val health = entity.health
         val energy = entity.energy
-        val hunger = entity.hunger
+        val satiety = entity.satiety
         val hygiene = entity.hygiene
-        val hoursWithoutAttention = max(
-            0L,
-            ChronoUnit.HOURS.between(
-                epochMillisToDateTime(entity.lastInteractionAt),
-                epochMillisToDateTime(System.currentTimeMillis())
+        val hoursWithoutAttention = if (isCareActive(entity.petId)) {
+            max(
+                0L,
+                ChronoUnit.HOURS.between(
+                    epochMillisToDateTime(entity.lastInteractionAt),
+                    epochMillisToDateTime(timeProvider.getCurrentTimeMillis())
+                )
             )
-        )
+        } else {
+            0L
+        }
         return when {
-            hunger < 35 -> PetMood.HUNGRY
+            satiety < 35 -> PetMood.HUNGRY
             energy < 35 -> PetMood.SLEEPY
             hygiene < 40 -> PetMood.DIRTY
-            health > 88 && energy > 70 && hunger > 65 -> PetMood.EXCITED
+            health > 88 && energy > 70 && satiety > 65 -> PetMood.EXCITED
             hoursWithoutAttention >= 6 -> PetMood.BORED
             health > 70 -> PetMood.HAPPY
             else -> PetMood.BORED
@@ -703,6 +734,7 @@ class PixelPalsRepository(context: Context, database: AppDatabase? = null) {
                 CareAction.PLAY -> R.string.action_play
                 CareAction.REST -> R.string.action_rest
                 CareAction.CHECK_IN -> R.string.action_check_in
+                CareAction.MEDICINE -> R.string.action_medicine
             }
         )
     }
@@ -782,8 +814,71 @@ class PixelPalsRepository(context: Context, database: AppDatabase? = null) {
             CareAction.PLAY -> "play"
             CareAction.REST -> "rest"
             CareAction.CHECK_IN -> "check_in"
+            CareAction.MEDICINE -> "medicine"
         }
     }
+
+    private fun reconcileStatus(entity: PetStatusEntity): PetStatusEntity {
+        val isActive = isCareActive(entity.petId)
+        val state = if (isActive) freezeInactiveElapsedTime(entity.toCareState()) else entity.toCareState()
+        val reconciled = petNeedsEngine.reconcile(state, isActive)
+        return reconciled.toEntity(entity).normalizeMood()
+    }
+
+    private fun freezeInactiveElapsedTime(state: PetCareState): PetCareState {
+        val selectedAt = selectedPetStore.getSelectedAt() ?: return state
+        if (selectedAt <= state.lastUpdatedAt) return state
+        val inactiveDuration = selectedAt - state.lastUpdatedAt
+        return state.copy(
+            conditionStartedAt = shiftTimestamp(state.conditionStartedAt, inactiveDuration),
+            criticalNeedsStartedAt = shiftTimestamp(state.criticalNeedsStartedAt, inactiveDuration),
+            lastUpdatedAt = selectedAt,
+            lastInteractionAt = shiftTimestamp(state.lastInteractionAt, inactiveDuration),
+            lastCareAt = shiftTimestamp(state.lastCareAt, inactiveDuration),
+        )
+    }
+
+    private fun shiftTimestamp(timestamp: Long, duration: Long): Long {
+        return if (timestamp > 0L) timestamp + duration else 0L
+    }
+
+    private fun hasRecovered(before: PetStatusEntity, after: PetStatusEntity): Boolean {
+        val previous = runCatching { PetCondition.valueOf(before.condition) }.getOrDefault(PetCondition.HEALTHY)
+        val current = runCatching { PetCondition.valueOf(after.condition) }.getOrDefault(PetCondition.HEALTHY)
+        return previous in setOf(PetCondition.SICK, PetCondition.RECOVERING) && current == PetCondition.HEALTHY
+    }
+
+    private fun isCareActive(petId: String): Boolean {
+        return selectedPetStore.isPetEnabled() && petIdOf(selectedPetStore.load()) == petId
+    }
+
+    private fun PetStatusEntity.toCareState(): PetCareState = PetCareState(
+        energy = energy,
+        satiety = satiety,
+        hygiene = hygiene,
+        condition = runCatching { PetCondition.valueOf(condition) }.getOrDefault(PetCondition.HEALTHY),
+        conditionStartedAt = conditionStartedAt,
+        criticalNeedsStartedAt = criticalNeedsStartedAt,
+        recoveryProgress = recoveryProgress.coerceIn(0, 100),
+        lastUpdatedAt = lastUpdatedAt,
+        lastInteractionAt = lastInteractionAt,
+        lastCareAt = lastCareAt,
+        lastMedicineAt = lastMedicineAt,
+    )
+
+    private fun PetCareState.toEntity(source: PetStatusEntity): PetStatusEntity = source.copy(
+        energy = energy,
+        satiety = satiety,
+        hygiene = hygiene,
+        condition = condition.name,
+        conditionStartedAt = conditionStartedAt,
+        criticalNeedsStartedAt = criticalNeedsStartedAt,
+        recoveryProgress = recoveryProgress,
+        lastUpdatedAt = lastUpdatedAt,
+        lastInteractionAt = lastInteractionAt,
+        lastCareAt = lastCareAt,
+        lastMedicineAt = lastMedicineAt,
+    )
 
     private fun memoryCountForBond(bondPoints: Int): Int {
         return when {
@@ -794,7 +889,10 @@ class PixelPalsRepository(context: Context, database: AppDatabase? = null) {
         }
     }
 
-    private fun todayKey(): String = LocalDate.now().toString()
+    private fun todayKey(): String = java.time.Instant.ofEpochMilli(timeProvider.getCurrentTimeMillis())
+        .atZone(java.time.ZoneId.systemDefault())
+        .toLocalDate()
+        .toString()
 
     private fun currentLocale(): Locale = appContext.resources.configuration.locales[0]
 
@@ -806,95 +904,254 @@ class PixelPalsRepository(context: Context, database: AppDatabase? = null) {
 
     private fun epochMillisToDateTime(epochMillis: Long) = java.time.Instant.ofEpochMilli(epochMillis).atZone(java.time.ZoneId.systemDefault()).toLocalDateTime()
 
-    suspend fun maybeAwardTreasureFromInteraction(petType: PetType): String? = db.withTransaction {
-        val petId = petIdOf(petType)
-        val bond = ensureBondEntity(petId)
-        val interactionCount = bond.bondPoints / 3
-        val treasureCount = db.treasureDao().getAllTreasuresSnapshot().sumOf { it.count }
-        val milestone = when {
-            treasureCount == 0 && interactionCount >= 3 -> 1
-            else -> interactionCount / 12
+    suspend fun getTreasureCollection(petType: PetType): TreasureCollection {
+        ensureWalletMigrated()
+        return db.withTransaction {
+            val petId: String = petIdOf(petType)
+            val treasures: List<TreasureItem> = db.treasureDao().getAllTreasuresSnapshot()
+            val treasureByEmoji: Map<String, TreasureItem> = treasures.associateBy { item -> item.emoji }
+            val discoveredCount: Int = TreasureCatalog.all.count { definition ->
+                (treasureByEmoji[definition.emoji]?.totalFound ?: 0) > 0
+            }
+            reconcileTreasureMilestones(
+                discoveredCount = discoveredCount,
+                completionPetId = null,
+                completionTime = treasures.maxOfOrNull { item -> item.lastFoundAt } ?: 0L,
+            )
+            val bond: PetBondEntity = ensureBondEntity(petId)
+            val isPetActive: Boolean = isCareActive(petId)
+            val hasGiftedToday: Boolean = bond.lastTreasureGiftDay == todayKey()
+            val favorites: Set<String> = TreasureCatalog.getFavorites(getPersonality(petType))
+            val canGiftToday: Boolean = isPetActive && !hasGiftedToday
+            val items: List<TreasureCollectionItem> = TreasureCatalog.all.map { definition ->
+                val stored: TreasureItem? = treasureByEmoji[definition.emoji]
+                val inventoryCount: Int = stored?.count?.coerceAtLeast(0) ?: 0
+                val totalFound: Int = stored?.totalFound?.coerceAtLeast(0) ?: 0
+                TreasureCollectionItem(
+                    id = definition.id,
+                    emoji = definition.emoji,
+                    name = appContext.getString(definition.nameResourceId),
+                    story = appContext.getString(definition.storyResourceId),
+                    hint = appContext.getString(definition.hintResourceId),
+                    inventoryCount = inventoryCount,
+                    totalFound = totalFound,
+                    lastFoundAt = stored?.lastFoundAt ?: 0L,
+                    isFavorite = definition.emoji in favorites,
+                    canGift = canGiftToday && totalFound > 0 && inventoryCount > 0,
+                )
+            }
+            val nextBadge: TreasureBadge? = TreasureBadge.getNext(discoveredCount)
+            TreasureCollection(
+                summary = TreasureCollectionSummary(
+                    discoveredCount = discoveredCount,
+                    totalCount = TreasureCatalog.all.size,
+                    badge = TreasureBadge.getForProgress(discoveredCount),
+                    nextMilestone = nextBadge?.milestone,
+                    nextRewardCoins = nextBadge?.rewardCoins,
+                    isPetActive = isPetActive,
+                    hasGiftedToday = hasGiftedToday,
+                    currentBond = bond.bondPoints.coerceIn(0, 100),
+                ),
+                items = items,
+            )
         }
-        val lastMilestone = bond.lastTreasureInteractionMilestone
-        if (milestone <= lastMilestone || milestone <= 0) return@withTransaction null
-        val treasure = pickTreasureEmoji(petId)
-        addTreasureInternal(petId, treasure)
-        db.petBondDao().upsert(
-            bond.copy(lastTreasureInteractionMilestone = milestone)
-        )
-        treasure
     }
 
-    suspend fun maybeAwardTreasureFromActiveMinute(petType: PetType): String? = db.withTransaction {
-        val petId = petIdOf(petType)
-        val bond = ensureBondEntity(petId)
-        val activeMinutes = bond.activeMinutes
-        val treasureCount = db.treasureDao().getAllTreasuresSnapshot().sumOf { it.count }
-        val milestone = when {
-            treasureCount == 0 && activeMinutes >= 1 -> 1
-            else -> activeMinutes / 4
+    suspend fun giftTreasure(
+        petType: PetType,
+        treasureId: String,
+        acceptsNoBondReward: Boolean = false,
+    ): TreasureGiftResult = db.withTransaction {
+        val petId: String = petIdOf(petType)
+        if (!isCareActive(petId)) return@withTransaction TreasureGiftResult.PetNotActive
+        val definition = TreasureCatalog.getById(treasureId)
+            ?: TreasureCatalog.getByEmoji(treasureId)
+            ?: return@withTransaction TreasureGiftResult.TreasureUnavailable
+        val bond: PetBondEntity = ensureBondEntity(petId)
+        if (bond.lastTreasureGiftDay == todayKey()) {
+            return@withTransaction TreasureGiftResult.AlreadyGiftedToday
         }
-        val lastMilestone = bond.lastTreasureActiveMilestone
-        if (milestone <= lastMilestone || milestone <= 0) return@withTransaction null
-        val treasure = pickTreasureEmoji(petId)
-        addTreasureInternal(petId, treasure)
-        db.petBondDao().upsert(
-            bond.copy(lastTreasureActiveMilestone = milestone)
-        )
-        treasure
-    }
-
-    suspend fun consumeTreasure(emoji: String): Int = db.withTransaction {
-        val dao = db.treasureDao()
-        val existing = dao.getTreasure(emoji) ?: return@withTransaction 0
-        val newCount = existing.count - 1
-        val now = System.currentTimeMillis()
-        if (newCount <= 0) {
-            dao.deleteTreasure(existing)
-        } else {
-            dao.updateTreasure(existing.copy(count = newCount, lastFoundAt = now))
+        val treasure: TreasureItem = db.treasureDao().getTreasure(definition.emoji)
+            ?: return@withTransaction TreasureGiftResult.TreasureUnavailable
+        if (treasure.totalFound <= 0 || treasure.count <= 0) {
+            return@withTransaction TreasureGiftResult.TreasureUnavailable
         }
-        newCount.coerceAtLeast(0)
-    }
-
-    private suspend fun pickTreasureEmoji(petId: String): String {
-        val allTreasures = TREASURE_POOL
-        val owned = db.treasureDao().getAllTreasuresSnapshot().associate { it.emoji to it.count }
-        val unseen = allTreasures.filter { (owned[it] ?: 0) == 0 }
-        val basePool = if (unseen.isNotEmpty()) {
-            unseen
-        } else {
-            val minCount = allTreasures.minOf { owned[it] ?: 0 }
-            allTreasures.filter { (owned[it] ?: 0) == minCount }
+        if (bond.bondPoints >= MAX_BOND && !acceptsNoBondReward) {
+            return@withTransaction TreasureGiftResult.MaximumBondConfirmationRequired
         }
-        return basePool.random()
-    }
-
-    private suspend fun addTreasureInternal(petId: String, emoji: String) {
-        val dao = db.treasureDao()
-        val now = System.currentTimeMillis()
-        val existing = dao.getTreasure(emoji)
-        if (existing != null) {
-            dao.updateTreasure(existing.copy(count = existing.count + 1, lastFoundAt = now))
-        } else {
-            dao.insertTreasure(TreasureItem(emoji, 1, now, now))
-        }
-        val bond = ensureBondEntity(petId)
+        val isFavorite: Boolean = definition.emoji in TreasureCatalog.getFavorites(getPersonality(petType))
+        val requestedBondGain: Int = if (isFavorite) FAVORITE_GIFT_BOND_REWARD else GIFT_BOND_REWARD
+        val nextBond: Int = (bond.bondPoints + requestedBondGain).coerceAtMost(MAX_BOND)
+        val bondGained: Int = nextBond - bond.bondPoints.coerceAtMost(MAX_BOND)
+        val remainingCount: Int = (treasure.count - 1).coerceAtLeast(0)
+        db.treasureDao().updateTreasure(treasure.copy(count = remainingCount))
         db.petBondDao().upsert(
             bond.copy(
-                softCurrency = bond.softCurrency + 10,
-                bondPoints = (bond.bondPoints + 2).coerceAtMost(100),
+                bondPoints = nextBond,
+                memoriesUnlocked = max(bond.memoriesUnlocked, memoryCountForBond(nextBond)),
+                lastTreasureGiftDay = todayKey(),
+                treasuresGifted = bond.treasuresGifted + 1,
+                favoriteTreasuresGifted = bond.favoriteTreasuresGifted + if (isFavorite) 1 else 0,
             )
         )
+        TreasureGiftResult.Success(
+            treasureId = definition.id,
+            emoji = definition.emoji,
+            isFavorite = isFavorite,
+            bondGained = bondGained,
+            remainingCount = remainingCount,
+        )
+    }
+
+    suspend fun maybeAwardTreasureFromInteraction(petType: PetType): TreasureDiscoveryResult? {
+        ensureWalletMigrated()
+        return db.withTransaction {
+            val petId: String = petIdOf(petType)
+            val bond: PetBondEntity = ensureBondEntity(petId)
+            val interactionCount: Int = bond.bondPoints / INTERACTION_BOND_STEP
+            val treasureCount: Int = getLifetimeTreasureCount()
+            val milestone: Int = when {
+                treasureCount == 0 && interactionCount >= FIRST_INTERACTION_DISCOVERY -> 1
+                else -> interactionCount / INTERACTION_DISCOVERY_INTERVAL
+            }
+            if (milestone <= bond.lastTreasureInteractionMilestone || milestone <= 0) {
+                return@withTransaction null
+            }
+            db.petBondDao().upsert(bond.copy(lastTreasureInteractionMilestone = milestone))
+            addTreasureInternal(petId, pickTreasureEmoji())
+        }
+    }
+
+    suspend fun maybeAwardTreasureFromActiveMinute(petType: PetType): TreasureDiscoveryResult? {
+        ensureWalletMigrated()
+        return db.withTransaction {
+            val petId: String = petIdOf(petType)
+            val bond: PetBondEntity = ensureBondEntity(petId)
+            val treasureCount: Int = getLifetimeTreasureCount()
+            val milestone: Int = when {
+                treasureCount == 0 && bond.activeMinutes >= FIRST_ACTIVE_MINUTE_DISCOVERY -> 1
+                else -> bond.activeMinutes / ACTIVE_MINUTE_DISCOVERY_INTERVAL
+            }
+            if (milestone <= bond.lastTreasureActiveMilestone || milestone <= 0) {
+                return@withTransaction null
+            }
+            db.petBondDao().upsert(bond.copy(lastTreasureActiveMilestone = milestone))
+            addTreasureInternal(petId, pickTreasureEmoji())
+        }
+    }
+
+    private suspend fun getLifetimeTreasureCount(): Int {
+        val catalogEmoji: Set<String> = TreasureCatalog.all.map { definition -> definition.emoji }.toSet()
+        return db.treasureDao().getAllTreasuresSnapshot()
+            .filter { item -> item.emoji in catalogEmoji }
+            .sumOf { item -> item.totalFound }
+    }
+
+    private suspend fun pickTreasureEmoji(): String {
+        val allTreasures: List<String> = TreasureCatalog.all.map { definition -> definition.emoji }
+        val found: Map<String, Int> = db.treasureDao().getAllTreasuresSnapshot()
+            .associate { item -> item.emoji to item.totalFound }
+        val unseen: List<String> = allTreasures.filter { emoji -> (found[emoji] ?: 0) == 0 }
+        if (unseen.isNotEmpty()) return unseen.random()
+        val minimumFound: Int = allTreasures.minOf { emoji -> found[emoji] ?: 0 }
+        return allTreasures.filter { emoji -> (found[emoji] ?: 0) == minimumFound }.random()
+    }
+
+    private suspend fun addTreasureInternal(petId: String, emoji: String): TreasureDiscoveryResult {
+        val now: Long = timeProvider.getCurrentTimeMillis()
+        val existing: TreasureItem? = db.treasureDao().getTreasure(emoji)
+        val isNewDiscovery: Boolean = existing == null || existing.totalFound <= 0
+        val updatedTreasure: TreasureItem = existing?.copy(
+            count = existing.count + 1,
+            lastFoundAt = now,
+            totalFound = existing.totalFound + 1,
+        ) ?: TreasureItem(
+            emoji = emoji,
+            count = 1,
+            firstFoundAt = now,
+            lastFoundAt = now,
+            totalFound = 1,
+        )
+        if (existing == null) {
+            db.treasureDao().insertTreasure(updatedTreasure)
+        } else {
+            db.treasureDao().updateTreasure(updatedTreasure)
+        }
+        val bond: PetBondEntity = ensureBondEntity(petId)
+        val nextBond: Int = (bond.bondPoints + if (isNewDiscovery) NEW_DISCOVERY_BOND_REWARD else 0)
+            .coerceAtMost(MAX_BOND)
+        db.petBondDao().upsert(
+            bond.copy(
+                bondPoints = nextBond,
+                memoriesUnlocked = max(bond.memoriesUnlocked, memoryCountForBond(nextBond)),
+            )
+        )
+        val wallet: PetBondEntity = ensureBondEntity(walletId)
+        db.petBondDao().upsert(wallet.copy(softCurrency = wallet.softCurrency + DISCOVERY_COIN_REWARD))
+        val discoveredCount: Int = TreasureCatalog.all.count { definition ->
+            val foundItem: TreasureItem? = db.treasureDao().getTreasure(definition.emoji)
+            (foundItem?.totalFound ?: 0) > 0
+        }
+        val milestoneReward: MilestoneReward = reconcileTreasureMilestones(
+            discoveredCount = discoveredCount,
+            completionPetId = petId,
+            completionTime = now,
+        )
+        return TreasureDiscoveryResult(
+            treasureId = requireNotNull(TreasureCatalog.getByEmoji(emoji)).id,
+            emoji = emoji,
+            isNewDiscovery = isNewDiscovery,
+            coinsGained = DISCOVERY_COIN_REWARD + milestoneReward.coins,
+            bondGained = nextBond - bond.bondPoints.coerceAtMost(MAX_BOND),
+            milestone = milestoneReward.highestBadge,
+        )
+    }
+
+    private suspend fun reconcileTreasureMilestones(
+        discoveredCount: Int,
+        completionPetId: String?,
+        completionTime: Long,
+    ): MilestoneReward {
+        val stateDao = db.treasureCollectionStateDao()
+        val state: TreasureCollectionStateEntity = stateDao.getState()
+            ?: TreasureCollectionStateEntity()
+        val rewards: List<TreasureBadge> = TreasureBadge.getRewardsAfter(
+            state.lastRewardedMilestone,
+            discoveredCount,
+        )
+        val rewardCoins: Int = rewards.sumOf { badge -> badge.rewardCoins }
+        if (rewardCoins > 0) {
+            val wallet: PetBondEntity = ensureBondEntity(walletId)
+            db.petBondDao().upsert(wallet.copy(softCurrency = wallet.softCurrency + rewardCoins))
+        }
+        val hasCompleted: Boolean = discoveredCount >= TreasureCatalog.all.size
+        val isNewCompletion: Boolean = hasCompleted && state.completedAt == 0L
+        val nextState: TreasureCollectionStateEntity = state.copy(
+            lastRewardedMilestone = rewards.lastOrNull()?.milestone ?: state.lastRewardedMilestone,
+            completedAt = if (isNewCompletion) completionTime else state.completedAt,
+            finalCollectorPetId = if (isNewCompletion) completionPetId.orEmpty() else state.finalCollectorPetId,
+        )
+        if (nextState != state || stateDao.getState() == null) stateDao.upsert(nextState)
+        return MilestoneReward(rewards.lastOrNull(), rewardCoins)
     }
 
     private companion object {
         const val INTERACTION_REWARD_COOLDOWN_MS: Long = 60_000L
         const val CARE_BOND_REWARD: Int = 8
-
-        val TREASURE_POOL = listOf(
-            "🪙", "🌸", "🦴", "⭐", "💎", "🍀", "🐚", "🎀",
-            "🍄", "🔑", "🧩", "🎵", "🪶", "🍬", "🌙", "💍", "👑", "🔮", "🍕"
-        )
+        const val MAX_BOND: Int = 100
+        const val NEW_DISCOVERY_BOND_REWARD: Int = 1
+        const val GIFT_BOND_REWARD: Int = 2
+        const val FAVORITE_GIFT_BOND_REWARD: Int = 5
+        const val DISCOVERY_COIN_REWARD: Int = 10
+        const val INTERACTION_BOND_STEP: Int = 3
+        const val FIRST_INTERACTION_DISCOVERY: Int = 3
+        const val INTERACTION_DISCOVERY_INTERVAL: Int = 12
+        const val FIRST_ACTIVE_MINUTE_DISCOVERY: Int = 1
+        const val ACTIVE_MINUTE_DISCOVERY_INTERVAL: Int = 4
     }
+
+    private data class MilestoneReward(
+        val highestBadge: TreasureBadge?,
+        val coins: Int,
+    )
 }

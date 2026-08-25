@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">PixelPals</string>
     <string name="nav_home">Inicio</string>
-    <string name="nav_pets">Mascotas</string>
+    <string name="nav_pets">Compañeros</string>
     <string name="nav_store">Tienda</string>
     <string name="subtitle">Tu compañero mascota virtual ✨</string>
 
@@ -10,7 +10,7 @@
     <string name="edge_to_edge_hint">El contenido ahora respeta las barras del sistema.</string>
 
     <!-- Onboarding de permisos -->
-    <string name="permissions_overview_title">Antes de empezar, esto es lo que hace cada permiso</string>
+    <string name="permissions_overview_title">Prepara a tu compañero</string>
     <string name="permissions_required_label">Necesario para iniciar</string>
     <string name="permissions_optional_label">Opcional para modo escritorio</string>
     <string name="launch_ready">Listo para lanzar</string>
@@ -21,29 +21,29 @@
     <string name="usage_optional_note">Opcional. Solo hace falta si quieres que PixelPals se oculte en otras apps o funcione como compañero de escritorio.</string>
 
     <!-- Permisos -->
-    <string name="overlay_title">Superposición en pantalla</string>
-    <string name="overlay_desc">Permite que tu mascota camine sobre otras apps</string>
-    <string name="notification_title">Notificaciones</string>
-    <string name="notification_desc">Mantén los controles de tu mascota accesibles</string>
+    <string name="overlay_title">Compañero en pantalla</string>
+    <string name="overlay_desc">Deja que tu mascota explore sobre otras apps</string>
+    <string name="notification_title">Avisos de tu mascota</string>
+    <string name="notification_desc">Ten sus cuidados y controles siempre a mano</string>
     <string name="permission_required">Requerido</string>
     <string name="permission_granted">✓ Concedido</string>
     <string name="grant_permission">Conceder Permiso</string>
-    <string name="usage_title">Solo en el escritorio</string>
+    <string name="usage_title">Modo escritorio</string>
     <string name="usage_desc">Oculta la mascota cuando abras otras apps (no tapa Chrome, juegos, etc.). Concede “Acceso de uso” a PixelPals en la pantalla siguiente.</string>
     <string name="usage_icon_desc">Icono de acceso de uso</string>
 
     <!-- Acciones -->
-    <string name="launch_pet">🐾  ¡Elige tu Mascota!</string>
+    <string name="launch_pet">🐾  Elegir compañero</string>
     <string name="stop_pet">Detener mascota</string>
     <string name="pet_stopped">Mascota detenida</string>
-    <string name="open_treasure_album">🏆 Álbum de tesoros</string>
+    <string name="open_treasure_album">🏆 Nuestros tesoros</string>
     <string name="pet_launched">¡Tu mascota está explorando! 🐕</string>
     <string name="overlay_needed">Se necesita el permiso de superposición primero</string>
     <string name="notification_needed">Permite las notificaciones antes de iniciar tu mascota.</string>
 
     <!-- Selección de Mascota -->
-    <string name="choose_your_pet">Elige tu Mascota</string>
-    <string name="choose_subtitle">Cada una tiene su propia personalidad ✨</string>
+    <string name="choose_your_pet">Elige a tu compañero</string>
+    <string name="choose_subtitle">¿Quién te acompañará hoy? ✨</string>
     <string name="bloop_desc">El Fantasmita Tímido\nFlota y se desvanece</string>
     <string name="nube_michi_desc">El Gatito de Nube\nDormilón y esponjoso</string>
     <string name="jelly_desc">El Slime de Gelatina\nRebotón y elástico</string>
@@ -68,13 +68,13 @@
     <string name="notification_icon_desc">Icono de permiso de notificaciones</string>
 
     <!-- Navegación V2 -->
-    <string name="open_dashboard">Abrir dashboard</string>
+    <string name="open_dashboard">Ver cómo está</string>
     <string name="open_store">Abrir tienda</string>
 
     <!-- Selección V2 -->
     <string name="selection_current_pet_format">%1$s se siente %2$s • Vínculo: %3$d</string>
-    <string name="selection_hint_format">Siguiente cuidado recomendado: %1$s • Racha actual: %2$d</string>
-    <string name="selection_catalog_summary_format">Seleccionadas: %1$d • Disponibles: %2$d • Bloqueadas: %3$d</string>
+    <string name="selection_hint_format">Ahora le vendría bien: %1$s • Racha: %2$d</string>
+    <string name="selection_catalog_summary_format">Contigo: %1$d • Disponibles: %2$d • Por descubrir: %3$d</string>
     <string name="selection_loading">Cargando catálogo de mascotas…</string>
     <string name="selection_error">No pudimos cargar el catálogo de mascotas.</string>
     <string name="selection_retry">Reintentar</string>
@@ -91,20 +91,21 @@
     <string name="selection_item_content_description">%1$s, %2$s. %3$s</string>
 
     <!-- Dashboard -->
-    <string name="dashboard_title">Dashboard de cuidado</string>
+    <string name="dashboard_title">Tu compañero</string>
+    <string name="dashboard_title_format">El rincón de %1$s</string>
     <string name="dashboard_subtitle_format">%1$s • Racha: %2$d • Monedas: %3$d</string>
     <string name="dashboard_companion_line_format">%1$s se siente %2$s y hoy se muestra especialmente %3$s.</string>
-    <string name="dashboard_loading">Actualizando el dashboard…</string>
-    <string name="dashboard_error">No pudimos actualizar el dashboard.</string>
+    <string name="dashboard_loading">Viendo cómo está tu compañero…</string>
+    <string name="dashboard_error">No pudimos ver cómo está tu compañero.</string>
     <string name="dashboard_retry">Reintentar</string>
-    <string name="dashboard_state_ready">Dashboard actualizado</string>
-    <string name="dashboard_status">Estado vivo</string>
+    <string name="dashboard_state_ready">Todo está al día</string>
+    <string name="dashboard_status">Bienestar</string>
     <string name="dashboard_mood_format">Ánimo: %1$s • Vínculo: %2$d</string>
-    <string name="dashboard_suggestion_format">Acción sugerida: %1$s</string>
-    <string name="dashboard_highlights_format">Rutinas: %1$d/%2$d • Recuerdos: %3$d</string>
+    <string name="dashboard_suggestion_format">Ahora le vendría bien: %1$s</string>
+    <string name="dashboard_highlights_format">Cuidados: %1$d/%2$d • Momentos: %3$d</string>
     <string name="dashboard_health_format">Salud %1$d%%</string>
     <string name="dashboard_energy_format">Energía %1$d%%</string>
-    <string name="dashboard_hunger_format">Hambre %1$d%%</string>
+    <string name="dashboard_hunger_format">Saciedad %1$d%%</string>
     <string name="dashboard_hygiene_format">Higiene %1$d%%</string>
     <string name="dashboard_bond_format">Vínculo %1$d%%</string>
     <string name="dashboard_bond_stage_format">%1$s · Vínculo %2$d</string>
@@ -125,8 +126,9 @@
     <string name="care_bubble_play">¡Otra vez! 🎉</string>
     <string name="care_bubble_rest">Zzz… 💛</string>
     <string name="care_bubble_check_in">¡Volviste! 💖</string>
-    <string name="dashboard_daily_tasks">Rutina diaria</string>
-    <string name="dashboard_memories">Recuerdos</string>
+    <string name="care_bubble_medicine">Me estoy sintiendo mejor 💊💛</string>
+    <string name="dashboard_daily_tasks">Cuidados de hoy</string>
+    <string name="dashboard_memories">Momentos juntos</string>
     <string name="dashboard_task_completed_format">• %1$s: %2$s — %3$s (+%4$d)</string>
     <string name="dashboard_task_pending_format">• %1$s: %2$s (+%3$d)</string>
     <string name="dashboard_memory_format">• %1$s\n%2$s</string>
@@ -135,6 +137,39 @@
     <string name="action_play">Jugar</string>
     <string name="action_rest">Descansar</string>
     <string name="action_check_in">Saludar</string>
+    <string name="action_medicine">Dar medicina</string>
+    <string name="action_medicine_later">La medicina está descansando</string>
+    <string name="condition_healthy_title">Se siente bien</string>
+    <string name="condition_healthy_detail">Tu compañero está sano.</string>
+    <string name="condition_at_risk_title">Necesita un poco más de cuidado</string>
+    <string name="condition_at_risk_detail">Dos necesidades llevan tiempo muy bajas. Cuidarlo ahora evita que enferme.</string>
+    <string name="condition_sick_title">No se siente bien 🤒</string>
+    <string name="condition_sick_detail">La comida, el aseo, el descanso y la medicina diaria gratuita ayudan a recuperarse.</string>
+    <string name="condition_recovering_title">Se está recuperando 💛</string>
+    <string name="condition_recovering_detail">Tus cuidados funcionan. La recuperación siempre termina de forma segura.</string>
+    <string name="condition_hibernating_title">Descansa de forma segura</string>
+    <string name="condition_hibernating_detail">Un saludo lo despertará sin perder ningún progreso.</string>
+    <string name="care_notification_channel_name">Cuidados de la mascota</string>
+    <string name="care_notification_channel_description">Recordatorios moderados sobre tu compañero activo</string>
+    <string name="care_notification_action_care">Cuidarlo</string>
+    <string name="care_notification_action_later">Más tarde</string>
+    <string name="care_notification_satiety_title">¡%1$s tiene hambre! 🍓</string>
+    <string name="care_notification_satiety_message">Dale algo de comer a %1$s y disfruta de su reacción.</string>
+    <string name="care_notification_satiety_critical_message">¡Apúrate! %1$s necesita que lo alimentes.</string>
+    <string name="care_notification_energy_title">%1$s necesita descansar un poco 🌙</string>
+    <string name="care_notification_energy_message">Ayuda a %1$s a acomodarse y recuperar energía.</string>
+    <string name="care_notification_hygiene_title">¿Ayudamos a %1$s a quedar reluciente? 🫧</string>
+    <string name="care_notification_hygiene_message">Un poco de aseo ayudará a %1$s a sentirse mucho mejor.</string>
+    <string name="care_notification_attention_title">%1$s quiere jugar contigo 🎾</string>
+    <string name="care_notification_attention_message">Pasen un momento juntos y alegra el día de %1$s.</string>
+    <string name="care_notification_risk_title">%1$s necesita un cuidado adicional 💛</string>
+    <string name="care_notification_risk_message">Visita a %1$s ahora para evitar que enferme.</string>
+    <string name="care_notification_sick_title">%1$s no se siente bien 🤒</string>
+    <string name="care_notification_sick_message">%1$s está a salvo y descansando. Tus cuidados ayudarán a su recuperación.</string>
+    <string name="care_reminders_toggle">Recordatorios de cuidado</string>
+    <string name="care_reminders_summary">Hasta 2 avisos suaves al día, solo cuando tu mascota activa te necesite.</string>
+    <string name="memory_first_recovery_title">Volvió a sentirse bien</string>
+    <string name="memory_first_recovery_subtitle">Estuviste a su lado y ayudaste a tu compañero a recuperarse.</string>
     <string name="task_done">Completado</string>
     <string name="mood_happy">feliz</string>
     <string name="mood_sleepy">somnoliento</string>
@@ -152,8 +187,8 @@
     <string name="personality_chaotic">travieso</string>
 
     <!-- Tienda -->
-    <string name="store_title">Tienda PixelPals</string>
-    <string name="store_subtitle_format">Packs y desbloqueos para %1$s</string>
+    <string name="store_title">La tienda de PixelPals</string>
+    <string name="store_subtitle_format">Nuevos compañeros y accesorios para %1$s</string>
     <string name="store_featured_message_format">La novedad de hoy para %1$s: %2$s</string>
     <string name="store_wallet_format">%1$s tiene %2$d 🪙 · Vínculo %3$d</string>
     <string name="store_coin_price">%1$d 🪙</string>
@@ -181,8 +216,8 @@
         <item quantity="many">%1$d compras restauradas</item>
         <item quantity="other">%1$d compras restauradas</item>
     </plurals>
-    <string name="store_premium_pets">Personajes premium</string>
-    <string name="store_accessories">Accesorios y cosméticos</string>
+    <string name="store_premium_pets">Nuevos compañeros</string>
+    <string name="store_accessories">Estilos y accesorios</string>
     <string name="store_preview_price">Vista previa</string>
     <string name="store_locked_state">Disponible para desbloquear</string>
     <string name="store_owned_state">Ya es tuyo</string>
@@ -219,8 +254,8 @@
         <string name="store_restore_v15">Restaurar compras</string>
                                             
     <!-- Álbum de tesoros -->
-    <string name="treasure_album_title">Álbum de tesoros</string>
-    <string name="treasure_album_subtitle">Sorpresas recogidas, ordenadas por la última que encontraste.</string>
+    <string name="treasure_album_title">Nuestros tesoros</string>
+    <string name="treasure_album_subtitle">Pequeños recuerdos que descubrieron jugando juntos.</string>
     <string name="treasure_album_loading">Cargando tesoros…</string>
     <string name="treasure_album_empty">Todavía no hay tesoros. Sigue jugando con tu mascota para encontrar más.</string>
     <string name="treasure_album_error">No pudimos cargar el álbum de tesoros.</string>
@@ -360,4 +395,105 @@
     <string name="bubble_ginger_purr">prrr</string>
     <string name="bubble_ginger_mrrp">mrrp</string>
 
+    <!-- Colección de tesoros y regalos -->
+    <string name="treasure_collection_section_title">Colección</string>
+    <string name="treasure_collection_progress">%1$d de %2$d descubiertos</string>
+    <string name="treasure_collection_badge_format">Insignia actual: %1$s</string>
+    <string name="treasure_collection_next_reward">Próxima recompensa en %1$d/%3$d · +%2$d monedas</string>
+    <string name="treasure_collection_complete">Colección completa · todas las pequeñas historias son tuyas</string>
+    <string name="treasure_collection_gift_available">El regalo especial de hoy está listo para %1$s</string>
+    <string name="treasure_collection_gift_used">%1$s ya recibió su regalo especial de hoy</string>
+    <string name="treasure_collection_gift_inactive">Inicia a %1$s para compartir un regalo especial</string>
+    <string name="treasure_collection_open">Abrir nuestros tesoros</string>
+    <string name="treasure_badge_none">Explorador</string>
+    <string name="treasure_badge_bronze">Bronce</string>
+    <string name="treasure_badge_silver">Plata</string>
+    <string name="treasure_badge_gold">Oro</string>
+    <string name="treasure_badge_legendary">Coleccionista legendario</string>
+    <string name="treasure_mystery_name">Tesoro misterioso</string>
+    <string name="treasure_mystery_symbol">◆</string>
+    <string name="treasure_favorite_label">Favorito · +5 vínculo</string>
+    <string name="treasure_regular_label">Regalo · +2 vínculo</string>
+    <string name="treasure_no_duplicates">Sin copias disponibles</string>
+    <string name="treasure_not_discovered">Sin descubrir</string>
+    <plurals name="treasure_inventory_count">
+        <item quantity="one">%1$d copia para regalar</item>
+        <item quantity="other">%1$d copias para regalar</item>
+    </plurals>
+    <string name="treasure_discovered_count">Encontrado %1$d veces</string>
+    <string name="treasure_mystery_content_description">Tesoro sin descubrir. Pista: %1$s</string>
+    <string name="treasure_discovered_content_description">%1$s, %2$s, %3$s. %4$s</string>
+    <string name="treasure_gift_dialog_title">¿Regalar %1$s?</string>
+    <string name="treasure_gift_dialog_message">%1$s\n\n%2$s\n%3$s</string>
+    <string name="treasure_gift_reward_favorite">Es uno de sus favoritos: +5 de vínculo</string>
+    <string name="treasure_gift_reward_regular">Un regalo con cariño: +2 de vínculo</string>
+    <string name="treasure_gift_reward_max_bond">El vínculo ya está en 100. Será un gesto de cariño sin puntos de vínculo.</string>
+    <string name="treasure_gift_confirm">Regalar</string>
+    <string name="treasure_gift_cancel">Ahora no</string>
+    <string name="treasure_gift_success">A %1$s le encantó %2$s · +%3$d vínculo · quedan %4$d</string>
+    <string name="treasure_gift_success_max_bond">A %1$s le encantó %2$s. Su vínculo ya está completo · quedan %3$d</string>
+    <string name="treasure_gift_already_today">El regalo especial de hoy ya fue entregado.</string>
+    <string name="treasure_gift_pet_inactive">Inicia a tu compañero seleccionado antes de regalar un tesoro.</string>
+    <string name="treasure_gift_unavailable">No hay copias disponibles de ese tesoro.</string>
+    <string name="treasure_gift_max_confirmation">Confirma que quieres regalarlo sin ganar puntos de vínculo.</string>
+    <string name="memory_treasure_collection_title">El último tesoro</string>
+    <string name="memory_treasure_collection_subtitle">Juntos completaron todas las pequeñas historias de la colección.</string>
+
+    <string name="treasure_name_travelling_coin">Moneda viajera</string>
+    <string name="treasure_story_travelling_coin">Volvió rodando de un paseo con un poquito de suerte compartida.</string>
+    <string name="treasure_hint_travelling_coin">Algo redondo brilla junto al camino.</string>
+    <string name="treasure_name_walking_flower">Flor de paseo</string>
+    <string name="treasure_story_walking_flower">Un pétalo suave de un paseo que ninguno de los dos quería terminar.</string>
+    <string name="treasure_hint_walking_flower">Un aroma delicado se esconde cerca.</string>
+    <string name="treasure_name_lucky_bone">Huesito de la suerte</string>
+    <string name="treasure_story_lucky_bone">Un hallazgo orgulloso, guardado para el día en que haga falta otra sonrisa.</string>
+    <string name="treasure_hint_lucky_bone">Una forma juguetona espera bajo tierra.</string>
+    <string name="treasure_name_pocket_star">Estrella de bolsillo</string>
+    <string name="treasure_story_pocket_star">Brilla lo justo para guiar a dos compañeros de vuelta a casa.</string>
+    <string name="treasure_hint_pocket_star">Un punto de luz cayó muy cerca.</string>
+    <string name="treasure_name_bright_gem">Gema brillante</string>
+    <string name="treasure_story_bright_gem">Pulida por pequeñas patitas hasta reflejar sus momentos más felices.</string>
+    <string name="treasure_hint_bright_gem">Un brillo de muchas caras asoma por ahí.</string>
+    <string name="treasure_name_companion_clover">Trébol compañero</string>
+    <string name="treasure_story_companion_clover">Sus cuatro hojas prometen que los buenos días son mejores juntos.</string>
+    <string name="treasure_hint_companion_clover">Cuenta las hojas de un secreto afortunado.</string>
+    <string name="treasure_name_whispering_shell">Concha susurrante</string>
+    <string name="treasure_story_whispering_shell">Al acercarla se escucha casi una aventura que vivieron juntos.</string>
+    <string name="treasure_hint_whispering_shell">Un mar tranquilo se enrosca en su interior.</string>
+    <string name="treasure_name_caring_bow">Lazo cariñoso</string>
+    <string name="treasure_story_caring_bow">Atado con cuidado para recordar cada gesto amable.</string>
+    <string name="treasure_hint_caring_bow">Dos vueltas suaves esconden un pensamiento cálido.</string>
+    <string name="treasure_name_curious_mushroom">Seta curiosa</string>
+    <string name="treasure_story_curious_mushroom">Apareció tras la lluvia, justo donde unas patas curiosas buscaron.</string>
+    <string name="treasure_hint_curious_mushroom">Un pequeño sombrero nace después de la lluvia.</string>
+    <string name="treasure_name_mysterious_key">Llave misteriosa</string>
+    <string name="treasure_story_mysterious_key">Nadie conoce su cerradura, pero encontrarla ya abrió otra historia.</string>
+    <string name="treasure_hint_mysterious_key">Pequeños dientes guardan un secreto cerrado.</string>
+    <string name="treasure_name_missing_piece">Pieza perdida</string>
+    <string name="treasure_story_missing_piece">La pieza que encajó cuando dos días distintos se volvieron un recuerdo.</string>
+    <string name="treasure_hint_missing_piece">Un borde extraño está buscando su lugar.</string>
+    <string name="treasure_name_playful_note">Nota juguetona</string>
+    <string name="treasure_story_playful_note">Una melodía que dejó un juego especialmente alegre.</string>
+    <string name="treasure_hint_playful_note">Escucha un sonido que no sabe quedarse quieto.</string>
+    <string name="treasure_name_light_feather">Pluma ligera</string>
+    <string name="treasure_story_light_feather">Cayó sin hacer ruido y se quedó con el compañero más gentil.</string>
+    <string name="treasure_hint_light_feather">Algo más suave que un susurro baja flotando.</string>
+    <string name="treasure_name_shared_sweet">Dulce compartido</string>
+    <string name="treasure_story_shared_sweet">Se guardó en vez de comerlo porque compartir el hallazgo era aún más dulce.</string>
+    <string name="treasure_hint_shared_sweet">Un envoltorio de colores guarda una pequeña delicia.</string>
+    <string name="treasure_name_nap_moon">Luna de siesta</string>
+    <string name="treasure_story_nap_moon">Una media luna soñolienta que cuida los descansos más cómodos.</string>
+    <string name="treasure_hint_nap_moon">Una curva plateada espera la hora de dormir.</string>
+    <string name="treasure_name_friendship_ring">Anillo de amistad</string>
+    <string name="treasure_story_friendship_ring">Un pequeño círculo sin final, como una amistad bien cuidada.</string>
+    <string name="treasure_hint_friendship_ring">Un círculo perfecto atrapa la luz.</string>
+    <string name="treasure_name_tiny_crown">Corona diminuta</string>
+    <string name="treasure_story_tiny_crown">Pertenece a quien convirtió un día corriente en algo digno de reyes.</string>
+    <string name="treasure_hint_tiny_crown">Pequeñas puntas doradas se alzan con orgullo.</string>
+    <string name="treasure_name_dream_orb">Orbe de sueños</string>
+    <string name="treasure_story_dream_orb">Sus colores se mueven cada vez que imaginan una nueva aventura.</string>
+    <string name="treasure_hint_dream_orb">Un brillo redondo guarda colores cambiantes.</string>
+    <string name="treasure_name_secret_slice">Porción secreta</string>
+    <string name="treasure_story_secret_slice">La merienda de emergencia de un juego cuyas reglas solo tu compañero conoce.</string>
+    <string name="treasure_hint_secret_slice">Un triángulo tibio huele sospechosamente delicioso.</string>
 </resources>
