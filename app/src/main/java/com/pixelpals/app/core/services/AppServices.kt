@@ -9,8 +9,40 @@ import com.pixelpals.app.data.repository.PixelPalsRepository
 import com.pixelpals.app.feature.store.billing.BillingRepository
 import com.pixelpals.app.feature.store.billing.DebugPreviewBillingRepository
 import com.pixelpals.app.feature.store.billing.GooglePlayBillingRepository
+import com.pixelpals.app.core.care.scene.CareSceneCoordinator
+import com.pixelpals.app.core.care.scene.CareSceneResult
+import com.pixelpals.app.notifications.PetCareNotificationManager
+import com.pixelpals.app.notifications.PetCareNotificationScheduler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 
 object AppServices {
+    val applicationScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    @Volatile private var careScenes: CareSceneCoordinator? = null
+
+    fun careScenes(context: Context): CareSceneCoordinator = careScenes ?: synchronized(this) {
+        val appContext: Context = context.applicationContext
+        careScenes ?: CareSceneCoordinator(
+            scope = applicationScope,
+            readSnapshot = { pet -> repository(appContext).getStatusSnapshot(pet) },
+            applyEffect = { request ->
+                val result: CareSceneResult = repository(appContext).completeCareScene(request.pet, request.action)
+                if (result is CareSceneResult.Completed) {
+                    // Ancillary work cannot turn an already committed action into a retryable error.
+                    runCatching {
+                        PetCareNotificationManager.cancel(appContext)
+                        PetCareNotificationScheduler.schedule(appContext)
+                        analytics(appContext).track("care_scene_completed", mapOf(
+                            "pet_id" to request.pet.name.lowercase(), "action" to request.action.name.lowercase(),
+                            "origin" to request.origin.name.lowercase(), "mode" to request.mode.name.lowercase(),
+                        ))
+                    }
+                }
+                result
+            },
+        ).also { careScenes = it }
+    }
     @Volatile
     private var repository: PixelPalsRepository? = null
 

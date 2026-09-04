@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="desktop_feed_retry">Try again in a moment</string>
+    <string name="desktop_pet_actions">%1$s. Tap to open available care</string>
+    <string name="desktop_pet_rested">What a lovely nap! 🌙</string>
+    <string name="desktop_pet_petted">Feels lovely! 💛</string>
+    <string name="care_scene_open">Care</string>
+    <string name="care_scene_close">Close care</string>
+    <string name="care_scene_pet">Pet</string>
+    <string name="care_scene_loading">Preparing a moment together…</string>
+    <string name="care_scene_hint">Tap a care tool to watch, or drag it towards your pet to take part.</string>
+    <string name="care_scene_tool_description">%1$s. Tap to complete care automatically or drag to take part.</string>
+    <string name="care_scene_pet_description">%1$s’s care area. Use the buttons to interact without dragging.</string>
+    <string name="care_scene_assets_error">Could not load the care poses. Please try again.</string>
+    <string name="care_scene_busy">Another care moment is in progress. Please wait.</string>
+    <string name="care_scene_saving">Saving this moment…</string>
+    <string name="care_scene_action_in_progress">%1$s · A moment together</string>
+    <string name="care_scene_manual_feed">Bring the food to their mouth to start eating.</string>
+    <string name="care_scene_manual_play">Move the toy and let go to start playing.</string>
+    <string name="care_scene_manual_pet">Gently stroke their head with the hand.</string>
+    <string name="care_scene_manual_clean">Gently rub the sponge over their body.</string>
+    <string name="care_scene_manual_rest">Place their bed underneath your pet.</string>
+    <string name="care_scene_manual_imp_rest">Bring the wings to your little imp so they can wrap up and rest.</string>
+    <string name="care_scene_manual_medicine">Bring the spoon to their mouth.</string>
+    <string name="care_scene_medicine_ready">Give medicine. Available to help with recovery.</string>
+    <string name="care_scene_medicine_unavailable">Medicine is only available while sick or recovering, after the time between doses has passed.</string>
+    <string name="care_scene_cancelled">Care cancelled. No changes were applied.</string>
+    <string name="care_scene_awake">Your pet is awake again. You can keep caring for them now.</string>
+    <string name="care_scene_no_changes">A little moment together. No extra changes this time.</string>
+    <string name="care_scene_recovered">Feeling better again. Thank you for all that care!</string>
+    <string name="care_delta_value">%1$s %2$+d</string>
+    <string name="care_delta_fullness">Fullness</string>
+    <string name="care_delta_energy">Energy</string>
+    <string name="care_delta_cleanliness">Cleanliness</string>
+    <string name="care_delta_bond">Bond</string>
+    <string name="care_delta_coins">Coins</string>
+    <string name="care_delta_health">Health</string>
+    <string name="care_delta_recovery">Recovery</string>
+</resources>

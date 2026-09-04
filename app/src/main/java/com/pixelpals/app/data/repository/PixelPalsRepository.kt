@@ -8,6 +8,9 @@ import com.pixelpals.app.core.care.PetCondition
 import com.pixelpals.app.core.care.PetNeedsEngine
 import com.pixelpals.app.core.care.SystemTimeProvider
 import com.pixelpals.app.core.care.TimeProvider
+import com.pixelpals.app.core.care.scene.CareSceneAction
+import com.pixelpals.app.core.care.scene.CareSceneResult
+import com.pixelpals.app.core.care.scene.isMedicineAvailable
 import com.pixelpals.app.core.domain.PetType
 import com.pixelpals.app.data.catalog.CatalogItemState
 import com.pixelpals.app.data.catalog.PetCatalogItem
@@ -222,6 +225,20 @@ class PixelPalsRepository(
             }
             getStatusSnapshot(petId)
         }
+    }
+
+    /** Atomic before/after result for a completed visual action; no animation callback mutates twice. */
+    suspend fun completeCareScene(petType: PetType, action: CareSceneAction): CareSceneResult = db.withTransaction {
+        val before: PetStatusSnapshot = getStatusSnapshot(petType)
+        if (action == CareSceneAction.MEDICINE && !isMedicineAvailable(before, System.currentTimeMillis())) {
+            return@withTransaction CareSceneResult.Unavailable
+        }
+        val after: PetStatusSnapshot = if (action.careAction != null) {
+            applyCareAction(petType, action.careAction)
+        } else {
+            recordInteraction(petType)
+        }
+        CareSceneResult.Completed(before, after)
     }
 
     suspend fun getDailyTasks(petType: PetType): List<DailyTask> {

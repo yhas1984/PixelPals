@@ -281,6 +281,12 @@ class CorgiBehavior(
         startWalk()
     }
 
+    fun resumeAfterFetch(facingLeft: Boolean): Unit {
+        walkDirection = if (facingLeft) -1f else 1f
+        reset()
+        bridge.animScaleX = walkDirection
+    }
+
     private fun approach(value: Float, target: Float, delta: Float): Float {
         return when {
             value < target -> (value + delta).coerceAtMost(target)

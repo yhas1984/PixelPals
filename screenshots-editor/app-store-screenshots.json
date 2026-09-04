@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "appName": "PixelPals",
-  "themeId": "dark-bold",
+  "themeId": "warm-editorial",
   "connectedCanvas": true,
   "locales": [
     "es"
@@ -14,15 +14,15 @@
     "iphone": [],
     "android": [
       {
-        "id": "s_pxlpals_01",
+        "id": "s_pxlpals_es_01",
         "layout": "hero",
         "label": {
-          "es": "TU COMPAÑERO DE CADA DÍA"
+          "es": "ELIGE A TU COMPAÑERO"
         },
         "headline": {
-          "es": "Una mascota\nque vive en\ntu pantalla"
+          "es": "Una mascota\nque vive contigo"
         },
-        "screenshot": "/screenshots/android/phone/{locale}/08.png",
+        "screenshot": "/screenshots/android/phone/{locale}/01.png",
         "transforms": {
           "caption": {
             "x": 86,
@@ -44,15 +44,15 @@
         "inverted": true
       },
       {
-        "id": "s_pxlpals_02",
+        "id": "s_pxlpals_es_02",
         "layout": "device-top",
         "label": {
-          "es": "ENCUENTRA A TU COMPAÑERO"
+          "es": "CUIDADO DIARIO"
         },
         "headline": {
-          "es": "Ocho mascotas.\nUna es para ti."
+          "es": "Cuídalo.\nConecta cada día."
         },
-        "screenshot": "/screenshots/android/phone/{locale}/04.png",
+        "screenshot": "/screenshots/android/phone/{locale}/02.png",
         "transforms": {
           "caption": {
             "x": 86,
@@ -73,13 +73,13 @@
         }
       },
       {
-        "id": "s_pxlpals_03",
+        "id": "s_pxlpals_es_03",
         "layout": "device-bottom",
         "label": {
-          "es": "HAZLA SOLO TUYA"
+          "es": "HAZLO TUYO"
         },
         "headline": {
-          "es": "Dale tu estilo\na cada aventura"
+          "es": "Tu estilo.\nSu personalidad."
         },
         "screenshot": "/screenshots/android/phone/{locale}/03.png",
         "transforms": {
@@ -102,15 +102,15 @@
         }
       },
       {
-        "id": "s_pxlpals_04",
+        "id": "s_pxlpals_es_04",
         "layout": "device-top",
         "label": {
-          "es": "COLECCIONA CADA MOMENTO"
+          "es": "TU COLECCIÓN"
         },
         "headline": {
-          "es": "Cada hallazgo\ncuenta una historia"
+          "es": "Cada tesoro\ncuenta algo."
         },
-        "screenshot": "/screenshots/android/phone/{locale}/05.png",
+        "screenshot": "/screenshots/android/phone/{locale}/04.png",
         "transforms": {
           "caption": {
             "x": 86,
@@ -125,6 +125,123 @@
             "y": 150,
             "width": 540,
             "height": 1170,
+            "rotation": 0,
+            "zIndex": 3
+          }
+        },
+        "inverted": true
+      },
+      {
+        "id": "s_pxlpals_es_05",
+        "layout": "device-bottom",
+        "label": {
+          "es": "OCHO PERSONALIDADES"
+        },
+        "headline": {
+          "es": "Encuentra al\ncompañero ideal."
+        },
+        "screenshot": "/screenshots/android/phone/{locale}/05.png",
+        "transforms": {
+          "caption": {
+            "x": 86,
+            "y": 90,
+            "width": 907,
+            "height": 400,
+            "rotation": 0,
+            "zIndex": 4
+          },
+          "device": {
+            "x": 240,
+            "y": 540,
+            "width": 600,
+            "height": 1300,
+            "rotation": 0,
+            "zIndex": 3
+          }
+        }
+      },
+      {
+        "id": "s_pxlpals_es_06",
+        "layout": "device-top",
+        "label": {
+          "es": "RECOMPENSAS QUE MOTIVAN"
+        },
+        "headline": {
+          "es": "Juega, cuida,\ndescubre."
+        },
+        "screenshot": "/screenshots/android/phone/{locale}/06.png",
+        "transforms": {
+          "caption": {
+            "x": 86,
+            "y": 1420,
+            "width": 907,
+            "height": 420,
+            "rotation": 0,
+            "zIndex": 4
+          },
+          "device": {
+            "x": 270,
+            "y": 150,
+            "width": 540,
+            "height": 1170,
+            "rotation": 0,
+            "zIndex": 3
+          }
+        }
+      },
+      {
+        "id": "s_pxlpals_es_07",
+        "layout": "device-bottom",
+        "label": {
+          "es": "DESCUBRE MÁS"
+        },
+        "headline": {
+          "es": "Pequeños hallazgos.\nGrandes recuerdos."
+        },
+        "screenshot": "/screenshots/android/phone/{locale}/07.png",
+        "transforms": {
+          "caption": {
+            "x": 86,
+            "y": 90,
+            "width": 907,
+            "height": 400,
+            "rotation": 0,
+            "zIndex": 4
+          },
+          "device": {
+            "x": 240,
+            "y": 540,
+            "width": 600,
+            "height": 1300,
+            "rotation": 0,
+            "zIndex": 3
+          }
+        }
+      },
+      {
+        "id": "s_pxlpals_es_08",
+        "layout": "hero",
+        "label": {
+          "es": "SIEMPRE CONTIGO"
+        },
+        "headline": {
+          "es": "Tu compañero,\nen cada pantalla."
+        },
+        "screenshot": "/screenshots/android/phone/{locale}/08.png",
+        "transforms": {
+          "caption": {
+            "x": 86,
+            "y": 80,
+            "width": 907,
+            "height": 430,
+            "rotation": 0,
+            "zIndex": 4
+          },
+          "device": {
+            "x": 240,
+            "y": 560,
+            "width": 600,
+            "height": 1300,
             "rotation": 0,
             "zIndex": 3
           }

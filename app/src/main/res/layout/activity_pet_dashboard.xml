@@ -43,6 +43,13 @@
             android:textSize="15sp"
             android:textStyle="bold" />
 
+        <com.pixelpals.app.feature.care.CareScenePanel
+            android:id="@+id/careScenePanel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:visibility="gone" />
+
         <LinearLayout
             android:id="@+id/cardDashboardState"
             android:layout_width="match_parent"

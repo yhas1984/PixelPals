@@ -28,6 +28,8 @@ android {
         targetSdk = 36
         versionCode = 20
         versionName = "2.3.0"
+        // Visual approval is required before enabling new care assets in production.
+        buildConfigField("boolean", "CARE_SCENES_ENABLED", "false")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // AdMob: IDs de PRUEBA de Google por defecto. Para ads reales define
@@ -93,6 +95,7 @@ android {
 
     buildTypes {
         debug {
+            buildConfigField("boolean", "CARE_SCENES_ENABLED", "true")
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
             val instrumentationBuildRequested = gradle.startParameter.taskNames.any { taskName ->

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="desktop_feed_retry">Inténtalo en un momento</string>
+    <string name="desktop_pet_actions">%1$s. Toca para abrir los cuidados disponibles</string>
+    <string name="desktop_pet_rested">¡Qué buena siesta! 🌙</string>
+    <string name="desktop_pet_petted">¡Qué gustito! 💛</string>
+    <string name="care_scene_open">Cuidar</string>
+    <string name="care_scene_close">Cerrar cuidados</string>
+    <string name="care_scene_pet">Acariciar</string>
+    <string name="care_scene_loading">Preparando un momento juntos…</string>
+    <string name="care_scene_hint">Toca un cuidado para verlo o arrastra una herramienta hacia tu mascota.</string>
+    <string name="care_scene_tool_description">%1$s. Toca para completar el cuidado automáticamente o arrastra para participar.</string>
+    <string name="care_scene_pet_description">Zona de cuidados de %1$s. Usa los botones para interactuar sin arrastrar.</string>
+    <string name="care_scene_assets_error">No se pudieron cargar las poses de cuidado. Inténtalo de nuevo.</string>
+    <string name="care_scene_busy">Hay otro cuidado en curso. Espera un momento.</string>
+    <string name="care_scene_saving">Guardando este momento…</string>
+    <string name="care_scene_action_in_progress">%1$s · Un momento juntos</string>
+    <string name="care_scene_manual_feed">Acerca la comida a su boca para que dé sus bocados.</string>
+    <string name="care_scene_manual_play">Mueve el juguete y suéltalo para empezar a jugar.</string>
+    <string name="care_scene_manual_pet">Desliza suavemente la mano por su cabeza.</string>
+    <string name="care_scene_manual_clean">Frota suavemente la esponja por su cuerpo.</string>
+    <string name="care_scene_manual_rest">Coloca su cama debajo de tu mascota.</string>
+    <string name="care_scene_manual_imp_rest">Acerca las alas a Diablito para que se arrope y descanse.</string>
+    <string name="care_scene_manual_medicine">Acerca la cucharita a su boca.</string>
+    <string name="care_scene_medicine_ready">Dar medicina. Disponible para ayudar en su recuperación.</string>
+    <string name="care_scene_medicine_unavailable">La medicina solo está disponible cuando está enferma o recuperándose y ha pasado el tiempo entre tomas.</string>
+    <string name="care_scene_cancelled">Cuidado cancelado. No se aplicaron cambios.</string>
+    <string name="care_scene_awake">Ya se ha despertado. Ahora puedes seguir cuidándola.</string>
+    <string name="care_scene_no_changes">Un ratito juntos. Esta vez no hubo cambios extra.</string>
+    <string name="care_scene_recovered">Ya está bien de nuevo. ¡Gracias por tanto cariño!</string>
+    <string name="care_delta_value">%1$s %2$+d</string>
+    <string name="care_delta_fullness">Saciedad</string>
+    <string name="care_delta_energy">Energía</string>
+    <string name="care_delta_cleanliness">Limpieza</string>
+    <string name="care_delta_bond">Vínculo</string>
+    <string name="care_delta_coins">Monedas</string>
+    <string name="care_delta_health">Salud</string>
+    <string name="care_delta_recovery">Recuperación</string>
+</resources>
