@@ -69,7 +69,7 @@
     <string name="notification_icon_desc">Notification permission icon</string>
 
     <!-- V2 Navigation -->
-    <string name="open_dashboard">See how they’re doing</string>
+    <string name="open_dashboard">Pet Stats</string>
     <string name="open_store">Open Store</string>
 
     <!-- Selection V2 -->

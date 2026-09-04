@@ -31,6 +31,16 @@ import com.pixelpals.app.feature.overlay.behavior.TelaCornerWebState
 import com.pixelpals.app.feature.overlay.behavior.TelaSilkState
 import com.pixelpals.app.notifications.PetCareNotificationManager
 import com.pixelpals.app.notifications.PetCareNotificationScheduler
+import com.pixelpals.app.core.services.AppServices
+import com.pixelpals.app.feature.care.CorgiCareCloud
+import com.pixelpals.app.feature.care.CorgiFetchBallOverlay
+import com.pixelpals.app.feature.care.CarePoseLoader
+import com.pixelpals.app.feature.care.DesktopCarePlayback
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 
 class PetService : Service() {
 
@@ -136,6 +146,11 @@ class PetService : Service() {
 
     private var windowManager: WindowManager? = null
     private var petView: PetView? = null
+    private var careOverlay: CorgiCareCloud? = null
+    private var fetchBall: CorgiFetchBallOverlay? = null
+    private val careScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private var isCareRoomVisible: Boolean = false
+    private var isScreenOn: Boolean = true
     private var telaWebOverlay: TelaWebOverlayController? = null
     private var screenReceiver: ScreenStateReceiver? = null
     private var batteryReceiver: BroadcastReceiver? = null
@@ -182,6 +197,7 @@ class PetService : Service() {
         val visible = insets.isVisible(WindowInsets.Type.ime())
         if (visible == lastImeVisible) return
         lastImeVisible = visible
+        if (visible) careOverlay?.close()
         val height = insets.getInsets(WindowInsets.Type.ime()).bottom
         petView?.onKeyboardChanged(visible, height)
         if (!visible) {
@@ -197,6 +213,13 @@ class PetService : Service() {
         isRunning = true
         selectedPetStore = SelectedPetStore(this)
         currentPetType = selectedPetStore.load()
+        if (BuildConfig.CARE_SCENES_ENABLED) careScope.launch {
+            AppServices.careScenes(this@PetService).roomOwners.collect { owners ->
+                isCareRoomVisible = owners.isNotEmpty()
+                if (isCareRoomVisible) careOverlay?.close()
+                applyPetOverlayVisible(shouldShowPetForPolicy())
+            }
+        }
         createNotificationChannel()
         PetCareNotificationManager.createChannel(this)
         if (selectedPetStore.isPetEnabled()) PetCareNotificationScheduler.schedule(this)
@@ -354,6 +377,28 @@ class PetService : Service() {
             onTelaSilkChanged = ::onTelaSilkChanged,
             onTelaCornerWebChanged = ::onTelaCornerWebChanged,
         )
+        if (BuildConfig.CARE_SCENES_ENABLED && currentPetType in DesktopCarePlayback.SUPPORTED_PETS &&
+            CarePoseLoader.isAvailable(assets, currentPetType)) {
+            if (currentPetType == PetType.CORGI) {
+                fetchBall = CorgiFetchBallOverlay(this, windowManager!!, petSize)
+                petView?.onFetchBallChanged = { frame ->
+                    if (fetchBall?.render(frame) == false) petView?.cancelDesktopCare()
+                }
+            }
+            careOverlay = CorgiCareCloud(this, windowManager!!, petSize, currentPetType,
+                readStatus = { petView?.petStatus }) { action ->
+                if (!isCareRoomVisible && shouldShowPetForPolicy()) petView?.startDesktopCare(action)
+            }
+            petView?.onCareStatusChanged = { careOverlay?.refreshActions() }
+            petView?.onCareDismiss = { careOverlay?.close() }
+            petView?.onDesktopPositionChanged = { x, y -> careOverlay?.follow(x, y) }
+            petView?.onCareAffordance = {
+                if (!isCareRoomVisible && shouldShowPetForPolicy()) {
+                    val position: WindowManager.LayoutParams? = petView?.getWindowParams()
+                    if (position != null) careOverlay?.show(position.x + petSize / 2, position.y)
+                }
+            }
+        }
 
         // Evita robar foco al sistema (mejora back/gestos), manteniendo el overlay touchable.
         // adjustNothing: el sistema no debe panear/insetar la ventana cuando abre el teclado;
@@ -392,6 +437,9 @@ class PetService : Service() {
     }
 
     private fun removePetOverlay() {
+        val previousCare: CorgiCareCloud? = careOverlay
+        careOverlay = null
+        previousCare?.close()
         homeCheckHandler.removeCallbacks(homeCheckRunnable)
         petView?.let {
             it.pauseAnimation()
@@ -401,6 +449,8 @@ class PetService : Service() {
             }
         }
         petView = null
+        fetchBall?.close()
+        fetchBall = null
         telaWebOverlay?.destroy()
         telaWebOverlay = null
         lastAppliedPetVisible = null
@@ -419,32 +469,30 @@ class PetService : Service() {
      * No se puede poner un TYPE_APPLICATION_OVERLAY detrás de otras apps; se oculta para no taparlas.
      */
     private fun shouldShowPetForPolicy(): Boolean {
-        if (userManuallyHidden) return false
+        if (userManuallyHidden || !isScreenOn || isCareRoomVisible) return false
         if (!DesktopForegroundHelper.hasUsageAccess(this)) return true
         return DesktopForegroundHelper.isLauncherForeground(this)
     }
 
     private fun refreshPetVisibilityForForeground() {
         if (!isViewAttached || petView == null) return
-        if (userManuallyHidden) return
-        if (!DesktopForegroundHelper.hasUsageAccess(this)) {
-            applyPetOverlayVisible(true)
-            return
-        }
-        val launcher = DesktopForegroundHelper.isLauncherForeground(this)
-        applyPetOverlayVisible(launcher)
+        val visible: Boolean = shouldShowPetForPolicy()
+        if (!visible) careOverlay?.close()
+        applyPetOverlayVisible(visible)
     }
 
     private fun applyPetOverlayVisible(visible: Boolean) {
         val v = petView ?: return
-        val already = lastAppliedPetVisible == visible &&
-            v.visibility == if (visible) View.VISIBLE else View.GONE
+        val effectiveVisible: Boolean = visible && !isCareRoomVisible && isScreenOn
+        if (!effectiveVisible) careOverlay?.close()
+        val already = lastAppliedPetVisible == effectiveVisible &&
+            v.visibility == if (effectiveVisible) View.VISIBLE else View.GONE
         if (already) return
-        lastAppliedPetVisible = visible
-        v.visibility = if (visible) View.VISIBLE else View.GONE
-        telaWebOverlay?.setVisible(visible)
-        updateOverlayTouchThrough(!visible)
-        if (visible) v.resumeAnimation() else v.pauseAnimation()
+        lastAppliedPetVisible = effectiveVisible
+        v.visibility = if (effectiveVisible) View.VISIBLE else View.GONE
+        telaWebOverlay?.setVisible(effectiveVisible)
+        updateOverlayTouchThrough(!effectiveVisible)
+        if (effectiveVisible) v.resumeAnimation() else v.pauseAnimation()
     }
 
     private fun updateOverlayTouchThrough(passThrough: Boolean) {
@@ -580,11 +628,9 @@ class PetService : Service() {
     private fun registerScreenReceiver() {
         if (screenReceiver != null) return
         screenReceiver = ScreenStateReceiver { on ->
-            if (on) {
-                if (petView?.visibility == View.VISIBLE) petView?.resumeAnimation()
-            } else {
-                petView?.pauseAnimation()
-            }
+            isScreenOn = on
+            if (!on) careOverlay?.close()
+            applyPetOverlayVisible(shouldShowPetForPolicy())
         }
         val filter = IntentFilter().apply { addAction(Intent.ACTION_SCREEN_OFF); addAction(Intent.ACTION_SCREEN_ON) }
         try {
@@ -626,6 +672,7 @@ class PetService : Service() {
     }
 
     override fun onDestroy() {
+        careScope.cancel()
         removePetOverlay()
         isForegroundStarted = false
         try { 
@@ -638,6 +685,12 @@ class PetService : Service() {
         screenReceiver = null
         isRunning = false
         super.onDestroy()
+    }
+
+    override fun onConfigurationChanged(newConfig: android.content.res.Configuration): Unit {
+        careOverlay?.close()
+        petView?.cancelDesktopCare()
+        super.onConfigurationChanged(newConfig)
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {

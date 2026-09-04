@@ -16,6 +16,14 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.ViewModelProvider
+import com.pixelpals.app.BuildConfig
+import com.pixelpals.app.core.care.scene.CareSceneAction
+import com.pixelpals.app.core.care.scene.CareSceneOrigin
+import com.pixelpals.app.core.care.scene.CareSceneResult
+import com.pixelpals.app.feature.care.CareScenePanel
+import com.pixelpals.app.feature.care.CareSceneViewModel
+import com.pixelpals.app.feature.care.CarePoseLoader
 import com.pixelpals.app.core.services.AppServices
 import com.pixelpals.app.core.care.PetCondition
 import com.pixelpals.app.core.domain.PetType
@@ -87,6 +95,8 @@ class PetDashboardActivity : AppCompatActivity() {
     private lateinit var progressCollection: ProgressBar
     private var requestedCareAction: CareAction? = null
     private var hasRenderedDashboard: Boolean = false
+    private var careModel: CareSceneViewModel? = null
+    private var carePanel: CareScenePanel? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -108,7 +118,36 @@ class PetDashboardActivity : AppCompatActivity() {
         updateDashboardTitle()
         applySystemBarsInsets()
         setupActions()
+        setupCareScenes()
         lifecycleScope.launch { refreshDashboard(applyCheckIn = true) }
+    }
+
+    private fun setupCareScenes(): Unit {
+        if (!BuildConfig.CARE_SCENES_ENABLED || !CarePoseLoader.isAvailable(assets, selectedPet)) return
+        val model: CareSceneViewModel = ViewModelProvider(this,
+            CareSceneViewModel.Factory(application, selectedPet, CareSceneOrigin.ROOM))[CareSceneViewModel::class.java]
+        careModel = model
+        carePanel = findViewById<CareScenePanel>(R.id.careScenePanel).apply {
+            visibility = View.VISIBLE
+            bind(model)
+            onResult = { result ->
+                if (result is CareSceneResult.Completed) lifecycleScope.launch { refreshDashboard(applyCheckIn = false) }
+            }
+        }
+        (findViewById<Button>(R.id.btnFeed).parent as View).visibility = View.GONE
+        (findViewById<Button>(R.id.btnPlay).parent as View).visibility = View.GONE
+    }
+
+    override fun onStart(): Unit {
+        super.onStart()
+        careModel?.setRoomVisible(true)
+        carePanel?.resumePresentation()
+    }
+
+    override fun onStop(): Unit {
+        carePanel?.pausePresentation()
+        careModel?.setRoomVisible(false)
+        super.onStop()
     }
 
     override fun onResume(): Unit {
@@ -185,6 +224,12 @@ class PetDashboardActivity : AppCompatActivity() {
     }
 
     private fun performCare(action: CareAction) {
+        if (carePanel != null && action != CareAction.CHECK_IN) {
+            requestedCareAction = null
+            CareSceneAction.entries.firstOrNull { it.careAction == action }?.let { carePanel?.start(it) }
+            findViewById<ScrollView>(R.id.dashboardScroll).smoothScrollTo(0, 0)
+            return
+        }
         lifecycleScope.launch {
             requestedCareAction = null
             showLoadingState(getString(R.string.dashboard_loading))

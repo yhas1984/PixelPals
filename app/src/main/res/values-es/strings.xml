@@ -68,7 +68,7 @@
     <string name="notification_icon_desc">Icono de permiso de notificaciones</string>
 
     <!-- Navegación V2 -->
-    <string name="open_dashboard">Ver cómo está</string>
+    <string name="open_dashboard">Estadísticas de tu mascota</string>
     <string name="open_store">Abrir tienda</string>
 
     <!-- Selección V2 -->

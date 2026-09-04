@@ -19,6 +19,11 @@ import android.view.WindowInsets
 import android.view.WindowManager
 import androidx.core.content.ContextCompat
 import com.pixelpals.app.core.analytics.AnalyticsTracker
+import com.pixelpals.app.core.care.scene.CareSceneResult
+import com.pixelpals.app.core.care.scene.CareSceneAction
+import com.pixelpals.app.core.care.scene.CarePoint
+import com.pixelpals.app.core.care.scene.CorgiFetchMotion
+import com.pixelpals.app.core.care.scene.CorgiFetchPlan
 import com.pixelpals.app.core.domain.PetState
 import com.pixelpals.app.core.domain.PetType
 import com.pixelpals.app.core.motion.MotionEngine
@@ -34,6 +39,10 @@ import com.pixelpals.app.core.services.AppServices
 import com.pixelpals.app.data.repository.PetProgress
 import com.pixelpals.app.data.repository.PixelPalsRepository
 import com.pixelpals.app.feature.overlay.behavior.*
+import com.pixelpals.app.feature.care.CorgiDesktopCare
+import com.pixelpals.app.feature.care.CorgiFetchFrame
+import com.pixelpals.app.feature.care.DesktopCarePlayback
+import com.pixelpals.app.feature.care.SpeciesDesktopCare
 import com.pixelpals.app.status.CareAction
 import com.pixelpals.app.status.PetMood
 import com.pixelpals.app.status.PetPersonality
@@ -63,6 +72,7 @@ class PetView(
     private val repository: PixelPalsRepository = AppServices.repository(context)
     private val analytics: AnalyticsTracker = AppServices.analytics(context)
     private val uiScope = CoroutineScope(Dispatchers.Main + Job())
+    private var desktopCare: DesktopCarePlayback? = null
     private var activeSecondsAccumulator = 0f
     private var ambientBubbleCooldown = 12f
     private var lastFrameTimeNanos = 0L
@@ -282,6 +292,11 @@ class PetView(
         }
 
     init {
+        if (BuildConfig.CARE_SCENES_ENABLED && petType in DesktopCarePlayback.SUPPORTED_PETS) {
+            contentDescription = context.getString(R.string.desktop_pet_actions, context.getString(petType.displayNameResId))
+            importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_YES
+            isClickable = true
+        }
         uiScope.launch {
             updatePetStatus(repository.getStatusSnapshot(petType))
             reloadCosmetic()
@@ -320,7 +335,7 @@ class PetView(
      *   - 12 FPS en idle profundo (la mascota está quieta y sin efectos).
      */
     private fun nextFrameDelayMs(wasMoving: Boolean): Long {
-        if (state != PetState.IDLE || bubbleTimer > 0f || treasureReactionTimer > 0f || wasMoving) {
+        if (desktopCare?.isActive == true || state != PetState.IDLE || bubbleTimer > 0f || treasureReactionTimer > 0f || wasMoving) {
             return FRAME_INTERVAL_ACTIVE_MS
         }
         if (hasAnimatedCosmetic()) return FRAME_INTERVAL_COSMETIC_MS
@@ -375,6 +390,7 @@ class PetView(
             }
             val wm = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
             wm.updateViewLayout(this, real)
+            onDesktopPositionChanged?.invoke(params.x + petSpriteSize / 2, params.y)
         } catch (e: Exception) {
             Log.w("PetView", "Failed to update window layout", e)
         }
@@ -467,6 +483,7 @@ class PetView(
     }
 
     override fun pauseAnimation() {
+        cancelDesktopCare()
         if (isAnimating) progress.flush()
         isAnimating = false
         lastFrameTimeNanos = 0L
@@ -523,6 +540,93 @@ class PetView(
             }
             invalidate()
         }
+    }
+
+    fun startDesktopCare(action: CareSceneAction): Unit {
+        if (!BuildConfig.CARE_SCENES_ENABLED || petType !in DesktopCarePlayback.SUPPORTED_PETS || !isAnimating ||
+            !isAttachedToWindow || visibility != VISIBLE || desktopCare?.isActive == true ||
+            action !in DesktopCarePlayback.ACTIONS) return
+        val facingLeft: Boolean = animScaleX < 0f
+        val fetch: CorgiFetchPlan? = if (petType == PetType.CORGI && action == CareSceneAction.PLAY) {
+            val position: WindowManager.LayoutParams = getWindowParams() ?: return
+            CorgiFetchMotion.createPlan(
+                CarePoint(position.x.toFloat(), position.y.toFloat()), bounds, petSpriteSize, facingLeft,
+                reducedMotion = !android.animation.ValueAnimator.areAnimatorsEnabled(),
+            )
+        } else null
+        physicsBody = null
+        isTouchPending = false
+        frameHandler.removeCallbacks(holdRunnable)
+        state = PetState.IDLE
+        hideBubble()
+        treasureReactionTimer = 0f
+        if (desktopCare == null) {
+            desktopCare = when (petType) {
+                PetType.CORGI -> CorgiDesktopCare(
+                    context, uiScope, ::applyFetchFrame,
+                    onFinished = ::finishDesktopCare,
+                )
+                else -> SpeciesDesktopCare(
+                    context, uiScope, petType,
+                    onFinished = ::finishDesktopCare,
+                )
+            }
+        }
+        behavior?.reset()
+        currentFrame = 0
+        animScaleX = if (facingLeft) -1f else 1f
+        desktopCare?.start(action, facingLeft, fetch)
+        invalidate()
+    }
+
+    fun cancelDesktopCare(): Unit { desktopCare?.cancel() }
+
+    private fun finishDesktopCare(completedAction: CareSceneAction, result: CareSceneResult?): Unit {
+        state = PetState.IDLE
+        if (petType == PetType.CORGI && completedAction == CareSceneAction.PLAY) {
+            (behavior as? CorgiBehavior)?.resumeAfterFetch(animScaleX < 0f)
+        } else {
+            behavior?.reset()
+        }
+        currentFrame = 0
+        if (result is CareSceneResult.Completed) {
+            updatePetStatus(result.after)
+            val message: String = context.getString(when (completedAction) {
+                CareSceneAction.FEED -> R.string.care_bubble_feed
+                CareSceneAction.PLAY -> R.string.care_bubble_play
+                CareSceneAction.PET -> R.string.desktop_pet_petted
+                CareSceneAction.CLEAN -> R.string.care_bubble_clean
+                CareSceneAction.REST -> R.string.desktop_pet_rested
+                CareSceneAction.MEDICINE -> R.string.care_bubble_medicine
+            })
+            showBubble(message)
+            announceForAccessibility(message)
+            playHaptic(35)
+        } else if (result != null) {
+            showBubble(context.getString(R.string.desktop_feed_retry))
+        }
+        invalidate()
+    }
+
+    private fun applyFetchFrame(frame: CorgiFetchFrame?): Unit {
+        if (frame != null) {
+            val params: WindowManager.LayoutParams = getWindowParams() ?: return
+            params.x = frame.pet.x.roundToInt()
+            params.y = frame.pet.y.roundToInt()
+            animScaleX = if (frame.facingLeft) -1f else 1f
+            animScaleY = 1f
+            animOffsetX = 0f
+            animOffsetY = 0f
+            animRotation = 0f
+            treasureEffectScaleX = 1f
+            treasureEffectScaleY = 1f
+            treasureEffectOffsetX = 0f
+            treasureEffectOffsetY = 0f
+            treasureEffectRotation = 0f
+            frame.regularFrame?.let { currentFrame = it }
+            updateWindowLayout(params)
+        }
+        onFetchBallChanged?.invoke(frame)
     }
 
     private fun reloadCosmetic() {
@@ -607,6 +711,7 @@ class PetView(
     }
 
     override fun onKeyboardChanged(visible: Boolean, height: Int) {
+        if (visible) cancelDesktopCare()
         keyboardHeightPx = if (visible) height.coerceAtLeast(0) else 0
         behavior?.onKeyboardVisibilityChanged(visible, height)
     }
@@ -616,6 +721,10 @@ class PetView(
     }
 
     private fun update(dt: Float) {
+        if (desktopCare?.isActive == true) {
+            desktopCare?.advance(dt)
+            return
+        }
         // No-op: screen metrics are cached at attach/config-change time (see refreshScreenMetrics).
         cosmeticClock += dt
         activeSecondsAccumulator += dt
@@ -683,6 +792,13 @@ class PetView(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
+        // Run frames and care frames share this same pet window; never draw both.
+        if (desktopCare?.isActive == true) {
+            if (desktopCare?.draw(canvas, petSpriteSize) != true) {
+                behavior?.onDraw(canvas, width / 2f, height / 2f)
+            }
+            return
+        }
         // Sprite base del pet.
         behavior?.onDraw(canvas, (width / 2).toFloat(), (height / 2).toFloat())
 
@@ -802,6 +918,7 @@ class PetView(
     private fun updatePetStatus(updated: PetStatusSnapshot) {
         val previous: PetStatusSnapshot = petStatus
         petStatus = updated
+        onCareStatusChanged?.invoke()
         behavior?.onStatusChanged(previous, updated)
         if (previous.condition != updated.condition) {
             analytics.track(
@@ -857,10 +974,18 @@ class PetView(
 
     override fun performClick(): Boolean {
         super.performClick()
+        if (desktopCare?.isActive == true) return true
         state = PetState.INTERACTING
         behavior?.onInteract()
+        onCareAffordance?.invoke()
         return true
     }
+
+    var onCareAffordance: (() -> Unit)? = null
+    var onCareStatusChanged: (() -> Unit)? = null
+    var onCareDismiss: (() -> Unit)? = null
+    var onDesktopPositionChanged: ((Int, Int) -> Unit)? = null
+    var onFetchBallChanged: ((CorgiFetchFrame?) -> Unit)? = null
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         val params = getWindowParams() ?: return false
@@ -878,6 +1003,7 @@ class PetView(
                     if (dx * dx + dy * dy > touchRadius * touchRadius) return false
                 }
 
+                if (desktopCare?.isMovingPet == true) cancelDesktopCare()
                 behaviorOwnsTouch = behavior?.onTouchDown(event.rawX, event.rawY) == true
                 if (behaviorOwnsTouch) return true
                 gestureRecognizer.onDown(event.rawX, event.rawY, event.eventTime)
@@ -891,7 +1017,9 @@ class PetView(
                 physicsBody = null
                 isTouchPending = true
                 frameHandler.removeCallbacks(holdRunnable)
-                frameHandler.postDelayed(holdRunnable, ViewConfiguration.getLongPressTimeout().toLong())
+                if (desktopCare?.isActive != true) {
+                    frameHandler.postDelayed(holdRunnable, ViewConfiguration.getLongPressTimeout().toLong())
+                }
                 return true
             }
             MotionEvent.ACTION_MOVE -> {
@@ -899,6 +1027,8 @@ class PetView(
                 addMovementToVelocityTracker(event)
                 val gesture = gestureRecognizer.onMove(event.rawX, event.rawY, event.eventTime)
                 if (gesture.type == PetGestureType.DRAG_STARTED) {
+                    onCareDismiss?.invoke()
+                    cancelDesktopCare()
                     isTouchPending = false
                     frameHandler.removeCallbacks(holdRunnable)
                     state = PetState.DRAGGING
@@ -989,6 +1119,7 @@ class PetView(
     }
 
     override fun onDetachedFromWindow() {
+        cancelDesktopCare()
         frameHandler.removeCallbacks(holdRunnable)
         isTouchPending = false
         behaviorOwnsTouch = false
@@ -1000,6 +1131,7 @@ class PetView(
     }
 
     override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+        cancelDesktopCare()
         super.onConfigurationChanged(newConfig)
         refreshScreenMetrics()
     }
