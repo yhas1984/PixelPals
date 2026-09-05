@@ -85,15 +85,11 @@ class PetsTabFragment : Fragment() {
         val price: Int = item.coinPrice ?: return
         val viewModel: StoreViewModel = storeFragment.getStoreViewModel()
         val balance: Int = viewModel.uiState.value.balance
-        if (balance < price) {
-            showInsufficientCoins()
-            return
-        }
         AlertDialog.Builder(requireContext())
             .setTitle(R.string.store_confirm_purchase_title)
             .setView(com.pixelpals.app.feature.home.CompanionPreview.create(this, item.petType ?: com.pixelpals.app.core.domain.PetType.CORGI))
             .setMessage(
-                getString(
+                if (balance < price) getString(R.string.store_insufficient_coins_detail) else getString(
                     R.string.store_confirm_pet_purchase,
                     item.displayName,
                     price,
@@ -102,7 +98,8 @@ class PetsTabFragment : Fragment() {
             )
             .setNegativeButton(android.R.string.cancel, null)
             .setPositiveButton(R.string.store_buy_button) { _, _ ->
-                viewModel.unlockPremiumPet(item)
+                if (viewModel.uiState.value.balance < price) showInsufficientCoins()
+                else viewModel.unlockPremiumPet(item)
             }
             .show()
     }
