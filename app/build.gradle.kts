@@ -26,8 +26,8 @@ android {
         applicationId = "com.pixelpals.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 20
-        versionName = "2.3.0"
+        versionCode = 21
+        versionName = "2.4.0"
         // Visual approval is required before enabling new care assets in production.
         buildConfigField("boolean", "CARE_SCENES_ENABLED", "false")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -124,6 +124,10 @@ android {
             )
         }
         release {
+            // Explicit candidate builds include desktop care for review without changing the production default.
+            val companionCandidate = providers.gradleProperty("pixelpals.companion.releaseCandidate")
+                .map(String::toBooleanStrict).getOrElse(false)
+            buildConfigField("boolean", "CARE_SCENES_ENABLED", companionCandidate.toString())
             isMinifyEnabled = true
             isShrinkResources = true
             // A Play-bound release must never be silently emitted unsigned.
@@ -179,6 +183,8 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+
+    sourceSets.getByName("androidTest").assets.srcDir("$projectDir/schemas")
 
     testOptions {
         unitTests.isIncludeAndroidResources = true

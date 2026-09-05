@@ -199,6 +199,7 @@ class StoreFragment : Fragment() {
                 when (position) {
                     StoreSection.PREMIUM.pageIndex -> R.string.store_tab_premium
                     StoreSection.COSMETICS.pageIndex -> R.string.store_tab_cosmetics
+                    StoreSection.DECORATIONS.pageIndex -> R.string.home_decoration_shop
                     else -> R.string.store_tab_coins
                 },
             )
@@ -401,6 +402,7 @@ class StoreFragment : Fragment() {
         override fun createFragment(position: Int): Fragment = when (position) {
             StoreSection.PREMIUM.pageIndex -> PetsTabFragment()
             StoreSection.COSMETICS.pageIndex -> CosmeticsTabFragment()
+            StoreSection.DECORATIONS.pageIndex -> com.pixelpals.app.feature.home.DecorationsTabFragment()
             else -> CoinsTabFragment()
         }
     }

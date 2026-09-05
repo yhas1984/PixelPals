@@ -169,14 +169,11 @@ class PetsFragment : Fragment() {
                 "display_name" to getString(petType.displayNameResId),
             ),
         )
-        PetService.requestPetChange(requireContext(), petType)
-        Toast.makeText(
-            requireContext(),
-            getString(R.string.selection_launching_pet_format, getString(petType.displayNameResId)),
-            Toast.LENGTH_SHORT,
-        ).show()
+        PetService.stopPet(requireContext())
+        com.pixelpals.app.data.prefs.SelectedPetStore(requireContext()).save(petType)
         viewModel.refreshIfNeeded(isForced = true)
-        requireActivity().moveTaskToBack(true)
+        isLaunchingPet = false
+        (requireActivity() as RootNavigator).navigate(PixelPalsDestination.HOME)
     }
 
     private fun getMoodLabel(mood: PetMood): String = getString(

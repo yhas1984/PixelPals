@@ -91,6 +91,7 @@ class PetsTabFragment : Fragment() {
         }
         AlertDialog.Builder(requireContext())
             .setTitle(R.string.store_confirm_purchase_title)
+            .setView(com.pixelpals.app.feature.home.CompanionPreview.create(this, item.petType ?: com.pixelpals.app.core.domain.PetType.CORGI))
             .setMessage(
                 getString(
                     R.string.store_confirm_pet_purchase,

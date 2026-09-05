@@ -12,6 +12,7 @@ import com.pixelpals.app.feature.store.StoreFragment
 enum class PixelPalsDestination(@param:IdRes val menuId: Int, val fragmentTag: String) {
     HOME(R.id.nav_home, "root_home"),
     PETS(R.id.nav_pets, "root_pets"),
+    ADVENTURES(R.id.nav_adventures, "root_adventures"),
     STORE(R.id.nav_store, "root_store"),
 }
 
@@ -19,6 +20,7 @@ enum class StoreSection(val pageIndex: Int) {
     PREMIUM(0),
     COSMETICS(1),
     COINS(2),
+    DECORATIONS(3),
 }
 
 interface RootNavigator {
@@ -90,6 +92,7 @@ class RootNavigationController(
         return when (destination) {
             PixelPalsDestination.HOME -> HomeFragment()
             PixelPalsDestination.PETS -> PetsFragment()
+            PixelPalsDestination.ADVENTURES -> com.pixelpals.app.feature.home.AdventuresFragment()
             PixelPalsDestination.STORE -> StoreFragment()
         }
     }

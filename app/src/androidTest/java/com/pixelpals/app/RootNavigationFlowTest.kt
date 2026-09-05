@@ -98,10 +98,21 @@ class RootNavigationFlowTest {
         scenario = ActivityScenario.launch(MainActivity::class.java)
         scenario!!.onActivity { activity ->
             val navigation: BottomNavigationView = activity.findViewById(R.id.bottomNavigation)
-            listOf(R.string.nav_home, R.string.nav_pets, R.string.nav_store).forEach { resource ->
+            listOf(R.string.nav_home, R.string.nav_pets, R.string.nav_adventures, R.string.nav_store).forEach { resource ->
                 val label: String = activity.getString(resource)
                 assertEquals(1, countVisibleLabels(navigation, label))
             }
+        }
+    }
+
+    @Test
+    fun adventuresRestoresAfterRecreationAndBackReturnsHome() {
+        scenario = ActivityScenario.launch(MainActivity.createIntent(application, PixelPalsDestination.ADVENTURES))
+        scenario!!.recreate()
+        scenario!!.onActivity { activity ->
+            assertTrue(getFragment(activity, PixelPalsDestination.ADVENTURES).lifecycle.currentState == Lifecycle.State.RESUMED)
+            activity.onBackPressedDispatcher.onBackPressed()
+            assertTrue(getFragment(activity, PixelPalsDestination.HOME).lifecycle.currentState == Lifecycle.State.RESUMED)
         }
     }
 

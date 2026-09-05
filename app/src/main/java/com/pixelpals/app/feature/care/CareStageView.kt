@@ -22,6 +22,10 @@ class CareStageView(context: Context) : View(context) {
     private var didFinish: Boolean = false
     private var isStarted: Boolean = false
     private var idleTimeMs: Long = 0L
+    private val preferences = com.pixelpals.app.feature.home.CompanionPreferences(context)
+    var environment: com.pixelpals.app.feature.home.HomeEnvironment? = null
+    private val backgroundPainter = com.pixelpals.app.feature.home.HomeScenePainter()
+    private fun isMotionEnabled(): Boolean = ValueAnimator.areAnimatorsEnabled() && !preferences.reducedMotion
     private val frame: Runnable = object : Runnable {
         override fun run(): Unit {
             if (!isAttachedToWindow || !isShown) { isStarted = false; return }
@@ -65,7 +69,7 @@ class CareStageView(context: Context) : View(context) {
         // Do not turn out-of-bounds input into a valid edge contact.
         val point: CarePoint = CarePoint((rawX - location[0]) / width, (rawY - location[1]) / height)
         scene.movePointer(point, renderer.getTarget(poses, scene, width.toFloat(), height.toFloat(),
-            if (ValueAnimator.areAnimatorsEnabled()) scene.animationMs else 0L, !ValueAnimator.areAnimatorsEnabled()), isDown)
+            if (isMotionEnabled()) scene.animationMs else 0L, !isMotionEnabled()), isDown)
         invalidate()
     }
 
@@ -83,14 +87,19 @@ class CareStageView(context: Context) : View(context) {
     override fun onDraw(canvas: Canvas): Unit {
         super.onDraw(canvas)
         val poses: CarePosePack = pack ?: return
-        renderer.draw(canvas, poses, controller, !ValueAnimator.areAnimatorsEnabled(), isGentle, idleTimeMs)
+        environment?.let {
+            canvas.save(); canvas.scale(width / 1000f, height / 760f)
+            backgroundPainter.drawBackground(canvas, it, java.time.LocalTime.now().hour)
+            canvas.restore()
+        }
+        renderer.draw(canvas, poses, controller, !isMotionEnabled(), isGentle, idleTimeMs)
     }
 
     private fun scheduleFrame(): Unit {
         if (isStarted || pack == null || !isAttachedToWindow || !isShown) return
         isStarted = true
         if (controller != null && !didFinish) postOnAnimation(frame)
-        else postDelayed(frame, if (ValueAnimator.areAnimatorsEnabled()) 80L else 500L)
+        else postDelayed(frame, if (isMotionEnabled()) 80L else 500L)
     }
 
     override fun onAttachedToWindow(): Unit { super.onAttachedToWindow(); scheduleFrame() }
@@ -100,7 +109,10 @@ class CareStageView(context: Context) : View(context) {
         if (visibility == VISIBLE) scheduleFrame()
     }
 
-    fun celebrate(): Unit { performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY) }
+    fun celebrate(): Unit {
+        if (preferences.haptics) performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+        if (preferences.sound) playSoundEffect(android.view.SoundEffectConstants.CLICK)
+    }
 
     override fun onDetachedFromWindow(): Unit {
         pack = null

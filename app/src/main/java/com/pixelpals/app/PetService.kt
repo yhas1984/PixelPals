@@ -213,7 +213,7 @@ class PetService : Service() {
         isRunning = true
         selectedPetStore = SelectedPetStore(this)
         currentPetType = selectedPetStore.load()
-        if (BuildConfig.CARE_SCENES_ENABLED) careScope.launch {
+        careScope.launch {
             AppServices.careScenes(this@PetService).roomOwners.collect { owners ->
                 isCareRoomVisible = owners.isNotEmpty()
                 if (isCareRoomVisible) careOverlay?.close()
@@ -221,6 +221,19 @@ class PetService : Service() {
             }
         }
         createNotificationChannel()
+        careScope.launch {
+            AppServices.careScenes(this@PetService).session.collect { session ->
+                isCompanionCareActive = session != null
+                companionObject?.setVisible(shouldShowPetForPolicy() && !isCompanionCareActive && BuildConfig.CARE_SCENES_ENABLED)
+            }
+        }
+        careScope.launch {
+            AppServices.companions(this@PetService).dao.observeExpedition().collect { expedition ->
+                isOnExpedition = expedition?.petId == currentPetType.name.lowercase()
+                if (isOnExpedition) careOverlay?.close()
+                applyPetOverlayVisible(shouldShowPetForPolicy())
+            }
+        }
         PetCareNotificationManager.createChannel(this)
         if (selectedPetStore.isPetEnabled()) PetCareNotificationScheduler.schedule(this)
     }
@@ -377,6 +390,19 @@ class PetService : Service() {
             onTelaSilkChanged = ::onTelaSilkChanged,
             onTelaCornerWebChanged = ::onTelaCornerWebChanged,
         )
+        companionObject = com.pixelpals.app.feature.home.CompanionObjectOverlay(this, windowManager!!) { decoration ->
+            if (shouldShowPetForPolicy()) decoration.action?.let { petView?.startDesktopCare(it) }
+        }
+        companionHomeJob?.cancel()
+        companionHomeJob = careScope.launch {
+            AppServices.companions(this@PetService).dao.observeHome(currentPetType.name.lowercase()).collect { home ->
+                com.pixelpals.app.feature.home.DecorationCatalog.find(home?.desktopObject.orEmpty())?.let {
+                    companionObject?.setObject(it)
+                    petView?.getWindowParams()?.let { params -> companionObject?.follow(params.x + petSize / 2, params.y) }
+                    companionObject?.setVisible(shouldShowPetForPolicy() && !isCompanionCareActive && BuildConfig.CARE_SCENES_ENABLED)
+                }
+            }
+        }
         if (BuildConfig.CARE_SCENES_ENABLED && currentPetType in DesktopCarePlayback.SUPPORTED_PETS &&
             CarePoseLoader.isAvailable(assets, currentPetType)) {
             if (currentPetType == PetType.CORGI) {
@@ -391,7 +417,7 @@ class PetService : Service() {
             }
             petView?.onCareStatusChanged = { careOverlay?.refreshActions() }
             petView?.onCareDismiss = { careOverlay?.close() }
-            petView?.onDesktopPositionChanged = { x, y -> careOverlay?.follow(x, y) }
+            petView?.onDesktopPositionChanged = { x, y -> careOverlay?.follow(x, y); companionObject?.follow(x, y) }
             petView?.onCareAffordance = {
                 if (!isCareRoomVisible && shouldShowPetForPolicy()) {
                     val position: WindowManager.LayoutParams? = petView?.getWindowParams()
@@ -437,6 +463,8 @@ class PetService : Service() {
     }
 
     private fun removePetOverlay() {
+        companionHomeJob?.cancel(); companionHomeJob = null
+        companionObject?.setVisible(false); companionObject = null
         val previousCare: CorgiCareCloud? = careOverlay
         careOverlay = null
         previousCare?.close()
@@ -468,8 +496,12 @@ class PetService : Service() {
      * Con acceso de uso: solo visible en el lanzador. Sin acceso: siempre visible salvo ocultar manual.
      * No se puede poner un TYPE_APPLICATION_OVERLAY detrás de otras apps; se oculta para no taparlas.
      */
+    private var isOnExpedition: Boolean = false
+    private var companionObject: com.pixelpals.app.feature.home.CompanionObjectOverlay? = null
+    private var companionHomeJob: kotlinx.coroutines.Job? = null
+    private var isCompanionCareActive: Boolean = false
     private fun shouldShowPetForPolicy(): Boolean {
-        if (userManuallyHidden || !isScreenOn || isCareRoomVisible) return false
+        if (isOnExpedition || userManuallyHidden || !isScreenOn || isCareRoomVisible) return false
         if (!DesktopForegroundHelper.hasUsageAccess(this)) return true
         return DesktopForegroundHelper.isLauncherForeground(this)
     }
@@ -483,7 +515,8 @@ class PetService : Service() {
 
     private fun applyPetOverlayVisible(visible: Boolean) {
         val v = petView ?: return
-        val effectiveVisible: Boolean = visible && !isCareRoomVisible && isScreenOn
+        val effectiveVisible: Boolean = visible && !isCareRoomVisible && isScreenOn && !isOnExpedition
+        companionObject?.setVisible(effectiveVisible && !isCompanionCareActive && BuildConfig.CARE_SCENES_ENABLED)
         if (!effectiveVisible) careOverlay?.close()
         val already = lastAppliedPetVisible == effectiveVisible &&
             v.visibility == if (effectiveVisible) View.VISIBLE else View.GONE

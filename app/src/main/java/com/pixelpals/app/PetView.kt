@@ -72,6 +72,7 @@ class PetView(
     private val repository: PixelPalsRepository = AppServices.repository(context)
     private val analytics: AnalyticsTracker = AppServices.analytics(context)
     private val uiScope = CoroutineScope(Dispatchers.Main + Job())
+    private val companionPreferences = com.pixelpals.app.feature.home.CompanionPreferences(context)
     private var desktopCare: DesktopCarePlayback? = null
     private var activeSecondsAccumulator = 0f
     private var ambientBubbleCooldown = 12f
@@ -335,6 +336,7 @@ class PetView(
      *   - 12 FPS en idle profundo (la mascota está quieta y sin efectos).
      */
     private fun nextFrameDelayMs(wasMoving: Boolean): Long {
+        if (companionPreferences.reducedMotion && state == PetState.IDLE && desktopCare?.isActive != true) return 100L
         if (desktopCare?.isActive == true || state != PetState.IDLE || bubbleTimer > 0f || treasureReactionTimer > 0f || wasMoving) {
             return FRAME_INTERVAL_ACTIVE_MS
         }
@@ -459,6 +461,7 @@ class PetView(
     }
     
     override fun playHaptic(durationMs: Long) {
+        if (!companionPreferences.haptics) return
         try {
             val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 (context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
@@ -551,7 +554,7 @@ class PetView(
             val position: WindowManager.LayoutParams = getWindowParams() ?: return
             CorgiFetchMotion.createPlan(
                 CarePoint(position.x.toFloat(), position.y.toFloat()), bounds, petSpriteSize, facingLeft,
-                reducedMotion = !android.animation.ValueAnimator.areAnimatorsEnabled(),
+                reducedMotion = !android.animation.ValueAnimator.areAnimatorsEnabled() || companionPreferences.reducedMotion,
             )
         } else null
         physicsBody = null
@@ -726,7 +729,7 @@ class PetView(
             return
         }
         // No-op: screen metrics are cached at attach/config-change time (see refreshScreenMetrics).
-        cosmeticClock += dt
+        if (!companionPreferences.reducedMotion) cosmeticClock += dt
         activeSecondsAccumulator += dt
         while (activeSecondsAccumulator >= 60f) {
             progress.trackMinute()
@@ -763,7 +766,7 @@ class PetView(
         // preserves the exact grab point and prevents a jump when drag starts.
         if (!isTouchPending) {
             when (state) {
-                PetState.IDLE -> behavior?.updateIdle(dt)
+                PetState.IDLE -> if (!companionPreferences.reducedMotion) behavior?.updateIdle(dt)
                 PetState.DRAGGING -> behavior?.updateDrag(dt)
                 PetState.FALLING -> updatePhysicsFalling(dt)
                 PetState.JUMPING -> behavior?.updateJumping(dt)

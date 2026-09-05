@@ -100,7 +100,11 @@ class CosmeticsTabFragment : Fragment() {
         )
         when (action) {
             CosmeticAction.EQUIPPED -> Unit
-            CosmeticAction.EQUIP -> viewModel.equipCosmetic(cosmetic)
+            CosmeticAction.EQUIP -> AlertDialog.Builder(requireContext())
+                .setTitle(cosmetic.displayName)
+                .setView(com.pixelpals.app.feature.home.CompanionPreview.create(this, state.selectedPet, cosmetic.effect))
+                .setNegativeButton(android.R.string.cancel, null)
+                .setPositiveButton(R.string.home_done) { _, _ -> viewModel.equipCosmetic(cosmetic) }.show()
             CosmeticAction.BUY -> requestCosmeticPurchase(cosmetic, state.balance)
         }
     }
@@ -113,6 +117,7 @@ class CosmeticsTabFragment : Fragment() {
         }
         AlertDialog.Builder(requireContext())
             .setTitle(R.string.store_confirm_purchase_title)
+            .setView(com.pixelpals.app.feature.home.CompanionPreview.create(this, storeFragment.getStoreViewModel().uiState.value.selectedPet, cosmetic.effect))
             .setMessage(
                 getString(
                     R.string.store_confirm_cosmetic_purchase,

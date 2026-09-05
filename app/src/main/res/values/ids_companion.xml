@@ -1,0 +1,5 @@
+<resources>
+    <item name="companionScene" type="id" />
+    <item name="companionCare" type="id" />
+    <item name="companionSettings" type="id" />
+</resources>

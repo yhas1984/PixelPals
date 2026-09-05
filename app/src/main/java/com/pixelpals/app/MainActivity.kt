@@ -184,7 +184,7 @@ class MainActivity : AppCompatActivity(), RootNavigator {
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             view.setPadding(bars.left, bars.top, bars.right, bars.bottom)
-            insets
+            WindowInsetsCompat.Builder(insets).setInsets(WindowInsetsCompat.Type.systemBars(), androidx.core.graphics.Insets.NONE).build()
         }
         ViewCompat.requestApplyInsets(binding.root)
     }

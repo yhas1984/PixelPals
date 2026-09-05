@@ -35,8 +35,10 @@ class CareScenePanel @JvmOverloads constructor(context: Context, attrs: Attribut
     private var isAnimationFinished: Boolean = false
     private var pendingPointer: Triple<Float, Float, Boolean>? = null
     private var loadJob: Job? = null
+    private var pendingAction: Pair<CareSceneAction, CareSceneMode>? = null
     var onResult: ((CareSceneResult) -> Unit)? = null
     var onClose: (() -> Unit)? = null
+    fun setHomeEnvironment(environment: com.pixelpals.app.feature.home.HomeEnvironment): Unit { stage.environment = environment; stage.invalidate() }
 
     init {
         orientation = VERTICAL
@@ -91,6 +93,7 @@ class CareScenePanel @JvmOverloads constructor(context: Context, attrs: Attribut
     }
 
     fun bind(viewModel: CareSceneViewModel): Unit {
+        if (model?.pet != viewModel.pet) { pausePresentation(); stage.pack = null }
         model = viewModel
         buttons.forEach { (action, button) ->
             button.setCompoundDrawables(null, CareToolDrawable(action, dp(22), viewModel.pet), null, null)
@@ -100,11 +103,12 @@ class CareScenePanel @JvmOverloads constructor(context: Context, attrs: Attribut
     }
 
     fun start(action: CareSceneAction, mode: CareSceneMode = CareSceneMode.AUTOMATIC): Unit {
-        if (stage.pack == null) return
+        if (stage.pack == null) { pendingAction = action to mode; return }
         model?.start(action, mode)
     }
 
     fun cancel(): Unit {
+        pendingAction = null
         pendingPointer = null
         stage.stop()
         model?.cancel()
@@ -141,6 +145,7 @@ class CareScenePanel @JvmOverloads constructor(context: Context, attrs: Attribut
             try {
                 stage.pack = CarePoseLoader.load(context.assets, current.pet)
                 render(current.state.value)
+                pendingAction?.let { (action, mode) -> pendingAction = null; current.start(action, mode) }
             } catch (exception: CancellationException) { throw exception
             } catch (_: Exception) {
                 message.setText(R.string.care_scene_assets_error)

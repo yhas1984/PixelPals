@@ -31,6 +31,7 @@ class SpeciesDesktopCare(
     private val onFinished: (CareSceneAction, CareSceneResult?) -> Unit,
 ) : DesktopCarePlayback {
     private val renderer: SpeciesCareRenderer = SpeciesCareRenderer()
+    private val companionPreferences = com.pixelpals.app.feature.home.CompanionPreferences(context)
     private var action: CareSceneAction = CareSceneAction.FEED
     private var owner: String? = null
     private var requestId: String? = null
@@ -112,7 +113,7 @@ class SpeciesDesktopCare(
         if (facingLeft) canvas.scale(-1f, 1f, canvas.width / 2f, canvas.height / 2f)
         renderer.draw(
             canvas, loaded, playback,
-            reduced = !ValueAnimator.areAnimatorsEnabled(),
+            reduced = !ValueAnimator.areAnimatorsEnabled() || companionPreferences.reducedMotion,
             gentle = false,
             desktopSize = spriteSize,
         )

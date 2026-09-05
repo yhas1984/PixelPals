@@ -140,6 +140,7 @@ class PixelPalsRepository(
     suspend fun getStatusSnapshot(petId: String): PetStatusSnapshot {
         val statusEntity = ensureStatusEntity(petId)
         var bondEntity = ensureBondEntity(petId)
+        if (db.companionDao().getExpedition()?.petId == petId) return toSnapshot(statusEntity, bondEntity)
         val reconciled = reconcileStatus(statusEntity)
         if (reconciled != statusEntity) {
             db.petStatusDao().upsert(reconciled)
@@ -153,6 +154,7 @@ class PixelPalsRepository(
 
     suspend fun recordActiveMinute(petType: PetType): PetStatusSnapshot {
         val petId = petIdOf(petType)
+        if (db.companionDao().getExpedition()?.petId == petId) return getStatusSnapshot(petId)
         val bond = ensureBondEntity(petId)
         db.petBondDao().upsert(bond.copy(activeMinutes = bond.activeMinutes + 1))
         return getStatusSnapshot(petId)
@@ -161,6 +163,7 @@ class PixelPalsRepository(
     suspend fun recordInteraction(petType: PetType): PetStatusSnapshot {
         val petId = petIdOf(petType)
         return db.withTransaction {
+            if (db.companionDao().getExpedition()?.petId == petId) return@withTransaction getStatusSnapshot(petId)
             val currentStatus = reconcileStatus(ensureStatusEntity(petId))
             val currentBond = ensureBondEntity(petId)
             if (
@@ -186,6 +189,7 @@ class PixelPalsRepository(
             )
             // Re-leer tras el upsert: el snapshot de applyMutation se construyó con el
             // bond ANTES del +3, y el bond debe reflejarse en lo que ve el usuario.
+            com.pixelpals.app.feature.home.CompanionLearning.record(db.companionDao(), petId, CareSceneAction.PET, timeProvider.getCurrentTimeMillis())
             getStatusSnapshot(petId)
         }
     }
@@ -194,6 +198,7 @@ class PixelPalsRepository(
         val petId = petIdOf(petType)
         val taskId = taskIdFor(action)
         return db.withTransaction {
+            if (db.companionDao().getExpedition()?.petId == petId) return@withTransaction getStatusSnapshot(petId)
             val isRewardEligible = action != CareAction.MEDICINE
             val isFirstCompletionToday = isRewardEligible && db.dailyTaskStateDao()
                 .getTasksForDay(petId, todayKey())
@@ -223,12 +228,16 @@ class PixelPalsRepository(
                     recoveryBond.copy(illnessRecoveries = recoveryBond.illnessRecoveries + 1)
                 )
             }
+            CareSceneAction.entries.firstOrNull { it.careAction == action }?.let {
+                com.pixelpals.app.feature.home.CompanionLearning.record(db.companionDao(), petId, it, timeProvider.getCurrentTimeMillis())
+            }
             getStatusSnapshot(petId)
         }
     }
 
     /** Atomic before/after result for a completed visual action; no animation callback mutates twice. */
     suspend fun completeCareScene(petType: PetType, action: CareSceneAction): CareSceneResult = db.withTransaction {
+        if (db.companionDao().getExpedition()?.petId == petIdOf(petType)) return@withTransaction CareSceneResult.Unavailable
         val before: PetStatusSnapshot = getStatusSnapshot(petType)
         if (action == CareSceneAction.MEDICINE && !isMedicineAvailable(before, System.currentTimeMillis())) {
             return@withTransaction CareSceneResult.Unavailable
@@ -238,7 +247,28 @@ class PixelPalsRepository(
         } else {
             recordInteraction(petType)
         }
+        com.pixelpals.app.feature.home.CompanionLearning.record(db.companionDao(), petIdOf(petType), action, timeProvider.getCurrentTimeMillis())
         CareSceneResult.Completed(before, after)
+    }
+
+    suspend fun purchaseDecorationWithCoins(id: String): CoinSpendResult {
+        val item: com.pixelpals.app.feature.home.Decoration = com.pixelpals.app.feature.home.DecorationCatalog.find(id)
+            ?: return CoinSpendResult.Failure("Unknown decoration")
+        if (item.expedition != null) return CoinSpendResult.Failure("Expedition reward")
+        ensureWalletMigrated()
+        return db.withTransaction {
+            if (db.companionDao().getOwned(id) != null) return@withTransaction CoinSpendResult.AlreadyOwned
+            val wallet: PetBondEntity = ensureBondEntity(walletId)
+            if (wallet.softCurrency < item.price) return@withTransaction CoinSpendResult.InsufficientFunds
+            db.petBondDao().upsert(wallet.copy(softCurrency = wallet.softCurrency - item.price))
+            db.companionDao().own(com.pixelpals.app.database.DecorationInventoryEntity(id, timeProvider.getCurrentTimeMillis()))
+            CoinSpendResult.Purchased
+        }
+    }
+
+    internal suspend fun grantExpeditionTreasure(petId: String, emoji: String): TreasureDiscoveryResult {
+        ensureWalletMigrated()
+        return addTreasureInternal(petId, emoji)
     }
 
     suspend fun getDailyTasks(petType: PetType): List<DailyTask> {
@@ -866,7 +896,8 @@ class PixelPalsRepository(
     }
 
     private fun isCareActive(petId: String): Boolean {
-        return selectedPetStore.isPetEnabled() && petIdOf(selectedPetStore.load()) == petId
+        return petIdOf(selectedPetStore.load()) == petId && (selectedPetStore.isPetEnabled() ||
+            com.pixelpals.app.core.services.AppServices.careScenes(appContext).roomOwners.value.isNotEmpty())
     }
 
     private fun PetStatusEntity.toCareState(): PetCareState = PetCareState(
@@ -1024,6 +1055,7 @@ class PixelPalsRepository(
         ensureWalletMigrated()
         return db.withTransaction {
             val petId: String = petIdOf(petType)
+            if (db.companionDao().getExpedition()?.petId == petId) return@withTransaction null
             val bond: PetBondEntity = ensureBondEntity(petId)
             val interactionCount: Int = bond.bondPoints / INTERACTION_BOND_STEP
             val treasureCount: Int = getLifetimeTreasureCount()
@@ -1043,6 +1075,7 @@ class PixelPalsRepository(
         ensureWalletMigrated()
         return db.withTransaction {
             val petId: String = petIdOf(petType)
+            if (db.companionDao().getExpedition()?.petId == petId) return@withTransaction null
             val bond: PetBondEntity = ensureBondEntity(petId)
             val treasureCount: Int = getLifetimeTreasureCount()
             val milestone: Int = when {

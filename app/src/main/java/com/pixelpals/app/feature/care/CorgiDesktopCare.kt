@@ -22,6 +22,7 @@ class CorgiDesktopCare(
     private val onFinished: (CareSceneAction, CareSceneResult?) -> Unit,
 ) : DesktopCarePlayback {
     private val renderer: CorgiDesktopCareRenderer = CorgiDesktopCareRenderer()
+    private val companionPreferences = com.pixelpals.app.feature.home.CompanionPreferences(context)
     private var action: CareSceneAction = CareSceneAction.FEED
     private var owner: String? = null
     private var requestId: String? = null
@@ -107,7 +108,7 @@ class CorgiDesktopCare(
         val playback: CareSceneController = scene ?: return false
         if (fetchPose?.regularFrame != null) return false
         renderer.draw(canvas, loaded, spriteSize, playback.animationMs, facingLeft,
-            reducedMotion = !ValueAnimator.areAnimatorsEnabled(), action = action,
+            reducedMotion = !ValueAnimator.areAnimatorsEnabled() || companionPreferences.reducedMotion, action = action,
             fetchFrame = fetchPose?.careFrame ?: 2)
         return true
     }
