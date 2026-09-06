@@ -222,12 +222,6 @@ class PetService : Service() {
         }
         createNotificationChannel()
         careScope.launch {
-            AppServices.careScenes(this@PetService).session.collect { session ->
-                isCompanionCareActive = session != null
-                companionObject?.setVisible(shouldShowPetForPolicy() && !isCompanionCareActive && BuildConfig.CARE_SCENES_ENABLED)
-            }
-        }
-        careScope.launch {
             AppServices.companions(this@PetService).dao.observeExpedition().collect { expedition ->
                 isOnExpedition = expedition?.petId == currentPetType.name.lowercase()
                 if (isOnExpedition) careOverlay?.close()
@@ -390,17 +384,10 @@ class PetService : Service() {
             onTelaSilkChanged = ::onTelaSilkChanged,
             onTelaCornerWebChanged = ::onTelaCornerWebChanged,
         )
-        companionObject = com.pixelpals.app.feature.home.CompanionObjectOverlay(this, windowManager!!) { decoration ->
-            if (shouldShowPetForPolicy()) decoration.action?.let { petView?.startDesktopCare(it) }
-        }
         companionHomeJob?.cancel()
         companionHomeJob = careScope.launch {
             AppServices.companions(this@PetService).dao.observeHome(currentPetType.name.lowercase()).collect { home ->
                 petView?.setCompanionHome(home)
-                val desktopObject = com.pixelpals.app.feature.home.DecorationCatalog.find(home?.desktopObject.orEmpty())
-                companionObject?.setObject(desktopObject)
-                petView?.getWindowParams()?.let { params -> companionObject?.follow(params.x + petSize / 2, params.y) }
-                companionObject?.setVisible(shouldShowPetForPolicy() && !isCompanionCareActive && BuildConfig.CARE_SCENES_ENABLED)
             }
         }
         if (BuildConfig.CARE_SCENES_ENABLED && currentPetType in DesktopCarePlayback.SUPPORTED_PETS &&
@@ -417,7 +404,7 @@ class PetService : Service() {
             }
             petView?.onCareStatusChanged = { careOverlay?.refreshActions() }
             petView?.onCareDismiss = { careOverlay?.close() }
-            petView?.onDesktopPositionChanged = { x, y -> careOverlay?.follow(x, y); companionObject?.follow(x, y) }
+            petView?.onDesktopPositionChanged = { x, y -> careOverlay?.follow(x, y) }
             petView?.onCareAffordance = {
                 if (!isCareRoomVisible && shouldShowPetForPolicy()) {
                     val position: WindowManager.LayoutParams? = petView?.getWindowParams()
@@ -464,7 +451,6 @@ class PetService : Service() {
 
     private fun removePetOverlay() {
         companionHomeJob?.cancel(); companionHomeJob = null
-        companionObject?.setVisible(false); companionObject = null
         val previousCare: CorgiCareCloud? = careOverlay
         careOverlay = null
         previousCare?.close()
@@ -497,9 +483,7 @@ class PetService : Service() {
      * No se puede poner un TYPE_APPLICATION_OVERLAY detrás de otras apps; se oculta para no taparlas.
      */
     private var isOnExpedition: Boolean = false
-    private var companionObject: com.pixelpals.app.feature.home.CompanionObjectOverlay? = null
     private var companionHomeJob: kotlinx.coroutines.Job? = null
-    private var isCompanionCareActive: Boolean = false
     private fun shouldShowPetForPolicy(): Boolean {
         if (isOnExpedition || userManuallyHidden || !isScreenOn || isCareRoomVisible) return false
         if (!DesktopForegroundHelper.hasUsageAccess(this)) return true
@@ -516,7 +500,6 @@ class PetService : Service() {
     private fun applyPetOverlayVisible(visible: Boolean) {
         val v = petView ?: return
         val effectiveVisible: Boolean = visible && !isCareRoomVisible && isScreenOn && !isOnExpedition
-        companionObject?.setVisible(effectiveVisible && !isCompanionCareActive && BuildConfig.CARE_SCENES_ENABLED)
         if (!effectiveVisible) careOverlay?.close()
         val already = lastAppliedPetVisible == effectiveVisible &&
             v.visibility == if (effectiveVisible) View.VISIBLE else View.GONE

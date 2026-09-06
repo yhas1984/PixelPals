@@ -12,12 +12,12 @@ PixelPals keeps its 15 companions, Kotlin/Views, local Room storage, existing wa
 
 - Home is an interactive 2D room; settings are a separate activity. Pets, Adventures and Store complete the four root destinations.
 - Each pet has a persistent nickname, room environment, object placement and interaction history. Existing status, bond and memories remain authoritative.
-- Three environments and 24 vector-drawn decorations share the same artwork across the room, previews, desktop object and postcards.
+- Three environments and 24 vector-drawn decorations share the same artwork across the room, previews and postcards.
 - Three trips last 5, 15 and 30 minutes. One journey is allowed at a time. Care is unavailable for the travelling pet, its status is frozen and its overlay is paused. Return is claimed explicitly; cancellation grants nothing.
 - A journey grants a catalog treasure through the existing treasure reward transaction and a route-specific decoration. Repeated journeys retain normal treasure inventory/rewards; decorations are owned once.
 - Return restores desktop presence only if it was active at departure, the same pet remains selected and overlay permission is still available.
 - Care continues to use the species-specific pose packs and existing completion coordinator. Automatic room interactions are presentation only; they never farm care rewards.
-- Desktop objects are optional. New homes start without one; an equipped object can be removed without losing ownership or its room placement. Existing selections are retained.
+- Desktop companion objects were removed at the user's request. Care is accessed through the existing cloud; room decorations remain usable. Stored desktop selections are retained as inert compatibility data and never create an overlay.
 - Postcards export only the app-rendered scene through a scoped FileProvider cache path. They do not capture the screen or other applications.
 
 ## State and boundaries
