@@ -14,7 +14,7 @@ data class CompanionHomeEntity(
     val touchCount: Int = 0,
     val lastLearnedAt: Long = 0,
     val favoriteObject: String = "ball",
-    val desktopObject: String = "ball",
+    val desktopObject: String = "",
 )
 
 @Entity(tableName = "home_decoration", primaryKeys = ["petId", "decorationId"])

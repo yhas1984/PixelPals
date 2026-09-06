@@ -7,6 +7,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.pixelpals.app.core.domain.PetType
+import com.pixelpals.app.database.HomeDecorationEntity
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -15,6 +16,65 @@ import java.io.File
 
 @RunWith(AndroidJUnit4::class)
 class CompanionSceneTest {
+    @Test fun atlasPaddingAndResolutionDoNotChangeVisibleSizeOrFloorContact(): Unit {
+        val paint = Paint()
+        val padded = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888)
+        val larger = Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888)
+        paint.color = Color.RED
+        Canvas(padded).drawRect(10f, 10f, 50f, 60f, paint)
+        Canvas(larger).drawRect(80f, 90f, 160f, 190f, paint)
+        val first = Bitmap.createBitmap(150, 150, Bitmap.Config.ARGB_8888)
+        val second = Bitmap.createBitmap(150, 150, Bitmap.Config.ARGB_8888)
+        val target = RectF(20f, 20f, 120f, 120f)
+        HomeSpriteFrames(listOf(padded to Rect(0, 0, 100, 100))).draw(Canvas(first), paint, target, 0)
+        HomeSpriteFrames(listOf(larger to Rect(0, 0, 200, 200))).draw(Canvas(second), paint, target, 0)
+        fun visibleBounds(bitmap: Bitmap): Rect {
+            val bounds = Rect(bitmap.width, bitmap.height, 0, 0)
+            for (y in 0 until bitmap.height) for (x in 0 until bitmap.width) {
+                if (Color.alpha(bitmap.getPixel(x, y)) >= 128) {
+                    bounds.left = minOf(bounds.left, x); bounds.top = minOf(bounds.top, y)
+                    bounds.right = maxOf(bounds.right, x + 1); bounds.bottom = maxOf(bounds.bottom, y + 1)
+                }
+            }
+            return bounds
+        }
+        // API versions filter edge pixels differently; the contract is geometry, not byte identity.
+        org.junit.Assert.assertEquals(Rect(38, 36, 102, 116), visibleBounds(first))
+        org.junit.Assert.assertEquals("Transparent padding moved or resized the pet", visibleBounds(first), visibleBounds(second))
+        listOf(padded, larger, first, second).forEach { it.recycle() }
+    }
+
+    @Test fun reviewDecoratedHomeAcrossMovementAndRest(): Unit {
+        val context: Context = ApplicationProvider.getApplicationContext()
+        val directory = File(context.getExternalFilesDir(null), "home-transitions").apply { mkdirs() }
+        for (pet in PetType.entries) {
+            InstrumentationRegistry.getInstrumentation().runOnMainSync {
+                val scene = HomeSceneView(context)
+                scene.placements = listOf(
+                    HomeDecorationEntity(pet.name.lowercase(), DecorationCatalog.starters.first { it.kind == DecorationKind.BED }.id, 0, 0),
+                    HomeDecorationEntity(pet.name.lowercase(), DecorationCatalog.starters.first { it.kind == DecorationKind.TOY }.id, 4, 2),
+                )
+                runBlocking { scene.loadPet(pet) }
+                scene.measure(View.MeasureSpec.makeMeasureSpec(400, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(304, View.MeasureSpec.EXACTLY))
+                scene.layout(0, 0, 400, 304)
+                val sheet = Bitmap.createBitmap(1200, 330, Bitmap.Config.ARGB_8888)
+                val canvas = Canvas(sheet)
+                canvas.drawColor(HomeUi.cream)
+                val label = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = HomeUi.ink; textSize = 16f }
+                listOf(CompanionActivity.GREET, CompanionActivity.APPROACH_TOY, CompanionActivity.REST).forEachIndexed { index, activity ->
+                    var attempts = 0
+                    while (scene.activity != activity && attempts++ < 2400) scene.advanceScene(50)
+                    assertTrue("$pet did not reach $activity", scene.activity == activity)
+                    if (activity == CompanionActivity.APPROACH_TOY) repeat(30) { scene.advanceScene(50) }
+                    canvas.save(); canvas.translate(index * 400f, 0f); scene.draw(canvas); canvas.restore()
+                    canvas.drawText("${pet.name} / ${listOf("greeting", "approach", "rear bed")[index]}", index * 400f + 10, 322f, label)
+                }
+                File(directory, "${pet.name.lowercase()}.png").outputStream().use { sheet.compress(Bitmap.CompressFormat.PNG, 100, it) }
+                sheet.recycle()
+            }
+        }
+    }
+
     @Test fun allFifteenCompanionsHaveVisibleHomeArtwork(): Unit {
         val context: Context = ApplicationProvider.getApplicationContext()
         val sheet: Bitmap = Bitmap.createBitmap(1500, 2100, Bitmap.Config.ARGB_8888)
@@ -47,5 +107,18 @@ class CompanionSceneTest {
             sheet.compress(Bitmap.CompressFormat.PNG, 100, it)
         }
         sheet.recycle()
+        InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            val memories = Bitmap.createBitmap(1200, 304, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(memories)
+            ExpeditionDestination.entries.forEachIndexed { index, destination ->
+                val illustration = MemoryIllustration(context, "expedition", destination.id)
+                illustration.layout(0, 0, 400, 304)
+                canvas.save(); canvas.translate(index * 400f, 0f); illustration.draw(canvas); canvas.restore()
+            }
+            File(context.getExternalFilesDir(null), "companion-encounters.png").outputStream().use {
+                memories.compress(Bitmap.CompressFormat.PNG, 100, it)
+            }
+            memories.recycle()
+        }
     }
 }

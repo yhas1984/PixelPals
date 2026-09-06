@@ -39,8 +39,13 @@ object DecorationDialogs {
             if (onUse != null) {
                 column.addView(HomeUi.button(context, context.getString(R.string.home_use)) { dialog.dismiss(); onUse(action) })
             }
-            column.addView(HomeUi.button(context, context.getString(R.string.home_desktop_object)) {
-                model.perform { check(model.repository.chooseObject(pet, item.id, true)) }; dialog.dismiss()
+            val onDesktop = world.home?.desktopObject == item.id
+            column.addView(HomeUi.button(context, context.getString(if (onDesktop) R.string.home_remove_desktop_object else R.string.home_desktop_object)) {
+                model.perform {
+                    if (onDesktop) model.repository.removeDesktopObject(pet)
+                    else check(model.repository.chooseObject(pet, item.id, true))
+                }
+                dialog.dismiss()
             })
         }
         dialog.show()

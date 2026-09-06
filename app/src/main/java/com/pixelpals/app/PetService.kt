@@ -397,11 +397,10 @@ class PetService : Service() {
         companionHomeJob = careScope.launch {
             AppServices.companions(this@PetService).dao.observeHome(currentPetType.name.lowercase()).collect { home ->
                 petView?.setCompanionHome(home)
-                com.pixelpals.app.feature.home.DecorationCatalog.find(home?.desktopObject.orEmpty())?.let {
-                    companionObject?.setObject(it)
-                    petView?.getWindowParams()?.let { params -> companionObject?.follow(params.x + petSize / 2, params.y) }
-                    companionObject?.setVisible(shouldShowPetForPolicy() && !isCompanionCareActive && BuildConfig.CARE_SCENES_ENABLED)
-                }
+                val desktopObject = com.pixelpals.app.feature.home.DecorationCatalog.find(home?.desktopObject.orEmpty())
+                companionObject?.setObject(desktopObject)
+                petView?.getWindowParams()?.let { params -> companionObject?.follow(params.x + petSize / 2, params.y) }
+                companionObject?.setVisible(shouldShowPetForPolicy() && !isCompanionCareActive && BuildConfig.CARE_SCENES_ENABLED)
             }
         }
         if (BuildConfig.CARE_SCENES_ENABLED && currentPetType in DesktopCarePlayback.SUPPORTED_PETS &&

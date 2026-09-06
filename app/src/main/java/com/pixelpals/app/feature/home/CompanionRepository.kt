@@ -57,6 +57,10 @@ class CompanionRepository(
 
     suspend fun store(pet: PetType, id: String): Unit = dao.store(pet.name.lowercase(), id)
 
+    suspend fun removeDesktopObject(pet: PetType): Unit = db.withTransaction {
+        dao.saveHome(ensureHome(pet).copy(desktopObject = ""))
+    }
+
     suspend fun chooseObject(pet: PetType, id: String, forDesktop: Boolean): Boolean = db.withTransaction {
         val item: Decoration = DecorationCatalog.find(id) ?: return@withTransaction false
         if (dao.getOwned(id) == null || item.action == null) return@withTransaction false

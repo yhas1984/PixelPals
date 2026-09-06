@@ -1,0 +1,6 @@
+{
+  "app/build/outputs/apk/debug/app-debug.apk": "5f3f1c450d7b633f5dd86582cb0bfe48eda7854a9eca61a6e7037124d0f2aa07",
+  "app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk": "5eacbc37def0574710f2f43268bd03bb5a0464b6f525bdffe79361b24324e257",
+  "app/build/outputs/apk/release/app-release.apk": "df2b77d2d06bd53cbaf0ef324390785b9b606c5e4f10fc4fc42c8c25e094b2b8",
+  "app/build/outputs/bundle/release/app-release.aab": "b83ca03b3c2c1890e8e0bf19b8b9d26b28c212bbdb92be3262cece3fcffa60f7"
+}

@@ -114,4 +114,5 @@
     <string name="companion_tela">Una exploradora ingeniosa que convierte cada rincón en hogar.</string>
     <string name="companion_lumi">Una chispa de asombro, atraída por todo lo que brilla.</string>
     <string name="nav_adventures">Aventuras</string>
+    <string name="home_remove_desktop_object">Quitar del escritorio</string>
 </resources>

@@ -19,15 +19,15 @@ class CompanionObjectOverlay(private val context: Context, private val manager: 
         WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
         PixelFormat.TRANSLUCENT).apply { gravity = Gravity.TOP or Gravity.START }
 
-    fun setObject(decoration: Decoration): Unit {
+    fun setObject(decoration: Decoration?): Unit {
         if (item == decoration) return
         close()
         item = decoration
-        view = DecorationPreview(context, decoration).apply {
+        view = decoration?.let { DecorationPreview(context, it).apply {
             minimumHeight = size
             contentDescription = context.getString(R.string.home_object, context.getString(decoration.title))
             setOnClickListener { onUse(decoration) }
-        }
+        } }
         setVisible(isVisible)
     }
     fun follow(x: Int, y: Int): Unit {

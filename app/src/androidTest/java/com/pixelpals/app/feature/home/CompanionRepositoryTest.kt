@@ -34,6 +34,16 @@ class CompanionRepositoryTest {
     @After fun close(): Unit { db.close() }
     private fun createRepository(): CompanionRepository = CompanionRepository(context, db, economy, { wall }, { uptime }, { boot })
 
+    @Test fun desktopObjectsAreOptionalAndRemovalPreservesInventory(): Unit = runBlocking {
+        assertEquals("", repository.ensureHome(PetType.CORGI).desktopObject)
+        assertTrue(repository.chooseObject(PetType.CORGI, "ball", true))
+        assertEquals("ball", createRepository().ensureHome(PetType.CORGI).desktopObject)
+        repository.removeDesktopObject(PetType.CORGI)
+        assertEquals("", createRepository().ensureHome(PetType.CORGI).desktopObject)
+        assertNotNull(repository.dao.getOwned("ball"))
+        assertTrue(repository.dao.getPlacements("corgi").any { it.decorationId == "ball" })
+    }
+
     @Test fun homesAreIndependentAndAdoptionDoesNotResetProgress(): Unit = runBlocking {
         economy.recordInteraction(PetType.CORGI)
         val bond: Int = economy.getStatusSnapshot(PetType.CORGI).bond
