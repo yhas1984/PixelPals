@@ -65,6 +65,14 @@ class CompanionRepository(
         true
     }
 
+    suspend fun recordObjectUse(pet: PetType, id: String): Unit = db.withTransaction {
+        if (dao.getOwned(id) == null || DecorationCatalog.find(id)?.action == null) return@withTransaction
+        val home = ensureHome(pet)
+        val now = wallTime()
+        dao.remember(CompanionJournalEntity("object:${home.petId}:${now / 30_000}", home.petId, "object", id, now))
+        dao.learnedFavorite(home.petId)?.let { dao.saveHome(home.copy(favoriteObject = it)) }
+    }
+
     suspend fun purchase(id: String): CoinSpendResult = economy.purchaseDecorationWithCoins(id)
 
     suspend fun startExpedition(pet: PetType, destination: ExpeditionDestination): Boolean = db.withTransaction {
@@ -104,6 +112,9 @@ class CompanionRepository(
             val paused: Long = (now - status.lastUpdatedAt).coerceAtLeast(0)
             dao.clearExpedition(requestId)
             db.petStatusDao().upsert(status.copy(lastUpdatedAt = now,
+                lastInteractionAt = if (status.lastInteractionAt > 0) status.lastInteractionAt + paused else 0,
+                lastCareAt = if (status.lastCareAt > 0) status.lastCareAt + paused else 0,
+                lastMedicineAt = if (status.lastMedicineAt > 0) status.lastMedicineAt + paused else 0,
                 conditionStartedAt = if (status.conditionStartedAt > 0) status.conditionStartedAt + paused else 0,
                 criticalNeedsStartedAt = if (status.criticalNeedsStartedAt > 0) status.criticalNeedsStartedAt + paused else 0))
         }

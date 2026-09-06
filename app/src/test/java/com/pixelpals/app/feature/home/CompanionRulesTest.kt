@@ -34,4 +34,16 @@ class CompanionRulesTest {
             previous = motion.x
         }
     }
+    @Test fun reachesRearRowBeforeResting(): Unit {
+        val motion = CompanionMotion()
+        repeat(3000) {
+            motion.advance(.05f, 500f, 200f, 1f, 80, 440f, 440f)
+            if (motion.activity == CompanionActivity.REST) {
+                assertEquals(440f, motion.y, 1f)
+                assertEquals(200f, motion.x, 1f)
+                return
+            }
+        }
+        fail("The pet never reached its rear-row bed")
+    }
 }

@@ -28,10 +28,12 @@ interface CompanionDao {
     suspend fun getOwned(id: String): DecorationInventoryEntity?
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun own(item: DecorationInventoryEntity): Long
-    @Query("SELECT * FROM companion_journal WHERE petId = :petId ORDER BY occurredAt DESC LIMIT 100")
+    @Query("SELECT * FROM companion_journal WHERE petId = :petId AND kind != 'object' ORDER BY occurredAt DESC LIMIT 100")
     fun observeJournal(petId: String): Flow<List<CompanionJournalEntity>>
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun remember(event: CompanionJournalEntity): Long
+    @Query("SELECT detail FROM companion_journal WHERE petId = :petId AND kind = 'object' GROUP BY detail ORDER BY COUNT(*) DESC, MAX(occurredAt) DESC LIMIT 1")
+    suspend fun learnedFavorite(petId: String): String?
     @Query("SELECT * FROM companion_expedition WHERE slot = 1")
     suspend fun getExpedition(): CompanionExpeditionEntity?
     @Query("SELECT * FROM companion_expedition WHERE slot = 1")

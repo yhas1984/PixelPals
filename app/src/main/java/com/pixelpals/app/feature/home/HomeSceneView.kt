@@ -33,9 +33,12 @@ class HomeSceneView(context: Context) : View(context) {
     private var lastMinute: Long = 0L
     private val preferences: CompanionPreferences = CompanionPreferences(context)
     private var pack: CarePosePack? = null
+    private var locomotion: HomeLocomotion? = null
     var pet: PetType = PetType.CORGI
         private set
+    private var traits = CompanionTraits.derive(PetType.CORGI, null, 0)
     var home: CompanionHomeEntity? = null
+        set(value) { field = value; traits = CompanionTraits.derive(pet, value, bond) }
     var environment: HomeEnvironment = HomeEnvironment.COZY
     var placements: List<HomeDecorationEntity> = emptyList()
         set(value) { if (field != value) field = value.sortedBy { it.row } }
@@ -44,6 +47,7 @@ class HomeSceneView(context: Context) : View(context) {
     var isEditing: Boolean = false
     var showPet: Boolean = true
     var bond: Int = 0
+        set(value) { field = value; traits = CompanionTraits.derive(pet, home, value) }
     private val cosmetics: SceneCosmeticPainter = SceneCosmeticPainter()
     private var cosmeticFilter: ColorFilter? = null
     var cosmeticEffect: com.pixelpals.app.data.catalog.CosmeticEffect? = null
@@ -79,9 +83,10 @@ class HomeSceneView(context: Context) : View(context) {
                 val toy: HomeDecorationEntity? = placements.firstOrNull { it.decorationId == home?.favoriteObject }
                     ?: placements.firstOrNull { DecorationCatalog.find(it.decorationId)?.kind == DecorationKind.TOY }
                 val bed: HomeDecorationEntity? = placements.firstOrNull { DecorationCatalog.find(it.decorationId)?.kind == DecorationKind.BED }
-                val learned: Float = 1f + ((home?.playCount ?: 0) - (home?.touchCount ?: 0)).coerceIn(-10, 10) * .015f
+                val learned: Float = traits.tempo
                 motion.advance(delta / 1000f, toy?.let { objectBounds(it).centerX() } ?: 500f,
-                    bed?.let { objectBounds(it).centerX() } ?: 500f, profile.tempo * learned, bond)
+                    bed?.let { objectBounds(it).centerX() } ?: 500f, profile.tempo * learned * traits.initiative, bond,
+                    toy?.let { objectBounds(it).bottom - 30f } ?: 650f, bed?.let { objectBounds(it).bottom - 30f } ?: 650f)
             }
             lastFrame = now
             invalidate(); schedule()
@@ -97,11 +102,15 @@ class HomeSceneView(context: Context) : View(context) {
     suspend fun loadPet(type: PetType): Unit {
         pet = type
         profile = CompanionProfiles.forPet(type)
+        traits = CompanionTraits.derive(type, home, bond)
         motion = CompanionMotion()
         pack = null
+        locomotion = null
+        val walk = HomeLocomotion.load(context, type)
         val loaded: CarePosePack = CarePoseLoader.load(context.assets, type)
         if (pet != type) return
         pack = loaded
+        locomotion = walk
         contentDescription = context.getString(R.string.home_scene_description, context.getString(type.displayNameResId))
         invalidate(); schedule()
     }
@@ -136,13 +145,13 @@ class HomeSceneView(context: Context) : View(context) {
     private fun drawCompanion(canvas: Canvas): Unit {
         val poses: CarePosePack = pack ?: return
         val reduced: Boolean = preferences.reducedMotion || !ValueAnimator.areAnimatorsEnabled()
-        val learnedTempo: Float = 1f + ((home?.playCount ?: 0) - (home?.touchCount ?: 0)).coerceIn(-10, 10) * .015f
+        val learnedTempo: Float = traits.tempo
         val time: Float = if (reduced || isEditing) 0f else activeTime / 1000f * profile.tempo * learnedTempo
         val bed: HomeDecorationEntity? = placements.firstOrNull { DecorationCatalog.find(it.decorationId)?.kind == DecorationKind.BED }
         val toy: HomeDecorationEntity? = placements.firstOrNull { it.decorationId == home?.favoriteObject }
             ?: placements.firstOrNull { DecorationCatalog.find(it.decorationId)?.kind == DecorationKind.TOY }
         val x: Float = motion.x
-        val size: Float = 290f + bond.coerceIn(0, 100) * .12f
+        val size: Float = (290f + bond.coerceIn(0, 100) * .12f) * (.75f + (motion.y - 430f) / 880f)
         val resting: Boolean = motion.activity == CompanionActivity.REST && bed != null && !reduced
         val action: CareSceneAction = if (resting) CareSceneAction.REST else if (motion.activity == CompanionActivity.PLAY && toy != null) CareSceneAction.PLAY else CareSceneAction.PET
         val timing: Long = if (reduced) 0 else ((motion.elapsed % 3f) * 1000).toLong()
@@ -151,11 +160,16 @@ class HomeSceneView(context: Context) : View(context) {
         source.set(frame % atlas.columns * atlas.frameWidth, frame / atlas.columns * atlas.frameHeight,
             (frame % atlas.columns + 1) * atlas.frameWidth, (frame / atlas.columns + 1) * atlas.frameHeight)
         val breath: Float = if (reduced) 0f else sin(time * 2f) * 2f
-        actor.set(x - size / 2, 650f - size - breath, x + size / 2, 650f)
-        paint.color = 0x25736954; canvas.drawOval(x - 65f, 622f, x + 65f, 642f, paint)
+        actor.set(x - size / 2, motion.y - size - breath, x + size / 2, motion.y)
+        paint.color = 0x25736954; canvas.drawOval(x - 65f, motion.y - 28f, x + 65f, motion.y - 8f, paint)
         paint.color = Color.WHITE
         paint.colorFilter = cosmeticFilter
-        canvas.drawBitmap(poses.bitmap, source, actor, paint)
+        canvas.save()
+        if (motion.isFacingLeft) canvas.scale(-1f, 1f, x, motion.y)
+        if (!reduced && (motion.activity == CompanionActivity.APPROACH_TOY || motion.activity == CompanionActivity.APPROACH_BED))
+            locomotion?.draw(canvas, paint, actor, activeTime)
+        else canvas.drawBitmap(poses.bitmap, source, actor, paint)
+        canvas.restore()
         paint.colorFilter = null
         cosmetics.draw(canvas, cosmeticEffect, actor, if (reduced) 0f else activeTime / 1000f)
     }

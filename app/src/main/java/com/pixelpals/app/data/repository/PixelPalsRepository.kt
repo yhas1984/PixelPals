@@ -137,10 +137,10 @@ class PixelPalsRepository(
         return getStatusSnapshot(petIdOf(petType))
     }
 
-    suspend fun getStatusSnapshot(petId: String): PetStatusSnapshot {
+    suspend fun getStatusSnapshot(petId: String): PetStatusSnapshot = db.withTransaction {
         val statusEntity = ensureStatusEntity(petId)
         var bondEntity = ensureBondEntity(petId)
-        if (db.companionDao().getExpedition()?.petId == petId) return toSnapshot(statusEntity, bondEntity)
+        if (db.companionDao().getExpedition()?.petId == petId) return@withTransaction toSnapshot(statusEntity, bondEntity)
         val reconciled = reconcileStatus(statusEntity)
         if (reconciled != statusEntity) {
             db.petStatusDao().upsert(reconciled)
@@ -149,15 +149,15 @@ class PixelPalsRepository(
             bondEntity = bondEntity.copy(illnessRecoveries = bondEntity.illnessRecoveries + 1)
             db.petBondDao().upsert(bondEntity)
         }
-        return toSnapshot(reconciled, bondEntity)
+        toSnapshot(reconciled, bondEntity)
     }
 
-    suspend fun recordActiveMinute(petType: PetType): PetStatusSnapshot {
+    suspend fun recordActiveMinute(petType: PetType): PetStatusSnapshot = db.withTransaction {
         val petId = petIdOf(petType)
-        if (db.companionDao().getExpedition()?.petId == petId) return getStatusSnapshot(petId)
+        if (db.companionDao().getExpedition()?.petId == petId) return@withTransaction getStatusSnapshot(petId)
         val bond = ensureBondEntity(petId)
         db.petBondDao().upsert(bond.copy(activeMinutes = bond.activeMinutes + 1))
-        return getStatusSnapshot(petId)
+        getStatusSnapshot(petId)
     }
 
     suspend fun recordInteraction(petType: PetType): PetStatusSnapshot {

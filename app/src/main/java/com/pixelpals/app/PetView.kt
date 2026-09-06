@@ -72,6 +72,12 @@ class PetView(
     private val repository: PixelPalsRepository = AppServices.repository(context)
     private val analytics: AnalyticsTracker = AppServices.analytics(context)
     private val uiScope = CoroutineScope(Dispatchers.Main + Job())
+    private var companionHome: com.pixelpals.app.database.CompanionHomeEntity? = null
+    private var companionTraits = com.pixelpals.app.feature.home.CompanionTraits(1f, 1f)
+    fun setCompanionHome(home: com.pixelpals.app.database.CompanionHomeEntity?) {
+        companionHome = home
+        companionTraits = com.pixelpals.app.feature.home.CompanionTraits.derive(petType, home, petStatus.bond)
+    }
     private val companionPreferences = com.pixelpals.app.feature.home.CompanionPreferences(context)
     private var desktopCare: DesktopCarePlayback? = null
     private var activeSecondsAccumulator = 0f
@@ -752,7 +758,7 @@ class PetView(
                 bubbleAlpha = 0f
             }
         }
-        ambientBubbleCooldown -= dt
+        ambientBubbleCooldown -= dt * companionTraits.initiative
         if (ambientBubbleCooldown <= 0f && bubbleText == null && state == PetState.IDLE) {
             maybeShowAmbientMoodBubble()
             ambientBubbleCooldown = when (petPersonality) {
@@ -766,7 +772,7 @@ class PetView(
         // preserves the exact grab point and prevents a jump when drag starts.
         if (!isTouchPending) {
             when (state) {
-                PetState.IDLE -> if (!companionPreferences.reducedMotion) behavior?.updateIdle(dt)
+                PetState.IDLE -> if (!companionPreferences.reducedMotion) behavior?.updateIdle(dt * companionTraits.tempo)
                 PetState.DRAGGING -> behavior?.updateDrag(dt)
                 PetState.FALLING -> updatePhysicsFalling(dt)
                 PetState.JUMPING -> behavior?.updateJumping(dt)
@@ -919,6 +925,7 @@ class PetView(
     }
 
     private fun updatePetStatus(updated: PetStatusSnapshot) {
+        companionTraits = com.pixelpals.app.feature.home.CompanionTraits.derive(petType, companionHome, updated.bond)
         val previous: PetStatusSnapshot = petStatus
         petStatus = updated
         onCareStatusChanged?.invoke()

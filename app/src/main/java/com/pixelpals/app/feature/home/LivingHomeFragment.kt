@@ -35,6 +35,7 @@ open class LivingHomeFragment : Fragment() {
     private var errorText: Button? = null
     private var currentPet: PetType? = null
     private var loadJob: Job? = null
+    private var pendingCareObject: String? = null
     private var isCareOpen: Boolean = false
     private var hasPendingDesktop: Boolean = false
     private var lastWorld: CompanionWorld = CompanionWorld()
@@ -58,7 +59,7 @@ open class LivingHomeFragment : Fragment() {
             view.clipToOutline = true
             column.addView(view, LinearLayout.LayoutParams(-1, -2).apply { topMargin = HomeUi.dp(context, 10) })
             view.onPet = { openCare(CareSceneAction.PET) }
-            view.onObject = { item -> if (view.isEditing) showDecoration(item) else item.action?.let(::openCare) }
+            view.onObject = { item -> if (view.isEditing) showDecoration(item) else item.action?.let { openCare(it, item.id) } }
             view.onPlace = { id, x, y -> model.perform {
                 if (!model.repository.place(model.pet.value, id, x, y)) notifyUser(R.string.home_occupied)
             } }
@@ -79,7 +80,14 @@ open class LivingHomeFragment : Fragment() {
             HomeUi.button(context, getString(R.string.home_settings)) { startActivity(Intent(context, CompanionSettingsActivity::class.java)) }))
         panel = CareScenePanel(context).also {
             it.visibility = View.GONE
-            it.onResult = { model.refresh() }
+            it.onResult = { result ->
+                val objectId = pendingCareObject
+                pendingCareObject = null
+                if (result is CareSceneResult.Completed && objectId != null) {
+                    val caredPet = careModel?.pet ?: model.pet.value
+                    model.perform { model.repository.recordObjectUse(caredPet, objectId) }
+                } else model.refresh()
+            }
             it.onClose = { closeCare() }
             column.addView(it, 5)
         }
@@ -175,8 +183,9 @@ open class LivingHomeFragment : Fragment() {
         else getString(resource, name)
     }
 
-    private fun openCare(action: CareSceneAction? = null): Unit {
+    private fun openCare(action: CareSceneAction? = null, objectId: String? = null): Unit {
         if (lastWorld.expedition?.petId == model.pet.value.name.lowercase()) return
+        pendingCareObject = objectId
         isCareOpen = true
         scene?.visibility = View.GONE
         panel?.visibility = View.VISIBLE
@@ -186,6 +195,7 @@ open class LivingHomeFragment : Fragment() {
     }
 
     private fun closeCare(): Unit {
+        pendingCareObject = null
         isCareOpen = false
         panel?.pausePresentation()
         panel?.visibility = View.GONE
@@ -233,7 +243,7 @@ open class LivingHomeFragment : Fragment() {
 
     private fun showDecoration(item: Decoration): Unit {
         DecorationDialogs.show(requireContext(), item, lastWorld, model.pet.value, model,
-            onUse = { action -> model.perform { model.repository.chooseObject(model.pet.value, item.id, false) }; openCare(action) })
+            onUse = { action -> openCare(action, item.id) })
     }
 
     private fun requestDesktop(): Unit {

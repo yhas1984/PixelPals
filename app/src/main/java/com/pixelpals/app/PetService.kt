@@ -396,6 +396,7 @@ class PetService : Service() {
         companionHomeJob?.cancel()
         companionHomeJob = careScope.launch {
             AppServices.companions(this@PetService).dao.observeHome(currentPetType.name.lowercase()).collect { home ->
+                petView?.setCompanionHome(home)
                 com.pixelpals.app.feature.home.DecorationCatalog.find(home?.desktopObject.orEmpty())?.let {
                     companionObject?.setObject(it)
                     petView?.getWindowParams()?.let { params -> companionObject?.follow(params.x + petSize / 2, params.y) }

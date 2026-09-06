@@ -148,7 +148,7 @@ class HomeScenePainter {
                 if (item.id == "glass_case") box(canvas, 0x559BC4C2, 16f, 20f, 70f, 55f, 8f)
                 box(canvas, color, 10f, 72f, 82f, if (item.id == "treasure_box") 20f else 10f, 4f)
                 box(canvas, color, 19f, 81f, 6f, 12f, 0f); box(canvas, color, 78f, 81f, 6f, 12f, 0f)
-                if (treasure == null) drawStar(canvas, 0xFFE8C77E.toInt(), 52f, 53f, 19f)
+                if (treasure == null || !paint.hasGlyph(treasure)) drawStar(canvas, 0xFFE8C77E.toInt(), 52f, 53f, 19f)
                 else { paint.color = Color.WHITE; paint.textSize = 35f; paint.textAlign = Paint.Align.CENTER; canvas.drawText(treasure, 50f, 66f, paint); paint.textAlign = Paint.Align.LEFT }
             }
             DecorationKind.LAMP -> {

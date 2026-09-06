@@ -119,4 +119,80 @@ class CompanionRepositoryTest {
         assertEquals(1, repository.dao.getHome("corgi")?.playCount)
         assertEquals(1, repository.dao.observeJournal("corgi").first().size)
     }
+
+    @Test fun delayedReturnDoesNotCountTravelAsAbsence(): Unit = runBlocking {
+        val selection = com.pixelpals.app.data.prefs.SelectedPetStore(context)
+        val originalPet = selection.load()
+        val originalEnabled = selection.isPetEnabled()
+        try {
+            selection.save(PetType.CORGI)
+            selection.setPetEnabled(true)
+            repository.ensureHome(PetType.CORGI)
+            economy.applyCareAction(PetType.CORGI, com.pixelpals.app.status.CareAction.FEED)
+            val before = economy.getStatusSnapshot(PetType.CORGI)
+            assertTrue(repository.startExpedition(PetType.CORGI, ExpeditionDestination.MEADOW))
+            val request = repository.dao.getExpedition()!!.requestId
+            wall += 8L * 86_400_000L
+            uptime += 8L * 86_400_000L
+            assertTrue(repository.finishExpedition(request))
+            val after = economy.getStatusSnapshot(PetType.CORGI)
+            assertEquals("Travel must not trigger absence hibernation", before.condition, after.condition)
+        } finally {
+            selection.save(originalPet)
+            selection.setPetEnabled(originalEnabled)
+        }
+    }
+
+    @Test fun concurrentStatusRefreshDoesNotOverwriteCompletedFeeding(): Unit = runBlocking {
+        val selection = com.pixelpals.app.data.prefs.SelectedPetStore(context)
+        val originalPet = selection.load()
+        val originalEnabled = selection.isPetEnabled()
+        val entered = java.util.concurrent.CountDownLatch(1)
+        val release = java.util.concurrent.CountDownLatch(1)
+        try {
+            selection.save(PetType.CORGI)
+            selection.setPetEnabled(true)
+            economy.getStatusSnapshot(PetType.CORGI)
+            wall += 30L * 60_000L
+            val reads = java.util.concurrent.atomic.AtomicInteger()
+            val refreshRepository = PixelPalsRepository(context, db, object : TimeProvider {
+                override fun getCurrentTimeMillis(): Long {
+                    if (reads.incrementAndGet() == 2) {
+                        entered.countDown()
+                        check(release.await(10, java.util.concurrent.TimeUnit.SECONDS))
+                    }
+                    return wall
+                }
+            })
+            val refresh = async(Dispatchers.IO) { refreshRepository.getStatusSnapshot(PetType.CORGI) }
+            assertTrue(withContext(Dispatchers.IO) { entered.await(5, java.util.concurrent.TimeUnit.SECONDS) })
+            val feeding = async(Dispatchers.IO) { economy.applyCareAction(PetType.CORGI, com.pixelpals.app.status.CareAction.FEED) }
+            delay(100)
+            release.countDown()
+            refresh.await()
+            val fed = feeding.await()
+            assertEquals("A stale refresh must not replace completed care", fed.hunger,
+                economy.getStatusSnapshot(PetType.CORGI).hunger)
+        } finally {
+            release.countDown()
+            selection.save(originalPet)
+            selection.setPetEnabled(originalEnabled)
+        }
+    }
+    @Test fun favoriteIsLearnedFromCompletedObjectUse(): Unit = runBlocking {
+        repository.ensureHome(PetType.CORGI)
+        economy.grantCoins(null, 100)
+        repository.purchase("yarn")
+        repository.recordObjectUse(PetType.CORGI, "ball")
+        wall += 31_000
+        repository.recordObjectUse(PetType.CORGI, "ball")
+        wall += 31_000
+        repository.recordObjectUse(PetType.CORGI, "yarn")
+        assertEquals("ball", repository.dao.getHome("corgi")?.favoriteObject)
+        wall += 31_000
+        repository.recordObjectUse(PetType.CORGI, "yarn")
+        wall += 31_000
+        repository.recordObjectUse(PetType.CORGI, "yarn")
+        assertEquals("yarn", repository.dao.getHome("corgi")?.favoriteObject)
+    }
 }

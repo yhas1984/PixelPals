@@ -34,23 +34,26 @@ class CompanionViewModel(application: Application) : AndroidViewModel(applicatio
     val error: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val busy: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
+    private val observationRevision = MutableStateFlow(0L)
+
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-    val world: StateFlow<CompanionWorld> = selected.flatMapLatest { pet ->
+    val world: StateFlow<CompanionWorld> = restartableObservation(combine(selected, observationRevision) { pet, _ -> pet }, { pet ->
         combine(repository.dao.observeHome(pet.name.lowercase()), repository.dao.observePlacements(pet.name.lowercase()),
             repository.dao.observeInventory(), repository.dao.observeExpedition()) { home, placements, inventory, expedition ->
             CompanionWorld(home, placements, inventory, expedition)
         }
-    }.catch { error.value = true }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), CompanionWorld())
+    }, { error.value = true }).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), CompanionWorld())
 
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-    val journal: StateFlow<List<CompanionJournalEntity>> = selected.flatMapLatest {
+    val journal: StateFlow<List<CompanionJournalEntity>> = restartableObservation(combine(selected, observationRevision) { pet, _ -> pet }, {
         repository.dao.observeJournal(it.name.lowercase())
-    }.catch { error.value = true }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    }, { error.value = true }).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     init { refresh() }
 
     fun refresh(): Unit {
         selected.value = selection.load()
+        observationRevision.value += 1
         viewModelScope.launch {
             try {
                 val current: PetType = pet.value

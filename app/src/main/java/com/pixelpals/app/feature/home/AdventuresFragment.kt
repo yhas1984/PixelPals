@@ -32,12 +32,8 @@ class AdventuresFragment : Fragment() {
         travelCard = HomeUi.card(requireContext()).also(column::addView)
         ExpeditionDestination.entries.forEach { destination ->
             val card = HomeUi.card(requireContext())
-            val scene: HomeSceneView = HomeSceneView(requireContext()).apply {
-                environment = destination.environment; showPet = false; isClickable = false
-                contentDescription = getString(destination.title)
-            }
-            scenes.add(scene)
-            card.addView(scene, LinearLayout.LayoutParams(-1, HomeUi.dp(requireContext(), 130)))
+            card.addView(MemoryIllustration(requireContext(), "expedition", destination.id),
+                LinearLayout.LayoutParams(-1, HomeUi.dp(requireContext(), 130)))
             card.addView(HomeUi.text(requireContext(), getString(destination.title), 22f))
             card.addView(HomeUi.text(requireContext(), getString(destination.story), 14f))
             card.addView(HomeUi.text(requireContext(), getString(R.string.adventure_reward), 13f))
@@ -94,6 +90,7 @@ class AdventuresFragment : Fragment() {
                     com.pixelpals.app.core.care.scene.CareSceneAction.entries.firstOrNull { it.name == event.detail } ?: com.pixelpals.app.core.care.scene.CareSceneAction.PET)))
                 else -> return@forEach
             }
+            card.addView(MemoryIllustration(requireContext(), event.kind, event.detail), LinearLayout.LayoutParams(-1, HomeUi.dp(requireContext(), 90)))
             card.addView(HomeUi.text(requireContext(), title, 18f))
             card.addView(HomeUi.text(requireContext(), DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
                 .format(Instant.ofEpochMilli(event.occurredAt).atZone(ZoneId.systemDefault())), 12f))
@@ -102,6 +99,7 @@ class AdventuresFragment : Fragment() {
             }
         }
         model.memories.value.forEach { memory ->
+            card.addView(MemoryIllustration(requireContext(), "bond", ""), LinearLayout.LayoutParams(-1, HomeUi.dp(requireContext(), 90)))
             card.addView(HomeUi.text(requireContext(), memory.title, 18f))
             card.addView(HomeUi.text(requireContext(), memory.subtitle, 14f))
         }
