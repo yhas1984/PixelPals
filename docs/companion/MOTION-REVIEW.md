@@ -30,6 +30,8 @@ adb -s DEVICE shell am start -n com.pixelpals.app.debug/com.pixelpals.app.debug.
 - Final scene sheets for all 15 pets were reviewed after allowing rest to settle.
 - Earlier in this follow-up, 3 scene tests passed on the NE2213. The connection subsequently dropped. Those tests predate the final toy response and desktop corrections and are not final-build physical acceptance. The new address `192.168.1.194:38829` returned `No route to host` on 2026-09-07; no final APK was installed on that phone.
 
+- Physical follow-up on 2026-09-07: debug APK from `59373a5` installed with `adb install -r` on NE2213 at `192.168.1.160:39723`. All 4 `CompanionSceneTest` tests passed in 7.075 seconds; this allowlisted class does not mutate the database. Corgi preview was launched and its visible screen checked. This closes installation and scene-test connectivity, not the broader physical acceptance below.
+
 ## Original plan acceptance still to close
 
 Home, adoption, care, per-pet names/layout/personality, 3 environments, 24 decorations, expeditions, journal/album, postcards and store previews are integrated in the current app. Persistent desktop objects were explicitly removed by the user, superseding that part of the plan.
