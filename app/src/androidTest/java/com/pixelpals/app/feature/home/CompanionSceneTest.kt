@@ -16,6 +16,17 @@ import java.io.File
 
 @RunWith(AndroidJUnit4::class)
 class CompanionSceneTest {
+    @Test fun transparentDecorationDoesNotChangeNextBackgroundOpacity(): Unit {
+        val painter: HomeScenePainter = HomeScenePainter()
+        val first: Bitmap = Bitmap.createBitmap(1000, 760, Bitmap.Config.ARGB_8888)
+        val second: Bitmap = Bitmap.createBitmap(1000, 760, Bitmap.Config.ARGB_8888)
+        painter.drawBackground(Canvas(first), HomeEnvironment.NIGHT, 22)
+        painter.drawObject(Canvas(Bitmap.createBitmap(150, 150, Bitmap.Config.ARGB_8888)), requireNotNull(DecorationCatalog.find("ball")), RectF(0f, 0f, 150f, 150f))
+        painter.drawBackground(Canvas(second), HomeEnvironment.NIGHT, 22)
+        assertTrue("A translucent object changed the following sky", first.sameAs(second))
+        first.recycle(); second.recycle()
+    }
+
     @Test fun atlasPaddingAndResolutionDoNotChangeVisibleSizeOrFloorContact(): Unit {
         val paint = Paint()
         val padded = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888)
@@ -66,6 +77,7 @@ class CompanionSceneTest {
                     while (scene.activity != activity && attempts++ < 2400) scene.advanceScene(50)
                     assertTrue("$pet did not reach $activity", scene.activity == activity)
                     if (activity == CompanionActivity.APPROACH_TOY) repeat(30) { scene.advanceScene(50) }
+                    if (activity == CompanionActivity.REST) repeat(40) { scene.advanceScene(50) }
                     canvas.save(); canvas.translate(index * 400f, 0f); scene.draw(canvas); canvas.restore()
                     canvas.drawText("${pet.name} / ${listOf("greeting", "approach", "rear bed")[index]}", index * 400f + 10, 322f, label)
                 }

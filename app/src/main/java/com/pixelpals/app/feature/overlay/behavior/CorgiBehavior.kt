@@ -43,6 +43,8 @@ class CorgiBehavior(
     private var walkDirection = 1f
     private var currentSpeed = 0f
     private var gaitDistance = 0f
+    private val walkTravel: com.pixelpals.app.core.motion.SubpixelTravel = com.pixelpals.app.core.motion.SubpixelTravel()
+    private var edgeTurnRemaining: Float = 0f
     private var hasFoundBone = false
     private var isZooming = false
 
@@ -67,10 +69,17 @@ class CorgiBehavior(
     private fun updateWalk(dt: Float) {
         val params = bridge.getWindowParams() ?: return
         val maxX = maxWindowX()
-        val targetSpeed = bridge.petSpriteSize * 0.58f * moodSpeedMultiplier()
+        if (edgeTurnRemaining > 0f) {
+            edgeTurnRemaining = (edgeTurnRemaining - dt).coerceAtLeast(0f)
+            bridge.currentFrame = FRAME_ALERT
+            return
+        }
+        val edgeDistance: Float = if (walkDirection > 0) (maxX - params.x).toFloat() else params.x.toFloat()
+        val brakingSpeed: Float = kotlin.math.sqrt(2f * bridge.petSpriteSize * 1.9f * (edgeDistance + 1f))
+        val targetSpeed = minOf(bridge.petSpriteSize * 0.58f * moodSpeedMultiplier(), brakingSpeed)
         currentSpeed = approach(currentSpeed, targetSpeed, bridge.petSpriteSize * 1.9f * dt)
         val previousX = params.x
-        val proposedX = params.x + (walkDirection * currentSpeed * dt).toInt()
+        val proposedX = params.x + walkTravel.advance(walkDirection * currentSpeed * dt)
         val shouldReverse = CorgiEdgeMotion.shouldReverse(
             positionX = params.x,
             proposedX = proposedX,
@@ -80,7 +89,9 @@ class CorgiBehavior(
         params.x = proposedX.coerceIn(0, maxX)
         if (shouldReverse) {
             walkDirection *= -1f
-            currentSpeed *= 0.72f
+            currentSpeed = 0f
+            edgeTurnRemaining = .28f
+            walkTravel.reset()
         }
         params.y = groundY()
         bridge.updateWindowLayout(params)
@@ -170,6 +181,8 @@ class CorgiBehavior(
         changeMode(Mode.WALK, 3.8f + random.nextFloat() * 2.2f)
         currentSpeed = bridge.petSpriteSize * 0.58f * initialSpeedRatio
         gaitDistance = 0f
+        walkTravel.reset()
+        edgeTurnRemaining = 0f
         clearTransforms()
     }
 
@@ -233,7 +246,7 @@ class CorgiBehavior(
         interactionTimer += dt
         val params = bridge.getWindowParams() ?: return
         val previousX = params.x
-        val proposedX = params.x + (walkDirection * currentSpeed * dt).toInt()
+        val proposedX = params.x + walkTravel.advance(walkDirection * currentSpeed * dt)
         params.x = proposedX.coerceIn(0, maxWindowX())
         params.y = groundY()
         bridge.updateWindowLayout(params)

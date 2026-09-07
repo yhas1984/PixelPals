@@ -8,12 +8,9 @@ import android.os.SystemClock
 import android.view.MotionEvent
 import android.view.View
 import com.pixelpals.app.R
-import com.pixelpals.app.core.care.scene.CareSceneAction
 import com.pixelpals.app.core.domain.PetType
 import com.pixelpals.app.database.CompanionHomeEntity
 import com.pixelpals.app.database.HomeDecorationEntity
-import com.pixelpals.app.feature.care.CarePoseLoader
-import com.pixelpals.app.feature.care.CarePosePack
 import java.time.LocalTime
 import kotlin.math.*
 
@@ -31,8 +28,6 @@ class HomeSceneView(context: Context) : View(context) {
     private var hour: Int = LocalTime.now().hour
     private var lastMinute: Long = 0L
     private val preferences: CompanionPreferences = CompanionPreferences(context)
-    private var pack: CarePosePack? = null
-    private var careSprites: HomeSpriteFrames? = null
     private var locomotion: HomeLocomotion? = null
     var pet: PetType = PetType.CORGI
         private set
@@ -68,6 +63,9 @@ class HomeSceneView(context: Context) : View(context) {
     private var downY: Float = 0f
     private var activeTime: Long = 0L
     private var motion: CompanionMotion = CompanionMotion()
+    internal var previewTimeScale: Float = 1f
+    internal var previewReducedMotion: Boolean = false
+    private val isMotionReduced: Boolean get() = previewReducedMotion || preferences.reducedMotion || !ValueAnimator.areAnimatorsEnabled()
     private var lastFrame: Long = 0L
     private var running: Boolean = false
     private val tick: Runnable = object : Runnable {
@@ -75,10 +73,11 @@ class HomeSceneView(context: Context) : View(context) {
             running = false
             if (!isAttachedToWindow || !isShown) { lastFrame = 0; return }
             val now: Long = SystemClock.uptimeMillis()
+            if (lastFrame > 0 && now - lastFrame < 16) { schedule(); return }
             val minute: Long = System.currentTimeMillis() / 60_000
             if (minute != lastMinute) { hour = LocalTime.now().hour; lastMinute = minute }
             val delta: Long = if (lastFrame > 0) (now - lastFrame).coerceAtMost(100) else 0
-            if (showPet && !isEditing && !isTravelling) advanceScene(delta)
+            if (showPet && !isEditing && !isTravelling) advanceScene((delta * previewTimeScale.coerceIn(.1f, 1f)).toLong())
             lastFrame = now
             invalidate(); schedule()
         }
@@ -95,13 +94,15 @@ class HomeSceneView(context: Context) : View(context) {
 
     internal fun advanceScene(delta: Long): Unit {
         activeTime += delta.coerceIn(0, 100)
-        if (preferences.reducedMotion || !ValueAnimator.areAnimatorsEnabled()) return
+        if (isMotionReduced) return
         val toy = placements.firstOrNull { it.decorationId == home?.favoriteObject && DecorationCatalog.find(it.decorationId)?.kind == DecorationKind.TOY }
             ?: placements.firstOrNull { DecorationCatalog.find(it.decorationId)?.kind == DecorationKind.TOY }
         val bed = placements.firstOrNull { DecorationCatalog.find(it.decorationId)?.kind == DecorationKind.BED }
-        motion.advance(delta / 1000f, toy?.let { objectBounds(it).centerX() } ?: 500f,
+        val toyCenter: Float = toy?.let { objectBounds(it).centerX() } ?: 500f
+        val toyStand: Float = if (toy == null) 500f else toyCenter + if (toyCenter < 500f) 100f else -100f
+        motion.advance(delta / 1000f, toyStand,
             bed?.let { objectBounds(it).centerX() } ?: 500f, profile.tempo * traits.tempo * traits.initiative, bond,
-            toy?.let { objectBounds(it).bottom - 30f } ?: 650f, bed?.let { objectBounds(it).bottom - 30f } ?: 650f)
+            toy?.let { objectBounds(it).bottom - 30f } ?: 650f, bed?.let { objectBounds(it).bottom - 30f } ?: 650f, toy?.let { toyCenter < toyStand })
     }
 
     suspend fun loadPet(type: PetType): Unit {
@@ -109,20 +110,9 @@ class HomeSceneView(context: Context) : View(context) {
         profile = CompanionProfiles.forPet(type)
         traits = CompanionTraits.derive(type, home, bond)
         motion = CompanionMotion()
-        pack = null
-        careSprites = null
         locomotion = null
-        val walk = HomeLocomotion.load(context, type)
-        val loaded: CarePosePack = CarePoseLoader.load(context.assets, type)
-        val sprites = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-            val atlas = loaded.spec.atlas
-            HomeSpriteFrames((0 until atlas.frameCount).map { frame -> loaded.bitmap to Rect(
-                frame % atlas.columns * atlas.frameWidth, frame / atlas.columns * atlas.frameHeight,
-                (frame % atlas.columns + 1) * atlas.frameWidth, (frame / atlas.columns + 1) * atlas.frameHeight) })
-        }
+        val walk: HomeLocomotion = HomeLocomotion.load(context, type)
         if (pet != type) return
-        pack = loaded
-        careSprites = sprites
         locomotion = walk
         contentDescription = context.getString(R.string.home_scene_description, context.getString(type.displayNameResId))
         invalidate(); schedule()
@@ -157,35 +147,51 @@ class HomeSceneView(context: Context) : View(context) {
     private inline fun drawDecorations(canvas: Canvas, include: (HomeDecorationEntity) -> Boolean): Unit {
         placements.forEach { position ->
             if (include(position) && position.decorationId != dragged?.decorationId) {
-                DecorationCatalog.find(position.decorationId)?.let { painter.drawObject(canvas, it, objectBounds(position), treasure) }
+                DecorationCatalog.find(position.decorationId)?.let { drawDecoration(canvas, it, position) }
             }
         }
     }
 
-    private fun drawCompanion(canvas: Canvas): Unit {
-        val poses: CarePosePack = pack ?: return
-        val reduced: Boolean = preferences.reducedMotion || !ValueAnimator.areAnimatorsEnabled()
-        val learnedTempo: Float = traits.tempo
-        val time: Float = if (reduced || isEditing) 0f else activeTime / 1000f * profile.tempo * learnedTempo
-        val bed: HomeDecorationEntity? = placements.firstOrNull { DecorationCatalog.find(it.decorationId)?.kind == DecorationKind.BED }
-        val toy: HomeDecorationEntity? = placements.firstOrNull { it.decorationId == home?.favoriteObject && DecorationCatalog.find(it.decorationId)?.kind == DecorationKind.TOY }
+    private fun drawDecoration(canvas: Canvas, item: Decoration, position: HomeDecorationEntity): Unit {
+        val bounds: RectF = objectBounds(position)
+        val activeToy: HomeDecorationEntity? = placements.firstOrNull { it.decorationId == home?.favoriteObject && DecorationCatalog.find(it.decorationId)?.kind == DecorationKind.TOY }
             ?: placements.firstOrNull { DecorationCatalog.find(it.decorationId)?.kind == DecorationKind.TOY }
+        canvas.save()
+        if (!isMotionReduced && !isEditing && motion.activity == CompanionActivity.PLAY && !motion.isTurning && position == activeToy) {
+            val beat: Float = ((motion.elapsed - .6f).coerceAtLeast(0f) % 1.2f) / 1.2f
+            val nudge: Float = sin(beat * PI.toFloat()).coerceAtLeast(0f)
+            val direction: Float = if (motion.x < bounds.centerX()) 1f else -1f
+            canvas.translate(nudge * 24f * direction, -nudge * 14f)
+            canvas.rotate(nudge * 25f * direction, bounds.centerX(), bounds.bottom - 30f)
+        }
+        painter.drawObject(canvas, item, bounds, treasure)
+        canvas.restore()
+    }
+
+    private fun drawCompanion(canvas: Canvas): Unit {
+        val sprites: HomeLocomotion = locomotion ?: return
+        val reduced: Boolean = isMotionReduced || isEditing
         val x: Float = motion.x
         val size: Float = (290f + bond.coerceIn(0, 100) * .12f) * (.75f + (motion.y - 430f) / 880f)
-        val resting: Boolean = motion.activity == CompanionActivity.REST && bed != null && !reduced
-        val action: CareSceneAction = if (resting) CareSceneAction.REST else if (motion.activity == CompanionActivity.PLAY && toy != null) CareSceneAction.PLAY else CareSceneAction.PET
-        val timing: Long = if (reduced) 0 else ((motion.elapsed % 3f) * 1000).toLong()
-        val frame: Int = poses.spec.getFrame(action, timing)
-        val breath: Float = if (reduced) 0f else sin(time * 2f) * 2f
-        actor.set(x - size / 2, motion.y - size - breath, x + size / 2, motion.y)
-        paint.color = 0x25736954; canvas.drawOval(x - 65f, motion.y - 28f, x + 65f, motion.y - 8f, paint)
+        val gait: HomeGait = HomeGait.forPet(pet)
+        val phase: Float = motion.distanceTravelled / 105f * (2f * PI.toFloat())
+        val amount: Float = if (reduced) 0f else (motion.speed / 75f).coerceIn(0f, 1f)
+        val lift: Float = if (reduced) 0f else if (gait.isFloating && motion.activity != CompanionActivity.REST)
+            7f + sin(activeTime / 1000f * 2f) * 3f else abs(sin(phase)) * gait.bounce * amount
+        val preparation: Float = if (!reduced && motion.isPreparing) sin(motion.elapsed / CompanionMotion.ANTICIPATION_SECONDS * PI.toFloat()) else 0f
+        val breath: Float = if (reduced) 0f else sin(activeTime / 1000f * 2f) * 1.1f
+        actor.set(x - size / 2, motion.y - size, x + size / 2, motion.y)
+        paint.color = 0x25736954
+        val shadowWidth: Float = size * .21f * (1f - lift / 100f)
+        canvas.drawOval(x - shadowWidth, motion.y - 21f, x + shadowWidth, motion.y - 7f, paint)
         paint.color = Color.WHITE
         paint.colorFilter = cosmeticFilter
         canvas.save()
-        if (motion.isFacingLeft) canvas.scale(-1f, 1f, x, motion.y)
-        if (!reduced && (motion.activity == CompanionActivity.APPROACH_TOY || motion.activity == CompanionActivity.APPROACH_BED))
-            locomotion?.draw(canvas, paint, actor, activeTime)
-        else careSprites?.draw(canvas, paint, actor, frame)
+        canvas.translate(0f, -lift)
+        canvas.rotate(if (reduced) 0f else sin(phase) * gait.sway * amount, x, motion.y)
+        canvas.scale(1f + preparation * .035f, 1f - preparation * .035f + breath / size, x, motion.y)
+        if (if (motion.isTurning) motion.turnFromFacingLeft else motion.isFacingLeft) canvas.scale(-1f, 1f, x, motion.y)
+        sprites.draw(canvas, paint, actor, motion, reduced)
         canvas.restore()
         paint.colorFilter = null
         cosmetics.draw(canvas, cosmeticEffect, actor, if (reduced) 0f else activeTime / 1000f)
@@ -240,7 +246,9 @@ class HomeSceneView(context: Context) : View(context) {
     private fun schedule(): Unit {
         if (running || !isAttachedToWindow || !isShown) return
         running = true
-        postDelayed(tick, if (!showPet) 60_000 else if (preferences.reducedMotion || !ValueAnimator.areAnimatorsEnabled() || isTravelling) 1000 else 50)
+        if (!showPet) postDelayed(tick, 60_000)
+        else if (isMotionReduced || isTravelling) postDelayed(tick, 1000)
+        else postOnAnimation(tick)
     }
     override fun onAttachedToWindow(): Unit { super.onAttachedToWindow(); schedule() }
     override fun onWindowVisibilityChanged(visibility: Int): Unit { super.onWindowVisibilityChanged(visibility); if (visibility == VISIBLE) schedule() else pause() }

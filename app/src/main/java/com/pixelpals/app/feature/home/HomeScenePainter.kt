@@ -25,6 +25,7 @@ class HomeScenePainter {
             gradient = LinearGradient(0f, 0f, 0f, 760f, top, bottom, Shader.TileMode.CLAMP)
             gradientColors = top to bottom
         }
+        paint.color = Color.WHITE
         paint.shader = gradient
         canvas.drawRect(0f, 0f, 1000f, 760f, paint); paint.shader = null
         if (environment == HomeEnvironment.COZY) drawRoom(canvas, night) else drawLandscape(canvas, night)

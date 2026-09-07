@@ -116,11 +116,13 @@ class GingerBehavior(
         params.y = groundY().roundToInt()
         bridge.updateWindowLayout(params)
 
-        bridge.currentFrame = FRAME_WALK_START + ((modeTimer / WALK_FRAME_SECONDS).toInt() % 4)
+        val gait: Float = abs(params.x - moveStartX) / (bridge.petSpriteSize * .22f)
+        val moving: Float = 4f * progress * (1f - progress)
+        bridge.currentFrame = FRAME_WALK_START + (gait.toInt() % 4)
         applyFacing()
         bridge.animScaleY = 1f
-        bridge.animOffsetY = -abs(sin(modeTimer * PI.toFloat() / WALK_FRAME_SECONDS)) * 1.8f
-        bridge.animRotation = facingDirection * sin(modeTimer * 5.2f) * 1.2f
+        bridge.animOffsetY = -abs(sin(gait * PI.toFloat())) * 1.8f * moving
+        bridge.animRotation = facingDirection * sin(gait * PI.toFloat()) * 1.2f * moving
         if (progress >= 1f) startSit(0.8f + random.nextFloat() * 0.8f)
     }
 
