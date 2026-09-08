@@ -25,10 +25,36 @@ class TelaBehavior(
     override val random: PetRandom,
 ) : BaseBehavior(bridge, random) {
 
+    private val restFade = com.pixelpals.app.core.rest.RestFadeTransition()
     private var scheduledRestRequested: Boolean = false
-    override fun onScheduledRestRequested(requested: Boolean) { scheduledRestRequested = requested }
+    override fun onScheduledRestRequested(requested: Boolean) {
+        scheduledRestRequested = requested
+        if (!requested) cancelRestFade()
+    }
+    private fun cancelRestFade() {
+        if (!restFade.active) return
+        restFade.cancel()
+        (bridge as? android.view.View)?.alpha = 1f
+    }
+    override fun advanceScheduledRestTransition(delta: Float, reducedMotion: Boolean) {
+        if (!scheduledRestRequested || !reducedMotion) {
+            cancelRestFade()
+            return
+        }
+        if (!restFade.active && canStartScheduledSleep(true)) return
+        val params = bridge.getWindowParams() ?: return
+        if (!restFade.active) restFade.start()
+        val reposition: Boolean = restFade.advance(delta)
+        (bridge as? android.view.View)?.alpha = restFade.opacity
+        if (reposition) {
+            params.y = maxY().roundToInt()
+            bridge.updateWindowLayout(params)
+            clearWebEffects()
+            approachScheduledRest(params.x.toFloat(), params.y.toFloat())
+        }
+    }
     override fun canStartScheduledSleep(reducedMotion: Boolean): Boolean =
-        (mode == Mode.SLEEP || (reducedMotion && mode == Mode.WALK)) &&
+        !restFade.active && (mode == Mode.SLEEP || (reducedMotion && mode == Mode.WALK)) &&
             abs((bridge.getWindowParams()?.y ?: Int.MIN_VALUE).toFloat() - maxY()) <= 1f
 
     override val isSleeping: Boolean get() = mode == Mode.SLEEP
@@ -560,6 +586,7 @@ class TelaBehavior(
     }
 
     override fun destroy(): Unit {
+        cancelRestFade()
         clearWebEffects()
         super.destroy()
     }

@@ -735,6 +735,7 @@ class PetView(
     private fun update(dt: Float) {
         val canRest: Boolean = state == PetState.IDLE && desktopCare?.isActive != true && !isTouchPending
         behavior?.onScheduledRestRequested(canRest && scheduledSleep.wantsRest())
+        behavior?.advanceScheduledRestTransition(dt, companionPreferences.reducedMotion)
         if (scheduledSleep.update(dt, canRest &&
                 behavior?.canStartScheduledSleep(companionPreferences.reducedMotion) == true)) return
         dreamSeconds = if (desktopCare?.isActive != true && state == PetState.IDLE && behavior?.isSleeping == true)

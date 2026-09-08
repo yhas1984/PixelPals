@@ -19,6 +19,9 @@ interface PetBehavior {
     /** Request a natural stopping point without interrupting committed movement. */
     fun onScheduledRestRequested(requested: Boolean) {}
 
+    /** Optional accessibility transition while ordinary autonomous motion is disabled. */
+    fun advanceScheduledRestTransition(delta: Float, reducedMotion: Boolean) {}
+
     /** Safe handoff to scheduled rest, after committed jumps and care reactions finish. */
     fun canStartScheduledSleep(reducedMotion: Boolean): Boolean = true
 

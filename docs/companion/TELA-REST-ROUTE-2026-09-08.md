@@ -9,9 +9,9 @@ cleared and offsets/rotation are reset before handing off to the sleeping body/b
 Canceling the request restores normal decisions at the next action boundary.
 
 Readiness requires ground contact; a stationary suspended spider is not treated as
-supported furniture contact. Reduced motion can hand off from stationary ground
-walking, but a suspended pet with controller updates disabled still waits there:
-the reduced-motion route and full visual transition acceptance remain unfinished.
+supported furniture contact. Reduced motion now uses a short opacity transition
+for suspended pets (see `TELA-REDUCED-REST-2026-09-08.md`). Full visual transition
+acceptance remains unfinished.
 
 Validation: debug and instrumentation APK builds, JVM tests and debug lint passed.
 Installed on 192.168.1.160:43041. TelaRestRouteTest plus AutonomousSleepStateTest

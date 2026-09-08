@@ -13,6 +13,39 @@ import kotlin.math.abs
 
 @RunWith(AndroidJUnit4::class)
 class TelaRestRouteTest {
+    @Test fun reducedMotionRepositionsOnlyWhileInvisibleAndCanBeCancelled(): Unit {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        instrumentation.runOnMainSync {
+            val bridge = TestPetBridge(instrumentation.targetContext, PetType.TELA)
+            val behavior = TelaBehavior(bridge, SeededPetRandom(12))
+            try {
+                val startY: Int = bridge.getWindowParams().y
+                behavior.onScheduledRestRequested(true)
+                behavior.advanceScheduledRestTransition(.05f, true)
+                assertTrue(bridge.alpha < 1f)
+                behavior.onScheduledRestRequested(false)
+                assertEquals(1f, bridge.alpha, 0f)
+                assertEquals(startY, bridge.getWindowParams().y)
+                behavior.onScheduledRestRequested(true)
+                var previousY: Int = startY
+                var moves: Int = 0
+                repeat(90) {
+                    behavior.advanceScheduledRestTransition(1f / 60f, true)
+                    if (bridge.getWindowParams().y != previousY) {
+                        moves++
+                        assertEquals(0f, bridge.alpha, 0f)
+                    }
+                    if (bridge.alpha < 1f) assertFalse(behavior.canStartScheduledSleep(true))
+                    previousY = bridge.getWindowParams().y
+                }
+                assertEquals(1, moves)
+                assertEquals(bridge.bounds.floor, bridge.getWindowParams().y)
+                assertEquals(1f, bridge.alpha, 0f)
+                assertTrue(behavior.canStartScheduledSleep(true))
+            } finally { behavior.destroy() }
+        }
+    }
+
     @Test fun restRoutesReachTheFloorFromCeilingWallsAndSilk(): Unit {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         instrumentation.runOnMainSync {
