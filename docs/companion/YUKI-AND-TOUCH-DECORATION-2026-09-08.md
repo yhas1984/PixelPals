@@ -37,6 +37,14 @@ The controls are localized in Spanish/English and their view reference is
 released on fragment view destruction. Debug/instrumentation assembly and
 three touch-placement Android tests passed, including cancellation on Done.
 
+Visible end-to-end check on emulator-5580: opened Decorate, selected Honey ball,
+chose Place in the room, tapped the front-right slot and pressed Done. After
+force-stopping and reopening the app, the ball remained in the new slot and
+editing controls/grid were gone. Screenshots are retained under
+`evidence/touch-decoration/preview.png` and `restored.png`. This validates the
+actual UI-to-repository persistence path for a placed object, beyond the callback
+tests. It does not establish every object/environment or physical-device flow.
+
 Validation: 211 JVM tests passed; debug/instrumentation assembly and debug lint
 passed. Six Android tests passed after the final throw-origin adjustment,
 including touch placement and all-species care rendering. The generated Yuki
