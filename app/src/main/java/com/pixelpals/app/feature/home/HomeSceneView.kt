@@ -43,7 +43,13 @@ class HomeSceneView(context: Context) : View(context) {
     var treasure: String? = null
     var isTravelling: Boolean = false
     var isEditing: Boolean = false
-        set(value) { field = value; if (!value) { pendingPlacement = null; dragged = null }; invalidate() }
+        set(value) {
+            field = value
+            if (!value) { pendingPlacement = null; dragged = null }
+            onEditingChanged?.invoke(value)
+            invalidate()
+        }
+    var onEditingChanged: ((Boolean) -> Unit)? = null
     var showPet: Boolean = true
     var energy: Int = 75
     var isUnwell: Boolean = false

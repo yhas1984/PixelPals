@@ -121,4 +121,5 @@
     <string name="home_touch_place_hint">Toca donde quieras colocarlo o arrastra el objeto hasta allí.</string>
     <string-array name="home_depth_names"><item>Fondo</item><item>Zona intermedia</item><item>Delante</item></string-array>
     <string-array name="home_side_names"><item>Izquierda</item><item>Centro izquierda</item><item>Centro</item><item>Centro derecha</item><item>Derecha</item></string-array>
+    <string name="home_add_object">Añadir objeto</string>
 </resources>

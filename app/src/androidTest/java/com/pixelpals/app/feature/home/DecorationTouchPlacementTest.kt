@@ -9,6 +9,27 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class DecorationTouchPlacementTest {
+    @Test fun finishingEditCancelsTheUnplacedObject(): Unit {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        instrumentation.runOnMainSync {
+            val view = HomeSceneView(instrumentation.targetContext)
+            view.layout(0, 0, 1000, 760)
+            var callbackEditing = false
+            var placed = false
+            view.onEditingChanged = { callbackEditing = it }
+            view.onPlace = { _, _, _ -> placed = true }
+            view.beginPlacement("ball")
+            assertTrue(callbackEditing)
+            view.isEditing = false
+            assertFalse(callbackEditing)
+            for (action: Int in listOf(MotionEvent.ACTION_DOWN, MotionEvent.ACTION_UP)) {
+                val event = MotionEvent.obtain(0, 0, action, 500f, 470f, 0)
+                view.onTouchEvent(event); event.recycle()
+            }
+            assertFalse(placed)
+        }
+    }
+
     @Test fun occupiedDropKeepsTheObjectAvailableForAnotherTap(): Unit {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         instrumentation.runOnMainSync {

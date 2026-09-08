@@ -31,6 +31,12 @@ tap. A toast and accessibility announcement supplement the outline. Debug and
 instrumentation builds passed; both touch-placement Android tests passed on
 emulator-5580 (0.043 seconds), including retry after an occupied destination.
 
+The home now exposes Add object and Done controls beside the scene while
+editing. Done clears only the pending preview; committed placements remain.
+The controls are localized in Spanish/English and their view reference is
+released on fragment view destruction. Debug/instrumentation assembly and
+three touch-placement Android tests passed, including cancellation on Done.
+
 Validation: 211 JVM tests passed; debug/instrumentation assembly and debug lint
 passed. Six Android tests passed after the final throw-origin adjustment,
 including touch placement and all-species care rendering. The generated Yuki

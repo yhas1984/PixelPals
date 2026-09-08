@@ -121,4 +121,5 @@
     <string name="home_touch_place_hint">Touch the spot where you want it, or drag the object there.</string>
     <string-array name="home_depth_names"><item>Back</item><item>Middle</item><item>Front</item></string-array>
     <string-array name="home_side_names"><item>Left</item><item>Left of centre</item><item>Centre</item><item>Right of centre</item><item>Right</item></string-array>
+    <string name="home_add_object">Add object</string>
 </resources>

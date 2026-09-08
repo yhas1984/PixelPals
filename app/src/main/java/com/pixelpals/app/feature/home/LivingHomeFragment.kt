@@ -32,6 +32,7 @@ open class LivingHomeFragment : Fragment() {
     private var favorite: TextView? = null
     private var travel: Button? = null
     private var careButton: Button? = null
+    private var decorationControls: View? = null
     private var errorText: Button? = null
     private var currentPet: PetType? = null
     private var loadJob: Job? = null
@@ -59,11 +60,16 @@ open class LivingHomeFragment : Fragment() {
             view.clipToOutline = true
             column.addView(view, LinearLayout.LayoutParams(-1, -2).apply { topMargin = HomeUi.dp(context, 10) })
             view.onPet = { openCare(CareSceneAction.PET) }
+            view.onEditingChanged = { editing -> decorationControls?.visibility = if (editing) View.VISIBLE else View.GONE }
             view.onObject = { item -> if (view.isEditing) showDecoration(item) else item.action?.let { openCare(it, item.id) } }
             view.onPlace = { id, x, y -> model.perform {
                 if (!model.repository.place(model.pet.value, id, x, y)) notifyUser(R.string.home_occupied)
             } }
         }
+        decorationControls = HomeUi.row(context,
+            HomeUi.button(context, getString(R.string.home_add_object)) { showDecorations() },
+            HomeUi.button(context, getString(R.string.home_done), true) { scene?.isEditing = false }
+        ).also { it.visibility = View.GONE; column.addView(it) }
         greeting = HomeUi.text(context, "", 15f).also(column::addView)
         favorite = HomeUi.text(context, "", 13f).also(column::addView)
         needs = HomeUi.text(context, "", 14f).also(column::addView)
@@ -278,7 +284,7 @@ open class LivingHomeFragment : Fragment() {
     override fun onDestroyView(): Unit {
         loadJob?.cancel(); closeCare(); scene?.pause(); careModel?.setRoomVisible(false)
         scene = null; panel = null; content = null; heading = null; description = null; needs = null
-        greeting = null; favorite = null; travel = null; careButton = null; errorText = null; currentPet = null
+        decorationControls = null; greeting = null; favorite = null; travel = null; careButton = null; errorText = null; currentPet = null
         super.onDestroyView()
     }
 }
