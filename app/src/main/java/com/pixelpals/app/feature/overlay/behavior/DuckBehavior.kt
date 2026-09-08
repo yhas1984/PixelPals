@@ -7,6 +7,7 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.math.sin
 import com.pixelpals.app.core.motion.PetRandom
+import com.pixelpals.app.core.motion.GroundGait
 
 /**
  * DuckBehavior — Patito nadador que, al tocarlo, sale del agua,
@@ -22,6 +23,9 @@ class DuckBehavior(
     init {
         loadFramesAsync()
     }
+
+    override fun canStartScheduledSleep(reducedMotion: Boolean): Boolean =
+        mode == DuckMode.QUACK || (reducedMotion && mode == DuckMode.WADDLE)
 
     private enum class DuckMode {
         WADDLE,
@@ -79,7 +83,7 @@ class DuckBehavior(
         if (abs(dx) > 10f) facingDir = if (dx >= 0f) 1f else -1f
 
         val distance = abs(dx)
-        swimDuration = (distance / 95f).coerceIn(2.2f, 5.6f)
+        swimDuration = GroundGait.duration(distance, 95f, 2.2f)
     }
 
     override fun updateIdle(dt: Float) {
@@ -93,7 +97,7 @@ class DuckBehavior(
                 if (swimDuration <= 0f) startSwim(resetTimer = false)
 
                 val t = (modeTimer / swimDuration).coerceIn(0f, 1f)
-                val easedT = sin((t * PI).toFloat() / 2f)
+                val easedT = GroundGait.progress(modeTimer, swimDuration)
                 val x = swimStartX + (swimTargetX - swimStartX) * easedT
                 val y = swimStartY
 
@@ -113,10 +117,10 @@ class DuckBehavior(
                 bridge.animOffsetY = abs(sin(time * 8.5f)) * 2f
                 bridge.animRotation = facingDir * sin(time * 6f) * 1.5f
 
-                if (random.nextFloat() < 0.0004f) {
+                if (t >= 1f) {
                     mode = DuckMode.QUACK
                     modeTimer = 0f
-                } else if (t >= 1f) startSwim()
+                }
             }
 
             DuckMode.TAKEOFF -> {
@@ -137,6 +141,8 @@ class DuckBehavior(
                 bridge.animRotation = facingDir * (6f * t)
 
                 if (t >= 1f) {
+                    // Continue from the actual end of takeoff, not the ground origin.
+                    flyStartY = params.y.toFloat()
                     mode = DuckMode.FLUTTER
                     modeTimer = 0f
                 }
@@ -144,10 +150,13 @@ class DuckBehavior(
 
             DuckMode.FLUTTER -> {
                 val params = bridge.getWindowParams() ?: return
-                val flyDuration = wingFlapCycles * 0.14f
+                val flyDuration = GroundGait.duration(
+                    kotlin.math.hypot(flyTargetX - flyStartX, flyTargetY - flyStartY),
+                    bridge.petSpriteSize * 2.5f, wingFlapCycles * 0.28f)
                 val t = (modeTimer / flyDuration).coerceIn(0f, 1f)
-                val x = flyStartX + (flyTargetX - flyStartX) * t
-                val y = flyStartY + (flyTargetY - flyStartY) * t - sin((t * PI).toFloat()) * bridge.petSpriteSize * 0.18f
+                val progress = GroundGait.progress(modeTimer, flyDuration)
+                val x = flyStartX + (flyTargetX - flyStartX) * progress
+                val y = flyStartY + (flyTargetY - flyStartY) * progress - sin((t * PI).toFloat()) * bridge.petSpriteSize * 0.18f
 
                 params.x = x.roundToInt()
                 params.y = y.roundToInt()
@@ -194,14 +203,18 @@ class DuckBehavior(
                 bridge.animRotation = 0f
 
                 if (modeTimer >= 0.48f) {
-                    startSwim()
+                    mode = DuckMode.QUACK
+                    modeTimer = 0f
                 }
             }
 
             DuckMode.QUACK -> {
                 bridge.currentFrame = 9
                 bridge.animScaleX = facingScale(facingDir)
-                bridge.animOffsetY = abs(sin(time * 7f)) * 2f
+                bridge.animScaleY = 1f
+                bridge.animOffsetX = 0f
+                bridge.animOffsetY = 0f
+                bridge.animRotation = 0f
                 if (modeTimer >= 0.45f) startSwim()
             }
         }
@@ -252,7 +265,7 @@ class DuckBehavior(
 
     override fun updateInteracting(dt: Float) {
         updateIdle(dt)
-        if (mode == DuckMode.WADDLE) {
+        if (mode == DuckMode.WADDLE || mode == DuckMode.QUACK) {
             bridge.state = PetState.IDLE
         }
     }

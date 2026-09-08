@@ -20,6 +20,7 @@ class AutonomousSleepStateTest {
                 PetType.PIRU to setOf("SLEEP"),
                 PetType.MENTA to setOf("COIL", "SLEEP"),
                 PetType.JELLY to setOf("IDLE"),
+                PetType.PATITO to setOf("QUACK"),
             )
             for ((pet, safe) in safeModes) {
                 val behavior: PetBehavior = PetBehaviorFactory.create(pet,
