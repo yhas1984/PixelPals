@@ -11,6 +11,13 @@ temperature thresholds remain 40 C to enter thermal melting and 38 C to recover;
 this is not ambient weather. Yuki's localized description now identifies device
 heat. No manual temperature input or network weather service was added.
 
+Thermal continuity refinement: the additional body deformation now progresses
+over the melt clip's 0.96-second duration. Repeated temperature notifications
+preserve elapsed melt time, and pause/status events no longer flash an undeformed
+body. The 40/38 C thresholds remain unchanged. Debug assembly and the JVM suite
+passed with the new regression covering repeated readings, pause/resume and
+cooling. This tests simulated readings, not deliberate physical-device heating.
+
 Home decoration's primary Place action now previews the object in the scene:
 tap a destination or drag it there. Existing objects retain drag placement.
 Accessible placement buttons remain available using named positions such as

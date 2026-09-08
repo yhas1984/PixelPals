@@ -101,7 +101,7 @@ class YukiRuntimeBrain(
         is PetEvent.StatusChanged,
         PetEvent.Paused,
         PetEvent.Destroyed,
-        -> output(state, clipFor(state.mode))
+        -> if (state.mode == YukiRuntimeMode.MELT) melt(state) else output(state, clipFor(state.mode))
     }
 
     private fun update(
@@ -116,7 +116,7 @@ class YukiRuntimeBrain(
                 output(
                     state.copy(elapsedSeconds = state.elapsedSeconds + deltaSeconds),
                     "melt",
-                    transform = meltTransform(),
+                    transform = meltTransform(state.elapsedSeconds + deltaSeconds),
                 )
             } else {
                 idle(state.copy(meltLatched = false), context)
@@ -240,7 +240,7 @@ class YukiRuntimeBrain(
     ): PetBrainResult<YukiRuntimeState> = when {
         thermalMode(state, context) == YukiRuntimeMode.MELT -> melt(state)
         state.mode == YukiRuntimeMode.MELT -> idle(state.copy(meltLatched = false), context)
-        else -> output(state, clipFor(state.mode))
+        else -> if (state.mode == YukiRuntimeMode.MELT) melt(state) else output(state, clipFor(state.mode))
     }
 
     private fun thermalIdle(state: YukiRuntimeState, context: PetBrainContext): PetBrainResult<YukiRuntimeState> =
@@ -260,11 +260,14 @@ class YukiRuntimeBrain(
         (context.environment.batteryTemperatureCelsius ?: Float.NEGATIVE_INFINITY) >=
             YukiRuntimeDefinition.MELT_ENTER_CELSIUS
 
-    private fun melt(state: YukiRuntimeState): PetBrainResult<YukiRuntimeState> = output(
-        state.copy(mode = YukiRuntimeMode.MELT, elapsedSeconds = 0f, meltLatched = true),
-        "melt",
-        transform = meltTransform(),
-    )
+    private fun melt(state: YukiRuntimeState): PetBrainResult<YukiRuntimeState> {
+        val elapsed: Float = if (state.mode == YukiRuntimeMode.MELT) state.elapsedSeconds else 0f
+        return output(
+            state.copy(mode = YukiRuntimeMode.MELT, elapsedSeconds = elapsed, meltLatched = true),
+            "melt",
+            transform = meltTransform(elapsed),
+        )
+    }
 
     private fun idle(
         state: YukiRuntimeState,
@@ -348,7 +351,11 @@ class YukiRuntimeBrain(
         offsetY = -abs(sin(elapsed * 6f)) * 3f,
     )
 
-    private fun meltTransform(): PetTransform = PetTransform(scaleX = 1.16f, scaleY = 0.84f)
+    private fun meltTransform(elapsed: Float): PetTransform {
+        val progress: Float = (elapsed / .96f).coerceIn(0f, 1f)
+        val eased: Float = progress * progress * (3f - 2f * progress)
+        return PetTransform(scaleX = 1f + .16f * eased, scaleY = 1f - .16f * eased)
+    }
 
     private companion object {
         const val MINIMUM_WALK_DISTANCE_PIXELS: Float = 24f

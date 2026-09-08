@@ -28,6 +28,23 @@ class YukiRuntimeBrainTest {
     }
 
     @Test
+    fun thermalUpdatesDoNotRestartMeltingOrFlashAnUnmeltedBody() {
+        val runtime = runtime(YukiSequenceRandom(), temperatureCelsius = 24f)
+        val entry = runtime.dispatch(PetEvent.EnvironmentChanged(environment(41f)))
+        assertEquals(1f, entry.transform.scaleY, .001f)
+        val halfway = runtime.dispatch(PetEvent.Tick(.48f))
+        assertTrue(halfway.transform.scaleY in .84f.. .99f)
+        val refreshed = runtime.dispatch(PetEvent.EnvironmentChanged(environment(42f)))
+        assertEquals(halfway.transform.scaleY, refreshed.transform.scaleY, .001f)
+        assertEquals(.48f, runtime.snapshot().brainState.elapsedSeconds, .001f)
+        val melted = runtime.dispatch(PetEvent.Tick(.5f))
+        assertEquals(.84f, melted.transform.scaleY, .001f)
+        assertEquals(melted.transform.scaleY, runtime.dispatch(PetEvent.Paused).transform.scaleY, .001f)
+        assertEquals(melted.transform.scaleY, runtime.dispatch(PetEvent.Resumed).transform.scaleY, .001f)
+        assertEquals("idle", runtime.dispatch(PetEvent.EnvironmentChanged(environment(38f))).clipId)
+    }
+
+    @Test
     fun tapRunsCuriosityAndReturnsToIdle() {
         val runtime = runtime(YukiSequenceRandom())
 
