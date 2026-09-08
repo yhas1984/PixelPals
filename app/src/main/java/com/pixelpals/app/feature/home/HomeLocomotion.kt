@@ -18,8 +18,9 @@ class HomeLocomotion private constructor(
     private val anchor: android.graphics.PointF? = null,
 ) {
     private val sprites: HomeSpriteFrames = HomeSpriteFrames(frames, anchor)
-    fun draw(canvas: Canvas, paint: Paint, target: RectF, motion: CompanionMotion, reduced: Boolean): Unit {
+    fun draw(canvas: Canvas, paint: Paint, target: RectF, motion: CompanionMotion, reduced: Boolean, poseClip: String? = null, poseSeconds: Float = 0f): Unit {
         val name: String = when {
+            poseClip != null -> poseClip
             reduced -> if (motion.activity == CompanionActivity.REST) "sleep" else "idle"
             motion.isTurning && motion.speed <= .1f -> "turn"
             motion.isPreparing -> "idle"
@@ -31,6 +32,7 @@ class HomeLocomotion private constructor(
         }
         val clip: PetClipSpec = clips[name] ?: requireNotNull(clips["idle"])
         val phase: Long = when {
+            poseClip != null -> (poseSeconds * 1000f).toLong()
             reduced -> if (name == "sleep") clip.frames.lastIndex * clip.frameDurationMs.toLong() else 0L
             name == "walk" -> (motion.distanceTravelled / 105f * clip.frames.size * clip.frameDurationMs).toLong()
             name == "wake" -> (motion.elapsed / CompanionMotion.WAKE_SECONDS * clip.frames.size * clip.frameDurationMs).toLong()
@@ -70,6 +72,9 @@ class HomeLocomotion private constructor(
             val idle: PetClipSpec = choose("idle", "sit", "perch_loop", "hover")
             val selected: Map<String, PetClipSpec> = mapOf(
                 "idle" to idle,
+                "stalk" to choose("stalk", "idle"),
+                "pounce" to choose("pounce", "idle"),
+                "land" to choose("land", "idle"),
                 "walk" to choose("walk", "crawl_loop", "right", "glide", "hover"),
                 "turn" to (spec.clip("turn")?.copy(loop = false) ?: idle),
                 "play" to choose("play", "playful_delight", "happy", "front_social", "groom", "grace", "tongue_strike", "idle"),

@@ -83,6 +83,12 @@ class HomeSceneView(context: Context) : View(context) {
     private var downY: Float = 0f
     private var activeTime: Long = 0L
     private val deviceRest = com.pixelpals.app.core.rest.DeviceRestState(context)
+    private var treeVisit: GingerTreeVisit? = null
+    fun exploreTree(): Unit {
+        if (pet != PetType.GINGER || isEditing || isTravelling || !showPet || isMotionReduced || treeVisit != null) return
+        treeVisit = GingerTreeVisit(motion.x, motion.y)
+        invalidate(); schedule()
+    }
     private var motion: CompanionMotion = CompanionMotion()
     internal var reviewSeed: Int? = null
     internal var previewTimeScale: Float = 1f
@@ -102,7 +108,7 @@ class HomeSceneView(context: Context) : View(context) {
             val delta: Long = if (lastFrame > 0) (now - lastFrame).coerceAtMost(100) else 0
             if (showPet && !isEditing && !isTravelling) advanceScene((delta * previewTimeScale.coerceIn(.1f, 1f)).toLong())
             lastFrame = now
-            val dreaming: Boolean = motion.activity == CompanionActivity.REST && !isTravelling && !isEditing && showPet &&
+            val dreaming: Boolean = treeVisit == null && motion.activity == CompanionActivity.REST && !isTravelling && !isEditing && showPet &&
                 (isMotionReduced || motion.elapsed >= 1.4f)
             if (describedDream != dreaming) {
                 describedDream = dreaming
@@ -129,6 +135,11 @@ class HomeSceneView(context: Context) : View(context) {
 
     internal fun advanceScene(delta: Long): Unit {
         activeTime += delta.coerceIn(0, 100)
+        treeVisit?.let { visit ->
+            visit.advance(delta / 1000f)
+            if (visit.phase == GingerTreeVisit.Phase.DONE) { treeVisit = null; motion.settleWithoutMovement(false) }
+            return
+        }
         val toy = placements.firstOrNull { it.decorationId == home?.favoriteObject && DecorationCatalog.find(it.decorationId)?.kind == DecorationKind.TOY }
             ?: placements.firstOrNull { DecorationCatalog.find(it.decorationId)?.kind == DecorationKind.TOY }
         val bed = placements.firstOrNull { it.decorationId == CareDecorationSelection.bed(placements) }
@@ -149,6 +160,7 @@ class HomeSceneView(context: Context) : View(context) {
 
     suspend fun loadPet(type: PetType): Unit {
         pet = type
+        treeVisit = null
         describedDream = null
         profile = CompanionProfiles.forPet(type)
         traits = CompanionTraits.derive(type, home, bond)
@@ -227,32 +239,34 @@ class HomeSceneView(context: Context) : View(context) {
     private fun drawCompanion(canvas: Canvas): Unit {
         val sprites: HomeLocomotion = locomotion ?: return
         val reduced: Boolean = isMotionReduced || isEditing
-        val x: Float = motion.x
+        val visit = treeVisit
+        val x: Float = visit?.x ?: motion.x
+        val actorY: Float = visit?.y ?: motion.y
         val size: Float = 290f
         val gait: HomeGait = HomeGait.forPet(pet)
         val phase: Float = motion.distanceTravelled / 105f * (2f * PI.toFloat())
-        val amount: Float = if (reduced) 0f else (motion.speed / 75f).coerceIn(0f, 1f)
+        val amount: Float = if (visit != null || reduced) 0f else (motion.speed / 75f).coerceIn(0f, 1f)
         val lift: Float = if (reduced) 0f else if (gait.isFloating && motion.activity != CompanionActivity.REST)
             7f + sin(activeTime / 1000f * 2f) * 3f else abs(sin(phase)) * gait.bounce * amount
-        val preparation: Float = if (!reduced && motion.isPreparing) sin(motion.elapsed / CompanionMotion.ANTICIPATION_SECONDS * PI.toFloat()) else 0f
+        val preparation: Float = if (visit == null && !reduced && motion.isPreparing) sin(motion.elapsed / CompanionMotion.ANTICIPATION_SECONDS * PI.toFloat()) else 0f
         val breath: Float = if (reduced) 0f else sin(activeTime / 1000f * 2f) * 1.1f
-        actor.set(x - size / 2, motion.y - size, x + size / 2, motion.y)
+        actor.set(x - size / 2, actorY - size, x + size / 2, actorY)
         paint.color = 0x25736954
         val shadowWidth: Float = size * .21f * (1f - lift / 100f)
-        canvas.drawOval(x - shadowWidth, motion.y - 21f, x + shadowWidth, motion.y - 7f, paint)
+        if (visit?.isAirborne != true) canvas.drawOval(x - shadowWidth, actorY - 21f, x + shadowWidth, actorY - 7f, paint)
         paint.color = Color.WHITE
         paint.colorFilter = cosmeticFilter
         canvas.save()
         canvas.translate(0f, -lift)
-        canvas.rotate(if (reduced) 0f else sin(phase) * gait.sway * amount, x, motion.y)
-        canvas.scale(1f + preparation * .035f, 1f - preparation * .035f + breath / size, x, motion.y)
-        if (if (motion.isTurning) motion.turnFromFacingLeft else motion.isFacingLeft) canvas.scale(-1f, 1f, x, motion.y)
-        sprites.draw(canvas, paint, actor, motion, reduced)
+        canvas.rotate(if (reduced) 0f else sin(phase) * gait.sway * amount, x, actorY)
+        canvas.scale(1f + preparation * .035f, 1f - preparation * .035f + breath / size, x, actorY)
+        if (visit?.facingLeft ?: if (motion.isTurning) motion.turnFromFacingLeft else motion.isFacingLeft) canvas.scale(-1f, 1f, x, actorY)
+        sprites.draw(canvas, paint, actor, motion, reduced, visit?.clip, visit?.clipSeconds ?: 0f)
         canvas.restore()
         paint.colorFilter = null
         cosmetics.draw(canvas, cosmeticEffect, actor, if (reduced) 0f else activeTime / 1000f)
-        if (motion.activity == CompanionActivity.REST && !isEditing && (reduced || motion.elapsed >= 1.4f))
-            dreamPainter.draw(canvas, x, motion.y, size, motion.elapsed, reduced)
+        if (visit == null && motion.activity == CompanionActivity.REST && !isEditing && (reduced || motion.elapsed >= 1.4f))
+            dreamPainter.draw(canvas, x, actorY, size, motion.elapsed, reduced)
     }
 
     private fun drawGrid(canvas: Canvas): Unit {

@@ -105,7 +105,7 @@ class PetHabitatPainter {
                 tree(c, night, 90f, 75f, leaf)
                 tree(c, night, 888f, if (pet == PetType.GINGER) 55f else 155f, leaf)
                 if (pet == PetType.GINGER) {
-                    line(c, if (night) "#887962" else "#B99871", 13f, 125f, 265f, 375f, 305f, 525f, 230f)
+                    line(c, if (night) "#887962" else "#B99871", 13f, 125f, 265f, 285f, 305f, 435f, 305f, 525f, 230f)
                     cloud(c, leaf, 370f, 165f, 250f)
                 }
                 if (pet == PetType.MOKI) {

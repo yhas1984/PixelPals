@@ -505,4 +505,5 @@
     <string name="rest_end">Wake-up: %1$s</string>
     <string name="decor_species_toy">%1$s’s toy</string>
     <string name="decor_species_rest">%1$s’s resting spot</string>
+    <string name="home_explore_tree">Explore the tree</string>
 </resources>

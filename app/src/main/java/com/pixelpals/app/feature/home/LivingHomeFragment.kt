@@ -31,6 +31,7 @@ open class LivingHomeFragment : Fragment() {
     private var greeting: TextView? = null
     private var favorite: TextView? = null
     private var travel: Button? = null
+    private var treeButton: View? = null
     private var careButton: Button? = null
     private var decorationControls: View? = null
     private var errorText: Button? = null
@@ -76,6 +77,10 @@ open class LivingHomeFragment : Fragment() {
         errorText = HomeUi.button(context, getString(R.string.home_error)) { model.error.value = false; model.refresh(); currentPet = null; bindPet(model.pet.value) }
             .also { it.visibility = View.GONE; column.addView(it) }
         careButton = HomeUi.button(context, getString(R.string.home_care), true) { openCare() }.also { it.id = R.id.companionCare; column.addView(it) }
+        treeButton = HomeUi.button(context, getString(R.string.home_explore_tree)) { scene?.exploreTree() }.also {
+            it.visibility = View.GONE
+            column.addView(it)
+        }
         column.addView(HomeUi.row(context,
             HomeUi.button(context, getString(R.string.home_decorate)) { showDecorations() },
             HomeUi.button(context, getString(R.string.home_share)) { sharePostcard() }))
@@ -143,6 +148,7 @@ open class LivingHomeFragment : Fragment() {
             } catch (exception: CancellationException) { throw exception
             } catch (_: Exception) { model.error.value = true }
         }
+        treeButton?.visibility = if (pet == PetType.GINGER && !CompanionPreferences(requireContext()).reducedMotion) View.VISIBLE else View.GONE
         description?.text = getString(CompanionProfiles.forPet(pet).description)
     }
 
@@ -283,6 +289,7 @@ open class LivingHomeFragment : Fragment() {
     override fun onSaveInstanceState(outState: Bundle): Unit { outState.putBoolean("desktop_pending", hasPendingDesktop); super.onSaveInstanceState(outState) }
     override fun onDestroyView(): Unit {
         loadJob?.cancel(); closeCare(); scene?.pause(); careModel?.setRoomVisible(false)
+        treeButton = null
         scene = null; panel = null; content = null; heading = null; description = null; needs = null
         decorationControls = null; greeting = null; favorite = null; travel = null; careButton = null; errorText = null; currentPet = null
         super.onDestroyView()
