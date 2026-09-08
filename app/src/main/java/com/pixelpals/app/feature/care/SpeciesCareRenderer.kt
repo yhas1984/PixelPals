@@ -39,6 +39,8 @@ class SpeciesCareRenderer {
     private val impBalloonPlay: ImpBalloonPlayPainter = ImpBalloonPlayPainter()
     private val impBalloonGripAnchor: CarePoint = CarePoint(.70f, .72f)
     private var frame: Int = 0
+    private var stageCenterX: Float = 0f
+    private var stageGround: Float = 0f
     private var pose: SpeciesCarePose = SpeciesCarePose()
     private var pet: PetType = PetType.DIABLILLO
     private var profile: PetCareProfile = PetCareProfile.forPet(pet)
@@ -61,6 +63,8 @@ class SpeciesCareRenderer {
         // Leave room above a tossed toy and below a hammock, even in a short room panel.
         val baseline: Float = desktopSize?.let { height / 2f + (desktopBaselineOffsetY ?: it * .46f) }
             ?: height * if (action == CareSceneAction.REST) .75f else .88f
+        stageCenterX = width / 2f
+        stageGround = baseline
         val ground: CarePoint = pack.spec.anchors[frame].ground
         val left: Float = width / 2f - ground.x * size
         val top: Float = baseline - ground.y * size
@@ -212,6 +216,11 @@ class SpeciesCareRenderer {
             CareSceneAction.PLAY -> {
                 val beat: CarePlayBeat = CarePlayChoreography.sample(if (reduced) 0f else p, scene.playVariation)
                 position = playingPosition(target, mouth, body, size, beat)
+                if (profile.play == CarePlayStyle.FOLLOW) {
+                    // The pinwheel's support ends 58/134 of its drawn size below its origin.
+                    // Anchor it to the scene, not to Taro's advancing body or changing pose.
+                    position = CarePoint(stageCenterX + size * .27f, stageGround - size * .28f * (58f / 134f))
+                }
                 if (profile.play == CarePlayStyle.WEB) {
                     line(canvas, CarePoint(body.x, actor.top + size * .06f), position, Color.rgb(208, 197, 229), size * .009f)
                 }

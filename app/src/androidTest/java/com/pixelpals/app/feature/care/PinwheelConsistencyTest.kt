@@ -12,6 +12,35 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class PinwheelConsistencyTest {
+    @Test fun taroDoesNotDragThePinwheelSupportDuringCare(): Unit = kotlinx.coroutines.runBlocking {
+        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+        val pack = CarePoseLoader.load(context.assets, PetType.TARO)
+        val bitmap = Bitmap.createBitmap(320, 320, Bitmap.Config.ARGB_8888)
+        val renderer = SpeciesCareRenderer()
+        try {
+            for (desktop in listOf(false, true)) {
+                var firstFoot: Pair<Int, Int>? = null
+                for (elapsed in listOf(0L, 900L, 1_800L, 2_700L, 3_600L, 4_500L)) {
+                    val scene = com.pixelpals.app.core.care.scene.CareSceneController(CareSceneAction.PLAY,
+                        com.pixelpals.app.core.care.scene.CareSceneMode.AUTOMATIC, pack.spec.timings.getValue(CareSceneAction.PLAY))
+                    scene.advance(elapsed)
+                    bitmap.eraseColor(Color.TRANSPARENT)
+                    renderer.draw(Canvas(bitmap), pack, scene, false, false, desktopSize = if (desktop) 160 else null)
+                    val pixels = IntArray(320 * 320)
+                    bitmap.getPixels(pixels, 0, 320, 0, 0, 320, 320)
+                    val pole = pixels.indices.filter { pixels[it] == 0xFFA78365.toInt() }
+                    assertTrue("Visible wooden support at $elapsed", pole.isNotEmpty())
+                    val bottom = pole.maxOf { it / 320 }
+                    val foot = pole.filter { it / 320 == bottom }.map { it % 320 }.average().toInt() to bottom
+                    firstFoot?.let { assertEquals("Support must not follow Taro", it, foot) }
+                    firstFoot = foot
+                    val expectedGround = if (desktop) 160f + 160f * .46f else 320f * .88f
+                    assertTrue("Support reaches the ground", kotlin.math.abs(bottom - expectedGround) <= 2f)
+                }
+            }
+        } finally { bitmap.recycle(); pack.bitmap.recycle() }
+    }
+
     @Test fun homeAndCareShareThePinwheelAndOnlyItsBladesRotate() {
         val bitmap = Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888)
         val home = HomeScenePainter()
