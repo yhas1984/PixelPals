@@ -22,6 +22,30 @@ import org.junit.runner.RunWith
 /** Canvas-only checks; safe on the user's phone, no database or preference mutations. */
 @RunWith(AndroidJUnit4::class)
 class CorgiDesktopFeedRendererTest {
+    @Test fun releasedBallLeavesTheMouthAndSettlesBeforeRemoval(): Unit = runBlocking {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val pack: CarePosePack = CarePoseLoader.load(context.assets, PetType.CORGI)
+        try {
+            for (left: Boolean in listOf(false, true)) {
+                val plan = CorgiFetchMotion.createPlan(CarePoint(500f, 900f), PetBounds(0, 1_120, 100, 900), 320, left, false)
+                val release = plan.catchMs + com.pixelpals.app.core.care.scene.CorgiBallRelease.HOLD_MS
+                var previous: CorgiFetchFrame? = null
+                for (elapsed in release - 1L..plan.timing.durationMs) {
+                    val pose = CorgiFetchMotion.getPose(plan, elapsed)
+                    val frame = CorgiFetchFrame.fromPose(plan, pose, pack.spec.anchors[pose.careFrame])
+                    previous?.let {
+                        assertEquals(it.ball.x, frame.ball.x, .001f)
+                        assertTrue("Continuous release and impact", kotlin.math.abs(it.ball.y - frame.ball.y) < .5f)
+                        assertEquals(it.rotation, frame.rotation, .001f)
+                    }
+                    if (frame.alpha < 1f) assertEquals("Fade only on the ground", pose.petY + 320f * .86f, frame.ball.y, .001f)
+                    previous = frame
+                }
+                assertEquals(0f, requireNotNull(previous).alpha, 0f)
+            }
+        } finally { pack.bitmap.recycle() }
+    }
+
     @Test fun rollingBallReachesTheScaledMouthWithoutTeleportingAtPickup(): Unit = runBlocking {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val pack: CarePosePack = CarePoseLoader.load(context.assets, PetType.CORGI)

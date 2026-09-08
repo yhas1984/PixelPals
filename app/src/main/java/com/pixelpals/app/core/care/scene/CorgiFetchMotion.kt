@@ -16,7 +16,7 @@ data class CorgiFetchPlan(
     val catchMs: Long,
     val reducedMotion: Boolean,
 ) {
-    val timing: CareSceneTiming = CareSceneTiming(catchMs + 900L, catchMs)
+    val timing: CareSceneTiming = CareSceneTiming(catchMs + if (reducedMotion) 900L else 1_300L, catchMs)
 }
 
 data class CorgiFetchPose(
@@ -29,6 +29,8 @@ data class CorgiFetchPose(
     val ballRotation: Float,
     val isCaught: Boolean,
     val pickupProgress: Float = 0f,
+    val releaseSeconds: Float = -1f,
+    val ballAlpha: Float = 1f,
 )
 
 /** World-space fetch: the pet window runs after an independent rolling prop. */
@@ -85,6 +87,8 @@ object CorgiFetchMotion {
         return CorgiFetchPose(petX, petY, regularFrame, careFrame, ballX,
             plan.floorY + plan.spriteSize * .86f - bounce,
             (ballX - initialBall) / (plan.spriteSize * .10f) * 57.29578f, elapsed >= plan.catchMs,
-            GroundGait.progress((elapsed - plan.catchMs + LOWER_HEAD_MS).toFloat(), LOWER_HEAD_MS.toFloat()))
+            GroundGait.progress((elapsed - plan.catchMs + LOWER_HEAD_MS).toFloat(), LOWER_HEAD_MS.toFloat()),
+            if (plan.reducedMotion) -1f else (elapsed - plan.catchMs - CorgiBallRelease.HOLD_MS) / 1_000f,
+            1f - GroundGait.progress((elapsed - plan.timing.durationMs + 250L).toFloat(), 250f))
     }
 }

@@ -11,7 +11,7 @@ class CorgiFetchMotionTest {
     @Test fun runsAcrossTheDesktopInsteadOfReturningToTheStart(): Unit {
         val plan: CorgiFetchPlan = plan(100f)
         assertTrue(plan.endX - plan.startX > 640f)
-        assertTrue(plan.timing.durationMs < 2_500L)
+        assertTrue(plan.timing.durationMs < 3_000L)
         val pose: CorgiFetchPose = CorgiFetchMotion.getPose(plan, plan.timing.durationMs)
         assertEquals(plan.endX, pose.petX, 0f)
         assertTrue(pose.isCaught)

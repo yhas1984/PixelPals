@@ -20,6 +20,7 @@ data class CorgiFetchFrame(
     val facingLeft: Boolean,
     val rotation: Float,
     val toyDecorationId: String? = null,
+    val alpha: Float = 1f,
 ) {
     companion object {
         fun fromPose(plan: CorgiFetchPlan, pose: CorgiFetchPose, anchors: CarePoseAnchors): CorgiFetchFrame {
@@ -33,10 +34,12 @@ data class CorgiFetchFrame(
             val pickup: Float = if (held) 1f else pose.pickupProgress
             val ball: CarePoint = CarePoint(
                 pose.ballX + (mouth.x - pose.ballX) * pickup,
-                pose.ballY + (mouth.y - pose.ballY) * pickup,
+                if (pose.releaseSeconds >= 0f) com.pixelpals.app.core.care.scene.CorgiBallRelease.height(
+                    mouth.y, pose.petY + plan.spriteSize * .86f, pose.releaseSeconds)
+                else pose.ballY + (mouth.y - pose.ballY) * pickup,
             )
             return CorgiFetchFrame(CarePoint(pose.petX, pose.petY), ball, pose.regularFrame,
-                plan.direction < 0f, if (plan.reducedMotion) 0f else pose.ballRotation)
+                plan.direction < 0f, if (plan.reducedMotion) 0f else pose.ballRotation, alpha = pose.ballAlpha)
         }
     }
 }
@@ -61,6 +64,7 @@ class CorgiFetchBallOverlay(context: Context, private val windowManager: WindowM
         if (frame == null) { close(); return true }
         params.x = (frame.ball.x - size / 2f).roundToInt()
         params.y = (frame.ball.y - size / 2f).roundToInt()
+        params.alpha = .8f * frame.alpha.coerceIn(0f, 1f)
         view.ballRotation = frame.rotation
         view.toyDecorationId = frame.toyDecorationId
         return try {
