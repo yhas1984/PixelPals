@@ -7,6 +7,9 @@ import kotlin.math.PI
 object YukiCareMotion {
     private fun cycle(progress: Float): Float = ((progress.coerceIn(0f, .9999f) * 2f) % 1f)
     fun flightAt(progress: Float): Float = ((cycle(progress) - .3f) / .55f).coerceIn(0f, 1f)
+    fun impactAt(progress: Float): Float = ((cycle(progress) - .85f) / .15f).coerceIn(0f, 1f)
+    fun ballHeight(hand: Float, landing: Float, size: Float, flight: Float): Float =
+        hand + (landing - hand) * flight - 4f * flight * (1f - flight) * size * .18f
     fun throwLean(progress: Float): Float = -sin(cycle(progress) * PI.toFloat() * 2f) * 4f
     fun playFrame(progress: Float): Int = when {
         progress >= .92f -> 7

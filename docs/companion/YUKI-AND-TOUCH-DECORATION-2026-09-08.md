@@ -6,6 +6,11 @@ and water instead of a snowflake. A temporary ground-anchored partial melt and
 puddle recover before bath completion. Reduced motion disables body deformation
 and keeps the ball/water static. Existing bitmap art is retained.
 
+Snowball completion: throws now land at the ground anchor instead of remaining
+at hand height. At impact, the ball is replaced by a short fading snow burst
+before the next throw. Reduced motion keeps the held ball and omits particles.
+Debug assembly and the JVM suite passed, including endpoint/impact timing checks.
+
 The user chose to retain automatic device-heat behavior. The existing battery
 temperature thresholds remain 40 C to enter thermal melting and 38 C to recover;
 this is not ambient weather. Yuki's localized description now identifies device

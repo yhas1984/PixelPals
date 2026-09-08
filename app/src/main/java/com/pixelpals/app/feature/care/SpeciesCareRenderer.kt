@@ -155,9 +155,14 @@ class SpeciesCareRenderer {
             if (scene.action == CareSceneAction.PLAY) {
                 val hand: CarePoint = point(CarePoint(.74f, .59f))
                 val flight: Float = if (reduced) 0f else YukiCareMotion.flightAt(scene.progress)
-                props.draw(canvas, scene.action, hand.x + flight * size * .40f,
-                    hand.y - 4f * flight * (1f - flight) * size * .18f,
-                    size * .14f, pet = pet)
+                val ground: CarePoint = point(anchors.ground)
+                val landing: CarePoint = CarePoint(hand.x + size * .40f, ground.y - size * .04f)
+                if (flight < 1f) {
+                    props.draw(canvas, scene.action, hand.x + flight * size * .40f,
+                        YukiCareMotion.ballHeight(hand.y, landing.y, size, flight), size * .14f, pet = pet)
+                } else {
+                    yukiEffects.drawSnowImpact(canvas, landing, size, YukiCareMotion.impactAt(scene.progress))
+                }
                 return
             }
             if (scene.action == CareSceneAction.CLEAN) {

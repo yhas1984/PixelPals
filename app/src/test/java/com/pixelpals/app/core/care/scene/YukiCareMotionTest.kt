@@ -5,6 +5,15 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class YukiCareMotionTest {
+    @Test fun snowballLandsBeforeItsImpactFades(): Unit {
+        assertEquals(100f, YukiCareMotion.ballHeight(100f, 160f, 100f, 0f), 0f)
+        assertEquals(160f, YukiCareMotion.ballHeight(100f, 160f, 100f, 1f), 0f)
+        for (start: Float in listOf(0f, .5f)) {
+            assertEquals(0f, YukiCareMotion.impactAt(start + .4f), 0f)
+            assertEquals(1f, YukiCareMotion.flightAt(start + .45f), .001f)
+            assertTrue(YukiCareMotion.impactAt(start + .49f) > .8f)
+        }
+    }
     @Test fun bathMeltsPartiallyAndRecoversBeforeCompletion(): Unit {
         assertEquals(0f, YukiCareMotion.meltAt(0f), 0f)
         assertEquals(1f, YukiCareMotion.meltAt(.55f), .001f)

@@ -6,6 +6,15 @@ import com.pixelpals.app.core.care.scene.CarePoint
 
 internal class YukiCarePainter {
     private val paint: Paint = Paint(Paint.ANTI_ALIAS_FLAG)
+    fun drawSnowImpact(canvas: Canvas, point: CarePoint, size: Float, progress: Float): Unit {
+        paint.color = 0xffd2ebf3.toInt()
+        paint.alpha = (255 * (1f - progress)).toInt().coerceIn(0, 255)
+        repeat(5) { index ->
+            val spread: Float = (index - 2) * size * .025f * (1f + progress)
+            val lift: Float = size * (.06f + (index % 2) * .035f) * kotlin.math.sin(progress * kotlin.math.PI.toFloat())
+            canvas.drawCircle(point.x + spread, point.y - lift, size * .018f * (1f - progress * .5f), paint)
+        }
+    }
     fun drawPuddle(canvas: Canvas, ground: CarePoint, size: Float, amount: Float): Unit {
         paint.color = 0xffbadfea.toInt()
         paint.alpha = (150 * amount).toInt()
