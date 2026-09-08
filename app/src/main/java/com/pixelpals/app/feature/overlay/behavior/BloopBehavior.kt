@@ -25,6 +25,26 @@ class BloopBehavior(bridge: PetViewBridge, override val random: PetRandom) : Bas
         loadFramesAsync()
     }
 
+    private var scheduledRestRequested: Boolean = false
+    override fun onScheduledRestRequested(requested: Boolean) { scheduledRestRequested = requested }
+    override fun canStartScheduledSleep(reducedMotion: Boolean): Boolean =
+        mode == Mode.FLOAT_VISIBLE && bridge.animAlpha >= .99f &&
+            (reducedMotion || kotlin.math.hypot(velX, velY) <= 1f)
+
+    override fun advanceScheduledRestTransition(delta: Float, reducedMotion: Boolean) {
+        if (!scheduledRestRequested || !reducedMotion || mode == Mode.FLOAT_VISIBLE) return
+        val step: Float = if (delta.isFinite()) delta.coerceIn(0f, .05f) else 0f
+        bridge.currentFrame = 0
+        bridge.animRotation = 0f
+        bridge.animScaleY = 1f
+        bridge.animAlpha = (bridge.animAlpha + step / .2f).coerceAtMost(1f)
+        if (bridge.animAlpha >= 1f) {
+            mode = Mode.FLOAT_VISIBLE
+            velX = 0f
+            velY = 0f
+        }
+    }
+
     private enum class Mode { FLOAT_VISIBLE, DISAPPEAR, ALERT, ESCAPING }
     private var mode = Mode.FLOAT_VISIBLE
 
@@ -80,6 +100,17 @@ class BloopBehavior(bridge: PetViewBridge, override val random: PetRandom) : Bas
         bridge.updateWindowLayout(params)
     }
 
+    private fun settleForRest(dt: Float) {
+        val step: Float = dt.coerceIn(0f, 1f / 30f)
+        val factor: Float = kotlin.math.exp(-6f * step)
+        velX *= factor
+        velY *= factor
+        val params = bridge.getWindowParams() ?: return
+        params.x = (params.x + velX * step).roundToInt().coerceIn(0, safeMaxX())
+        params.y = (params.y + velY * step).roundToInt().coerceIn(safeMinY(), safeMaxY())
+        bridge.updateWindowLayout(params)
+    }
+
     override fun updateIdle(dt: Float) {
         if (isLoading || frames.isEmpty()) return
         time += dt
@@ -96,6 +127,10 @@ class BloopBehavior(bridge: PetViewBridge, override val random: PetRandom) : Bas
                 bridge.animScaleX = facingScale()
                 bridge.animScaleY = 1f + sin(time * 1.2f) * 0.02f
 
+                if (scheduledRestRequested) {
+                    settleForRest(dt)
+                    return
+                }
                 // Movimiento por pantalla, siempre con clamp de paredes (BaseBehavior.applyMovement)
                 updateDecision(dt)
                 updateFacing(velX)

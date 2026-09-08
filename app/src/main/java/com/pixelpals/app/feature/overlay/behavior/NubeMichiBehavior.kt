@@ -45,6 +45,9 @@ class NubeMichiBehavior(
         loadFramesAsync()
     }
 
+    override fun canStartScheduledSleep(reducedMotion: Boolean): Boolean =
+        reducedMotion || mode == Mode.SLEEP_FLOAT
+
     private enum class Mode {
         SLEEP_FLOAT,
         WAKE_UP,

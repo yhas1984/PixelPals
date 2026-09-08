@@ -11,6 +11,12 @@ class AngelBehavior(
     bridge: PetViewBridge,
     override val random: PetRandom,
 ) : BaseBehavior(bridge, random) {
+    private var scheduledRestRequested: Boolean = false
+    override fun onScheduledRestRequested(requested: Boolean) { scheduledRestRequested = requested }
+    override fun canStartScheduledSleep(reducedMotion: Boolean): Boolean =
+        if (reducedMotion) mode != Mode.TOUCH && mode != Mode.RECOVER
+        else (mode == Mode.HOVER || mode == Mode.PRAYER) && hypot(velocityX, velocityY) <= 1f
+
     override val resourceIds: List<Int> = emptyList()
 
     private enum class Mode {
@@ -62,11 +68,12 @@ class AngelBehavior(
 
     private fun updateHover(dt: Float) {
         flightTargetY = flightTargetY.coerceIn(preferredTop(), preferredBottom())
-        steer(dt, accelerationRatio = 0.34f, damping = 3.6f, maxSpeedRatio = 0.22f)
+        if (scheduledRestRequested) settleForRest(dt)
+        else steer(dt, accelerationRatio = 0.34f, damping = 3.6f, maxSpeedRatio = 0.22f)
         bridge.currentFrame = FRAME_HOVER_START + ((time / HOVER_FRAME_SECONDS).toInt() % 4)
         applyUprightAttitude(maxTilt = 3.5f)
         bridge.animOffsetY = sin(time * 1.7f) * 4f
-        if (modeTimer >= modeDuration) startCruise()
+        if (!scheduledRestRequested && modeTimer >= modeDuration) startCruise()
     }
 
     private fun updateCruise(dt: Float) {
@@ -111,7 +118,7 @@ class AngelBehavior(
     }
 
     private fun updatePrayer(dt: Float) {
-        dampInPlace(dt, 4.8f)
+        if (scheduledRestRequested) settleForRest(dt) else dampInPlace(dt, 4.8f)
         bridge.currentFrame = FRAME_PRAYER_START + ((modeTimer / PRAYER_FRAME_SECONDS).toInt() % 2)
         applyUprightAttitude(maxTilt = 1.5f)
         bridge.animOffsetY = sin(time * 1.25f) * 3f
@@ -156,6 +163,19 @@ class AngelBehavior(
             velocityY = velocityY / speed * maxSpeed
         }
         integrate(dt)
+    }
+
+    private fun settleForRest(dt: Float) {
+        val step: Float = dt.coerceIn(0f, 1f / 30f)
+        val factor: Float = kotlin.math.exp(-6f * step)
+        velocityX *= factor
+        velocityY *= factor
+        positionX = (positionX + velocityX * step).coerceIn(0f, maxWindowX().toFloat())
+        positionY = (positionY + velocityY * step).coerceIn(hardTop(), hardBottom())
+        val params = bridge.getWindowParams() ?: return
+        params.x = positionX.toInt()
+        params.y = positionY.toInt()
+        bridge.updateWindowLayout(params)
     }
 
     private fun dampInPlace(dt: Float, damping: Float) {
