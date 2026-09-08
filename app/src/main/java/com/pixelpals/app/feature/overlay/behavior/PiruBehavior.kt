@@ -77,7 +77,7 @@ class PiruBehavior(
         swimTargetX = (swimStartX + dir * bridge.petSpriteSize * (3f + random.nextFloat() * 5f))
             .coerceIn(minX, maxX)
         facingDir = dir
-        swimDuration = 1.1f + random.nextFloat() * 0.9f
+        swimDuration = GroundGait.duration(swimTargetX - swimStartX, bridge.petSpriteSize * 2.4f, .55f)
         params.y = groundY().roundToInt()
         bridge.updateWindowLayout(params)
     }
@@ -154,17 +154,18 @@ class PiruBehavior(
     private fun updateSlide(dt: Float) {
         val params = bridge.getWindowParams() ?: return
         val t = (modeTimer / swimDuration).coerceIn(0f, 1f)
-        val x = swimStartX + (swimTargetX - swimStartX) * t
+        val x = swimStartX + (swimTargetX - swimStartX) * GroundGait.progress(modeTimer, swimDuration)
         params.x = x.roundToInt()
         params.y = groundY().roundToInt()
         bridge.updateWindowLayout(params)
 
         val spec = spriteSheetSpec ?: return
         val clip = spec.clip("slide") ?: return
-        val idx = ((animClock / 0.17f).toInt() % clip.frames.size)
+        val phase: Float = GroundGait.phase(x - swimStartX, bridge.petSpriteSize * .6f)
+        val idx = ((phase * clip.frames.size).toInt() % clip.frames.size)
         bridge.currentFrame = clip.frames[idx]
         bridge.animScaleX = facingScale(facingDir)
-        bridge.animScaleY = 0.96f + sin(time * 10f) * 0.02f
+        bridge.animScaleY = 1f
         bridge.animOffsetX = 0f
         bridge.animOffsetY = 0f
         bridge.animRotation = 0f
@@ -176,18 +177,20 @@ class PiruBehavior(
         val params = bridge.getWindowParams() ?: return
         val t = (modeTimer / 0.55f).coerceIn(0f, 1f)
         val x = swimStartX + (swimTargetX - swimStartX) * t
-        val y = jumpStartY + (jumpTargetY - jumpStartY) * sin((t * PI).toFloat())
+        val y = com.pixelpals.app.core.motion.GroundJump.heightAt(jumpStartY, jumpTargetY, t)
         params.x = x.roundToInt()
         params.y = y.roundToInt()
         bridge.updateWindowLayout(params)
 
         val spec = spriteSheetSpec ?: return
         val clip = spec.clip("jump") ?: return
-        val idx = ((animClock / 0.16f).toInt() % clip.frames.size)
+        val idx = (t * clip.frames.size).toInt().coerceAtMost(clip.frames.lastIndex)
         bridge.currentFrame = clip.frames[idx]
         bridge.animScaleX = facingScale(facingDir)
-        bridge.animScaleY = 1f + sin(time * 8f) * 0.05f
-        bridge.animRotation = facingDir * sin(time * 6f) * 3f
+        bridge.animScaleY = 1f
+        bridge.animOffsetX = 0f
+        bridge.animOffsetY = 0f
+        bridge.animRotation = facingDir * sin(t * PI.toFloat()) * 3f
 
         if (t >= 1f) startWaddle()
     }
