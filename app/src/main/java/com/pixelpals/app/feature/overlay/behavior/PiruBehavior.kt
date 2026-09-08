@@ -24,6 +24,9 @@ class PiruBehavior(
 
     override val resourceIds: List<Int> = emptyList()
 
+    override fun canStartScheduledSleep(reducedMotion: Boolean): Boolean =
+        mode == Mode.SLEEP || (reducedMotion && mode == Mode.WADDLE)
+
     private enum class Mode { WADDLE, SLIDE, JUMP, HAPPY, TOUCH, SLEEP }
 
     private var mode = Mode.WADDLE

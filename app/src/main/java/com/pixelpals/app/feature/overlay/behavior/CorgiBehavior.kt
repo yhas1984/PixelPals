@@ -29,6 +29,9 @@ class CorgiBehavior(
         R.drawable.corgi_13,
     )
 
+    override fun canStartScheduledSleep(reducedMotion: Boolean): Boolean =
+        mode == Mode.REST || mode == Mode.ALERT || (reducedMotion && mode == Mode.WALK)
+
     private enum class Mode {
         WALK,
         ALERT,

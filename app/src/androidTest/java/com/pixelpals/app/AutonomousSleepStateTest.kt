@@ -11,6 +11,45 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class AutonomousSleepStateTest {
+    @Test fun scheduledSleepWaitsForGroundActionsAndThermalRecovery(): Unit {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        instrumentation.runOnMainSync {
+            val safeModes: Map<PetType, Set<String>> = mapOf(
+                PetType.CORGI to setOf("REST", "ALERT"),
+                PetType.GINGER to setOf("SIT", "SLEEP"),
+                PetType.PIRU to setOf("SLEEP"),
+                PetType.MENTA to setOf("COIL", "SLEEP"),
+                PetType.JELLY to setOf("IDLE"),
+            )
+            for ((pet, safe) in safeModes) {
+                val behavior: PetBehavior = PetBehaviorFactory.create(pet,
+                    TestPetBridge(instrumentation.targetContext, pet), SeededPetRandom(12))
+                try {
+                    val mode = behavior.javaClass.getDeclaredField("mode").apply { isAccessible = true }
+                    for (value in requireNotNull(mode.type.enumConstants)) {
+                        mode.set(behavior, value)
+                        val name: String = (value as Enum<*>).name
+                        assertEquals("$pet $name handoff", name in safe, behavior.canStartScheduledSleep(false))
+                        val staticTravel: Boolean = name in setOf("WALK", "WADDLE", "SLITHER")
+                        assertEquals("$pet $name reduced handoff", name in safe || staticTravel,
+                            behavior.canStartScheduledSleep(true))
+                    }
+                } finally { behavior.destroy() }
+            }
+            val runtime = YukiRuntimeBehavior(TestPetBridge(instrumentation.targetContext, PetType.YUKI), SeededPetRandom(12))
+            try {
+                val intent = RuntimePetBehavior::class.java.getDeclaredField("currentIntent").apply { isAccessible = true }
+                assertFalse("Unloaded runtime must not hand off", runtime.canStartScheduledSleep(false))
+                for (value in com.pixelpals.app.core.runtime.PetIntent.entries) {
+                    intent.set(runtime, value)
+                    val safe: Boolean = value.name in setOf("IDLE", "SLEEP")
+                    assertEquals(value.name, safe, runtime.canStartScheduledSleep(false))
+                    assertEquals(value.name, safe || value.name == "WALK", runtime.canStartScheduledSleep(true))
+                }
+            } finally { runtime.destroy() }
+        }
+    }
+
     @Test fun onlyActualSleepingModesExposeDreams(): Unit {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         instrumentation.runOnMainSync {

@@ -16,6 +16,9 @@ interface PetBehavior {
     /** Actual autonomous sleep, distinct from a sleepy mood or an idle blink. */
     val isSleeping: Boolean get() = false
 
+    /** Safe handoff to scheduled rest, after committed jumps and care reactions finish. */
+    fun canStartScheduledSleep(reducedMotion: Boolean): Boolean = true
+
     /** Semantic facing, independent of whether the source artwork was drawn mirrored. */
     val facingLeft: Boolean? get() = null
     /** Current rendered ground contact relative to the pet window's vertical center. */

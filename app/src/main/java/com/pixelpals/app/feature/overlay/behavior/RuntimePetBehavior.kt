@@ -34,6 +34,11 @@ open class RuntimePetBehavior<S : PetBrainState>(
     final override var isSleeping: Boolean = false
         private set
 
+    private var currentIntent: PetIntent? = null
+    final override fun canStartScheduledSleep(reducedMotion: Boolean): Boolean =
+        currentIntent == PetIntent.IDLE || currentIntent == PetIntent.SLEEP ||
+            (reducedMotion && currentIntent == PetIntent.WALK)
+
     private var runtime: PetRuntime<S>? = null
     private var batteryPercent: Int = 100
     private var isCharging: Boolean = false
@@ -198,6 +203,7 @@ open class RuntimePetBehavior<S : PetBrainState>(
     }
 
     private fun applyOutput(output: PetRuntimeOutput) {
+        currentIntent = output.intent
         isSleeping = output.intent == PetIntent.SLEEP
         bridge.currentFrame = output.frame
         bridge.animScaleX = output.facing.scaleX * output.transform.scaleX

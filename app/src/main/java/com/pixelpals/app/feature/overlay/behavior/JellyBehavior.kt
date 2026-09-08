@@ -19,6 +19,9 @@ class JellyBehavior(
         loadFramesAsync()
     }
 
+    override fun canStartScheduledSleep(reducedMotion: Boolean): Boolean =
+        mode == JellyMode.IDLE
+
     private enum class JellyMode {
         IDLE,
         PREPARE_HOP,

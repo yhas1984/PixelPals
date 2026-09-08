@@ -30,6 +30,9 @@ class MentaBehavior(
 
     override val resourceIds: List<Int> = emptyList()
 
+    override fun canStartScheduledSleep(reducedMotion: Boolean): Boolean =
+        mode == Mode.COIL || mode == Mode.SLEEP || (reducedMotion && mode == Mode.SLITHER)
+
     private enum class Mode { SLITHER, CLIMB, COIL, HAPPY, TOUCH, SLEEP }
 
     private var mode = Mode.COIL

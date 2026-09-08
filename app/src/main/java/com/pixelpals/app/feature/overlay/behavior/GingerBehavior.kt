@@ -17,6 +17,9 @@ class GingerBehavior(
 
     override val resourceIds: List<Int> = emptyList()
 
+    override fun canStartScheduledSleep(reducedMotion: Boolean): Boolean =
+        mode == Mode.SIT || mode == Mode.SLEEP || (reducedMotion && mode == Mode.WALK)
+
     private enum class Mode {
         SIT,
         GROOM,

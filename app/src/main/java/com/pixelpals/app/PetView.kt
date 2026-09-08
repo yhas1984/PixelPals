@@ -733,7 +733,8 @@ class PetView(
     }
 
     private fun update(dt: Float) {
-        if (scheduledSleep.update(dt, state == PetState.IDLE && desktopCare?.isActive != true && !isTouchPending)) return
+        if (scheduledSleep.update(dt, state == PetState.IDLE && desktopCare?.isActive != true && !isTouchPending &&
+                behavior?.canStartScheduledSleep(companionPreferences.reducedMotion) == true)) return
         dreamSeconds = if (desktopCare?.isActive != true && state == PetState.IDLE && behavior?.isSleeping == true)
             dreamSeconds + dt else 0f
         if (desktopCare?.isActive == true) {
