@@ -84,6 +84,7 @@ class DesktopCareTransitionTest {
         val playback = DeferredCare()
         val manager = context.getSystemService(WindowManager::class.java)
         var resets: Int = 0
+        var viewportChanges: Int = 0
         instrumentation.runOnMainSync {
             view = PetView(context, 1080, 2400, 80, PetType.CORGI)
             val behaviorField = PetView::class.java.getDeclaredField("behaviorLazy").apply { isAccessible = true }
@@ -91,6 +92,11 @@ class DesktopCareTransitionTest {
             val behavior = object : BaseBehavior(view, SeededPetRandom(2)) {
                 override val resourceIds: List<Int> = emptyList()
                 override val careBaselineOffsetY: Float = -17f
+                override fun onViewportChanged() {
+                    viewportChanges++
+                    assertTrue(view.windowX in view.bounds.left..view.bounds.right)
+                    assertTrue(view.windowY in view.bounds.top..view.bounds.floor)
+                }
                 override fun reset() {
                     resets++
                     view.currentFrame = 12
@@ -130,6 +136,17 @@ class DesktopCareTransitionTest {
                     CareSceneResult::class.java).apply { isAccessible = true }.invoke(view, CareSceneAction.FEED, null)
                 assertEquals(1, resets)
                 assertEquals("Completion overwrote the controller's pose", 12, view.currentFrame)
+                val outside = requireNotNull(view.getWindowParams()).apply { x = 10_000; y = 10_000 }
+                view.updateWindowLayout(outside)
+                view.velocityX = 300f
+                view.velocityY = 500f
+                view.state = com.pixelpals.app.core.domain.PetState.DRAGGING
+                PetView::class.java.getDeclaredMethod("reconcileViewport").apply { isAccessible = true }.invoke(view)
+                assertEquals(1, viewportChanges)
+                assertEquals(0f, view.velocityX, 0f)
+                assertEquals(0f, view.velocityY, 0f)
+                assertEquals(com.pixelpals.app.core.domain.PetState.IDLE, view.state)
+
             }
         } finally {
             instrumentation.runOnMainSync {

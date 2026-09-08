@@ -151,6 +151,11 @@ open class RuntimePetBehavior<S : PetBrainState>(
         dispatch(PetEvent.Cancelled)
     }
 
+    final override fun onViewportChanged() {
+        publishEnvironment()
+        reset()
+    }
+
     final override fun pause() {
         dispatch(PetEvent.Paused)
     }

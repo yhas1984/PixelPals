@@ -1153,7 +1153,25 @@ class PetView(
     override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
         cancelDesktopCare()
         super.onConfigurationChanged(newConfig)
+        val previousBounds: PetBounds = bounds
         refreshScreenMetrics()
+        if (bounds != previousBounds) reconcileViewport()
+    }
+
+    private fun reconcileViewport() {
+        val params: WindowManager.LayoutParams = getWindowParams() ?: return
+        frameHandler.removeCallbacks(holdRunnable)
+        isTouchPending = false
+        behaviorOwnsTouch = false
+        recycleVelocityTracker()
+        velocityX = 0f
+        velocityY = 0f
+        state = PetState.IDLE
+        params.x = params.x.coerceIn(bounds.left, bounds.right)
+        params.y = params.y.coerceIn(bounds.top, bounds.floor)
+        updateWindowLayout(params)
+        behavior?.onViewportChanged()
+        invalidate()
     }
 
     private fun recycleVelocityTracker() {

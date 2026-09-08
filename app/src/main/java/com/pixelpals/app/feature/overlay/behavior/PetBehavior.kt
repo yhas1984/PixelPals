@@ -70,6 +70,9 @@ interface PetBehavior {
     /** Reset state */
     fun reset()
 
+    /** Rebuild any cached trajectory after the window has been clamped to new bounds. */
+    fun onViewportChanged() { reset() }
+
     // --- Lifecycle and Events ---
     fun resume() {}
     fun pause() {}
