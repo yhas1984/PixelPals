@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.PixelPals" parent="Theme.Material3.Light.NoActionBar">
-        <item name="colorPrimary">@color/purple_soft</item>
+        <item name="colorPrimary">@color/brand_primary</item>
         <item name="colorPrimaryContainer">@color/surface_tinted</item>
         <item name="colorOnPrimary">@color/text_on_accent</item>
         <item name="colorSecondary">@color/coral_accent</item>

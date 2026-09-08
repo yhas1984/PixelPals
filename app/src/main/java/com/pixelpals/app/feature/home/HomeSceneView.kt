@@ -174,7 +174,7 @@ class HomeSceneView(context: Context) : View(context) {
         if (width == 0 || height == 0) return
         canvas.save(); canvas.scale(width / 1000f, height / 760f)
         canvas.clipRect(0f, 0f, 1000f, 760f)
-        painter.drawBackground(canvas, environment, hour)
+        painter.drawBackground(canvas, environment, hour, pet)
         if (isEditing) drawGrid(canvas)
         val actorVisible = showPet && !isTravelling
         drawDecorations(canvas) { !actorVisible || HomeDepth.isBehindPet(objectBounds(it).bottom - 30f, motion.y) }

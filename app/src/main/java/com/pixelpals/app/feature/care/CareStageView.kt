@@ -92,7 +92,8 @@ class CareStageView(context: Context) : View(context) {
         val poses: CarePosePack = pack ?: return
         environment?.let {
             canvas.save(); canvas.scale(width / 1000f, height / 760f)
-            backgroundPainter.drawBackground(canvas, it, java.time.LocalTime.now().hour)
+            backgroundPainter.drawBackground(canvas, it, java.time.LocalTime.now().hour,
+                pack?.spec?.atlas?.petId?.let { id -> com.pixelpals.app.core.domain.PetType.entries.firstOrNull { type -> type.name.equals(id, true) } })
             canvas.restore()
         }
         renderer.draw(canvas, poses, controller, !isMotionEnabled(), isGentle, idleTimeMs)

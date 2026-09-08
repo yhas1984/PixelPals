@@ -7,6 +7,7 @@ import kotlin.math.*
 class HomeScenePainter {
     private val paint: Paint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val path: Path = Path()
+    private val habitat = PetHabitatPainter()
     private val careProps = com.pixelpals.app.feature.care.CarePropPainter()
     private var gradient: LinearGradient? = null
     private var gradientColors: Pair<Int, Int>? = null
@@ -18,7 +19,11 @@ class HomeScenePainter {
         paint.color = color; canvas.drawRoundRect(x, y, x + width, y + height, radius, radius, paint)
     }
 
-    fun drawBackground(canvas: Canvas, environment: HomeEnvironment, hour: Int): Unit {
+    fun drawBackground(canvas: Canvas, environment: HomeEnvironment, hour: Int, pet: com.pixelpals.app.core.domain.PetType? = null): Unit {
+        if (pet != null && pet != com.pixelpals.app.core.domain.PetType.CORGI) {
+            habitat.draw(canvas, pet, environment, hour)
+            return
+        }
         val night: Boolean = environment == HomeEnvironment.NIGHT || hour < 7 || hour >= 20
         val top: Int = if (night) 0xFF283C4D.toInt() else if (environment == HomeEnvironment.GARDEN) 0xFFCDE1D8.toInt() else 0xFFF2E5D0.toInt()
         val bottom: Int = if (night) 0xFF72777E.toInt() else 0xFFF9EDD6.toInt()
