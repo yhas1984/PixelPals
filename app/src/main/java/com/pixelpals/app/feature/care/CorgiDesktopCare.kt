@@ -22,6 +22,7 @@ class CorgiDesktopCare(
     private val coordinator: CareSceneCoordinator = AppServices.careScenes(context),
     private val onFinished: (CareSceneAction, CareSceneResult?) -> Unit,
 ) : DesktopCarePlayback {
+    private var selectedToy: String? = null
     private val renderer: CorgiDesktopCareRenderer = CorgiDesktopCareRenderer()
     private val companionPreferences = com.pixelpals.app.feature.home.CompanionPreferences(context)
     private var action: CareSceneAction = CareSceneAction.FEED
@@ -66,6 +67,11 @@ class CorgiDesktopCare(
                     return@launch
                 }
                 val loaded: CarePosePack = CarePoseLoader.load(context.assets, PetType.CORGI)
+                val decorationDao = AppServices.companions(context).dao
+                val placements = decorationDao.getPlacements(PetType.CORGI.name.lowercase())
+                val favorite = decorationDao.getHome(PetType.CORGI.name.lowercase())?.favoriteObject
+                selectedToy = com.pixelpals.app.feature.home.CareDecorationSelection.toy(placements, favorite)
+                    ?.takeIf { it == "ball" || it == "yarn" || it == "star_toy" }
                 renderer.bedDecorationId = com.pixelpals.app.feature.home.CareDecorationSelection.bed(
                     AppServices.companions(context).dao.getPlacements(PetType.CORGI.name.lowercase()))
                 pack = loaded
@@ -131,7 +137,7 @@ class CorgiDesktopCare(
         val pose: CorgiFetchPose = CorgiFetchMotion.getPose(plan, elapsed)
         fetchPose = pose
         val anchors: CarePoseAnchors = loaded.spec.anchors[pose.careFrame]
-        onFetchFrame(CorgiFetchFrame.fromPose(plan, pose, anchors))
+        onFetchFrame(CorgiFetchFrame.fromPose(plan, pose, anchors).copy(toyDecorationId = selectedToy))
     }
 
     private fun finish(outcome: CareSceneResult?): Unit {

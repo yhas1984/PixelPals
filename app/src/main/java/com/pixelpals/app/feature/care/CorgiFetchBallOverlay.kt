@@ -19,6 +19,7 @@ data class CorgiFetchFrame(
     val regularFrame: Int?,
     val facingLeft: Boolean,
     val rotation: Float,
+    val toyDecorationId: String? = null,
 ) {
     companion object {
         fun fromPose(plan: CorgiFetchPlan, pose: CorgiFetchPose, anchors: CarePoseAnchors): CorgiFetchFrame {
@@ -54,6 +55,7 @@ class CorgiFetchBallOverlay(context: Context, private val windowManager: WindowM
         params.x = (frame.ball.x - size / 2f).roundToInt()
         params.y = (frame.ball.y - size / 2f).roundToInt()
         view.ballRotation = frame.rotation
+        view.toyDecorationId = frame.toyDecorationId
         return try {
             if (!attached) {
                 windowManager.addView(view, params)
@@ -81,11 +83,13 @@ class CorgiFetchBallOverlay(context: Context, private val windowManager: WindowM
     private class BallView(context: Context) : View(context) {
         private val painter: CarePropPainter = CarePropPainter()
         var ballRotation: Float = 0f
+        var toyDecorationId: String? = null
         init { importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO }
         override fun onDraw(canvas: Canvas): Unit {
             super.onDraw(canvas)
             canvas.save()
             canvas.rotate(ballRotation, width / 2f, height / 2f)
+            painter.toyDecorationId = toyDecorationId
             painter.draw(canvas, CareSceneAction.PLAY, width / 2f, height / 2f, width * .86f)
             canvas.restore()
         }

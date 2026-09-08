@@ -12,6 +12,8 @@ import com.pixelpals.app.core.domain.PetType
 class CarePropPainter {
     private val paint: Paint = Paint(Paint.ANTI_ALIAS_FLAG)
     var bedDecorationId: String? = null
+    var toyDecorationId: String? = null
+    private val toyBounds: RectF = RectF(-100f / 67f, -120f / 67f, 100f / 67f, 80f / 67f)
     private val homePainter by lazy { com.pixelpals.app.feature.home.HomeScenePainter() }
     private val bedBounds: RectF = RectF(-100f / 94f, -154f / 94f, 100f / 94f, 46f / 94f)
     private val species: SpeciesPropPainter = SpeciesPropPainter()
@@ -24,6 +26,12 @@ class CarePropPainter {
         canvas.save()
         canvas.translate(x, y)
         canvas.scale(size / 2f, size / 2f)
+        val selectedToy = toyDecorationId?.let(com.pixelpals.app.feature.home.DecorationCatalog::find)
+        if (action == CareSceneAction.PLAY && selectedToy?.kind == com.pixelpals.app.feature.home.DecorationKind.TOY && selectedToy.id != "ball") {
+            homePainter.drawObject(canvas, selectedToy, toyBounds, pet = pet)
+            canvas.restore()
+            return
+        }
         val selectedBed = bedDecorationId?.let(com.pixelpals.app.feature.home.DecorationCatalog::find)
         if (action == CareSceneAction.REST && selectedBed?.kind == com.pixelpals.app.feature.home.DecorationKind.BED && selectedBed.id != "linen_bed") {
             homePainter.drawObject(canvas, selectedBed, bedBounds, pet = pet)
