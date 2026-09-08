@@ -37,6 +37,14 @@ internal class MokiMotionController(
     /** Clearance superior ADICIONAL (dp) para UIs con header (solo preview debug). */
     private val topClearanceDp: Float = 0f,
 ) {
+    private var restRequested: Boolean = false
+    private var restBrakingTime: Float = 0f
+    fun requestRest(requested: Boolean) {
+        restRequested = requested
+        if (!requested) restBrakingTime = 0f
+    }
+    val readyForRest: Boolean get() = mode == MokiMode.PERCH && surface == MokiSurface.BOTTOM
+
     var mode: MokiMode = MokiMode.PERCH
         private set
     var surface: MokiSurface = MokiSurface.BOTTOM
@@ -145,12 +153,20 @@ internal class MokiMotionController(
             stateTime < 1.65f -> 0
             else -> 3
         }
-        if (stateTime >= PERCH_DURATION_SECONDS) changeMode(MokiMode.CRAWL)
+        if (!(restRequested && surface == MokiSurface.BOTTOM) && stateTime >= PERCH_DURATION_SECONDS) changeMode(MokiMode.CRAWL)
     }
 
     private fun updateCrawl(dt: Float): Unit {
         val edgeLength: Float = getEdgeLength(surface)
-        edgeProgress += CRAWL_SPEED_DP * density * dt / edgeLength.coerceAtLeast(1f)
+        val braking: Boolean = restRequested && surface == MokiSurface.BOTTOM
+        restBrakingTime = if (braking) restBrakingTime + dt else 0f
+        val speed: Float = CRAWL_SPEED_DP * density * kotlin.math.exp(-6f * restBrakingTime)
+        edgeProgress += speed * dt / edgeLength.coerceAtLeast(1f)
+        if (braking && speed <= density && edgeProgress < 1f) {
+            setAnchoredPosition()
+            changeMode(MokiMode.PERCH)
+            return
+        }
         frameIndex = 4 + ((stateTime / CRAWL_FRAME_SECONDS).toInt() % 4)
         val shouldRest: Boolean = completedEdges > 0 && completedEdges % REST_EDGE_INTERVAL == 0
         if (shouldRest && !hasRestedOnCurrentEdge && edgeProgress >= REST_EDGE_PROGRESS) {

@@ -12,6 +12,10 @@ class MokiBehavior(
     bridge: PetViewBridge,
     override val random: PetRandom,
 ) : BaseBehavior(bridge, random) {
+    override fun onScheduledRestRequested(requested: Boolean) { controller.requestRest(requested) }
+    override fun canStartScheduledSleep(reducedMotion: Boolean): Boolean =
+        controller.readyForRest || (reducedMotion && controller.surface == com.pixelpals.app.core.motion.MokiSurface.BOTTOM && controller.mode == MokiMode.CRAWL)
+
     override val resourceIds: List<Int> = emptyList()
     private val controller: MokiMotionController = MokiMotionController(density = (bridge as View).resources.displayMetrics.density)
     private var pose: MokiPose = controller.getPose()

@@ -13,6 +13,13 @@ class LumiBehavior(
     bridge: PetViewBridge,
     override val random: PetRandom,
 ) : BaseBehavior(bridge, random) {
+    private var scheduledRestRequested: Boolean = false
+    override fun onScheduledRestRequested(requested: Boolean) { scheduledRestRequested = requested }
+    override fun canStartScheduledSleep(reducedMotion: Boolean): Boolean =
+        configured && (controller.mode == com.pixelpals.app.core.motion.LumiMode.IDLE ||
+            controller.mode == com.pixelpals.app.core.motion.LumiMode.SLEEP ||
+            (reducedMotion && controller.mode == com.pixelpals.app.core.motion.LumiMode.WALK))
+
     override val isSleeping: Boolean get() = controller.mode == com.pixelpals.app.core.motion.LumiMode.SLEEP
 
     override val resourceIds: List<Int> = emptyList()
@@ -92,7 +99,7 @@ class LumiBehavior(
         syncControllerToWindow()
         val pose = controller.update(
             deltaSeconds = dt,
-            shouldSleep = bridge.petStatus.mood == PetMood.SLEEPY || bridge.petStatus.energy <= 28,
+            shouldSleep = scheduledRestRequested || bridge.petStatus.mood == PetMood.SLEEPY || bridge.petStatus.energy <= 28,
         )
         syncPoseToBridge(pose)
         bridge.state = when (pose.mode) {
