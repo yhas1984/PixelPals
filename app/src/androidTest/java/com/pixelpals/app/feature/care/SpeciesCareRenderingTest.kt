@@ -91,18 +91,27 @@ class SpeciesCareRenderingTest {
         pack.bitmap.recycle()
     }
 
-    @Test fun everyTrayHasDistinctFoodToyAndBedIllustrations(): Unit {
+    @Test fun traysHaveDistinctIllustrationsExceptTheSharedImpCushion(): Unit {
         val bitmap: Bitmap = Bitmap.createBitmap(80, 80, Bitmap.Config.ARGB_8888)
         val painter: CarePropPainter = CarePropPainter()
         val pixels: IntArray = IntArray(6_400)
         for (action: CareSceneAction in listOf(CareSceneAction.FEED, CareSceneAction.PLAY, CareSceneAction.REST)) {
             val hashes: MutableSet<Int> = mutableSetOf()
+            bitmap.eraseColor(Color.TRANSPARENT)
+            painter.draw(Canvas(bitmap), action, 40f, 40f, 64f, pet = PetType.CORGI)
+            bitmap.getPixels(pixels, 0, 80, 0, 0, 80, 80)
+            val corgiHash: Int = pixels.contentHashCode()
             for (pet: PetType in PetType.entries) {
                 bitmap.eraseColor(Color.TRANSPARENT)
                 painter.draw(Canvas(bitmap), action, 40f, 40f, 64f, pet = pet)
                 bitmap.getPixels(pixels, 0, 80, 0, 0, 80, 80)
                 assertTrue("$pet $action visible", pixels.count { Color.alpha(it) > 128 } > 70)
-                assertTrue("$pet $action unique", hashes.add(pixels.contentHashCode()))
+                if (pet == PetType.DIABLILLO && action == CareSceneAction.REST) {
+                    // Wings belong to the sleeping body; its furniture is the shared cushion.
+                    assertEquals("Imp cushion matches the shared furniture", corgiHash, pixels.contentHashCode())
+                } else {
+                    assertTrue("$pet $action unique", hashes.add(pixels.contentHashCode()))
+                }
             }
         }
         bitmap.recycle()

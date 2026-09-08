@@ -11,7 +11,8 @@ shows open habitat; night uses night lighting. Movable furniture retains its gri
 Home and care backgrounds receive the selected pet. Postcards captured from the
 home therefore include the habitat. Gradient and parsed colors are cached rather
 than rebuilt per frame. These are initial native illustrations, not final art signoff.
-Trees/branches are currently scenery: Ginger climbing them remains outstanding.
+Ginger can now jump onto a branch and return (see `GINGER-TREE-VISIT-2026-09-08.md`).
+Actual trunk climbing still requires dedicated gripping/climbing frames.
 
 Unified shared resource surfaces, text, strokes, navigation/primary accent to the
 existing HomeUi cream/sage palette. Historical purple resource names alias the new
