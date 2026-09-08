@@ -1,5 +1,7 @@
 package com.pixelpals.app.feature.home
 
+import com.pixelpals.app.feature.care.PetDreamPainter
+
 import android.content.Context
 import android.graphics.*
 import android.view.View
@@ -54,7 +56,7 @@ class CompanionSceneTest {
     }
 
     @Test fun dreamCloudStaysStillWithReducedMotion(): Unit {
-        val painter: HomeDreamPainter = HomeDreamPainter()
+        val painter: PetDreamPainter = PetDreamPainter()
         val first: Bitmap = Bitmap.createBitmap(1000, 760, Bitmap.Config.ARGB_8888)
         val second: Bitmap = Bitmap.createBitmap(1000, 760, Bitmap.Config.ARGB_8888)
         painter.draw(Canvas(first), 500f, 650f, 300f, 2f, true)

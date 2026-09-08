@@ -20,6 +20,7 @@ class CorgiDesktopCareRenderer {
     private val source: Rect = Rect()
     private val destination: RectF = RectF()
     private val props: CarePropPainter = CarePropPainter()
+    private val dreams: PetDreamPainter = PetDreamPainter()
     private val foam: CareFoamPainter = CareFoamPainter()
 
     fun draw(canvas: Canvas, pack: CarePosePack, spriteSize: Int, elapsedMs: Long,
@@ -96,6 +97,9 @@ class CorgiDesktopCareRenderer {
             }
         }
         canvas.restore()
+        if (action == CareSceneAction.REST) {
+            dreams.drawDesktop(canvas, cx, baseline, size, elapsedMs / 1_000f, reducedMotion)
+        }
     }
 
     private fun drawFadedProp(canvas: Canvas, action: CareSceneAction, x: Float, y: Float,

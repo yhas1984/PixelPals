@@ -1,5 +1,7 @@
 package com.pixelpals.app.feature.home
 
+import com.pixelpals.app.feature.care.PetDreamPainter
+
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
@@ -15,7 +17,7 @@ import java.time.LocalTime
 import kotlin.math.*
 
 class HomeSceneView(context: Context) : View(context) {
-    private val dreamPainter: HomeDreamPainter = HomeDreamPainter()
+    private val dreamPainter: PetDreamPainter = PetDreamPainter()
     private val painter: HomeScenePainter = HomeScenePainter()
     private val paint: Paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
     private val actor: RectF = RectF()

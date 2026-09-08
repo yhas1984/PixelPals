@@ -1,4 +1,4 @@
-package com.pixelpals.app.feature.home
+package com.pixelpals.app.feature.care
 
 import android.graphics.Canvas
 import android.graphics.Paint
@@ -8,16 +8,28 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 /** A small thought cloud. All movement stops with the user's reduced-motion setting. */
-internal class HomeDreamPainter {
+internal class PetDreamPainter {
     private val paint: Paint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val path: Path = Path()
     fun draw(canvas: Canvas, x: Float, floor: Float, size: Float, seconds: Float, reduced: Boolean): Unit {
         val center: Float = (x + size * .26f).coerceIn(100f, 900f)
         val top: Float = (floor - size * .82f).coerceAtLeast(80f)
+        drawCloud(canvas, center, top, 1f, seconds, reduced)
+    }
+    fun drawDesktop(canvas: Canvas, x: Float, floor: Float, size: Float, seconds: Float, reduced: Boolean): Unit {
+        val scale: Float = (size / 290f).coerceAtMost(minOf(canvas.width / 140f, canvas.height / 140f))
+        if (scale <= 0f) return
+        val margin: Float = 70f * scale
+        val center: Float = (x + size * .26f).coerceIn(margin, canvas.width - margin)
+        val top: Float = (floor - size * .82f).coerceIn(82f * scale, canvas.height - 46f * scale)
+        drawCloud(canvas, center, top, scale, seconds, reduced)
+    }
+    private fun drawCloud(canvas: Canvas, center: Float, top: Float, scale: Float, seconds: Float, reduced: Boolean): Unit {
         val drift: Float = if (reduced) 0f else sin(seconds * .9f) * 3f
         val opacity: Int = if (reduced) 255 else ((seconds - 1.4f) / .6f * 255).toInt().coerceIn(0, 255)
         canvas.save()
-        canvas.translate(center, top + drift)
+        canvas.translate(center, top + drift * scale)
+        canvas.scale(scale, scale)
         paint.style = Paint.Style.FILL
         paint.color = 0xfff8f2ff.toInt()
         paint.alpha = opacity

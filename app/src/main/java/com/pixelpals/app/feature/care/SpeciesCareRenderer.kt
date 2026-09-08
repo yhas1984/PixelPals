@@ -23,6 +23,7 @@ class SpeciesCareRenderer {
     private val transform: Matrix = Matrix()
     private val coordinates: FloatArray = FloatArray(2)
     private val props: CarePropPainter = CarePropPainter()
+    private val dreams: PetDreamPainter = PetDreamPainter()
     private val foam: CareFoamPainter = CareFoamPainter()
     private val cloud: CloudCarePainter = CloudCarePainter()
     private val impWings: ImpWingPainter = ImpWingPainter()
@@ -138,6 +139,9 @@ class SpeciesCareRenderer {
             impFire.draw(canvas, point(anchors.mouth), actor.width(), ImpCareMotion.sampleFire(scene.animationMs, reduced || gentle))
         }
         if (scene?.hasContact == true && !reduced && !gentle) drawReaction(canvas, scene, anchors)
+        if (desktopSize != null && action == CareSceneAction.REST && scene?.hasContact == true && !scene.isCancelled) {
+            dreams.drawDesktop(canvas, ground.x, ground.y, actor.width(), scene.animationMs / 1_000f, reduced)
+        }
     }
 
     private fun drawTool(canvas: Canvas, scene: CareSceneController, anchors: CarePoseAnchors, reduced: Boolean): Unit {
