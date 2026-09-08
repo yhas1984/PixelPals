@@ -26,6 +26,9 @@ class SpeciesCareRenderer {
     var bedDecorationId: String?
         get() = props.bedDecorationId
         set(value) { props.bedDecorationId = value }
+    var toyDecorationId: String?
+        get() = props.toyDecorationId
+        set(value) { props.toyDecorationId = value }
 
     private val yukiEffects: YukiCarePainter = YukiCarePainter()
     private val dreams: PetDreamPainter = PetDreamPainter()

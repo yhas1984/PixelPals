@@ -27,6 +27,39 @@ import java.util.Locale
 class SpeciesCareRenderingTest {
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 
+    @Test fun selectedYarnAppearsInRoomAndGingerDesktopWithoutChangingFood(): Unit = runBlocking {
+        val bitmap = Bitmap.createBitmap(320, 320, Bitmap.Config.ARGB_8888)
+        try {
+            for (pet in listOf(PetType.CORGI, PetType.GINGER)) {
+                val pack = CarePoseLoader.load(context.assets, pet)
+                try {
+                    val room = CareSceneRenderer()
+                    val desktop = SpeciesCareRenderer()
+                    fun render(action: CareSceneAction, toy: String?, onDesktop: Boolean): IntArray {
+                        val scene = CareSceneController(action, CareSceneMode.AUTOMATIC, pack.spec.timings.getValue(action))
+                        scene.advance(1_600L)
+                        bitmap.eraseColor(Color.TRANSPARENT)
+                        if (onDesktop) {
+                            desktop.toyDecorationId = toy
+                            desktop.draw(Canvas(bitmap), pack, scene, false, false, desktopSize = 160)
+                        } else {
+                            room.toyDecorationId = toy
+                            room.draw(Canvas(bitmap), pack, scene, false, false)
+                        }
+                        return IntArray(320 * 320).also { bitmap.getPixels(it, 0, 320, 0, 0, 320, 320) }
+                    }
+                    for (onDesktop in if (pet == PetType.GINGER) listOf(false, true) else listOf(false)) {
+                        val basic = render(CareSceneAction.PLAY, null, onDesktop)
+                        val yarn = render(CareSceneAction.PLAY, "yarn", onDesktop)
+                        assertTrue("$pet selected toy must reach the renderer", basic.indices.count { basic[it] != yarn[it] } > 20)
+                        assertArrayEquals("Toy choice must not replace food", render(CareSceneAction.FEED, null, onDesktop), render(CareSceneAction.FEED, "yarn", onDesktop))
+                        assertArrayEquals("Removing the toy must clear it", basic, render(CareSceneAction.PLAY, null, onDesktop))
+                    }
+                } finally { pack.bitmap.recycle() }
+            }
+        } finally { bitmap.recycle() }
+    }
+
     @Test fun equippedTintChangesEveryPetAndDoesNotLeakIntoLaterFrames(): Unit = runBlocking {
         val shared: SpeciesCareRenderer = SpeciesCareRenderer()
         val corgi: CorgiDesktopCareRenderer = CorgiDesktopCareRenderer()

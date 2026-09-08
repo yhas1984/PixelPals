@@ -20,6 +20,9 @@ class CareStageView(context: Context) : View(context) {
     var bedDecorationId: String?
         get() = renderer.bedDecorationId
         set(value) { renderer.bedDecorationId = value; invalidate() }
+    var toyDecorationId: String?
+        get() = renderer.toyDecorationId
+        set(value) { renderer.toyDecorationId = value; invalidate() }
     private var controller: CareSceneController? = null
     private var lastFrame: Long = 0L
     private var didFinish: Boolean = false

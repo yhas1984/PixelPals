@@ -143,8 +143,12 @@ class CareScenePanel @JvmOverloads constructor(context: Context, attrs: Attribut
         retryButton.visibility = GONE
         loadJob = scope?.launch {
             try {
+                val decorationDao = com.pixelpals.app.core.services.AppServices.companions(context).dao
+                val placements = decorationDao.getPlacements(current.pet.name.lowercase())
+                stage.toyDecorationId = com.pixelpals.app.feature.home.CareDecorationSelection.careToy(
+                    current.pet, placements, decorationDao.getHome(current.pet.name.lowercase())?.favoriteObject)
                 stage.bedDecorationId = com.pixelpals.app.feature.home.CareDecorationSelection.bed(
-                    com.pixelpals.app.core.services.AppServices.companions(context).dao.getPlacements(current.pet.name.lowercase()))
+                    placements)
                 stage.pack = CarePoseLoader.load(context.assets, current.pet)
                 render(current.state.value)
                 pendingAction?.let { (action, mode) -> pendingAction = null; current.start(action, mode) }

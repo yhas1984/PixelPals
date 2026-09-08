@@ -79,8 +79,12 @@ class SpeciesDesktopCare(
                     return@launch
                 }
                 val loaded: CarePosePack = CarePoseLoader.load(context.assets, pet)
+                val decorationDao = AppServices.companions(context).dao
+                val placements = decorationDao.getPlacements(pet.name.lowercase())
+                renderer.toyDecorationId = com.pixelpals.app.feature.home.CareDecorationSelection.careToy(
+                    pet, placements, decorationDao.getHome(pet.name.lowercase())?.favoriteObject)
                 renderer.bedDecorationId = com.pixelpals.app.feature.home.CareDecorationSelection.bed(
-                    AppServices.companions(context).dao.getPlacements(pet.name.lowercase()))
+                    placements)
                 pack = loaded
                 scene = CareSceneController(action, CareSceneMode.AUTOMATIC, loaded.spec.timings.getValue(action))
                 coordinator.session.collect { current: CareSceneSession? ->

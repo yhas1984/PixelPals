@@ -5,6 +5,19 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class CareDecorationSelectionTest {
+    @Test fun careUsesCompatiblePlacedToysAndPreservesSpeciesActions() {
+        val pinwheel = HomeDecorationEntity("corgi", "pinwheel", 0, 0)
+        val yarn = HomeDecorationEntity("corgi", "yarn", 1, 0)
+        val ball = HomeDecorationEntity("corgi", "ball", 2, 0)
+        for (pet in listOf(com.pixelpals.app.core.domain.PetType.CORGI, com.pixelpals.app.core.domain.PetType.GINGER)) {
+            assertEquals("yarn", CareDecorationSelection.careToy(pet, listOf(pinwheel, yarn), "pinwheel"))
+            assertEquals("yarn", CareDecorationSelection.careToy(pet, listOf(ball, yarn), "yarn"))
+            assertNull(CareDecorationSelection.careToy(pet, listOf(pinwheel), "yarn"))
+        }
+        assertEquals("ball", CareDecorationSelection.careToy(com.pixelpals.app.core.domain.PetType.YUKI, listOf(yarn, ball), "yarn"))
+        assertNull(CareDecorationSelection.careToy(com.pixelpals.app.core.domain.PetType.DIABLILLO, listOf(yarn), "yarn"))
+    }
+
     @Test fun toyUsesPlacedFavoriteAndIgnoresStoredOrNonToyFavorites() {
         val ball = HomeDecorationEntity("corgi", "ball", 0, 0)
         val yarn = HomeDecorationEntity("corgi", "yarn", 1, 0)

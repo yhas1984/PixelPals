@@ -20,6 +20,9 @@ class CareSceneRenderer {
     var bedDecorationId: String?
         get() = props.bedDecorationId
         set(value) { props.bedDecorationId = value; species.bedDecorationId = value }
+    var toyDecorationId: String?
+        get() = props.toyDecorationId
+        set(value) { props.toyDecorationId = value; species.toyDecorationId = value }
 
     private val foam: CareFoamPainter = CareFoamPainter()
 

@@ -70,8 +70,7 @@ class CorgiDesktopCare(
                 val decorationDao = AppServices.companions(context).dao
                 val placements = decorationDao.getPlacements(PetType.CORGI.name.lowercase())
                 val favorite = decorationDao.getHome(PetType.CORGI.name.lowercase())?.favoriteObject
-                selectedToy = com.pixelpals.app.feature.home.CareDecorationSelection.toy(placements, favorite)
-                    ?.takeIf { it == "ball" || it == "yarn" || it == "star_toy" }
+                selectedToy = com.pixelpals.app.feature.home.CareDecorationSelection.careToy(PetType.CORGI, placements, favorite)
                 renderer.bedDecorationId = com.pixelpals.app.feature.home.CareDecorationSelection.bed(
                     AppServices.companions(context).dao.getPlacements(PetType.CORGI.name.lowercase()))
                 pack = loaded
