@@ -12,7 +12,7 @@ interface DesktopCarePlayback {
 
     fun start(action: CareSceneAction, facingLeft: Boolean, fetchPlan: CorgiFetchPlan? = null): Unit
     fun advance(deltaSeconds: Float): Unit
-    fun draw(canvas: Canvas, spriteSize: Int): Boolean
+    fun draw(canvas: Canvas, spriteSize: Int, baselineOffsetY: Float = spriteSize * .46f): Boolean
     fun cancel(): Unit
 
     companion object {

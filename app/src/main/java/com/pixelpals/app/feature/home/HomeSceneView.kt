@@ -105,6 +105,8 @@ class HomeSceneView(context: Context) : View(context) {
     /** Selects a path for frame review without waiting for a random autonomous choice. */
     internal fun requestMotionReview(intent: CompanionIntent): Unit = motion.beginIntent(intent)
 
+    internal val renderedActorSize: Float get() = actor.width()
+
     internal val activity: CompanionActivity get() = motion.activity
 
     internal fun advanceScene(delta: Long): Unit {
@@ -189,7 +191,7 @@ class HomeSceneView(context: Context) : View(context) {
         val sprites: HomeLocomotion = locomotion ?: return
         val reduced: Boolean = isMotionReduced || isEditing
         val x: Float = motion.x
-        val size: Float = (290f + bond.coerceIn(0, 100) * .12f) * (.75f + (motion.y - 430f) / 880f)
+        val size: Float = 290f
         val gait: HomeGait = HomeGait.forPet(pet)
         val phase: Float = motion.distanceTravelled / 105f * (2f * PI.toFloat())
         val amount: Float = if (reduced) 0f else (motion.speed / 75f).coerceIn(0f, 1f)

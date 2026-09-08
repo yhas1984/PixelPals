@@ -1,6 +1,7 @@
 package com.pixelpals.app.core.runtime.pets
 
 import com.pixelpals.app.core.motion.PetRandom
+import com.pixelpals.app.core.motion.GroundGait
 import com.pixelpals.app.core.runtime.PetActionCandidate
 import com.pixelpals.app.core.runtime.PetActionScheduler
 import com.pixelpals.app.core.runtime.PetBrain
@@ -205,8 +206,9 @@ class YukiRuntimeBrain(
             targetX = if (startX < (bounds.left + bounds.right) / 2f) bounds.right.toFloat() else bounds.left.toFloat()
         }
         val facing = if (targetX >= startX) PetFacing.RIGHT else PetFacing.LEFT
-        val duration = (abs(targetX - startX) / YukiRuntimeDefinition.WALK_SPEED_PIXELS_PER_SECOND)
-            .coerceAtLeast(MINIMUM_WALK_DURATION_SECONDS)
+        val duration = GroundGait.duration(
+            targetX - startX, YukiRuntimeDefinition.WALK_SPEED_PIXELS_PER_SECOND, MINIMUM_WALK_DURATION_SECONDS,
+        )
         val next = state.copy(
             mode = YukiRuntimeMode.WALK,
             elapsedSeconds = 0f,
@@ -222,13 +224,13 @@ class YukiRuntimeBrain(
         state: YukiRuntimeState,
         context: PetBrainContext,
     ): PetBrainResult<YukiRuntimeState> {
-        val progress = (state.elapsedSeconds / state.walkDurationSeconds).coerceIn(0f, 1f)
+        val progress = GroundGait.progress(state.elapsedSeconds, state.walkDurationSeconds)
         val x = state.walkStartX + (state.walkTargetX - state.walkStartX) * progress
         val position = PetVector(x, context.environment.bounds.floor.toFloat())
         return if (progress >= 1f) {
             idle(state, context, position)
         } else {
-            output(state, "walk", position, dreamyTransform(state.elapsedSeconds, 0.8f))
+            output(state, "walk", position, PetTransform())
         }
     }
 

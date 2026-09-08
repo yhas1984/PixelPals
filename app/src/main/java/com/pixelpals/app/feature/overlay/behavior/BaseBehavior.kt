@@ -33,6 +33,32 @@ abstract class BaseBehavior(
     protected open val random: PetRandom
 ) : PetBehavior {
 
+    override val facingLeft: Boolean get() = bridge.animScaleX < 0f
+    override val careBaselineOffsetY: Float?
+        get() {
+            val index: Int = bridge.currentFrame.coerceAtLeast(0)
+            val spec: PetAtlasSpec? = spriteSheetSpec
+            val bottom: Float = if (spec != null) {
+                (spriteHitMask?.opaqueBottom(index) ?: return null).toFloat() / spec.frameHeight
+            } else {
+                val bitmap: Bitmap = frames.getOrNull(index) ?: return null
+                val row: IntArray = IntArray(bitmap.width)
+                var y: Int = bitmap.height - 1
+                while (y >= 0) {
+                    bitmap.getPixels(row, 0, bitmap.width, 0, y, bitmap.width, 1)
+                    if (row.any { it ushr 24 >= 32 }) break
+                    y--
+                }
+                if (y < 0) return null
+                (y + 1).toFloat() / bitmap.height
+            }
+            val size: Float = bridge.petSpriteSize * bridge.spriteScale * spriteAtlasDrawScale
+            val pivot: Float = spec?.pivot?.y?.toFloat()?.div(spec.frameHeight) ?: .5f
+            val radians: Double = Math.toRadians(bridge.renderRotation.toDouble())
+            return bridge.renderOffsetY + (.5f - pivot) * size +
+                (bottom - .5f) * size * bridge.renderScaleY * cos(radians).toFloat()
+        }
+
     protected var time: Float = 0f
     protected var interactionTimer: Float = 0f 
 
@@ -508,13 +534,9 @@ abstract class BaseBehavior(
         if (isLoading || (bitmap == null && (spriteSheet == null || srcRect == null))) return
 
         canvas.save()
-        // Tamaño de DIBUJO normalizado (todos los pets visibles al tamaño de Moki).
-        // Normalización por frame: los frames "estirados" (contenido más alto que
-        // el idle) se comprimen al alto del idle; los bajos (squash, sniff, dormir,
-        // gatear) se mantienen a su tamaño natural. Así ningún frame se dibuja más
-        // alto que la referencia y las posturas bajas siguen leyéndose como bajas.
-        val frameScale = frameOccupancyScale(frameIdx)
-        val halfSize = bridge.petSpriteSize * bridge.spriteScale * spriteAtlasDrawScale * frameScale / 2f
+        // Keep the source camera fixed across poses. Alpha height changes with
+        // lifted paws, ears and breathing; it must not resize the whole animal.
+        val halfSize = bridge.petSpriteSize * bridge.spriteScale * spriteAtlasDrawScale / 2f
         val atlasPivot = spriteSheetSpec?.pivot
         val pivotOffsetX = if (atlasPivot != null && spriteSheetSpec != null) {
             (0.5f - atlasPivot.x.toFloat() / spriteSheetSpec!!.frameWidth) * 2f * halfSize
@@ -555,8 +577,7 @@ abstract class BaseBehavior(
         val spec = spriteSheetSpec ?: return null
         val mask = spriteHitMask ?: return null
         val frameIndex = bridge.currentFrame.coerceIn(0, spec.frameCount - 1)
-        val frameScale = frameOccupancyScale(frameIndex)
-        val halfSize = bridge.petSpriteSize * bridge.spriteScale * spriteAtlasDrawScale * frameScale / 2f
+        val halfSize = bridge.petSpriteSize * bridge.spriteScale * spriteAtlasDrawScale / 2f
         if (halfSize <= 0f) return false
         val pivot = spec.pivot
         val pivotOffsetX = pivot?.let { (0.5f - it.x.toFloat() / spec.frameWidth) * 2f * halfSize } ?: 0f
@@ -574,16 +595,6 @@ abstract class BaseBehavior(
         val frameX = (((spriteX / halfSize) + 1f) * 0.5f * spec.frameWidth).toInt()
         val frameY = (((spriteY / halfSize) + 1f) * 0.5f * spec.frameHeight).toInt()
         return mask.isOpaque(frameIndex, frameX, frameY)
-    }
-
-    private fun frameOccupancyScale(frameIndex: Int): Float {
-        if (spriteSheetSpec?.renderHints?.useFrameOccupancyNormalization == false) return 1f
-        val frameFraction = bridge.spriteFrameContentFractions.getOrNull(frameIndex) ?: 0f
-        return if (frameFraction > 0f && bridge.spriteIdleContentFraction > 0f) {
-            (bridge.spriteIdleContentFraction / frameFraction).coerceAtMost(1f)
-        } else {
-            1f
-        }
     }
 
     private fun moodColorFilter(): ColorMatrixColorFilter? {

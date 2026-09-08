@@ -80,6 +80,7 @@ class PetView(
     }
     private val companionPreferences = com.pixelpals.app.feature.home.CompanionPreferences(context)
     private var desktopCare: DesktopCarePlayback? = null
+    private var careBaselineOffsetY: Float = petSpriteSize * .46f
     private var activeSecondsAccumulator = 0f
     private var ambientBubbleCooldown = 12f
     private var lastFrameTimeNanos = 0L
@@ -555,7 +556,8 @@ class PetView(
         if (!BuildConfig.CARE_SCENES_ENABLED || petType !in DesktopCarePlayback.SUPPORTED_PETS || !isAnimating ||
             !isAttachedToWindow || visibility != VISIBLE || desktopCare?.isActive == true ||
             action !in DesktopCarePlayback.ACTIONS) return
-        val facingLeft: Boolean = animScaleX < 0f
+        val facingLeft: Boolean = behavior?.facingLeft ?: (animScaleX < 0f)
+        careBaselineOffsetY = behavior?.careBaselineOffsetY ?: (petSpriteSize * .46f)
         val fetch: CorgiFetchPlan? = if (petType == PetType.CORGI && action == CareSceneAction.PLAY) {
             val position: WindowManager.LayoutParams = getWindowParams() ?: return
             CorgiFetchMotion.createPlan(
@@ -581,9 +583,8 @@ class PetView(
                 )
             }
         }
-        behavior?.reset()
-        currentFrame = 0
-        animScaleX = if (facingLeft) -1f else 1f
+        // Keep the current pose and position until care assets are ready. Resetting
+        // here can teleport a ground pet and flash an unrelated drag frame.
         desktopCare?.start(action, facingLeft, fetch)
         invalidate()
     }
@@ -597,7 +598,6 @@ class PetView(
         } else {
             behavior?.reset()
         }
-        currentFrame = 0
         if (result is CareSceneResult.Completed) {
             updatePetStatus(result.after)
             val message: String = context.getString(when (completedAction) {
@@ -655,7 +655,7 @@ class PetView(
         // rotación: corona/paraguas flotan "arriba" en pantalla, no giran con él.
         val cx = width / 2f + renderOffsetX
         val cy = height / 2f + renderOffsetY
-        val scale = renderScaleX.coerceAtLeast(0.4f)
+        val scale = abs(renderScaleX).coerceAtLeast(0.4f)
         when (effect) {
             is com.pixelpals.app.data.catalog.CosmeticEffect.TintEffect -> Unit
             is com.pixelpals.app.data.catalog.CosmeticEffect.AuraEffect -> {
@@ -671,8 +671,8 @@ class PetView(
                 }
             }
             is com.pixelpals.app.data.catalog.CosmeticEffect.FloatEffect -> {
-                val scaleX = renderScaleX.coerceAtLeast(0.4f)
-                val scaleY = renderScaleY.coerceAtLeast(0.4f)
+                val scaleX = abs(renderScaleX).coerceAtLeast(0.4f)
+                val scaleY = abs(renderScaleY).coerceAtLeast(0.4f)
                 cosmeticPaint.textSize = petSpriteSize.toFloat() * effect.sizeRatio * scaleX
                 cosmeticPaint.alpha = (255 * (animAlpha.coerceIn(0f, 1f))).toInt()
                 val fm = cosmeticPaint.fontMetrics
@@ -803,7 +803,7 @@ class PetView(
         super.onDraw(canvas)
         // Run frames and care frames share this same pet window; never draw both.
         if (desktopCare?.isActive == true) {
-            if (desktopCare?.draw(canvas, petSpriteSize) != true) {
+            if (desktopCare?.draw(canvas, petSpriteSize, careBaselineOffsetY) != true) {
                 behavior?.onDraw(canvas, width / 2f, height / 2f)
             }
             return

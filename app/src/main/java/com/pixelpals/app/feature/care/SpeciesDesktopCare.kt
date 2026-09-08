@@ -106,7 +106,7 @@ class SpeciesDesktopCare(
         finishIfReady()
     }
 
-    override fun draw(canvas: Canvas, spriteSize: Int): Boolean {
+    override fun draw(canvas: Canvas, spriteSize: Int, baselineOffsetY: Float): Boolean {
         val loaded: CarePosePack = pack ?: return false
         val playback: CareSceneController = scene ?: return false
         canvas.save()
@@ -116,6 +116,7 @@ class SpeciesDesktopCare(
             reduced = !ValueAnimator.areAnimatorsEnabled() || companionPreferences.reducedMotion,
             gentle = false,
             desktopSize = spriteSize,
+            desktopBaselineOffsetY = baselineOffsetY,
         )
         canvas.restore()
         return true

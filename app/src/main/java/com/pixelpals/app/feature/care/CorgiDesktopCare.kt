@@ -103,13 +103,13 @@ class CorgiDesktopCare(
     }
 
     /** True means locomotion must not draw an additional sprite this frame. */
-    override fun draw(canvas: Canvas, spriteSize: Int): Boolean {
+    override fun draw(canvas: Canvas, spriteSize: Int, baselineOffsetY: Float): Boolean {
         val loaded: CarePosePack = pack ?: return false
         val playback: CareSceneController = scene ?: return false
         if (fetchPose?.regularFrame != null) return false
         renderer.draw(canvas, loaded, spriteSize, playback.animationMs, facingLeft,
             reducedMotion = !ValueAnimator.areAnimatorsEnabled() || companionPreferences.reducedMotion, action = action,
-            fetchFrame = fetchPose?.careFrame ?: 2)
+            fetchFrame = fetchPose?.careFrame ?: 2, baselineOffsetY = baselineOffsetY)
         return true
     }
 

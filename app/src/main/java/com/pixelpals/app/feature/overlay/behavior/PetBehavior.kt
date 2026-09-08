@@ -13,6 +13,11 @@ import com.pixelpals.app.status.PetStatusSnapshot
  */
 interface PetBehavior {
 
+    /** Semantic facing, independent of whether the source artwork was drawn mirrored. */
+    val facingLeft: Boolean? get() = null
+    /** Current rendered ground contact relative to the pet window's vertical center. */
+    val careBaselineOffsetY: Float? get() = null
+
     /** True when this behavior, rather than PetView, owns drag and release physics. */
     val usesRuntimeInput: Boolean get() = false
 

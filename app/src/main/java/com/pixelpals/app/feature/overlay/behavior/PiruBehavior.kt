@@ -2,6 +2,7 @@ package com.pixelpals.app.feature.overlay.behavior
 
 import com.pixelpals.app.core.domain.PetState
 import com.pixelpals.app.core.motion.PetRandom
+import com.pixelpals.app.core.motion.GroundGait
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -60,7 +61,7 @@ class PiruBehavior(
         swimTargetX = random.nextFloat() * (maxX - minX) + minX
         val dx = swimTargetX - swimStartX
         if (abs(dx) > 10f) facingDir = if (dx >= 0f) 1f else -1f
-        swimDuration = (abs(dx) / 110f).coerceIn(2.0f, 5.0f)
+        swimDuration = GroundGait.duration(dx, bridge.petSpriteSize * .95f, 2f)
     }
 
     private fun startSlide() {
@@ -117,7 +118,7 @@ class PiruBehavior(
         if (swimDuration <= 0f) startWaddle(resetTimer = false)
 
         val t = (modeTimer / swimDuration).coerceIn(0f, 1f)
-        val easedT = sin((t * PI).toFloat() / 2f)
+        val easedT = GroundGait.progress(modeTimer, swimDuration)
         val x = swimStartX + (swimTargetX - swimStartX) * easedT
         val y = groundY()
 
@@ -127,13 +128,14 @@ class PiruBehavior(
 
         val spec = spriteSheetSpec ?: return
         val clip = spec.clip("walk") ?: return
-        val idx = ((animClock / 0.22f).toInt() % clip.frames.size)
+        val phase: Float = GroundGait.phase(x - swimStartX, bridge.petSpriteSize * .46f)
+        val idx = ((phase * clip.frames.size).toInt() % clip.frames.size)
         bridge.currentFrame = clip.frames[idx]
         bridge.animScaleX = facingScale(facingDir)
-        bridge.animScaleY = 1f + sin(time * 4.4f) * 0.02f
+        bridge.animScaleY = 1f
         bridge.animOffsetX = 0f
-        bridge.animOffsetY = abs(sin(time * 8.5f)) * 2f
-        bridge.animRotation = facingDir * sin(time * 6f) * 2f
+        bridge.animOffsetY = -abs(sin(phase * 2f * PI.toFloat())) * bridge.petSpriteSize * .018f
+        bridge.animRotation = facingDir * sin(phase * 2f * PI.toFloat()) * 2f
 
         val roll = random.nextFloat()
         if (roll < 0.0004f) {

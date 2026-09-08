@@ -57,6 +57,21 @@ class YukiRuntimeBrainTest {
     }
 
     @Test
+    fun walkAcceleratesGentlyWithoutStretchingOrFloating() {
+        val runtime = runtime(YukiSequenceRandom(0.1f, 0.9f), initialX = 100f)
+        assertEquals("walk", runtime.dispatch(PetEvent.Tick(3.1f)).clipId)
+        val startX = runtime.snapshot().position.x
+        val first = runtime.dispatch(PetEvent.Tick(1f / 60f))
+        assertTrue("Walk starts at full speed", first.position.x - startX < .05f)
+        repeat(120) {
+            val output = runtime.dispatch(PetEvent.Tick(1f / 60f))
+            assertEquals(1f, output.transform.scaleY, .001f)
+            assertEquals(0f, output.transform.offsetY, .001f)
+        }
+        assertTrue("Walk did not accelerate", runtime.snapshot().position.x > startX + 1f)
+    }
+
+    @Test
     fun flingUsesSoftGroundRecoveryAndExitsInteraction() {
         val runtime = runtime(YukiSequenceRandom())
         runtime.dispatch(

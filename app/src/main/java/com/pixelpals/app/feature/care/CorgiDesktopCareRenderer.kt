@@ -23,11 +23,11 @@ class CorgiDesktopCareRenderer {
 
     fun draw(canvas: Canvas, pack: CarePosePack, spriteSize: Int, elapsedMs: Long,
              facingLeft: Boolean, reducedMotion: Boolean, action: CareSceneAction = CareSceneAction.FEED,
-             fetchFrame: Int = 2): Unit {
+             fetchFrame: Int = 2, baselineOffsetY: Float = spriteSize * .46f): Unit {
         val size: Float = spriteSize * .94f
         val cx: Float = canvas.width / 2f
         // Match the feet of the regular Corgi sprites, not the bottom of the overlay window.
-        val baseline: Float = canvas.height / 2f + spriteSize * .46f
+        val baseline: Float = canvas.height / 2f + baselineOffsetY
         val elapsed: Long = if (reducedMotion) 0L else elapsedMs
         val additional: CorgiAdditionalCarePose? = if (action in CorgiAdditionalCareMotion.actions)
             CorgiAdditionalCareMotion.getPose(action, elapsedMs, reducedMotion) else null

@@ -32,6 +32,7 @@ class GingerBehavior(
     private var modeTimer: Float = 0f
     private var modeDuration: Float = 1.6f
     private var facingDirection: Float = -1f
+    override val facingLeft: Boolean get() = bridge.animScaleX >= 0f
     private var moveStartX: Float = 0f
     private var moveTargetX: Float = 0f
     private var airX: Float = 0f

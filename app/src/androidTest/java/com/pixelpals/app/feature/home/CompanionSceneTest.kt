@@ -16,6 +16,43 @@ import java.io.File
 
 @RunWith(AndroidJUnit4::class)
 class CompanionSceneTest {
+    @Test fun changingDepthAndBondDoesNotResizeActor(): Unit {
+        InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            val context: Context = ApplicationProvider.getApplicationContext()
+            val scene: HomeSceneView = HomeSceneView(context).apply { reviewSeed = 42 }
+            scene.placements = listOf(HomeDecorationEntity("corgi", "linen_bed", 0, 0))
+            runBlocking { scene.loadPet(PetType.CORGI) }
+            scene.measure(View.MeasureSpec.makeMeasureSpec(400, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(304, View.MeasureSpec.EXACTLY))
+            scene.layout(0, 0, 400, 304)
+            val bitmap: Bitmap = Bitmap.createBitmap(400, 304, Bitmap.Config.ARGB_8888)
+            scene.draw(Canvas(bitmap))
+            val standingSize: Float = scene.renderedActorSize
+            scene.bond = 100
+            scene.requestMotionReview(CompanionIntent.REST)
+            var attempts: Int = 0
+            while (scene.activity != CompanionActivity.REST && attempts++ < 2400) scene.advanceScene(50)
+            assertTrue(scene.activity == CompanionActivity.REST)
+            scene.draw(Canvas(bitmap))
+            org.junit.Assert.assertEquals("Depth or bond resized the same pet", standingSize, scene.renderedActorSize, .001f)
+            bitmap.recycle()
+        }
+    }
+
+    @Test fun lyingDownReducesHeightWithoutInflatingTheBody(): Unit {
+        val source: Bitmap = Bitmap.createBitmap(200, 100, Bitmap.Config.ARGB_8888)
+        val paint: Paint = Paint().apply { color = Color.RED }
+        Canvas(source).drawRect(20f, 20f, 80f, 80f, paint)
+        Canvas(source).drawRect(120f, 50f, 180f, 80f, paint)
+        val frames: HomeSpriteFrames = HomeSpriteFrames(listOf(source to Rect(0, 0, 100, 100), source to Rect(100, 0, 200, 100)))
+        val result: Bitmap = Bitmap.createBitmap(200, 100, Bitmap.Config.ARGB_8888)
+        frames.draw(Canvas(result), paint, RectF(0f, 0f, 100f, 100f), 0)
+        frames.draw(Canvas(result), paint, RectF(100f, 0f, 200f, 100f), 1)
+        fun rowWidth(offset: Int, row: Int): Int = (0 until 100).count { Color.alpha(result.getPixel(offset + it, row)) > 128 }
+        org.junit.Assert.assertEquals(rowWidth(0, 80), rowWidth(100, 80))
+        assertTrue(rowWidth(0, 30) > 0 && rowWidth(100, 30) == 0)
+        source.recycle(); result.recycle()
+    }
+
     @Test fun dreamCloudStaysStillWithReducedMotion(): Unit {
         val painter: HomeDreamPainter = HomeDreamPainter()
         val first: Bitmap = Bitmap.createBitmap(1000, 760, Bitmap.Config.ARGB_8888)

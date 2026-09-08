@@ -47,8 +47,8 @@ class TestPetBridge(context: Context, petType: PetType) : View(context), PetView
     override val screenHeight: Int = 2_400
     override val petSpriteSize: Int = 80
     override val spriteScale: Float = 1f
-    override val spriteIdleContentFraction: Float = 1f
-    override val spriteFrameContentFractions: FloatArray = floatArrayOf(1f)
+    override var spriteIdleContentFraction: Float = 1f
+    override var spriteFrameContentFractions: FloatArray = floatArrayOf(1f)
     override val groundY: Int
         get() = bounds.floor
     override val topSystemInsetPx: Int = 100

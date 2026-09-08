@@ -9,9 +9,13 @@ class PetAlphaHitMask private constructor(
     val frameCount: Int,
     private val longsPerFrame: Int,
     private val opaqueBits: LongArray,
+    private val opaqueBottoms: IntArray,
 ) {
     val byteCount: Int
-        get() = opaqueBits.size * Long.SIZE_BYTES
+        get() = opaqueBits.size * Long.SIZE_BYTES + opaqueBottoms.size * Int.SIZE_BYTES
+
+    /** Exclusive bottom edge of visible source pixels, in frame coordinates. */
+    fun opaqueBottom(frame: Int): Int = opaqueBottoms.getOrElse(frame) { 0 }
 
     fun isOpaque(frame: Int, x: Int, y: Int): Boolean {
         if (frame !in 0 until frameCount || x !in 0 until frameWidth || y !in 0 until frameHeight) return false
@@ -27,6 +31,7 @@ class PetAlphaHitMask private constructor(
             val pixelsPerFrame = spec.frameWidth * spec.frameHeight
             val longsPerFrame = (pixelsPerFrame + Long.SIZE_BITS - 1) / Long.SIZE_BITS
             val bits = LongArray(longsPerFrame * spec.frameCount)
+            val bottoms = IntArray(spec.frameCount)
             val pixels = IntArray(pixelsPerFrame)
             repeat(spec.frameCount) { frame ->
                 val column = frame % spec.columns
@@ -42,6 +47,7 @@ class PetAlphaHitMask private constructor(
                 )
                 pixels.forEachIndexed { pixelIndex, color ->
                     if (color ushr 24 >= TOUCH_ALPHA_THRESHOLD) {
+                        bottoms[frame] = pixelIndex / spec.frameWidth + 1
                         val bitIndex = frame * longsPerFrame * Long.SIZE_BITS + pixelIndex
                         bits[bitIndex / Long.SIZE_BITS] =
                             bits[bitIndex / Long.SIZE_BITS] or (1L shl (bitIndex % Long.SIZE_BITS))
@@ -54,6 +60,7 @@ class PetAlphaHitMask private constructor(
                 frameCount = spec.frameCount,
                 longsPerFrame = longsPerFrame,
                 opaqueBits = bits,
+                opaqueBottoms = bottoms,
             )
         }
     }

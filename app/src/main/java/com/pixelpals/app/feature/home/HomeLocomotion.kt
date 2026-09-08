@@ -15,12 +15,9 @@ class HomeLocomotion private constructor(
     frames: List<Pair<Bitmap, Rect>>,
     private val clips: Map<String, PetClipSpec>,
     private val nativeFacesLeft: Boolean,
-    normalizeClips: Boolean = false,
     private val anchor: android.graphics.PointF? = null,
 ) {
     private val sprites: HomeSpriteFrames = HomeSpriteFrames(frames, anchor)
-    private val clipSprites: Map<String, HomeSpriteFrames> = if (normalizeClips)
-        clips.mapValues { (_, clip) -> HomeSpriteFrames(clip.frames.map { frames[it] }) } else emptyMap()
     fun draw(canvas: Canvas, paint: Paint, target: RectF, motion: CompanionMotion, reduced: Boolean): Unit {
         val name: String = when {
             reduced -> if (motion.activity == CompanionActivity.REST) "sleep" else "idle"
@@ -43,8 +40,7 @@ class HomeLocomotion private constructor(
         val index: Int = (phase / clip.frameDurationMs).toInt().let { if (clip.loop) it % clip.frames.size else it.coerceAtMost(clip.frames.lastIndex) }
         canvas.save()
         if (nativeFacesLeft) canvas.scale(-1f, 1f, target.centerX(), target.bottom)
-        val local: HomeSpriteFrames? = clipSprites[name] ?: clipSprites["idle"]
-        if (local != null) local.draw(canvas, paint, target, index) else sprites.draw(canvas, paint, target, clip.frames[index])
+        sprites.draw(canvas, paint, target, clip.frames[index])
         canvas.restore()
     }
     fun toyResponse(elapsed: Float): Float {
@@ -92,7 +88,7 @@ class HomeLocomotion private constructor(
                 val bitmap: Bitmap = requireNotNull(BitmapFactory.decodeResource(context.resources, resource, BitmapFactory.Options().apply { inScaled = false; inSampleSize = 2 }))
                 bitmap to Rect(0, 0, bitmap.width, bitmap.height)
             }
-            return HomeLocomotion(frames, bank.clips, false, normalizeClips = true)
+            return HomeLocomotion(frames, bank.clips, false)
         }
     }
 }

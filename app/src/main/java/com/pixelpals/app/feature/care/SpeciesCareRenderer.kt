@@ -35,7 +35,7 @@ class SpeciesCareRenderer {
 
     private fun prepare(pack: CarePosePack, action: CareSceneAction, elapsed: Long, progress: Float,
                         width: Float, height: Float, reduced: Boolean, desktopSize: Int?,
-                        variation: CarePlayVariation): Unit {
+                        variation: CarePlayVariation, desktopBaselineOffsetY: Float? = null): Unit {
         val next: PetType = PetType.valueOf(pack.spec.atlas.petId.uppercase(java.util.Locale.ROOT))
         if (pet != next) { pet = next; profile = PetCareProfile.forPet(next) }
         val poseElapsed: Long = if (action == CareSceneAction.PLAY && !reduced && profile.play != CarePlayStyle.BALLOON_POP)
@@ -47,7 +47,7 @@ class SpeciesCareRenderer {
         pose = SpeciesCareMotion.sample(profile, action, progress, reduced, variation)
         val size: Float = desktopSize?.times(.94f) ?: minOf(height * .76f, width * .66f)
         // Leave room above a tossed toy and below a hammock, even in a short room panel.
-        val baseline: Float = desktopSize?.let { height / 2f + it * .46f }
+        val baseline: Float = desktopSize?.let { height / 2f + (desktopBaselineOffsetY ?: it * .46f) }
             ?: height * if (action == CareSceneAction.REST) .75f else .88f
         val ground: CarePoint = pack.spec.anchors[frame].ground
         val left: Float = width / 2f - ground.x * size
@@ -93,7 +93,8 @@ class SpeciesCareRenderer {
     }
 
     fun draw(canvas: Canvas, pack: CarePosePack, scene: CareSceneController?, reduced: Boolean,
-             gentle: Boolean, idleMs: Long = 0L, desktopSize: Int? = null): Unit {
+             gentle: Boolean, idleMs: Long = 0L, desktopSize: Int? = null,
+             desktopBaselineOffsetY: Float? = null): Unit {
         val action: CareSceneAction = scene?.action ?: CareSceneAction.PET
         val elapsed: Long = when {
             reduced -> if (scene?.isComplete == true) scene.timing.durationMs else 0L
@@ -102,7 +103,7 @@ class SpeciesCareRenderer {
             else -> 0L
         }
         prepare(pack, action, elapsed, scene?.progress ?: 0f, canvas.width.toFloat(), canvas.height.toFloat(), reduced,
-            desktopSize, scene?.playVariation ?: CarePlayVariation.DIRECT)
+            desktopSize, scene?.playVariation ?: CarePlayVariation.DIRECT, desktopBaselineOffsetY)
         val anchors: CarePoseAnchors = pack.spec.anchors[frame]
         val ground: CarePoint = point(anchors.ground)
         if (action == CareSceneAction.REST && scene != null && profile.bed != CareBed.WING_WRAP) {
