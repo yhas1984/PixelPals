@@ -51,9 +51,12 @@ class ScheduledPetSleep(private val context: Context, private val pet: PetType, 
         active = false
     }
 
+    fun wantsRest(): Boolean = SystemClock.elapsedRealtime() >= awakeUntil &&
+        device.shouldRest(preferences.restSchedule)
+
     fun update(delta: Float, eligible: Boolean): Boolean {
         val now = SystemClock.elapsedRealtime()
-        val rest = eligible && now >= awakeUntil && device.shouldRest(preferences.restSchedule)
+        val rest = eligible && wantsRest()
         if (!rest) {
             motion.advanceScheduledRest(false, delta)
             // Direct manipulation/care takes priority; automatic waking holds the

@@ -4,6 +4,7 @@ import com.pixelpals.app.core.domain.PetState
 import com.pixelpals.app.core.motion.PetAnimationClip
 import com.pixelpals.app.core.motion.PetAnimationPlayer
 import com.pixelpals.app.core.motion.PetRandom
+import com.pixelpals.app.core.motion.GroundGait
 import com.pixelpals.app.status.PetMood
 import kotlin.math.PI
 import kotlin.math.abs
@@ -23,6 +24,12 @@ class TelaBehavior(
     bridge: PetViewBridge,
     override val random: PetRandom,
 ) : BaseBehavior(bridge, random) {
+
+    private var scheduledRestRequested: Boolean = false
+    override fun onScheduledRestRequested(requested: Boolean) { scheduledRestRequested = requested }
+    override fun canStartScheduledSleep(reducedMotion: Boolean): Boolean =
+        (mode == Mode.SLEEP || (reducedMotion && mode == Mode.WALK)) &&
+            abs((bridge.getWindowParams()?.y ?: Int.MIN_VALUE).toFloat() - maxY()) <= 1f
 
     override val isSleeping: Boolean get() = mode == Mode.SLEEP
 
@@ -128,6 +135,10 @@ class TelaBehavior(
         val params = bridge.getWindowParams() ?: return
         val x = params.x.toFloat()
         val y = params.y.toFloat()
+        if (scheduledRestRequested) {
+            approachScheduledRest(x, y)
+            return
+        }
         val edge = 30f
         val ceilingY = minY().coerceAtMost(maxY())
         val floorY = maxY().coerceAtLeast(ceilingY)
@@ -187,6 +198,29 @@ class TelaBehavior(
         }
     }
 
+    private fun approachScheduledRest(x: Float, y: Float) {
+        if (abs(y - maxY()) <= 1f) {
+            bridge.updateTelaSilk(null)
+            bridge.animOffsetX = 0f
+            bridge.animOffsetY = 0f
+            bridge.animRotation = 0f
+            bridge.animScaleY = 1f
+            startMode(Mode.SLEEP, 4f, x, y, x, y)
+            return
+        }
+        val onWall: Boolean = abs(x - minX()) <= 30f || abs(x - maxX()) <= 30f
+        if (onWall) {
+            startMode(Mode.CLIMB, GroundGait.duration(maxY() - y, bridge.petSpriteSize * 1.8f, 1f), x, y, x, maxY())
+        } else if (abs(y - minY()) <= 30f) {
+            startMode(Mode.CEILING, GroundGait.duration(maxX() - x, bridge.petSpriteSize * 1.8f, 1f), x, y, maxX(), minY())
+        } else {
+            webAnchorX = x + bridge.petSpriteSize / 2f
+            webAnchorY = 0f
+            webTopY = y
+            startMode(Mode.WEB_DESCEND, GroundGait.duration(maxY() - y, bridge.petSpriteSize * 1.8f, 1f), x, y, x, maxY())
+        }
+    }
+
     override fun updateIdle(dt: Float) {
         if (isLoading || spriteSheetBitmap == null || spriteFrameRects.isEmpty()) return
         val step = dt.coerceIn(0f, 1f / 30f)
@@ -230,7 +264,7 @@ class TelaBehavior(
     private fun updateWalk(dt: Float) {
         val params = bridge.getWindowParams() ?: return
         val t = (modeTimer / modeDuration).coerceIn(0f, 1f)
-        val eased = sin((t * PI).toFloat() / 2f)
+        val eased = GroundGait.progress(modeTimer, modeDuration)
         val x = fromX + (toX - fromX) * eased
         val y = fromY + (toY - fromY) * eased
         params.x = x.roundToInt()
@@ -253,7 +287,7 @@ class TelaBehavior(
     private fun updateClimb(dt: Float) {
         val params = bridge.getWindowParams() ?: return
         val t = (modeTimer / modeDuration).coerceIn(0f, 1f)
-        val eased = sin((t * PI).toFloat() / 2f)
+        val eased = GroundGait.progress(modeTimer, modeDuration)
         val x = fromX + (toX - fromX) * eased
         val y = fromY + (toY - fromY) * eased
         params.x = x.roundToInt()
@@ -277,7 +311,7 @@ class TelaBehavior(
     private fun updateCeiling(dt: Float) {
         val params = bridge.getWindowParams() ?: return
         val t = (modeTimer / modeDuration).coerceIn(0f, 1f)
-        val eased = sin((t * PI).toFloat() / 2f)
+        val eased = GroundGait.progress(modeTimer, modeDuration)
         val x = fromX + (toX - fromX) * eased
         params.x = x.roundToInt()
         params.y = minY().roundToInt() // pegado al techo según PetBounds
@@ -368,6 +402,11 @@ class TelaBehavior(
     private fun updateWebDescend(dt: Float) {
         updateWebPosition(dt)
         if (modeTimer >= modeDuration) {
+            if (abs(toY - maxY()) <= 1f) {
+                bridge.updateTelaSilk(null)
+                decideNext()
+                return
+            }
             modeTimer = 0f
             modeDuration = 2.4f + random.nextFloat() * 1.8f
             mode = Mode.WEB_HANG
@@ -398,11 +437,11 @@ class TelaBehavior(
         params.y = when (mode) {
             Mode.WEB_HANG -> toY.roundToInt()
             Mode.WEB_ASCEND -> {
-                val eased = sin((progress * PI).toFloat() / 2f)
+                val eased = GroundGait.progress(modeTimer, modeDuration)
                 (fromY + (toY - fromY) * eased).roundToInt()
             }
             else -> {
-                val eased = sin((progress * PI).toFloat() / 2f)
+                val eased = GroundGait.progress(modeTimer, modeDuration)
                 (fromY + (toY - fromY) * eased).roundToInt()
             }
         }

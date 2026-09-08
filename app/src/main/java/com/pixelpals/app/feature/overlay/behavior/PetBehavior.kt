@@ -16,6 +16,9 @@ interface PetBehavior {
     /** Actual autonomous sleep, distinct from a sleepy mood or an idle blink. */
     val isSleeping: Boolean get() = false
 
+    /** Request a natural stopping point without interrupting committed movement. */
+    fun onScheduledRestRequested(requested: Boolean) {}
+
     /** Safe handoff to scheduled rest, after committed jumps and care reactions finish. */
     fun canStartScheduledSleep(reducedMotion: Boolean): Boolean = true
 
