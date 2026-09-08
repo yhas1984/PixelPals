@@ -82,6 +82,7 @@ class HomeSceneView(context: Context) : View(context) {
     private var downX: Float = 0f
     private var downY: Float = 0f
     private var activeTime: Long = 0L
+    private val deviceRest = com.pixelpals.app.core.rest.DeviceRestState(context)
     private var motion: CompanionMotion = CompanionMotion()
     internal var reviewSeed: Int? = null
     internal var previewTimeScale: Float = 1f
@@ -128,6 +129,7 @@ class HomeSceneView(context: Context) : View(context) {
 
     internal fun advanceScene(delta: Long): Unit {
         activeTime += delta.coerceIn(0, 100)
+        if (reviewSeed == null && motion.advanceScheduledRest(deviceRest.shouldRest(preferences.restSchedule), delta / 1000f)) return
         if (isMotionReduced) { motion.settleWithoutMovement(energy <= 25 || isUnwell); return }
         val toy = placements.firstOrNull { it.decorationId == home?.favoriteObject && DecorationCatalog.find(it.decorationId)?.kind == DecorationKind.TOY }
             ?: placements.firstOrNull { DecorationCatalog.find(it.decorationId)?.kind == DecorationKind.TOY }

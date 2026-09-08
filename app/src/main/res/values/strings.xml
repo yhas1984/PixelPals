@@ -497,4 +497,10 @@
     <string name="treasure_name_secret_slice">Secret slice</string>
     <string name="treasure_story_secret_slice">The emergency snack from a game whose rules only your companion knows.</string>
     <string name="treasure_hint_secret_slice">A warm triangle smells suspiciously delicious.</string>
+    <string name="rest_settings">Sleep routine</string>
+    <string name="rest_description">Your pet rests during Do Not Disturb or the hours you choose. Tap your desktop pet to wake it for a minute. Matching start and end times disable the time window.</string>
+    <string name="rest_follow_dnd">Follow Do Not Disturb</string>
+    <string name="rest_schedule_enabled">Use a sleep schedule</string>
+    <string name="rest_start">Bedtime: %1$s</string>
+    <string name="rest_end">Wake-up: %1$s</string>
 </resources>

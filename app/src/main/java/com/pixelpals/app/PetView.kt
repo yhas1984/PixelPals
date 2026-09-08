@@ -72,6 +72,7 @@ class PetView(
     private val repository: PixelPalsRepository = AppServices.repository(context)
     private val analytics: AnalyticsTracker = AppServices.analytics(context)
     private val uiScope = CoroutineScope(Dispatchers.Main + Job())
+    private val scheduledSleep by lazy { com.pixelpals.app.feature.home.ScheduledPetSleep(context, petType, uiScope) }
     private var companionHome: com.pixelpals.app.database.CompanionHomeEntity? = null
     private var companionTraits = com.pixelpals.app.feature.home.CompanionTraits(1f, 1f)
     fun setCompanionHome(home: com.pixelpals.app.database.CompanionHomeEntity?) {
@@ -732,6 +733,7 @@ class PetView(
     }
 
     private fun update(dt: Float) {
+        if (scheduledSleep.update(dt, state == PetState.IDLE && desktopCare?.isActive != true && !isTouchPending)) return
         dreamSeconds = if (desktopCare?.isActive != true && state == PetState.IDLE && behavior?.isSleeping == true)
             dreamSeconds + dt else 0f
         if (desktopCare?.isActive == true) {
@@ -810,6 +812,12 @@ class PetView(
             if (desktopCare?.draw(canvas, petSpriteSize, careBaselineOffsetY, cosmeticColorFilter) != true) {
                 behavior?.onDraw(canvas, width / 2f, height / 2f)
             }
+            drawCosmetic(canvas)
+            return
+        }
+        if (scheduledSleep.active) {
+            scheduledSleep.draw(canvas, petSpriteSize.toFloat(),
+                behavior?.careBaselineOffsetY ?: petSpriteSize * .46f, animScaleX < 0f, cosmeticColorFilter)
             drawCosmetic(canvas)
             return
         }
@@ -1008,6 +1016,7 @@ class PetView(
     var onFetchBallChanged: ((CorgiFetchFrame?) -> Unit)? = null
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
+        if (event.actionMasked == MotionEvent.ACTION_DOWN) scheduledSleep.wakeForInteraction()
         val params = getWindowParams() ?: return false
 
         when (event.action) {

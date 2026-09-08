@@ -64,6 +64,21 @@ class CompanionMotion(private val selector: CompanionIntentSelector = CompanionI
         val target: CompanionActivity = if (shouldRest) CompanionActivity.REST else CompanionActivity.OBSERVE
         if (activity != target) transition(target)
     }
+    private var scheduledRest: Boolean = false
+    fun advanceScheduledRest(rest: Boolean, delta: Float): Boolean {
+        if (rest) {
+            if (!scheduledRest) transition(CompanionActivity.REST)
+            scheduledRest = true
+            elapsed = (elapsed + delta.coerceIn(0f, .1f)).coerceAtMost(3600f)
+            return true
+        }
+        if (scheduledRest) {
+            scheduledRest = false
+            pendingIntent = CompanionIntent.OBSERVE
+            transition(CompanionActivity.WAKE)
+        }
+        return false
+    }
     private fun chooseNext(): Unit = beginIntent(selector.choose(context))
     internal fun beginIntent(intent: CompanionIntent): Unit {
         pauseDuration = selector.nextPause()

@@ -496,4 +496,10 @@
     <string name="treasure_name_secret_slice">Porción secreta</string>
     <string name="treasure_story_secret_slice">La merienda de emergencia de un juego cuyas reglas solo tu compañero conoce.</string>
     <string name="treasure_hint_secret_slice">Un triángulo tibio huele sospechosamente delicioso.</string>
+    <string name="rest_settings">Rutina de sueño</string>
+    <string name="rest_description">Tu mascota descansa con No molestar o durante el horario que elijas. Tócala en el escritorio para despertarla un minuto. Si ambas horas coinciden, se desactiva el intervalo.</string>
+    <string name="rest_follow_dnd">Seguir No molestar</string>
+    <string name="rest_schedule_enabled">Usar horario de sueño</string>
+    <string name="rest_start">Dormir: %1$s</string>
+    <string name="rest_end">Despertar: %1$s</string>
 </resources>
