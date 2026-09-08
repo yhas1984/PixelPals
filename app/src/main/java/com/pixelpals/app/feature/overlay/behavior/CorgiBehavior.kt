@@ -300,8 +300,12 @@ class CorgiBehavior(
     }
 
     fun resumeAfterFetch(facingLeft: Boolean): Unit {
-        walkDirection = if (facingLeft) -1f else 1f
         reset()
+        walkDirection = if (facingLeft) -1f else 1f
+        // Match the upright final care pose before beginning another stride.
+        // Starting WALK immediately replaced it with a stretched running contact.
+        changeMode(Mode.ALERT, .65f)
+        bridge.currentFrame = FRAME_DRAG
         bridge.animScaleX = walkDirection
     }
 

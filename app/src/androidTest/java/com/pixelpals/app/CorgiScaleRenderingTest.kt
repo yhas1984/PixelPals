@@ -16,6 +16,39 @@ import java.io.File
 /** Exercises the real desktop renderer, including its asynchronously decoded original frames. */
 @RunWith(AndroidJUnit4::class)
 class CorgiScaleRenderingTest {
+    @Test fun fetchExitPausesOnPlantedFeetBeforeResumingTheSameDirection(): Unit = runBlocking {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        lateinit var bridge: TestPetBridge
+        lateinit var behavior: CorgiBehavior
+        instrumentation.runOnMainSync {
+            bridge = TestPetBridge(instrumentation.targetContext, PetType.CORGI)
+            behavior = CorgiBehavior(bridge, SeededPetRandom(8))
+        }
+        try {
+            val loading = BaseBehavior::class.java.getDeclaredField("isLoading").apply { isAccessible = true }
+            repeat(100) { if (loading.getBoolean(behavior)) delay(50) }
+            assertFalse(loading.getBoolean(behavior))
+            instrumentation.runOnMainSync {
+                for (left: Boolean in listOf(false, true)) {
+                    val position = bridge.getWindowParams()
+                    position.x = 500
+                    position.y = bridge.groundY
+                    behavior.resumeAfterFetch(left)
+                    assertEquals(0, bridge.currentFrame)
+                    repeat(30) {
+                        behavior.updateIdle(1f / 60f)
+                        assertEquals("No sliding during the upright pause", 500, position.x)
+                        assertEquals(bridge.groundY, position.y)
+                        assertEquals(if (left) -1f else 1f, bridge.animScaleX, 0f)
+                        assertTrue(bridge.currentFrame in 0..1)
+                    }
+                    repeat(40) { behavior.updateIdle(1f / 60f) }
+                    assertTrue("Resume in the fetch direction", if (left) position.x < 500 else position.x > 500)
+                }
+            }
+        } finally { instrumentation.runOnMainSync { behavior.destroy() } }
+    }
+
     @Test fun gaitKeepsStandingBodyScaleAndFloorInBothDirections(): Unit = runBlocking {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         lateinit var bridge: TestPetBridge
