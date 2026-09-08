@@ -25,6 +25,8 @@ class NubeMichiBehavior(
     override val random: PetRandom
 ) : BaseBehavior(bridge, random) {
 
+    override val isSleeping: Boolean get() = mode == Mode.SLEEP_FLOAT
+
     override val resourceIds = listOf(
         R.drawable.gato_0,  // dormido flotando
         R.drawable.gato_1,  // despierta

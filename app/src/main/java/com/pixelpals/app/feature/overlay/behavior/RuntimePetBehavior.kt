@@ -31,6 +31,9 @@ open class RuntimePetBehavior<S : PetBrainState>(
     final override val resourceIds: List<Int> = emptyList()
     final override val usesRuntimeInput: Boolean = true
 
+    final override var isSleeping: Boolean = false
+        private set
+
     private var runtime: PetRuntime<S>? = null
     private var batteryPercent: Int = 100
     private var isCharging: Boolean = false
@@ -190,6 +193,7 @@ open class RuntimePetBehavior<S : PetBrainState>(
     }
 
     private fun applyOutput(output: PetRuntimeOutput) {
+        isSleeping = output.intent == PetIntent.SLEEP
         bridge.currentFrame = output.frame
         bridge.animScaleX = output.facing.scaleX * output.transform.scaleX
         bridge.animScaleY = output.transform.scaleY

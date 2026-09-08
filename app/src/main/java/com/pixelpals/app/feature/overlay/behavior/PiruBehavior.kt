@@ -20,6 +20,8 @@ class PiruBehavior(
     override val random: PetRandom,
 ) : BaseBehavior(bridge, random) {
 
+    override val isSleeping: Boolean get() = mode == Mode.SLEEP
+
     override val resourceIds: List<Int> = emptyList()
 
     private enum class Mode { WADDLE, SLIDE, JUMP, HAPPY, TOUCH, SLEEP }

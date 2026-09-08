@@ -13,6 +13,8 @@ class LumiBehavior(
     bridge: PetViewBridge,
     override val random: PetRandom,
 ) : BaseBehavior(bridge, random) {
+    override val isSleeping: Boolean get() = controller.mode == com.pixelpals.app.core.motion.LumiMode.SLEEP
+
     override val resourceIds: List<Int> = emptyList()
 
     private val controller = LumiMotionController(random)

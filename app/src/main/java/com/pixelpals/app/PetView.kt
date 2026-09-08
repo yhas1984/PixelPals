@@ -79,6 +79,8 @@ class PetView(
         companionTraits = com.pixelpals.app.feature.home.CompanionTraits.derive(petType, home, petStatus.bond)
     }
     private val companionPreferences = com.pixelpals.app.feature.home.CompanionPreferences(context)
+    private val dreamPainter = com.pixelpals.app.feature.care.PetDreamPainter()
+    private var dreamSeconds: Float = 0f
     private var desktopCare: DesktopCarePlayback? = null
     private var careBaselineOffsetY: Float = petSpriteSize * .46f
     private var activeSecondsAccumulator = 0f
@@ -730,6 +732,8 @@ class PetView(
     }
 
     private fun update(dt: Float) {
+        dreamSeconds = if (desktopCare?.isActive != true && state == PetState.IDLE && behavior?.isSleeping == true)
+            dreamSeconds + dt else 0f
         if (desktopCare?.isActive == true) {
             desktopCare?.advance(dt)
             return
@@ -813,6 +817,11 @@ class PetView(
         behavior?.onDraw(canvas, (width / 2).toFloat(), (height / 2).toFloat())
 
         drawCosmetic(canvas)
+        if (state == PetState.IDLE && behavior?.isSleeping == true) {
+            dreamPainter.drawDesktop(canvas, width / 2f + renderOffsetX,
+                height / 2f + (behavior?.careBaselineOffsetY ?: petSpriteSize * .46f),
+                petSpriteSize.toFloat(), dreamSeconds, companionPreferences.reducedMotion)
+        }
 
         // Dibuja el bubble encima del pet.
         val text = bubbleText ?: return

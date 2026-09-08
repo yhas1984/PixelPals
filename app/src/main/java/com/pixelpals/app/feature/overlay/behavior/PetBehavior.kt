@@ -13,6 +13,9 @@ import com.pixelpals.app.status.PetStatusSnapshot
  */
 interface PetBehavior {
 
+    /** Actual autonomous sleep, distinct from a sleepy mood or an idle blink. */
+    val isSleeping: Boolean get() = false
+
     /** Semantic facing, independent of whether the source artwork was drawn mirrored. */
     val facingLeft: Boolean? get() = null
     /** Current rendered ground contact relative to the pet window's vertical center. */

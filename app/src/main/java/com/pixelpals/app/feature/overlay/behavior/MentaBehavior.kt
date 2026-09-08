@@ -25,6 +25,8 @@ class MentaBehavior(
         const val WAVE_DISTANCE_PX = 42f
     }
 
+    override val isSleeping: Boolean get() = mode == Mode.SLEEP
+
     override val resourceIds: List<Int> = emptyList()
 
     private enum class Mode { SLITHER, CLIMB, COIL, HAPPY, TOUCH, SLEEP }
