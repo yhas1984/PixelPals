@@ -43,6 +43,18 @@ internal class MokiMotionController(
         restRequested = requested
         if (!requested) restBrakingTime = 0f
     }
+    /** Atomic relocation for a fully hidden reduced-motion transition. */
+    fun settleAtBottom(centerX: Float): MokiPose {
+        surface = MokiSurface.BOTTOM
+        edgeProgress = getProgressForSurface(surface, centerX, trackBottom)
+        velocityX = 0f
+        velocityY = 0f
+        restBrakingTime = 0f
+        changeMode(MokiMode.PERCH)
+        frameIndex = 0
+        setAnchoredPosition()
+        return getPose()
+    }
     val readyForRest: Boolean get() = mode == MokiMode.PERCH && surface == MokiSurface.BOTTOM
 
     var mode: MokiMode = MokiMode.PERCH

@@ -4,7 +4,8 @@ Moki's controller now accepts a persistent rest request. It continues its perime
 route on walls/ceiling, then exponentially brakes on the bottom surface and stays
 perched there. Only that supported perch permits normal scheduled sleep. Canceling
 the request resumes ordinary decisions. Reduced-motion stationary bottom crawling
-can also hand off; reduced-motion wall/ceiling completion remains pending.
+can also hand off; walls/ceiling now use the opacity transition described in
+`MOKI-REDUCED-REST-2026-09-08.md`.
 
 Lumi forwards the schedule request to its existing shouldSleep controller input.
 Its adapter permits handoff only in idle/sleep, plus stationary reduced-motion
