@@ -27,3 +27,16 @@ Debug APK and instrumentation APK build successfully. Installed both on
 care renderer and contain visible artwork. The test does not change app persistence.
 This establishes common artwork, not full pose/contact/choreography acceptance.
 Propagating selected purchased variants into desktop play/rest remains outstanding.
+
+## Placed bed variants in desktop care
+
+Corgi and shared species desktop care capture the same first placed bed selected by
+the home actor at care start. CarePropPainter delegates non-starter beds to the home
+variant artwork, preserving colors/geometry. Native species defaults remain when
+no bed is placed; Diablillo's body wing wrap still takes precedence over a prop.
+Selection JVM test passes for empty/non-bed/removed/multiple-bed placements.
+Debug and instrumentation builds pass. Installed on 192.168.1.160:43041; both
+SharedPropArtworkTest cases passed (5.173s), covering all starter species objects
+and the three purchased/reward bed variants (subpixel edge tolerance).
+Pending: alternate toys with compatible choreography, selected beds in scheduled
+sleep and in the separate manual-care room renderer, and full visual contact review.

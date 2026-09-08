@@ -66,6 +66,8 @@ class CorgiDesktopCare(
                     return@launch
                 }
                 val loaded: CarePosePack = CarePoseLoader.load(context.assets, PetType.CORGI)
+                renderer.bedDecorationId = com.pixelpals.app.feature.home.CareDecorationSelection.bed(
+                    AppServices.companions(context).dao.getPlacements(PetType.CORGI.name.lowercase()))
                 pack = loaded
                 scene = CareSceneController(action, CareSceneMode.AUTOMATIC,
                     when (action) {

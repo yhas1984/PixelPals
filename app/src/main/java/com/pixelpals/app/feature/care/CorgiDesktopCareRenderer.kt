@@ -20,6 +20,10 @@ class CorgiDesktopCareRenderer {
     private val source: Rect = Rect()
     private val destination: RectF = RectF()
     private val props: CarePropPainter = CarePropPainter()
+    var bedDecorationId: String?
+        get() = props.bedDecorationId
+        set(value) { props.bedDecorationId = value }
+
     private val dreams: PetDreamPainter = PetDreamPainter()
     private val foam: CareFoamPainter = CareFoamPainter()
 

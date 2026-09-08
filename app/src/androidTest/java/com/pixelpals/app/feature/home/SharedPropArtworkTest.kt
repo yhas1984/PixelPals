@@ -14,6 +14,24 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class SharedPropArtworkTest {
+    @Test fun selectedBedVariantsReuseHomeGeometry() {
+        for (id in listOf("moss_bed", "cloud_bed", "moon_bed")) {
+            val home = Bitmap.createBitmap(400, 400, Bitmap.Config.ARGB_8888)
+            val desktop = Bitmap.createBitmap(400, 400, Bitmap.Config.ARGB_8888)
+            try {
+                HomeScenePainter().drawObject(Canvas(home), requireNotNull(DecorationCatalog.find(id)), RectF(0f, 0f, 400f, 400f))
+                CarePropPainter().apply { bedDecorationId = id }.draw(Canvas(desktop), CareSceneAction.REST, 200f, 308f, 376f)
+                var different = 0
+                for (y in 0 until 400) for (x in 0 until 400) {
+                    if (home.getPixel(x, y) != desktop.getPixel(x, y)) different++
+                }
+                assertTrue("$id differs in $different pixels", different < 400)
+            } finally {
+                home.recycle(); desktop.recycle()
+            }
+        }
+    }
+
     @Test fun everySpeciesStarterUsesTheDesktopDrawing() {
         for (pet in PetType.entries) for (id in listOf("ball", "linen_bed")) {
             val home = Bitmap.createBitmap(400, 400, Bitmap.Config.ARGB_8888)

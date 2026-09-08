@@ -131,7 +131,7 @@ class HomeSceneView(context: Context) : View(context) {
         activeTime += delta.coerceIn(0, 100)
         val toy = placements.firstOrNull { it.decorationId == home?.favoriteObject && DecorationCatalog.find(it.decorationId)?.kind == DecorationKind.TOY }
             ?: placements.firstOrNull { DecorationCatalog.find(it.decorationId)?.kind == DecorationKind.TOY }
-        val bed = placements.firstOrNull { DecorationCatalog.find(it.decorationId)?.kind == DecorationKind.BED }
+        val bed = placements.firstOrNull { it.decorationId == CareDecorationSelection.bed(placements) }
         if (reviewSeed == null && motion.advanceScheduledRest(
                 deviceRest.shouldRest(preferences.restSchedule), delta / 1000f,
                 bed?.takeUnless { isMotionReduced }?.let { objectBounds(it).centerX() },

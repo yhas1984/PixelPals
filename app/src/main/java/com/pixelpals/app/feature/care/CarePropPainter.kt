@@ -11,6 +11,9 @@ import com.pixelpals.app.core.domain.PetType
 /** Small illustrated tools, drawn in a common [-1,1] coordinate space. */
 class CarePropPainter {
     private val paint: Paint = Paint(Paint.ANTI_ALIAS_FLAG)
+    var bedDecorationId: String? = null
+    private val homePainter by lazy { com.pixelpals.app.feature.home.HomeScenePainter() }
+    private val bedBounds: RectF = RectF(-100f / 94f, -154f / 94f, 100f / 94f, 46f / 94f)
     private val species: SpeciesPropPainter = SpeciesPropPainter()
     private var lastPet: PetType = PetType.CORGI
     private var profile: PetCareProfile = PetCareProfile.forPet(lastPet)
@@ -21,6 +24,12 @@ class CarePropPainter {
         canvas.save()
         canvas.translate(x, y)
         canvas.scale(size / 2f, size / 2f)
+        val selectedBed = bedDecorationId?.let(com.pixelpals.app.feature.home.DecorationCatalog::find)
+        if (action == CareSceneAction.REST && selectedBed?.kind == com.pixelpals.app.feature.home.DecorationKind.BED && selectedBed.id != "linen_bed") {
+            homePainter.drawObject(canvas, selectedBed, bedBounds, pet = pet)
+            canvas.restore()
+            return
+        }
         if (pet != lastPet) { lastPet = pet; profile = PetCareProfile.forPet(pet) }
         // Wing wrapping is body choreography, never detached bedroom furniture.
         val bodyWrap: Boolean = action == CareSceneAction.REST && profile.bed == com.pixelpals.app.core.care.scene.CareBed.WING_WRAP

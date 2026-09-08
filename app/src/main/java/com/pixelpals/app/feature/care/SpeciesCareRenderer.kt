@@ -23,6 +23,10 @@ class SpeciesCareRenderer {
     private val transform: Matrix = Matrix()
     private val coordinates: FloatArray = FloatArray(2)
     private val props: CarePropPainter = CarePropPainter()
+    var bedDecorationId: String?
+        get() = props.bedDecorationId
+        set(value) { props.bedDecorationId = value }
+
     private val yukiEffects: YukiCarePainter = YukiCarePainter()
     private val dreams: PetDreamPainter = PetDreamPainter()
     private val foam: CareFoamPainter = CareFoamPainter()
