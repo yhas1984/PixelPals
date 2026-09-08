@@ -43,6 +43,7 @@ class HomeSceneView(context: Context) : View(context) {
     var treasure: String? = null
     var isTravelling: Boolean = false
     var isEditing: Boolean = false
+        set(value) { field = value; if (!value) { pendingPlacement = null; dragged = null }; invalidate() }
     var showPet: Boolean = true
     var energy: Int = 75
     var isUnwell: Boolean = false
@@ -60,6 +61,14 @@ class HomeSceneView(context: Context) : View(context) {
     var onObject: ((Decoration) -> Unit)? = null
     var onPet: (() -> Unit)? = null
     var onPlace: ((String, Int, Int) -> Unit)? = null
+    private var pendingPlacement: String? = null
+    fun beginPlacement(id: String): Unit {
+        isEditing = true
+        pendingPlacement = id
+        dragged = HomeDecorationEntity(pet.name.lowercase(), id, 2, 1)
+        dragX = 500f; dragY = 500f
+        invalidate()
+    }
     private var dragged: HomeDecorationEntity? = null
     private var dragX: Float = 0f
     private var dragY: Float = 0f
@@ -236,7 +245,7 @@ class HomeSceneView(context: Context) : View(context) {
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
                 downX = x; downY = y; didMove = false
-                dragged = if (isEditing) placements.lastOrNull { objectBounds(it).contains(x, y) } else null
+                dragged = pendingPlacement?.let { HomeDecorationEntity(pet.name.lowercase(), it, 2, 1) } ?: if (isEditing) placements.lastOrNull { objectBounds(it).contains(x, y) } else null
                 dragX = x; dragY = y
                 if (dragged != null) parent?.requestDisallowInterceptTouchEvent(true)
                 return true
@@ -249,7 +258,8 @@ class HomeSceneView(context: Context) : View(context) {
                 val item: HomeDecorationEntity? = dragged
                 dragged = null
                 parent?.requestDisallowInterceptTouchEvent(false)
-                if (item != null && didMove) {
+                if (item != null && (didMove || pendingPlacement != null)) {
+                    pendingPlacement = null
                     onPlace?.invoke(item.decorationId, ((x - 65) / 175).toInt().coerceIn(0, 4), ((y - 330) / 103).toInt().coerceIn(0, 2))
                 } else if (!didMove) {
                     val hit: HomeDecorationEntity? = placements.lastOrNull { objectBounds(it).contains(x, y) }

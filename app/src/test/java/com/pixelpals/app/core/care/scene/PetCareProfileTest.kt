@@ -57,7 +57,9 @@ class PetCareProfileTest {
             for (step: Int in -10..110) {
                 val pose: SpeciesCarePose = SpeciesCareMotion.sample(profile, action, step / 100f, false)
                 assertTrue("$pet $action $step", abs(pose.x) <= .12f && abs(pose.y) <= .1f)
-                assertTrue(pose.scaleX in .9f..1.1f && pose.scaleY in .9f..1.1f)
+                if (pet == PetType.YUKI && action == CareSceneAction.CLEAN) {
+                    assertTrue(pose.scaleX in 1f..1.12f && pose.scaleY in .72f..1f)
+                } else assertTrue(pose.scaleX in .9f..1.1f && pose.scaleY in .9f..1.1f)
                 assertTrue(pose.rotation in -10f..10f && pose.alpha in .7f..1f)
                 assertEquals(SpeciesCarePose(), SpeciesCareMotion.sample(profile, action, step / 100f, true))
             }

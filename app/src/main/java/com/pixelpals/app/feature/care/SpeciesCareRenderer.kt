@@ -23,6 +23,7 @@ class SpeciesCareRenderer {
     private val transform: Matrix = Matrix()
     private val coordinates: FloatArray = FloatArray(2)
     private val props: CarePropPainter = CarePropPainter()
+    private val yukiEffects: YukiCarePainter = YukiCarePainter()
     private val dreams: PetDreamPainter = PetDreamPainter()
     private val foam: CareFoamPainter = CareFoamPainter()
     private val cloud: CloudCarePainter = CloudCarePainter()
@@ -40,12 +41,14 @@ class SpeciesCareRenderer {
                         variation: CarePlayVariation, desktopBaselineOffsetY: Float? = null, colorFilter: ColorFilter? = null): Unit {
         val next: PetType = PetType.valueOf(pack.spec.atlas.petId.uppercase(java.util.Locale.ROOT))
         if (pet != next) { pet = next; profile = PetCareProfile.forPet(next) }
-        val poseElapsed: Long = if (action == CareSceneAction.PLAY && !reduced && profile.play != CarePlayStyle.BALLOON_POP)
+        val poseElapsed: Long = if (action == CareSceneAction.PLAY && !reduced && profile.play != CarePlayStyle.BALLOON_POP && profile.play != CarePlayStyle.SNOW_THROW)
             (CarePlayChoreography.sample(progress, variation).poseProgress * pack.spec.timings.getValue(action).durationMs).toLong()
             else elapsed
         frame = pack.spec.getFrame(action, poseElapsed)
         if (pet == PetType.DIABLILLO && reduced) frame = ImpCareMotion.getReducedFrame(action,
             (progress * pack.spec.timings.getValue(action).durationMs).toLong()) ?: frame
+        if (pet == PetType.YUKI && action == CareSceneAction.PLAY && !reduced)
+            frame = YukiCareMotion.playFrame(progress)
         pose = SpeciesCareMotion.sample(profile, action, progress, reduced, variation)
         val size: Float = desktopSize?.times(.94f) ?: minOf(height * .76f, width * .66f)
         // Leave room above a tossed toy and below a hammock, even in a short room panel.
@@ -113,6 +116,8 @@ class SpeciesCareRenderer {
         }
         if (pet == PetType.NUBE_MICHI) cloud.draw(canvas, ground, actor.width(),
             if (reduced) .2f else sin((scene?.progress ?: 0f) * PI).toFloat())
+        if (pet == PetType.YUKI && action == CareSceneAction.CLEAN && scene?.hasContact == true && !reduced)
+            yukiEffects.drawPuddle(canvas, ground, actor.width(), YukiCareMotion.meltAt(scene.progress))
         val atlas: PetAtlasSpec = pack.spec.atlas
         source.set(frame % atlas.columns * atlas.frameWidth, frame / atlas.columns * atlas.frameHeight,
             (frame % atlas.columns + 1) * atlas.frameWidth, (frame / atlas.columns + 1) * atlas.frameHeight)
@@ -131,7 +136,7 @@ class SpeciesCareRenderer {
         if (isWingRest) impWings.draw(canvas, wingCenter, actor.width(), wingFold, true)
         canvas.restore()
         paint.alpha = 255
-        if (scene?.hasContact == true && action == CareSceneAction.CLEAN) {
+        if (scene?.hasContact == true && action == CareSceneAction.CLEAN && pet != PetType.YUKI) {
             foam.draw(canvas, contact(anchors, action), actor.width(), CareWashMotion.sample(scene.progress, reduced))
         }
         if (scene != null && action != CareSceneAction.REST) drawTool(canvas, scene, anchors, reduced)
@@ -146,6 +151,22 @@ class SpeciesCareRenderer {
 
     private fun drawTool(canvas: Canvas, scene: CareSceneController, anchors: CarePoseAnchors, reduced: Boolean): Unit {
         val size: Float = actor.width()
+        if (pet == PetType.YUKI && scene.hasContact && !scene.isCancelled) {
+            if (scene.action == CareSceneAction.PLAY) {
+                val hand: CarePoint = point(CarePoint(.74f, .59f))
+                val flight: Float = if (reduced) 0f else YukiCareMotion.flightAt(scene.progress)
+                props.draw(canvas, scene.action, hand.x + flight * size * .40f,
+                    hand.y - 4f * flight * (1f - flight) * size * .18f,
+                    size * .14f, pet = pet)
+                return
+            }
+            if (scene.action == CareSceneAction.CLEAN) {
+                val head: CarePoint = point(anchors.head)
+                props.draw(canvas, scene.action, head.x - size * .18f, head.y - size * .15f, size * .28f, pet = pet)
+                yukiEffects.drawWater(canvas, head, size, scene.progress, reduced)
+                return
+            }
+        }
         val target: CarePoint = contact(anchors, scene.action)
         val mouth: CarePoint = point(anchors.mouth)
         val body: CarePoint = point(anchors.body)
@@ -236,6 +257,7 @@ class SpeciesCareRenderer {
             CarePlayStyle.BOUNCE -> CarePoint(.2f, -.06f - .17f * abs(wave))
             CarePlayStyle.PADDLE -> CarePoint(.23f + .07f * wave, -.025f)
             CarePlayStyle.PEEK -> CarePoint(direction * (.30f + .045f * wave), .055f - .06f * orbit)
+            CarePlayStyle.SNOW_THROW -> CarePoint(.25f, -.12f)
             CarePlayStyle.TWIRL -> CarePoint(.32f + .06f * wave, -.07f + .12f * orbit)
             CarePlayStyle.SLIDE -> CarePoint(.28f + .10f * wave, -.03f)
             CarePlayStyle.FOLLOW -> CarePoint(.27f, -.16f)

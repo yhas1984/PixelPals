@@ -246,7 +246,8 @@ open class LivingHomeFragment : Fragment() {
 
     private fun showDecoration(item: Decoration): Unit {
         DecorationDialogs.show(requireContext(), item, lastWorld, model.pet.value, model,
-            onUse = { action -> openCare(action, item.id) })
+            onUse = { action -> openCare(action, item.id) },
+            onPlaceByTouch = { scene?.beginPlacement(item.id); notifyUser(R.string.home_touch_place_hint) })
     }
 
     private fun requestDesktop(): Unit {

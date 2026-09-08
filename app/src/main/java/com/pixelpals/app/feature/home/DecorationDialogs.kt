@@ -24,12 +24,15 @@ class DecorationPreview(context: Context, private val item: Decoration) : View(c
 
 object DecorationDialogs {
     fun show(context: Context, item: Decoration, world: CompanionWorld, pet: PetType, model: CompanionViewModel,
-             onUse: ((CareSceneAction) -> Unit)? = null): Unit {
+             onUse: ((CareSceneAction) -> Unit)? = null, onPlaceByTouch: (() -> Unit)? = null): Unit {
         val column = HomeUi.column(context)
         column.addView(DecorationPreview(context, item), android.widget.LinearLayout.LayoutParams(-1, HomeUi.dp(context, 150)))
         val dialog: AlertDialog = AlertDialog.Builder(context).setTitle(item.title).setView(column)
             .setNegativeButton(R.string.home_done, null).create()
         column.addView(HomeUi.button(context, context.getString(R.string.home_place), true) {
+            dialog.dismiss(); if (onPlaceByTouch != null) onPlaceByTouch() else choosePosition(context, item, world, pet, model)
+        })
+        if (onPlaceByTouch != null) column.addView(HomeUi.button(context, context.getString(R.string.home_place_buttons)) {
             dialog.dismiss(); choosePosition(context, item, world, pet, model)
         })
         column.addView(HomeUi.button(context, context.getString(R.string.home_stored)) {
@@ -49,7 +52,7 @@ object DecorationDialogs {
             .filter { (column, row) -> world.placements.none { it.decorationId != item.id && it.column == column && it.row == row } }
         if (positions.isEmpty()) { Toast.makeText(context, R.string.home_occupied, Toast.LENGTH_LONG).show(); return }
         AlertDialog.Builder(context).setTitle(R.string.home_place)
-            .setItems(positions.map { context.getString(R.string.home_empty_slot, it.first + 1, it.second + 1) }.toTypedArray()) { _, index ->
+            .setItems(positions.map { context.getString(R.string.home_named_slot, context.resources.getStringArray(R.array.home_depth_names)[it.second], context.resources.getStringArray(R.array.home_side_names)[it.first]) }.toTypedArray()) { _, index ->
                 val position: Pair<Int, Int> = positions[index]
                 model.perform {
                     if (!model.repository.place(pet, item.id, position.first, position.second))

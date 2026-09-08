@@ -108,7 +108,7 @@
     <string name="companion_patito">Sus pequeños pasos curiosos llevan a grandes descubrimientos.</string>
     <string name="companion_diablillo">Travieso y enérgico, con un rincón tierno para ti.</string>
     <string name="companion_moki">Atento y paciente, hasta que una hoja empieza a bailar.</string>
-    <string name="companion_yuki">Un copo tranquilo lleno de sorpresas delicadas.</string>
+    <string name="companion_yuki">Un compañero de nieve que lanza bolas de nieve y se derrite cuando el móvil se calienta.</string>
     <string name="companion_piru">Alegre y sociable, siempre listo para deslizarse hacia un juego.</string>
     <string name="companion_menta">Serena y delicada, sigue los ritmos más suaves.</string>
     <string name="companion_tela">Una exploradora ingeniosa que convierte cada rincón en hogar.</string>
@@ -116,4 +116,9 @@
     <string name="nav_adventures">Aventuras</string>
     <string name="home_remove_desktop_object">Quitar del escritorio</string>
     <string name="home_scene_dreaming">%1$s está soñando. Utiliza los botones de cuidados y decoración para interactuar.</string>
+    <string name="home_place_buttons">Colocar con botones</string>
+    <string name="home_named_slot">%1$s · %2$s</string>
+    <string name="home_touch_place_hint">Toca donde quieras colocarlo o arrastra el objeto hasta allí.</string>
+    <string-array name="home_depth_names"><item>Fondo</item><item>Zona intermedia</item><item>Delante</item></string-array>
+    <string-array name="home_side_names"><item>Izquierda</item><item>Centro izquierda</item><item>Centro</item><item>Centro derecha</item><item>Derecha</item></string-array>
 </resources>

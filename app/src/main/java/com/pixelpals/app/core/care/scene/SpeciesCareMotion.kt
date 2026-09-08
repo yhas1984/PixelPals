@@ -25,6 +25,12 @@ object SpeciesCareMotion {
             return SpeciesCarePose(x = game.thrust * .025f, rotation = -game.thrust * 2.5f,
                 y = -game.celebration * .018f)
         }
+        if (action == CareSceneAction.CLEAN && profile.wash == CareWashStyle.SHOWER) {
+            val melt: Float = YukiCareMotion.meltAt(progress)
+            return SpeciesCarePose(scaleX = 1f + .12f * melt, scaleY = 1f - .28f * melt)
+        }
+        if (action == CareSceneAction.PLAY && profile.play == CarePlayStyle.SNOW_THROW)
+            return SpeciesCarePose(rotation = YukiCareMotion.throwLean(progress))
         val p: Float = progress.coerceIn(0f, 1f)
         val envelope: Float = sin(p * PI).toFloat()
         val wave: Float = sin(p * PI * 6 * profile.tempo).toFloat() * envelope
@@ -41,6 +47,7 @@ object SpeciesCareMotion {
                 CareWashStyle.BRUSH -> SpeciesCarePose(scaleY = 1f + .018f * wave)
                 CareWashStyle.MIST -> SpeciesCarePose(scaleX = 1f + .014f * wave)
                 CareWashStyle.SPARKLES -> SpeciesCarePose(y = -.015f * envelope, rotation = wave * 2f)
+                CareWashStyle.SHOWER -> SpeciesCarePose()
                 CareWashStyle.SNOW -> SpeciesCarePose(rotation = wave * 3f)
                 CareWashStyle.SPONGE -> SpeciesCarePose(rotation = wave * 2f)
             }
@@ -66,6 +73,7 @@ object SpeciesCareMotion {
         CarePlayStyle.PADDLE -> SpeciesCarePose(x = .07f * wave, rotation = wave * 5f)
         CarePlayStyle.BALLOON_POP -> SpeciesCarePose()
         CarePlayStyle.PEEK -> SpeciesCarePose(x = .045f * wave, rotation = wave * 3f)
+        CarePlayStyle.SNOW_THROW -> SpeciesCarePose()
         CarePlayStyle.TWIRL -> SpeciesCarePose(rotation = wave * 9f)
         CarePlayStyle.SLIDE -> SpeciesCarePose(x = .11f * wave, scaleY = 1f - .05f * envelope, rotation = wave * 7f)
         CarePlayStyle.FOLLOW -> SpeciesCarePose(x = .035f * envelope)
