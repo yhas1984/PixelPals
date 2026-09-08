@@ -173,9 +173,9 @@ class HomeSceneView(context: Context) : View(context) {
         painter.drawBackground(canvas, environment, hour)
         if (isEditing) drawGrid(canvas)
         val actorVisible = showPet && !isTravelling
-        drawDecorations(canvas) { !actorVisible || objectBounds(it).bottom - 30f <= motion.y }
+        drawDecorations(canvas) { !actorVisible || HomeDepth.isBehindPet(objectBounds(it).bottom - 30f, motion.y) }
         if (actorVisible) drawCompanion(canvas)
-        if (actorVisible) drawDecorations(canvas) { objectBounds(it).bottom - 30f > motion.y }
+        if (actorVisible) drawDecorations(canvas) { !HomeDepth.isBehindPet(objectBounds(it).bottom - 30f, motion.y) }
         dragged?.let { item -> DecorationCatalog.find(item.decorationId)?.let {
             val slot: Pair<Int, Int> = placementSlot(dragX, dragY)
             draggedBounds.set(gridBounds[slot.second * HomeGrid.COLUMNS + slot.first])

@@ -133,7 +133,12 @@ class CompanionMotion(private val selector: CompanionIntentSelector = CompanionI
         val dx: Float = target.coerceIn(140f, 860f) - x
         val dy: Float = targetY.coerceIn(430f, 680f) - y
         val distance: Float = hypot(dx, dy)
-        if (distance <= .35f) { speed = 0f; return true }
+        if (distance <= .35f) {
+            x = target.coerceIn(140f, 860f)
+            y = targetY.coerceIn(430f, 680f)
+            speed = 0f
+            return true
+        }
         if (updateTurn(dx, dt, tempo) || isPreparing) return false
         val acceleration: Float = 130f * tempo.coerceIn(.3f, 2f)
         val desiredSpeed: Float = minOf(85f * tempo, sqrt(2f * acceleration * distance))
