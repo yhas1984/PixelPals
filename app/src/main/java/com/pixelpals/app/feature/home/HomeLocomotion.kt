@@ -16,9 +16,14 @@ class HomeLocomotion private constructor(
     private val clips: Map<String, PetClipSpec>,
     private val nativeFacesLeft: Boolean,
     private val anchor: android.graphics.PointF? = null,
+    private val restArtwork: HomeRestArtwork? = null,
 ) {
     private val sprites: HomeSpriteFrames = HomeSpriteFrames(frames, anchor)
     fun draw(canvas: Canvas, paint: Paint, target: RectF, motion: CompanionMotion, reduced: Boolean, poseClip: String? = null, poseSeconds: Float = 0f): Unit {
+        if (poseClip == null && restArtwork != null && (motion.activity == CompanionActivity.REST || motion.activity == CompanionActivity.WAKE)) {
+            restArtwork.draw(canvas, paint, target, motion.elapsed, motion.activity == CompanionActivity.WAKE, reduced)
+            return
+        }
         val name: String = when {
             poseClip != null -> poseClip
             reduced -> if (motion.activity == CompanionActivity.REST) "sleep" else "idle"
@@ -85,7 +90,7 @@ class HomeLocomotion private constructor(
             val anchor: PointF? = if (json.optJSONObject("renderHints")?.optBoolean("preserveFrameAnchors") == true)
                 spec.pivot?.let { PointF(it.x * width.toFloat() / spec.frameWidth, it.y * height.toFloat() / spec.frameHeight) } else null
             HomeLocomotion((0 until spec.frameCount).map { bitmap to Rect(it % spec.columns * width, it / spec.columns * height,
-                (it % spec.columns + 1) * width, (it / spec.columns + 1) * height) }, withWake, pet == PetType.GINGER, anchor = anchor)
+                (it % spec.columns + 1) * width, (it / spec.columns + 1) * height) }, withWake, pet == PetType.GINGER, anchor = anchor, restArtwork = HomeRestArtwork.load(context, pet))
         }
         private fun loadLegacy(context: Context, pet: PetType): HomeLocomotion {
             val bank: HomeLegacyClips = HomeLegacyClips.forPet(pet)
@@ -93,7 +98,7 @@ class HomeLocomotion private constructor(
                 val bitmap: Bitmap = requireNotNull(BitmapFactory.decodeResource(context.resources, resource, BitmapFactory.Options().apply { inScaled = false; inSampleSize = 2 }))
                 bitmap to Rect(0, 0, bitmap.width, bitmap.height)
             }
-            return HomeLocomotion(frames, bank.clips, false)
+            return HomeLocomotion(frames, bank.clips, false, restArtwork = HomeRestArtwork.load(context, pet))
         }
     }
 }
