@@ -223,7 +223,7 @@ class PetService : Service() {
         createNotificationChannel()
         careScope.launch {
             AppServices.companions(this@PetService).dao.observeExpedition().collect { expedition ->
-                isOnExpedition = expedition?.petId == currentPetType.name.lowercase()
+                expeditionVisibility.update(expedition?.petId)
                 if (isOnExpedition) careOverlay?.close()
                 applyPetOverlayVisible(shouldShowPetForPolicy())
             }
@@ -482,7 +482,9 @@ class PetService : Service() {
      * Con acceso de uso: solo visible en el lanzador. Sin acceso: siempre visible salvo ocultar manual.
      * No se puede poner un TYPE_APPLICATION_OVERLAY detrás de otras apps; se oculta para no taparlas.
      */
-    private var isOnExpedition: Boolean = false
+    private val expeditionVisibility = com.pixelpals.app.core.motion.ExpeditionVisibility()
+    private val isOnExpedition: Boolean
+        get() = expeditionVisibility.hides(currentPetType.name.lowercase())
     private var companionHomeJob: kotlinx.coroutines.Job? = null
     private fun shouldShowPetForPolicy(): Boolean {
         if (isOnExpedition || userManuallyHidden || !isScreenOn || isCareRoomVisible) return false
