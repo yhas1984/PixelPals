@@ -158,7 +158,7 @@ def build(pet: str, calibration: dict) -> dict:
             head = measured.get("head", {}).get(str(index), [mouth_x, max(offset[1] + 12, mouth_y - measured.get("foreheadOffset", 46))])
             frame_anchors["head"] = [value / CELL for value in head]
         anchors.append(frame_anchors)
-    directory = ROOT / "app/src/debug/assets/pets" / pet
+    directory = ROOT / "app/src/carePreview/assets/pets" / pet
     directory.mkdir(parents=True, exist_ok=True)
     atlas.save(directory / "care_v1.png", optimize=True)
     spec = {"version": 1, "petId": pet, "atlasPath": f"pets/{pet}/care_v1.png",

@@ -1,3 +1,13 @@
+## Care pack source and candidate builds (2026-09-08)
+
+Care atlases now live in `app/src/carePreview/assets/pets`. Debug always includes
+this directory. Release includes it only with
+`-Ppixelpals.companion.releaseCandidate=true`, using the same property that enables
+`CARE_SCENES_ENABLED`. The rest of the debug laboratory is excluded.
+Generators and atlas tests use the new source directory. This packaging change
+is not visual acceptance or production promotion. Earlier evidence below records
+the paths and flags used at the time.
+
 # Visual care — debug candidate
 
 ## All-species desktop care rollout (2026-09-04)

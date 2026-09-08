@@ -32,7 +32,7 @@ class CareAtlasTests(unittest.TestCase):
         self.assertTrue(all(cell.size == (61, 66) for cell in cells))
 
     def test_all_fifteen_packs_are_complete_transparent_and_padded(self):
-        paths = sorted((ROOT / "app/src/debug/assets/pets").glob("*/care_v1.json"))
+        paths = sorted((ROOT / "app/src/carePreview/assets/pets").glob("*/care_v1.json"))
         self.assertEqual(len(paths), 15)
         for path in paths:
             with self.subTest(pet=path.parent.name):
@@ -69,12 +69,12 @@ class CareAtlasTests(unittest.TestCase):
                                          len(clip["frames"]) * clip["frameDurationMs"])
 
     def test_imp_has_two_eye_idle_and_no_dog_like_approach(self):
-        spec = json.loads((ROOT / "app/src/debug/assets/pets/diablillo/care_v1.json").read_text())
+        spec = json.loads((ROOT / "app/src/carePreview/assets/pets/diablillo/care_v1.json").read_text())
         self.assertEqual(spec["clips"][2]["frames"][0], 3)
         self.assertTrue(all(not {0, 4, 8}.intersection(clip["frames"]) for clip in spec["clips"]))
 
     def test_imp_is_livelier_without_rushing_its_nap(self):
-        spec = json.loads((ROOT / "app/src/debug/assets/pets/diablillo/care_v1.json").read_text())
+        spec = json.loads((ROOT / "app/src/carePreview/assets/pets/diablillo/care_v1.json").read_text())
         durations = {clip["id"]: len(clip["frames"]) * clip["frameDurationMs"] for clip in spec["clips"]}
         self.assertEqual(durations["feed"], 3300)
         self.assertEqual(durations["play"], 4200)
@@ -82,7 +82,7 @@ class CareAtlasTests(unittest.TestCase):
         self.assertEqual(durations["pet"], 4200)
 
     def test_imp_finishes_quick_bites_before_fire_and_sleeps_upright(self):
-        spec = json.loads((ROOT / "app/src/debug/assets/pets/diablillo/care_v1.json").read_text())
+        spec = json.loads((ROOT / "app/src/carePreview/assets/pets/diablillo/care_v1.json").read_text())
         clips = {clip["id"]: clip for clip in spec["clips"]}
         self.assertEqual(clips["feed"]["frames"][:7], [3, 3, 1, 1, 1, 2, 2])
         self.assertEqual(clips["feed"]["frames"][7:10], [6, 6, 6])

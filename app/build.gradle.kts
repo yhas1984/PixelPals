@@ -18,6 +18,9 @@ ksp {
     arg("room.expandProjection", "true")
 }
 
+val companionCandidate = providers.gradleProperty("pixelpals.companion.releaseCandidate")
+    .map(String::toBooleanStrict).getOrElse(false)
+
 android {
     namespace = "com.pixelpals.app"
     compileSdk = 36
@@ -125,8 +128,6 @@ android {
         }
         release {
             // Explicit candidate builds include desktop care for review without changing the production default.
-            val companionCandidate = providers.gradleProperty("pixelpals.companion.releaseCandidate")
-                .map(String::toBooleanStrict).getOrElse(false)
             buildConfigField("boolean", "CARE_SCENES_ENABLED", companionCandidate.toString())
             isMinifyEnabled = true
             isShrinkResources = true
@@ -182,6 +183,12 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    // Share only reviewed care packs with opt-in candidates, never the full debug laboratory.
+    sourceSets.getByName("debug").assets.srcDir("src/carePreview/assets")
+    if (companionCandidate) {
+        sourceSets.getByName("release").assets.srcDir("src/carePreview/assets")
     }
 
     sourceSets.getByName("androidTest").assets.srcDir("$projectDir/schemas")
