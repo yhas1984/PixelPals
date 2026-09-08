@@ -65,6 +65,8 @@
     <string name="journal_title">Nuestra historia</string>
     <string name="journal_empty">Vuestros primeros momentos aparecerán aquí.</string>
     <string name="journal_adopt">El día que empezó nuestra historia</string>
+    <string name="journal_object">Un momento juntos · %1$s</string>
+    <string name="journal_object_unknown">Un momento juntos en el hogar</string>
     <string name="journal_care">Un momento juntos · %1$s</string>
     <string name="journal_expedition">Un descubrimiento en %1$s</string>
     <string name="journal_album">Abrir álbum de tesoros</string>

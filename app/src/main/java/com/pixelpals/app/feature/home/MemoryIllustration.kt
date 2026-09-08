@@ -5,7 +5,8 @@ import android.graphics.*
 import android.view.View
 
 /** Small vector illustrations remain readable offline, including devices missing emoji glyphs. */
-class MemoryIllustration(context: Context, private val kind: String, private val detail: String) : View(context) {
+class MemoryIllustration(context: Context, private val kind: String, private val detail: String,
+    private val pet: com.pixelpals.app.core.domain.PetType = com.pixelpals.app.core.domain.PetType.CORGI) : View(context) {
     private val painter = HomeScenePainter()
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val heart = Path()
@@ -14,7 +15,10 @@ class MemoryIllustration(context: Context, private val kind: String, private val
         canvas.save()
         canvas.scale(width / 1000f, height / 760f)
         painter.drawBackground(canvas, if (kind == "expedition" && detail == "forest") HomeEnvironment.GARDEN else ExpeditionDestination.find(detail)?.environment ?: HomeEnvironment.COZY, 14)
-        if (kind == "expedition" && detail == "night") {
+        val decoration: Decoration? = if (kind == "object") DecorationCatalog.find(detail) else null
+        if (decoration != null) {
+            painter.drawObject(canvas, decoration, RectF(320f, 190f, 680f, 550f), pet = pet)
+        } else if (kind == "expedition" && detail == "night") {
             paint.color = Color.rgb(243, 219, 158); paint.strokeWidth = 6f
             canvas.drawLine(330f, 240f, 440f, 150f, paint)
             canvas.drawLine(440f, 150f, 580f, 230f, paint)

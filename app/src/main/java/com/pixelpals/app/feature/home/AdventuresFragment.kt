@@ -85,12 +85,13 @@ class AdventuresFragment : Fragment() {
         events.forEach { event ->
             val title: String = when (event.kind) {
                 "adopt" -> getString(R.string.journal_adopt)
+                "object" -> JournalPresentation.objectTitle(requireContext(), event)
                 "expedition" -> getString(R.string.journal_expedition, getString(ExpeditionDestination.find(event.detail)?.title ?: R.string.adventures_title))
                 "care" -> getString(R.string.journal_care, getString(com.pixelpals.app.feature.care.CareScenePanel.label(
                     com.pixelpals.app.core.care.scene.CareSceneAction.entries.firstOrNull { it.name == event.detail } ?: com.pixelpals.app.core.care.scene.CareSceneAction.PET)))
                 else -> return@forEach
             }
-            card.addView(MemoryIllustration(requireContext(), event.kind, event.detail), LinearLayout.LayoutParams(-1, HomeUi.dp(requireContext(), 90)))
+            card.addView(MemoryIllustration(requireContext(), event.kind, event.detail, JournalPresentation.pet(event)), LinearLayout.LayoutParams(-1, HomeUi.dp(requireContext(), 90)))
             card.addView(HomeUi.text(requireContext(), title, 18f))
             card.addView(HomeUi.text(requireContext(), DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
                 .format(Instant.ofEpochMilli(event.occurredAt).atZone(ZoneId.systemDefault())), 12f))
