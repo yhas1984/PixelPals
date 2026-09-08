@@ -18,6 +18,7 @@ internal data class HomeLegacyClips(val resources: List<Int>, val clips: Map<Str
         }
         private fun create(resources: List<Int>, idle: List<Int>, walk: List<Int>, play: List<Int>, sleep: List<Int>): HomeLegacyClips = HomeLegacyClips(resources,
             mapOf("idle" to PetClipSpec("idle", idle, true, 650), "walk" to PetClipSpec("walk", walk, true, 150),
-                "play" to PetClipSpec("play", play, true, 450), "sleep" to PetClipSpec("sleep", sleep, false, 950)))
+                "play" to PetClipSpec("play", play, true, 450), "sleep" to PetClipSpec("sleep", sleep, false, 950),
+                "wake" to PetClipSpec("wake", sleep.reversed(), false, 300)))
     }
 }

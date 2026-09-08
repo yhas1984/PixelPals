@@ -15,6 +15,7 @@ import java.time.LocalTime
 import kotlin.math.*
 
 class HomeSceneView(context: Context) : View(context) {
+    private val dreamPainter: HomeDreamPainter = HomeDreamPainter()
     private val painter: HomeScenePainter = HomeScenePainter()
     private val paint: Paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
     private val actor: RectF = RectF()
@@ -41,6 +42,8 @@ class HomeSceneView(context: Context) : View(context) {
     var isTravelling: Boolean = false
     var isEditing: Boolean = false
     var showPet: Boolean = true
+    var energy: Int = 75
+    var isUnwell: Boolean = false
     var bond: Int = 0
         set(value) { field = value; traits = CompanionTraits.derive(pet, home, value) }
     private val cosmetics: SceneCosmeticPainter = SceneCosmeticPainter()
@@ -63,9 +66,11 @@ class HomeSceneView(context: Context) : View(context) {
     private var downY: Float = 0f
     private var activeTime: Long = 0L
     private var motion: CompanionMotion = CompanionMotion()
+    internal var reviewSeed: Int? = null
     internal var previewTimeScale: Float = 1f
     internal var previewReducedMotion: Boolean = false
     private val isMotionReduced: Boolean get() = previewReducedMotion || preferences.reducedMotion || !ValueAnimator.areAnimatorsEnabled()
+    private var describedDream: Boolean? = null
     private var lastFrame: Long = 0L
     private var running: Boolean = false
     private val tick: Runnable = object : Runnable {
@@ -79,6 +84,13 @@ class HomeSceneView(context: Context) : View(context) {
             val delta: Long = if (lastFrame > 0) (now - lastFrame).coerceAtMost(100) else 0
             if (showPet && !isEditing && !isTravelling) advanceScene((delta * previewTimeScale.coerceIn(.1f, 1f)).toLong())
             lastFrame = now
+            val dreaming: Boolean = motion.activity == CompanionActivity.REST && !isTravelling && !isEditing && showPet &&
+                (isMotionReduced || motion.elapsed >= 1.4f)
+            if (describedDream != dreaming) {
+                describedDream = dreaming
+                contentDescription = context.getString(if (dreaming) R.string.home_scene_dreaming else R.string.home_scene_description,
+                    context.getString(pet.displayNameResId))
+            }
             invalidate(); schedule()
         }
     }
@@ -90,16 +102,21 @@ class HomeSceneView(context: Context) : View(context) {
     }
 
     /** Advances only visible scene time; also used by deterministic Android render reviews. */
+    /** Selects a path for frame review without waiting for a random autonomous choice. */
+    internal fun requestMotionReview(intent: CompanionIntent): Unit = motion.beginIntent(intent)
+
     internal val activity: CompanionActivity get() = motion.activity
 
     internal fun advanceScene(delta: Long): Unit {
         activeTime += delta.coerceIn(0, 100)
-        if (isMotionReduced) return
+        if (isMotionReduced) { motion.settleWithoutMovement(energy <= 25 || isUnwell); return }
         val toy = placements.firstOrNull { it.decorationId == home?.favoriteObject && DecorationCatalog.find(it.decorationId)?.kind == DecorationKind.TOY }
             ?: placements.firstOrNull { DecorationCatalog.find(it.decorationId)?.kind == DecorationKind.TOY }
         val bed = placements.firstOrNull { DecorationCatalog.find(it.decorationId)?.kind == DecorationKind.BED }
         val toyCenter: Float = toy?.let { objectBounds(it).centerX() } ?: 500f
         val toyStand: Float = if (toy == null) 500f else toyCenter + if (toyCenter < 500f) 100f else -100f
+        motion.context = CompanionIntentContext(energy, isUnwell, toy != null, bed != null, profile.curiosity,
+            ((home?.playCount ?: 0) / 30f).coerceIn(0f, 1f), (.3f + bond / 140f).coerceIn(0f, 1f))
         motion.advance(delta / 1000f, toyStand,
             bed?.let { objectBounds(it).centerX() } ?: 500f, profile.tempo * traits.tempo * traits.initiative, bond,
             toy?.let { objectBounds(it).bottom - 30f } ?: 650f, bed?.let { objectBounds(it).bottom - 30f } ?: 650f, toy?.let { toyCenter < toyStand })
@@ -107,9 +124,10 @@ class HomeSceneView(context: Context) : View(context) {
 
     suspend fun loadPet(type: PetType): Unit {
         pet = type
+        describedDream = null
         profile = CompanionProfiles.forPet(type)
         traits = CompanionTraits.derive(type, home, bond)
-        motion = CompanionMotion()
+        motion = CompanionMotion(CompanionIntentSelector(reviewSeed?.let { kotlin.random.Random(it) } ?: kotlin.random.Random.Default))
         locomotion = null
         val walk: HomeLocomotion = HomeLocomotion.load(context, type)
         if (pet != type) return
@@ -158,8 +176,7 @@ class HomeSceneView(context: Context) : View(context) {
             ?: placements.firstOrNull { DecorationCatalog.find(it.decorationId)?.kind == DecorationKind.TOY }
         canvas.save()
         if (!isMotionReduced && !isEditing && motion.activity == CompanionActivity.PLAY && !motion.isTurning && position == activeToy) {
-            val beat: Float = ((motion.elapsed - .6f).coerceAtLeast(0f) % 1.2f) / 1.2f
-            val nudge: Float = sin(beat * PI.toFloat()).coerceAtLeast(0f)
+            val nudge: Float = locomotion?.toyResponse(motion.elapsed) ?: 0f
             val direction: Float = if (motion.x < bounds.centerX()) 1f else -1f
             canvas.translate(nudge * 24f * direction, -nudge * 14f)
             canvas.rotate(nudge * 25f * direction, bounds.centerX(), bounds.bottom - 30f)
@@ -195,6 +212,8 @@ class HomeSceneView(context: Context) : View(context) {
         canvas.restore()
         paint.colorFilter = null
         cosmetics.draw(canvas, cosmeticEffect, actor, if (reduced) 0f else activeTime / 1000f)
+        if (motion.activity == CompanionActivity.REST && !isEditing && (reduced || motion.elapsed >= 1.4f))
+            dreamPainter.draw(canvas, x, motion.y, size, motion.elapsed, reduced)
     }
 
     private fun drawGrid(canvas: Canvas): Unit {

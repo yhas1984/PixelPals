@@ -16,6 +16,17 @@ import java.io.File
 
 @RunWith(AndroidJUnit4::class)
 class CompanionSceneTest {
+    @Test fun dreamCloudStaysStillWithReducedMotion(): Unit {
+        val painter: HomeDreamPainter = HomeDreamPainter()
+        val first: Bitmap = Bitmap.createBitmap(1000, 760, Bitmap.Config.ARGB_8888)
+        val second: Bitmap = Bitmap.createBitmap(1000, 760, Bitmap.Config.ARGB_8888)
+        painter.draw(Canvas(first), 500f, 650f, 300f, 2f, true)
+        painter.draw(Canvas(second), 500f, 650f, 300f, 20f, true)
+        assertTrue("Reduced motion must freeze both cloud and dream motif", first.sameAs(second))
+        assertTrue("The dream cloud must be visible", first.getPixel(578, 382) ushr 24 > 0)
+        first.recycle(); second.recycle()
+    }
+
     @Test fun transparentDecorationDoesNotChangeNextBackgroundOpacity(): Unit {
         val painter: HomeScenePainter = HomeScenePainter()
         val first: Bitmap = Bitmap.createBitmap(1000, 760, Bitmap.Config.ARGB_8888)
@@ -60,7 +71,7 @@ class CompanionSceneTest {
         val directory = File(context.getExternalFilesDir(null), "home-transitions").apply { mkdirs() }
         for (pet in PetType.entries) {
             InstrumentationRegistry.getInstrumentation().runOnMainSync {
-                val scene = HomeSceneView(context)
+                val scene = HomeSceneView(context).apply { reviewSeed = 42 }
                 scene.placements = listOf(
                     HomeDecorationEntity(pet.name.lowercase(), DecorationCatalog.starters.first { it.kind == DecorationKind.BED }.id, 0, 0),
                     HomeDecorationEntity(pet.name.lowercase(), DecorationCatalog.starters.first { it.kind == DecorationKind.TOY }.id, 4, 2),
@@ -73,6 +84,11 @@ class CompanionSceneTest {
                 canvas.drawColor(HomeUi.cream)
                 val label = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = HomeUi.ink; textSize = 16f }
                 listOf(CompanionActivity.GREET, CompanionActivity.APPROACH_TOY, CompanionActivity.REST).forEachIndexed { index, activity ->
+                    when (activity) {
+                        CompanionActivity.APPROACH_TOY -> scene.requestMotionReview(CompanionIntent.PLAY)
+                        CompanionActivity.REST -> scene.requestMotionReview(CompanionIntent.REST)
+                        else -> Unit
+                    }
                     var attempts = 0
                     while (scene.activity != activity && attempts++ < 2400) scene.advanceScene(50)
                     assertTrue("$pet did not reach $activity", scene.activity == activity)

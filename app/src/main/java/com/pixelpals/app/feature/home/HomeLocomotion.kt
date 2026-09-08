@@ -2,7 +2,7 @@ package com.pixelpals.app.feature.home
 
 import android.content.Context
 import android.graphics.*
-import com.pixelpals.app.R
+import com.pixelpals.app.BuildConfig
 import com.pixelpals.app.core.domain.PetType
 import com.pixelpals.app.feature.overlay.behavior.PetAtlasSpec
 import com.pixelpals.app.feature.overlay.behavior.PetClipSpec
@@ -16,8 +16,9 @@ class HomeLocomotion private constructor(
     private val clips: Map<String, PetClipSpec>,
     private val nativeFacesLeft: Boolean,
     normalizeClips: Boolean = false,
+    private val anchor: android.graphics.PointF? = null,
 ) {
-    private val sprites: HomeSpriteFrames = HomeSpriteFrames(frames)
+    private val sprites: HomeSpriteFrames = HomeSpriteFrames(frames, anchor)
     private val clipSprites: Map<String, HomeSpriteFrames> = if (normalizeClips)
         clips.mapValues { (_, clip) -> HomeSpriteFrames(clip.frames.map { frames[it] }) } else emptyMap()
     fun draw(canvas: Canvas, paint: Paint, target: RectF, motion: CompanionMotion, reduced: Boolean): Unit {
@@ -26,6 +27,7 @@ class HomeLocomotion private constructor(
             motion.isTurning && motion.speed <= .1f -> "turn"
             motion.isPreparing -> "idle"
             motion.isApproaching -> "walk"
+            motion.activity == CompanionActivity.WAKE -> "wake"
             motion.activity == CompanionActivity.REST -> "sleep"
             motion.activity == CompanionActivity.PLAY -> "play"
             else -> "idle"
@@ -34,6 +36,7 @@ class HomeLocomotion private constructor(
         val phase: Long = when {
             reduced -> if (name == "sleep") clip.frames.lastIndex * clip.frameDurationMs.toLong() else 0L
             name == "walk" -> (motion.distanceTravelled / 105f * clip.frames.size * clip.frameDurationMs).toLong()
+            name == "wake" -> (motion.elapsed / CompanionMotion.WAKE_SECONDS * clip.frames.size * clip.frameDurationMs).toLong()
             name == "turn" -> (motion.turnElapsed / CompanionMotion.TURN_SECONDS * clip.frames.size * clip.frameDurationMs).toLong()
             else -> (motion.elapsed * 1000).toLong()
         }
@@ -44,13 +47,26 @@ class HomeLocomotion private constructor(
         if (local != null) local.draw(canvas, paint, target, index) else sprites.draw(canvas, paint, target, clip.frames[index])
         canvas.restore()
     }
+    fun toyResponse(elapsed: Float): Float {
+        val clip: PetClipSpec = clips["play"] ?: return 0f
+        val duration: Float = clip.frames.size * clip.frameDurationMs / 1000f
+        val contact: Float = minOf(2, clip.frames.lastIndex) * clip.frameDurationMs / 1000f
+        val phase: Float = elapsed % duration
+        if (phase < contact) return 0f
+        val response: Float = ((phase - contact) / (duration - contact)).coerceIn(0f, 1f)
+        return kotlin.math.sin(response * Math.PI.toFloat()).coerceAtLeast(0f)
+    }
     companion object {
         suspend fun load(context: Context, pet: PetType): HomeLocomotion = withContext(Dispatchers.IO) {
             val folder: String = "pets/${pet.name.lowercase()}"
             val filename: String? = context.assets.list(folder).orEmpty().filter { it.endsWith(".json") && !it.startsWith("care") }
                 .sortedWith(compareByDescending<String> { it.contains("motion_v2") }.thenByDescending { it }).firstOrNull()
-            if (filename == null) return@withContext loadLegacy(context, pet)
-            val spec: PetAtlasSpec = context.assets.open("$folder/$filename").bufferedReader().use { PetAtlasSpec.fromJson(JSONObject(it.readText())) }
+            val candidate: String = "${pet.name.lowercase()}.json"
+            val hasCandidate: Boolean = BuildConfig.DEBUG && candidate in context.assets.list("companion/pets").orEmpty()
+            if (filename == null && !hasCandidate) return@withContext loadLegacy(context, pet)
+            val path: String = if (hasCandidate) "companion/pets/$candidate" else "$folder/$filename"
+            val json: JSONObject = context.assets.open(path).bufferedReader().use { JSONObject(it.readText()) }
+            val spec: PetAtlasSpec = PetAtlasSpec.fromJson(json)
             val bitmap: Bitmap = context.assets.open(spec.atlasPath).use { requireNotNull(BitmapFactory.decodeStream(it, null, BitmapFactory.Options().apply { inSampleSize = 2 })) }
             val width: Int = bitmap.width / spec.columns
             val height: Int = bitmap.height / spec.rows
@@ -60,11 +76,15 @@ class HomeLocomotion private constructor(
                 "idle" to idle,
                 "walk" to choose("walk", "crawl_loop", "right", "glide", "hover"),
                 "turn" to (spec.clip("turn")?.copy(loop = false) ?: idle),
-                "play" to choose("playful_delight", "happy", "front_social", "groom", "grace", "tongue_strike", "idle"),
+                "play" to choose("play", "playful_delight", "happy", "front_social", "groom", "grace", "tongue_strike", "idle"),
                 "sleep" to (if (pet == PetType.MENTA) choose("blink", "idle") else choose("sleep", "prayer", "perch_loop", "idle")).copy(loop = false),
             )
+            val sleep: PetClipSpec = requireNotNull(selected["sleep"])
+            val withWake: Map<String, PetClipSpec> = selected + ("wake" to (spec.clip("wake") ?: sleep.copy(id = "wake", frames = sleep.frames.reversed(), loop = false)))
+            val anchor: PointF? = if (json.optJSONObject("renderHints")?.optBoolean("preserveFrameAnchors") == true)
+                spec.pivot?.let { PointF(it.x * width.toFloat() / spec.frameWidth, it.y * height.toFloat() / spec.frameHeight) } else null
             HomeLocomotion((0 until spec.frameCount).map { bitmap to Rect(it % spec.columns * width, it / spec.columns * height,
-                (it % spec.columns + 1) * width, (it / spec.columns + 1) * height) }, selected, pet == PetType.GINGER)
+                (it % spec.columns + 1) * width, (it / spec.columns + 1) * height) }, withWake, pet == PetType.GINGER, anchor = anchor)
         }
         private fun loadLegacy(context: Context, pet: PetType): HomeLocomotion {
             val bank: HomeLegacyClips = HomeLegacyClips.forPet(pet)

@@ -115,4 +115,5 @@
     <string name="companion_lumi">Una chispa de asombro, atraída por todo lo que brilla.</string>
     <string name="nav_adventures">Aventuras</string>
     <string name="home_remove_desktop_object">Quitar del escritorio</string>
+    <string name="home_scene_dreaming">%1$s está soñando. Utiliza los botones de cuidados y decoración para interactuar.</string>
 </resources>

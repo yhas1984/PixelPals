@@ -4,10 +4,15 @@ import kotlin.math.abs
 import kotlin.math.hypot
 import kotlin.math.sqrt
 
-enum class CompanionActivity { GREET, APPROACH_TOY, PLAY, APPROACH_BED, REST }
+enum class CompanionActivity { GREET, APPROACH_TOY, PLAY, APPROACH_BED, REST, WAKE, EXPLORE, OBSERVE }
 
 /** Distance-driven gait with anticipation, braking and planted direction changes. */
-class CompanionMotion {
+class CompanionMotion(private val selector: CompanionIntentSelector = CompanionIntentSelector()) {
+    var context: CompanionIntentContext = CompanionIntentContext()
+    private var destinationX: Float = 500f
+    private var destinationY: Float = 650f
+    private var pauseDuration: Float = 3f
+    private var pendingIntent: CompanionIntent? = null
     var x: Float = 500f
         private set
     var y: Float = 650f
@@ -31,21 +36,45 @@ class CompanionMotion {
     private var targetFacesLeft: Boolean = false
     private var headingX: Float = 0f
     private var headingY: Float = 0f
-    val isApproaching: Boolean get() = activity == CompanionActivity.APPROACH_TOY || activity == CompanionActivity.APPROACH_BED
+    val isApproaching: Boolean get() = activity == CompanionActivity.APPROACH_TOY || activity == CompanionActivity.APPROACH_BED || activity == CompanionActivity.EXPLORE
     val isPreparing: Boolean get() = isApproaching && elapsed < ANTICIPATION_SECONDS
     fun advance(delta: Float, toyX: Float, bedX: Float, tempo: Float, bond: Int, toyY: Float = 650f, bedY: Float = 650f, toyFacesLeft: Boolean? = null): Unit {
         val dt: Float = delta.coerceIn(0f, .1f)
         elapsed += dt
         when (activity) {
-            CompanionActivity.GREET -> if (elapsed >= 4f - bond.coerceIn(0, 100) * .02f) transition(CompanionActivity.APPROACH_TOY)
-            CompanionActivity.APPROACH_TOY -> if (approach(toyX, toyY, dt, tempo)) transition(CompanionActivity.PLAY)
+            CompanionActivity.GREET -> if (elapsed >= 4f - bond.coerceIn(0, 100) * .02f) chooseNext()
+            CompanionActivity.APPROACH_TOY -> if (!context.hasToy) chooseNext() else if (approach(toyX, toyY, dt, tempo)) transition(CompanionActivity.PLAY)
             CompanionActivity.PLAY -> {
+                val wasTurning: Boolean = isTurning
                 if (toyFacesLeft != null) updateTurn(if (toyFacesLeft) -100f else 100f, dt, tempo)
-                if (elapsed >= 5f && !isTurning) transition(CompanionActivity.APPROACH_BED)
+                if (wasTurning && !isTurning) elapsed = 0f
+                if ((!context.hasToy || elapsed >= 5f) && !isTurning) chooseNext()
             }
-            CompanionActivity.APPROACH_BED -> if (approach(bedX, bedY, dt, tempo)) transition(CompanionActivity.REST)
-            CompanionActivity.REST -> if (elapsed >= 8f / tempo.coerceAtLeast(.45f)) transition(CompanionActivity.APPROACH_TOY)
+            CompanionActivity.APPROACH_BED -> if (!context.hasBed || approach(bedX, bedY, dt, tempo)) transition(CompanionActivity.REST)
+            CompanionActivity.REST -> if (elapsed >= 8f / tempo.coerceAtLeast(.45f) && context.energy > 25 && !context.isUnwell) {
+                pendingIntent = selector.choose(context)
+                if (pendingIntent != CompanionIntent.REST) transition(CompanionActivity.WAKE) else elapsed = 2f
+            }
+            CompanionActivity.WAKE -> if (elapsed >= WAKE_SECONDS) beginIntent(if (context.energy <= 25 || context.isUnwell) CompanionIntent.REST else pendingIntent ?: CompanionIntent.OBSERVE)
+            CompanionActivity.EXPLORE -> if (approach(destinationX, destinationY, dt, tempo)) transition(CompanionActivity.OBSERVE)
+            CompanionActivity.OBSERVE -> if (elapsed >= pauseDuration) chooseNext()
         }
+    }
+    fun settleWithoutMovement(shouldRest: Boolean): Unit {
+        val target: CompanionActivity = if (shouldRest) CompanionActivity.REST else CompanionActivity.OBSERVE
+        if (activity != target) transition(target)
+    }
+    private fun chooseNext(): Unit = beginIntent(selector.choose(context))
+    internal fun beginIntent(intent: CompanionIntent): Unit {
+        pauseDuration = selector.nextPause()
+        destinationX = selector.nextX()
+        destinationY = selector.nextY()
+        transition(when (intent) {
+            CompanionIntent.PLAY -> CompanionActivity.APPROACH_TOY
+            CompanionIntent.REST -> if (context.hasBed) CompanionActivity.APPROACH_BED else CompanionActivity.REST
+            CompanionIntent.EXPLORE -> CompanionActivity.EXPLORE
+            CompanionIntent.OBSERVE -> CompanionActivity.OBSERVE
+        })
     }
     private fun transition(next: CompanionActivity): Unit {
         activity = next
@@ -93,6 +122,7 @@ class CompanionMotion {
         return false
     }
     companion object {
+        const val WAKE_SECONDS: Float = 1.2f
         const val ANTICIPATION_SECONDS: Float = .22f
         const val TURN_SECONDS: Float = .36f
     }

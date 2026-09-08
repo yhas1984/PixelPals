@@ -7,8 +7,8 @@ import android.graphics.Rect
 import android.graphics.RectF
 
 /** Measures once when loading. Transparent atlas padding never changes the actor's floor contact. */
-internal class HomeSpriteFrames(frames: List<Pair<Bitmap, Rect>>) {
-    private data class Frame(val bitmap: Bitmap, val visible: Rect)
+internal class HomeSpriteFrames(frames: List<Pair<Bitmap, Rect>>, private val anchor: android.graphics.PointF? = null) {
+    private data class Frame(val bitmap: Bitmap, val visible: Rect, val cell: Rect)
     private val frames: List<Frame> = frames.map { (bitmap, cell) ->
         val pixels = IntArray(cell.width() * cell.height())
         bitmap.getPixels(pixels, 0, cell.width(), cell.left, cell.top, cell.width(), cell.height())
@@ -20,7 +20,7 @@ internal class HomeSpriteFrames(frames: List<Pair<Bitmap, Rect>>) {
             }
         }
         require(right >= left && bottom >= top) { "Home frame is transparent" }
-        Frame(bitmap, Rect(cell.left + left, cell.top + top, cell.left + right + 1, cell.top + bottom + 1))
+        Frame(bitmap, Rect(cell.left + left, cell.top + top, cell.left + right + 1, cell.top + bottom + 1), Rect(cell))
     }
     private val extent = this.frames.maxOf { maxOf(it.visible.width(), it.visible.height()) }.toFloat()
     private val destination = RectF()
@@ -32,6 +32,10 @@ internal class HomeSpriteFrames(frames: List<Pair<Bitmap, Rect>>) {
         val height = frame.visible.height() * scale
         val ground = target.bottom - target.height() * .04f
         destination.set(target.centerX() - width / 2, ground - height, target.centerX() + width / 2, ground)
-        canvas.drawBitmap(frame.bitmap, frame.visible, destination, paint)
+        if (anchor != null) {
+            destination.set(target.centerX() - anchor.x * scale, ground - anchor.y * scale,
+                target.centerX() + (frame.cell.width() - anchor.x) * scale, ground + (frame.cell.height() - anchor.y) * scale)
+            canvas.drawBitmap(frame.bitmap, frame.cell, destination, paint)
+        } else canvas.drawBitmap(frame.bitmap, frame.visible, destination, paint)
     }
 }

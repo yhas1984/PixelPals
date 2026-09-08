@@ -104,6 +104,9 @@ open class LivingHomeFragment : Fragment() {
                     if (snapshot != null) {
                         needs?.text = getString(R.string.home_needs, snapshot.hunger, snapshot.energy, snapshot.hygiene, snapshot.bond)
                         scene?.bond = snapshot.bond
+                        scene?.energy = snapshot.energy
+                        scene?.isUnwell = snapshot.condition == com.pixelpals.app.core.care.PetCondition.SICK ||
+                            snapshot.condition == com.pixelpals.app.core.care.PetCondition.RECOVERING
                         renderGreeting()
                     }
                 } }

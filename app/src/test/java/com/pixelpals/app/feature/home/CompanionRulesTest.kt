@@ -5,8 +5,8 @@ import org.junit.Test
 
 class CompanionRulesTest {
     @Test fun gaitDoesNotAdvanceWhilePreparingOrResting(): Unit {
-        val motion: CompanionMotion = CompanionMotion()
-        while (motion.activity == CompanionActivity.GREET) motion.advance(.05f, 800f, 200f, 1f, 80)
+        val motion: CompanionMotion = CompanionMotion(CompanionIntentSelector(kotlin.random.Random(42)))
+        while (motion.activity != CompanionActivity.APPROACH_TOY) motion.advance(.05f, 800f, 200f, 1f, 80)
         val distance: Float = motion.distanceTravelled
         repeat(3) { motion.advance(.05f, 800f, 200f, 1f, 80) }
         assertEquals(distance, motion.distanceTravelled, .001f)
@@ -22,7 +22,7 @@ class CompanionRulesTest {
         fail("Never reached rest")
     }
     @Test fun reversingAPlacedTargetBrakesBeforeTurning(): Unit {
-        val motion: CompanionMotion = CompanionMotion()
+        val motion: CompanionMotion = CompanionMotion(CompanionIntentSelector(kotlin.random.Random(42)))
         while (motion.speed < 60f) motion.advance(.02f, 850f, 200f, 1f, 80)
         val previousSpeed: Float = motion.speed
         motion.advance(.02f, 150f, 200f, 1f, 80)
@@ -55,7 +55,7 @@ class CompanionRulesTest {
         assertFalse(HomeGrid.isValid(0, 3)); assertTrue(HomeGrid.isValid(4, 2))
     }
     @Test fun targetChangesAndLongPausesNeverTeleportTheCompanion(): Unit {
-        val motion: CompanionMotion = CompanionMotion()
+        val motion: CompanionMotion = CompanionMotion(CompanionIntentSelector(kotlin.random.Random(42)))
         var previous: Float = motion.x
         repeat(4000) { index ->
             motion.advance(if (index == 200) 60f else .05f, if (index < 300) 200f else 800f, 220f, 1.2f, 80)
@@ -65,7 +65,7 @@ class CompanionRulesTest {
         }
     }
     @Test fun reachesRearRowBeforeResting(): Unit {
-        val motion = CompanionMotion()
+        val motion = CompanionMotion(CompanionIntentSelector(kotlin.random.Random(42)))
         repeat(3000) {
             motion.advance(.05f, 500f, 200f, 1f, 80, 440f, 440f)
             if (motion.activity == CompanionActivity.REST) {

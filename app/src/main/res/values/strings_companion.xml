@@ -115,4 +115,5 @@
     <string name="companion_lumi">A little spark of wonder, drawn to everything that glows.</string>
     <string name="nav_adventures">Adventures</string>
     <string name="home_remove_desktop_object">Remove from desktop</string>
+    <string name="home_scene_dreaming">%1$s is dreaming. Use the care and decoration buttons to interact.</string>
 </resources>

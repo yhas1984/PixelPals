@@ -25,11 +25,11 @@ class HomeMotionPreviewActivity : Activity() {
         column.setPadding(24, 80, 24, 32)
         heading = TextView(this).apply { textSize = 26f; setTextColor(HomeUi.ink) }
         column.addView(heading)
-        scene = HomeSceneView(this)
+        scene = HomeSceneView(this).apply { reviewSeed = 42 }
         scene.bond = 75
         column.addView(scene)
         column.addView(TextView(this).apply {
-            text = "Preparación → pasos → frenada → juego → giro → descanso.\nLa prueba no modifica tus mascotas ni tu progreso."
+            text = "Observa sus pausas, exploración, juego, descanso y despertar.\nLa prueba no modifica tus mascotas ni tu progreso."
             textSize = 17f
             setTextColor(HomeUi.ink)
         })
@@ -41,6 +41,9 @@ class HomeMotionPreviewActivity : Activity() {
             HomeUi.button(this, "Repetir") { showPet(selected) },
             HomeUi.button(this, "Normal / lento") { scene.previewTimeScale = if (scene.previewTimeScale == 1f) .35f else 1f },
             HomeUi.button(this, "Movimiento reducido") { scene.previewReducedMotion = !scene.previewReducedMotion }))
+        column.addView(HomeUi.row(this,
+            HomeUi.button(this, "Descansar") { scene.energy = 10 },
+            HomeUi.button(this, "Despertar") { scene.energy = 90 }))
         column.addView(HomeUi.button(this, "Volver a PixelPals") { finish() })
         setContentView(ScrollView(this).apply { setBackgroundColor(HomeUi.cream); addView(column) })
         val requested: PetType = PetType.entries.firstOrNull { it.name == intent.getStringExtra("pet") } ?: PetType.CORGI
