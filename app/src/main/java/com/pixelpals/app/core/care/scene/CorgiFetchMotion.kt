@@ -1,6 +1,8 @@
 package com.pixelpals.app.core.care.scene
 
 import com.pixelpals.app.core.motion.PetBounds
+import com.pixelpals.app.core.motion.CorgiGait
+import com.pixelpals.app.core.motion.GroundGait
 import kotlin.math.abs
 import kotlin.math.sin
 
@@ -32,7 +34,7 @@ data class CorgiFetchPose(
 object CorgiFetchMotion {
     private const val REACTION_MS: Long = 160L
     private const val LOWER_HEAD_MS: Long = 220L
-    private const val RUN_SPEED_SPRITES_PER_SECOND: Float = 2.3f
+    private const val MAX_RUN_SPEED_SPRITES_PER_SECOND: Float = 4.3f
     private const val MAX_DISTANCE_SPRITES: Float = 2.6f
 
     fun createPlan(start: CarePoint, bounds: PetBounds, spriteSize: Int,
@@ -48,22 +50,23 @@ object CorgiFetchMotion {
             else if (rightRoom >= leftRoom) 1f else -1f
         val available: Float = if (direction > 0f) rightRoom else leftRoom
         val distance: Float = if (reducedMotion) 0f else minOf(size * MAX_DISTANCE_SPRITES, available * .90f)
-        val runMs: Long = (distance / size / RUN_SPEED_SPRITES_PER_SECOND * 1_000f).toLong().coerceIn(650L, 1_400L)
+        val runMs: Long = (GroundGait.duration(distance, size * MAX_RUN_SPEED_SPRITES_PER_SECOND, .65f) * 1_000f).toLong()
         return CorgiFetchPlan(x, start.y, x + direction * distance, bounds.floor.toFloat(), size,
-            direction, if (reducedMotion) 360L else REACTION_MS + runMs, reducedMotion)
+            direction, if (reducedMotion) 360L else REACTION_MS + runMs + LOWER_HEAD_MS, reducedMotion)
     }
 
     fun getPose(plan: CorgiFetchPlan, elapsedMs: Long): CorgiFetchPose {
         val elapsed: Long = elapsedMs.coerceAtLeast(0L)
-        val run: Float = ((elapsed - REACTION_MS).toFloat() / (plan.catchMs - REACTION_MS)).coerceIn(0f, 1f)
-        val travel: Float = run * run * (3f - 2f * run)
+        // Stop on planted feet before switching to the stationary pickup artwork.
+        val travel: Float = GroundGait.progress((elapsed - REACTION_MS).toFloat(),
+            (plan.catchMs - REACTION_MS - LOWER_HEAD_MS).toFloat())
         val petX: Float = plan.startX + (plan.endX - plan.startX) * travel
         val landing: Float = (elapsed.toFloat() / REACTION_MS).coerceIn(0f, 1f)
         val petY: Float = if (plan.reducedMotion) plan.startY else plan.startY + (plan.floorY - plan.startY) * landing
         val regularFrame: Int? = when {
             plan.reducedMotion -> null
             elapsed < REACTION_MS -> 0
-            elapsed < plan.catchMs - LOWER_HEAD_MS -> 10 + (abs(petX - plan.startX) / (plan.spriteSize * .10f)).toInt() % 4
+            elapsed < plan.catchMs - LOWER_HEAD_MS -> CorgiGait.frameAt(petX - plan.startX, plan.spriteSize, running = true)
             else -> null
         }
         val careFrame: Int = when {

@@ -3,6 +3,7 @@ package com.pixelpals.app.feature.overlay.behavior
 import com.pixelpals.app.core.domain.PetState
 import com.pixelpals.app.R
 import com.pixelpals.app.core.motion.PetRandom
+import com.pixelpals.app.core.motion.CorgiGait
 import kotlin.math.abs
 import kotlin.math.sin
 
@@ -97,8 +98,7 @@ class CorgiBehavior(
         bridge.updateWindowLayout(params)
 
         gaitDistance += abs(params.x - previousX)
-        bridge.currentFrame = WALK_FRAME_START +
-            ((gaitDistance / (bridge.petSpriteSize * WALK_FRAME_TRAVEL_RATIO)).toInt() % WALK_FRAME_COUNT)
+        bridge.currentFrame = CorgiGait.frameAt(gaitDistance, bridge.petSpriteSize.toFloat())
         bridge.animScaleX = if (walkDirection >= 0f) 1f else -1f
         bridge.animScaleY = 1f
         bridge.animOffsetX = 0f
@@ -256,8 +256,7 @@ class CorgiBehavior(
         bridge.currentFrame = if (interactionTimer < 0.16f) {
             FRAME_ZOOM_START
         } else {
-            WALK_FRAME_START +
-                ((gaitDistance / (bridge.petSpriteSize * ZOOM_FRAME_TRAVEL_RATIO)).toInt() % WALK_FRAME_COUNT)
+            CorgiGait.frameAt(gaitDistance, bridge.petSpriteSize.toFloat(), running = true)
         }
         bridge.animScaleX = if (walkDirection >= 0f) 1f else -1f
         bridge.animScaleY = 1f
@@ -319,9 +318,5 @@ class CorgiBehavior(
         const val FRAME_REST_BLINK = 7
         const val FRAME_BELLY_RUB = 8
         const val FRAME_ZOOM_START = 9
-        const val WALK_FRAME_START = 10
-        const val WALK_FRAME_COUNT = 4
-        const val WALK_FRAME_TRAVEL_RATIO = 0.11f
-        const val ZOOM_FRAME_TRAVEL_RATIO = 0.085f
     }
 }
