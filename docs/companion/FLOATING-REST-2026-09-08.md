@@ -9,8 +9,8 @@ in over 200 ms at its current position before handing off; no teleport is added.
 Angel waits for hover/prayer at at most 1 px/s. Requested hover/prayer damps in place
 without the edge springs reaccelerating the actor, and hover does not start another
 cruise. Other active flight actions finish first. Reduced motion permits stationary
-flight poses except touch/recovery; suspended reduced-motion recovery still needs
-an explicit completion policy.
+flight poses except touch/recovery. Reduced-motion recovery now has a stationary
+fade handoff described in `ANGEL-REDUCED-REST-2026-09-08.md`.
 
 Nube Michi waits for its native SLEEP_FLOAT state in normal motion. With reduced
 motion its already-static cloud pose can hand off directly at the same location.

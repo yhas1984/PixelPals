@@ -11,6 +11,41 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class FloatingRestTest {
+    @Test fun angelRecoveryCanFinishWithoutTravelInReducedMotion(): Unit {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        instrumentation.runOnMainSync {
+            val bridge = TestPetBridge(instrumentation.targetContext, PetType.ANGEL)
+            val behavior = AngelBehavior(bridge, SeededPetRandom(12))
+            try {
+                val mode = AngelBehavior::class.java.getDeclaredField("mode").apply { isAccessible = true }
+                mode.set(behavior, mode.type.enumConstants!!.first { (it as Enum<*>).name == "RECOVER" })
+                val originalX: Int = bridge.getWindowParams().x
+                val originalY: Int = bridge.getWindowParams().y
+                assertFalse(behavior.canStartScheduledSleep(true))
+                behavior.onScheduledRestRequested(true)
+                behavior.advanceScheduledRestTransition(.05f, true)
+                behavior.onScheduledRestRequested(false)
+                assertEquals(1f, bridge.alpha, 0f)
+                assertEquals("RECOVER", (mode.get(behavior) as Enum<*>).name)
+                behavior.onScheduledRestRequested(true)
+                var previousMode: String = "RECOVER"
+                repeat(90) {
+                    behavior.advanceScheduledRestTransition(1f / 60f, true)
+                    val currentMode: String = (mode.get(behavior) as Enum<*>).name
+                    if (currentMode != previousMode) assertEquals(0f, bridge.alpha, 0f)
+                    previousMode = currentMode
+                    assertEquals(originalX, bridge.getWindowParams().x)
+                    assertEquals(originalY, bridge.getWindowParams().y)
+                    if (bridge.alpha < 1f) assertFalse(behavior.canStartScheduledSleep(true))
+                }
+                assertEquals("PRAYER", previousMode)
+                assertTrue(behavior.canStartScheduledSleep(true))
+                assertEquals(1f, bridge.alpha, 0f)
+                assertEquals(11, bridge.currentFrame)
+            } finally { behavior.destroy() }
+        }
+    }
+
     @Test fun ghostAndAngelSettleBeforeSleep(): Unit {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         instrumentation.runOnMainSync {

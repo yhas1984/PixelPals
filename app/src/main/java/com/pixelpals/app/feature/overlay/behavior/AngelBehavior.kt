@@ -11,11 +11,50 @@ class AngelBehavior(
     bridge: PetViewBridge,
     override val random: PetRandom,
 ) : BaseBehavior(bridge, random) {
+    private val restFade = com.pixelpals.app.core.rest.RestFadeTransition()
     private var scheduledRestRequested: Boolean = false
-    override fun onScheduledRestRequested(requested: Boolean) { scheduledRestRequested = requested }
+    override fun onScheduledRestRequested(requested: Boolean) {
+        scheduledRestRequested = requested
+        if (!requested) cancelRestFade()
+    }
+    private fun cancelRestFade() {
+        if (!restFade.active) return
+        restFade.cancel()
+        (bridge as? android.view.View)?.alpha = 1f
+    }
+    override fun advanceScheduledRestTransition(delta: Float, reducedMotion: Boolean) {
+        if (!scheduledRestRequested || !reducedMotion) {
+            cancelRestFade()
+            return
+        }
+        if (!restFade.active && mode != Mode.RECOVER) return
+        val params = bridge.getWindowParams() ?: return
+        if (!restFade.active) restFade.start()
+        val settle: Boolean = restFade.advance(delta)
+        (bridge as? android.view.View)?.alpha = restFade.opacity
+        if (settle) {
+            positionX = params.x.toFloat()
+            positionY = params.y.toFloat()
+            positionInitialized = true
+            velocityX = 0f
+            velocityY = 0f
+            flightTargetX = positionX
+            flightTargetY = positionY
+            changeMode(Mode.PRAYER, 3f)
+            bridge.currentFrame = FRAME_PRAYER_START + 1
+            bridge.animRotation = 0f
+            bridge.animOffsetX = 0f
+            bridge.animOffsetY = 0f
+            bridge.animScaleY = 1f
+        }
+    }
+    override fun destroy() {
+        cancelRestFade()
+        super.destroy()
+    }
     override fun canStartScheduledSleep(reducedMotion: Boolean): Boolean =
-        if (reducedMotion) mode != Mode.TOUCH && mode != Mode.RECOVER
-        else (mode == Mode.HOVER || mode == Mode.PRAYER) && hypot(velocityX, velocityY) <= 1f
+        !restFade.active && (if (reducedMotion) mode != Mode.TOUCH && mode != Mode.RECOVER
+        else (mode == Mode.HOVER || mode == Mode.PRAYER) && hypot(velocityX, velocityY) <= 1f)
 
     override val resourceIds: List<Int> = emptyList()
 
