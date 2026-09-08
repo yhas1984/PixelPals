@@ -169,10 +169,24 @@ class HomeSceneView(context: Context) : View(context) {
         if (actorVisible) drawCompanion(canvas)
         if (actorVisible) drawDecorations(canvas) { objectBounds(it).bottom - 30f > motion.y }
         dragged?.let { item -> DecorationCatalog.find(item.decorationId)?.let {
-            draggedBounds.set(dragX - 72f, dragY - 100f, dragX + 72f, dragY + 45f)
+            val slot: Pair<Int, Int> = placementSlot(dragX, dragY)
+            draggedBounds.set(gridBounds[slot.second * HomeGrid.COLUMNS + slot.first])
+            paint.style = Paint.Style.STROKE
+            paint.strokeWidth = 5f
+            paint.color = if (canPlace(item.decorationId, slot)) 0xff426b56.toInt() else 0xffac3e42.toInt()
+            canvas.drawRoundRect(draggedBounds, 18f, 18f, paint)
+            paint.style = Paint.Style.FILL
             painter.drawObject(canvas, it, draggedBounds, treasure)
         } }
         canvas.restore()
+    }
+
+    private fun placementSlot(x: Float, y: Float): Pair<Int, Int> =
+        ((x - 137.5f) / 175f).roundToInt().coerceIn(0, HomeGrid.COLUMNS - 1) to
+            ((y - 402.5f) / 103f).roundToInt().coerceIn(0, HomeGrid.ROWS - 1)
+
+    private fun canPlace(id: String, slot: Pair<Int, Int>): Boolean = placements.none {
+        it.decorationId != id && it.column == slot.first && it.row == slot.second
     }
 
     private inline fun drawDecorations(canvas: Canvas, include: (HomeDecorationEntity) -> Boolean): Unit {
@@ -259,8 +273,14 @@ class HomeSceneView(context: Context) : View(context) {
                 dragged = null
                 parent?.requestDisallowInterceptTouchEvent(false)
                 if (item != null && (didMove || pendingPlacement != null)) {
-                    pendingPlacement = null
-                    onPlace?.invoke(item.decorationId, ((x - 65) / 175).toInt().coerceIn(0, 4), ((y - 330) / 103).toInt().coerceIn(0, 2))
+                    val slot: Pair<Int, Int> = placementSlot(x, y)
+                    if (canPlace(item.decorationId, slot)) {
+                        pendingPlacement = null
+                        onPlace?.invoke(item.decorationId, slot.first, slot.second)
+                    } else {
+                        android.widget.Toast.makeText(context, R.string.home_occupied, android.widget.Toast.LENGTH_SHORT).show()
+                        announceForAccessibility(context.getString(R.string.home_occupied))
+                    }
                 } else if (!didMove) {
                     val hit: HomeDecorationEntity? = placements.lastOrNull { objectBounds(it).contains(x, y) }
                     val definition: Decoration? = hit?.let { DecorationCatalog.find(it.decorationId) }
