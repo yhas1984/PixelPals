@@ -38,9 +38,11 @@ class ScheduledPetSleep(private val context: Context, private val pet: PetType, 
         val now = SystemClock.elapsedRealtime()
         val rest = eligible && now >= awakeUntil && device.shouldRest(preferences.restSchedule)
         if (!rest) {
-            active = false
             motion.advanceScheduledRest(false, delta)
-            return false
+            // Direct manipulation/care takes priority; automatic waking holds the
+            // actor in place until its wake clip completes.
+            active = eligible && art != null && motion.advanceScheduledWake(delta)
+            return active
         }
         if (art == null && loading?.isActive != true && now >= retryAfter) {
             loading = scope.launch {
@@ -68,6 +70,8 @@ class ScheduledPetSleep(private val context: Context, private val pet: PetType, 
         if (facesLeft) canvas.scale(-1f, 1f, canvas.width / 2f, ground)
         source.draw(canvas, paint, target, motion, preferences.reducedMotion)
         canvas.restore()
-        dreams.drawDesktop(canvas, canvas.width / 2f, ground, size, motion.elapsed, preferences.reducedMotion)
+        if (motion.activity == CompanionActivity.REST) {
+            dreams.drawDesktop(canvas, canvas.width / 2f, ground, size, motion.elapsed, preferences.reducedMotion)
+        }
     }
 }

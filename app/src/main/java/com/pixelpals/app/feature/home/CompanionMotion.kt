@@ -79,6 +79,16 @@ class CompanionMotion(private val selector: CompanionIntentSelector = CompanionI
         }
         return false
     }
+    /** Desktop wake keeps its position until the last wake pose has been shown. */
+    fun advanceScheduledWake(delta: Float): Boolean {
+        if (activity != CompanionActivity.WAKE) return false
+        elapsed = (elapsed + delta.coerceIn(0f, .1f)).coerceAtMost(WAKE_SECONDS)
+        if (elapsed >= WAKE_SECONDS) {
+            transition(CompanionActivity.OBSERVE)
+            return false
+        }
+        return true
+    }
     private fun chooseNext(): Unit = beginIntent(selector.choose(context))
     internal fun beginIntent(intent: CompanionIntent): Unit {
         pauseDuration = selector.nextPause()

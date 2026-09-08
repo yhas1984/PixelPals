@@ -21,3 +21,14 @@ equal endpoints, staying asleep and home wake transition.
 ADB currently reports no connected device, so physical visual review of all 15
 sleep/wake transitions and settings remains pending. Desktop returns to its existing
 behavior after scheduled rest; a dedicated desktop wake choreography is still pending.
+
+
+## Desktop wake follow-up
+
+Automatic wake now holds position and renders the existing wake clip for 1.2s
+before returning to desktop behavior. Direct manipulation/care still takes priority.
+Dream bubbles stop when waking. Focused schedule/motion tests and assembleDebug pass.
+Installed the resulting debug APK with adb install -r on 192.168.1.160:43041;
+installation succeeded and MainActivity launched. UI hierarchy confirmed Sleep routine
+in Settings. The phone changed screens during review, so further remote touches
+stopped; physical sleep/wake visual acceptance is not yet proven.
