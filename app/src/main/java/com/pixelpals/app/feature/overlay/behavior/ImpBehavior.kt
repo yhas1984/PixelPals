@@ -4,6 +4,7 @@ import com.pixelpals.app.core.domain.PetState
 import com.pixelpals.app.R
 import kotlin.math.abs
 import kotlin.math.sin
+import kotlin.math.roundToInt
 import com.pixelpals.app.core.motion.PetRandom
 
 /**
@@ -11,6 +12,46 @@ import com.pixelpals.app.core.motion.PetRandom
  * IA: Vuelo (0-1, 2-3), Escalada vertical (4-5-6), Interacción (7-8-9).
  */
 class ImpBehavior(bridge: PetViewBridge, override val random: PetRandom) : BaseBehavior(bridge, random) {
+
+    private var restRequested: Boolean = false
+    private val restFade = com.pixelpals.app.core.rest.RestFadeTransition()
+    override fun onScheduledRestRequested(requested: Boolean) {
+        restRequested = requested
+        if (!requested) cancelRestFade()
+    }
+    override fun canStartScheduledSleep(reducedMotion: Boolean): Boolean =
+        !restFade.active && impState == ImpState.FLYING &&
+            kotlin.math.hypot(velX, velY) <= 1f && abs(bridge.animRotation) <= .1f
+
+    private fun cancelRestFade() {
+        if (!restFade.active) return
+        restFade.cancel()
+        (bridge as? android.view.View)?.alpha = 1f
+    }
+    override fun advanceScheduledRestTransition(delta: Float, reducedMotion: Boolean) {
+        if (!restRequested || !reducedMotion) {
+            cancelRestFade()
+            return
+        }
+        if (!restFade.active && canStartScheduledSleep(true)) return
+        if (!restFade.active) restFade.start()
+        val resetPose: Boolean = restFade.advance(delta)
+        (bridge as? android.view.View)?.alpha = restFade.opacity
+        if (resetPose) {
+            impState = ImpState.FLYING
+            velX = 0f
+            velY = 0f
+            bridge.animRotation = 0f
+            bridge.animOffsetX = 0f
+            bridge.animOffsetY = 0f
+            bridge.animScaleY = 1f
+            bridge.currentFrame = 0
+        }
+    }
+    override fun destroy() {
+        cancelRestFade()
+        super.destroy()
+    }
 
     override val resourceIds = listOf(R.drawable.diablillo_0, R.drawable.diablillo_1, R.drawable.diablillo_2, R.drawable.diablillo_3, R.drawable.diablillo_4, R.drawable.diablillo_5, R.drawable.diablillo_6, R.drawable.diablillo_7, R.drawable.diablillo_8, R.drawable.diablillo_9)
 
@@ -54,6 +95,10 @@ class ImpBehavior(bridge: PetViewBridge, override val random: PetRandom) : BaseB
     }
 
     private fun updateFlying(dt: Float) {
+        if (restRequested) {
+            settleForRest(dt)
+            return
+        }
         updateDecision(dt)
         applyMovement(dt)
         time += dt
@@ -71,6 +116,22 @@ class ImpBehavior(bridge: PetViewBridge, override val random: PetRandom) : BaseB
         if (params.x <= 0 || params.x >= bridge.screenWidth - bridge.petSpriteSize) {
             startClimbing(params.x >= bridge.screenWidth - bridge.petSpriteSize)
         }
+    }
+
+    private fun settleForRest(dt: Float) {
+        val step: Float = dt.coerceIn(0f, 1f / 30f)
+        val factor: Float = kotlin.math.exp(-6f * step)
+        velX *= factor
+        velY *= factor
+        val params = bridge.getWindowParams() ?: return
+        params.x = (params.x + velX * step).roundToInt().coerceIn(0, safeMaxX())
+        params.y = (params.y + velY * step).roundToInt().coerceIn(safeMinY(), safeMaxY())
+        bridge.updateWindowLayout(params)
+        time += step
+        bridge.currentFrame = if ((time * 5f).toInt() % 2 == 0) 0 else 1
+        bridge.animOffsetX *= factor
+        bridge.animOffsetY *= factor
+        bridge.animRotation *= factor
     }
 
     private fun startClimbing(isRight: Boolean) {
