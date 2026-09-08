@@ -233,6 +233,8 @@ class SpeciesCareRenderer {
             scene.action == CareSceneAction.PLAY -> .28f
             else -> .30f
         }
+        props.toyRotation = if (scene.action == CareSceneAction.PLAY && scene.hasContact && !reduced)
+            (scene.animationMs * .09f) % 360f else 0f
         props.draw(canvas, scene.action, position.x, position.y, size * toolScale, amount, pet)
     }
 

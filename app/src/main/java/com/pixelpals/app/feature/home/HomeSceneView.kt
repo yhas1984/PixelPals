@@ -82,6 +82,7 @@ class HomeSceneView(context: Context) : View(context) {
     private var downX: Float = 0f
     private var downY: Float = 0f
     private var activeTime: Long = 0L
+    private val toyAngles: MutableMap<String, Float> = mutableMapOf()
     private val deviceRest = com.pixelpals.app.core.rest.DeviceRestState(context)
     private var treeVisit: GingerTreeVisit? = null
     fun exploreTree(): Unit {
@@ -143,6 +144,11 @@ class HomeSceneView(context: Context) : View(context) {
         val toy = placements.firstOrNull { it.decorationId == home?.favoriteObject && DecorationCatalog.find(it.decorationId)?.kind == DecorationKind.TOY }
             ?: placements.firstOrNull { DecorationCatalog.find(it.decorationId)?.kind == DecorationKind.TOY }
         val bed = placements.firstOrNull { it.decorationId == CareDecorationSelection.bed(placements) }
+        if (toy != null && !isMotionReduced && !isEditing && motion.activity == CompanionActivity.PLAY &&
+            !motion.isTurning && !motion.isApproaching && !motion.isPreparing &&
+            (toy.decorationId == "pinwheel" || (toy.decorationId == "ball" && pet == com.pixelpals.app.core.domain.PetType.TARO))) {
+            toyAngles[toy.decorationId] = ((toyAngles[toy.decorationId] ?: 0f) + delta.coerceIn(0, 100) * .09f) % 360f
+        }
         if (reviewSeed == null && motion.advanceScheduledRest(
                 deviceRest.shouldRest(preferences.restSchedule), delta / 1000f,
                 bed?.takeUnless { isMotionReduced }?.let { objectBounds(it).centerX() },
@@ -226,13 +232,17 @@ class HomeSceneView(context: Context) : View(context) {
         val activeToy: HomeDecorationEntity? = placements.firstOrNull { it.decorationId == home?.favoriteObject && DecorationCatalog.find(it.decorationId)?.kind == DecorationKind.TOY }
             ?: placements.firstOrNull { DecorationCatalog.find(it.decorationId)?.kind == DecorationKind.TOY }
         canvas.save()
+        val spinningToy: Boolean = item.id == "pinwheel" || (item.id == "ball" && pet == com.pixelpals.app.core.domain.PetType.TARO)
+        val toyRotation: Float = if (spinningToy) toyAngles[item.id] ?: 0f else 0f
         if (!isMotionReduced && !isEditing && motion.activity == CompanionActivity.PLAY && !motion.isTurning && position == activeToy) {
             val nudge: Float = locomotion?.toyResponse(motion.elapsed) ?: 0f
             val direction: Float = if (motion.x < bounds.centerX()) 1f else -1f
-            canvas.translate(nudge * 24f * direction, -nudge * 14f)
-            canvas.rotate(nudge * 25f * direction, bounds.centerX(), bounds.bottom - 30f)
+            if (!spinningToy) {
+                canvas.translate(nudge * 24f * direction, -nudge * 14f)
+                canvas.rotate(nudge * 25f * direction, bounds.centerX(), bounds.bottom - 30f)
+            }
         }
-        painter.drawObject(canvas, item, bounds, treasure, pet)
+        painter.drawObject(canvas, item, bounds, treasure, pet, toyRotation)
         canvas.restore()
     }
 

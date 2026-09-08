@@ -102,21 +102,24 @@ class HomeScenePainter {
         canvas.restore()
     }
 
-    fun drawObject(canvas: Canvas, item: Decoration, bounds: RectF, treasure: String? = null, pet: com.pixelpals.app.core.domain.PetType = com.pixelpals.app.core.domain.PetType.CORGI): Unit {
+    fun drawObject(canvas: Canvas, item: Decoration, bounds: RectF, treasure: String? = null, pet: com.pixelpals.app.core.domain.PetType = com.pixelpals.app.core.domain.PetType.CORGI, toyRotation: Float = 0f): Unit {
         canvas.save(); canvas.translate(bounds.left, bounds.top); canvas.scale(bounds.width() / 100f, bounds.height() / 100f)
         val color: Int = item.color
-        oval(canvas, 0x22736C54, 8f, 83f, 86f, 13f)
+        careProps.toyRotation = toyRotation
+        // Taro's starter toy delegates the complete decoration, including its shadow.
+        if (item.id != "ball" || pet != com.pixelpals.app.core.domain.PetType.TARO)
+            oval(canvas, 0x22736C54, 8f, 83f, 86f, 13f)
         when {
             item.id == "ball" -> careProps.draw(canvas,
                 com.pixelpals.app.core.care.scene.CareSceneAction.PLAY, 50f, 60f, 67f, pet = pet)
             item.id == "linen_bed" -> careProps.draw(canvas,
                 com.pixelpals.app.core.care.scene.CareSceneAction.REST, 50f, 77f, 94f, pet = pet)
-            else -> drawDecorationVariant(canvas, item, color, treasure)
+            else -> drawDecorationVariant(canvas, item, color, treasure, toyRotation)
         }
         canvas.restore()
     }
 
-    private fun drawDecorationVariant(canvas: Canvas, item: Decoration, color: Int, treasure: String?): Unit {
+    private fun drawDecorationVariant(canvas: Canvas, item: Decoration, color: Int, treasure: String?, toyRotation: Float): Unit {
         when (item.kind) {
             DecorationKind.BED -> {
                 oval(canvas, 0xFF987B68.toInt(), 3f, 47f, 94f, 42f)
@@ -128,7 +131,7 @@ class HomeScenePainter {
                 if (item.id == "pinwheel") {
                     box(canvas, 0xFFA78365.toInt(), 48f, 37f, 4f, 52f, 1f)
                     for (i: Int in 0..3) {
-                        canvas.save(); canvas.rotate(i * 90f, 50f, 35f)
+                        canvas.save(); canvas.rotate(i * 90f + toyRotation, 50f, 35f)
                         path.reset(); path.moveTo(50f, 35f); path.lineTo(20f, 8f); path.lineTo(20f, 35f); path.close()
                         paint.color = if (i % 2 == 0) color else 0xFFE4C486.toInt(); canvas.drawPath(path, paint); canvas.restore()
                     }

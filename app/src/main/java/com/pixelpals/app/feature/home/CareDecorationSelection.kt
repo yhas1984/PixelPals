@@ -7,6 +7,7 @@ object CareDecorationSelection {
     fun careToy(pet: com.pixelpals.app.core.domain.PetType, placements: List<HomeDecorationEntity>, favorite: String?): String? {
         val compatible: Set<String> = when (pet) {
             com.pixelpals.app.core.domain.PetType.CORGI, com.pixelpals.app.core.domain.PetType.GINGER -> setOf("ball", "yarn", "star_toy")
+            com.pixelpals.app.core.domain.PetType.TARO -> setOf("ball", "pinwheel")
             else -> setOf("ball") // The starter object resolves to the species' own care toy.
         }
         return toy(placements.filter { it.decorationId in compatible }, favorite)
