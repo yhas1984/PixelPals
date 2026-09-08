@@ -124,7 +124,9 @@ class PetAtlasLabActivity : AppCompatActivity() {
         bondSpinner.onSelection { lab.updateConfig(bond = BOND_VALUES[it]) }
         temperatureSpinner.onSelection { lab.updateConfig(temperature = TEMPERATURE_VALUES[it]) }
         surfaceSpinner.onSelection { lab.updateConfig(surface = PetSurface.entries[it]) }
-        lab.loadPet(PETS.values.first())
+        val initialIndex = PETS.values.indexOfFirst { it.id == intent.getStringExtra("asset") }.coerceAtLeast(0)
+        petSpinner.setSelection(initialIndex)
+        lab.loadPet(PETS.values.elementAt(initialIndex))
     }
 
     private fun spinner(items: List<String>): Spinner = Spinner(this).apply {
@@ -181,11 +183,13 @@ class PetAtlasLabActivity : AppCompatActivity() {
             "Tela" to PetLabAsset("tela", "pets/tela/tela_motion_v2.json", PetType.TELA),
             "Yuki" to PetLabAsset("yuki", "pets/yuki/yuki_sheet_v1.json", PetType.YUKI),
             "Lumi" to PetLabAsset("lumi", "pets/lumi/lumi_motion_v2.json", PetType.LUMI),
+            "Corgi original" to PetLabAsset("corgi_original", "companion/review/corgi_walk_original.json", PetType.CORGI, false),
+            "Corgi contacts v4" to PetLabAsset("corgi_contacts_v4", "companion/review/corgi_walk_v4.json", PetType.CORGI, false),
         )
     }
 }
 
-private data class PetLabAsset(val id: String, val specPath: String, val petType: PetType)
+private data class PetLabAsset(val id: String, val specPath: String, val petType: PetType, val allowOverlay: Boolean = true)
 private data class RecordedLabEvent(val atMillis: Long, val event: PetEvent)
 
 @SuppressLint("ViewConstructor", "SetTextI18n")
@@ -384,7 +388,10 @@ private class PetAtlasLabView(
     }
 
     fun startAutonomous() {
-        loadedPet?.let { asset -> PetService.requestPetChange(activity, asset.petType) }
+        loadedPet?.let { asset ->
+            if (asset.allowOverlay) PetService.requestPetChange(activity, asset.petType)
+            else onLabChanged(null, "Review-only artwork. Production desktop remains unchanged.")
+        }
     }
 
     override fun onSizeChanged(width: Int, height: Int, oldWidth: Int, oldHeight: Int) {
