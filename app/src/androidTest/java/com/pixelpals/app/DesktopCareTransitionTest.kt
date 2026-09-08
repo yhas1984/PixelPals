@@ -149,7 +149,7 @@ class DesktopCareTransitionTest {
             isActive = true
         }
         override fun advance(deltaSeconds: Float): Unit = Unit
-        override fun draw(canvas: Canvas, spriteSize: Int, baselineOffsetY: Float): Boolean {
+        override fun draw(canvas: Canvas, spriteSize: Int, baselineOffsetY: Float, colorFilter: android.graphics.ColorFilter?): Boolean {
             this.baselineOffsetY = baselineOffsetY
             return false
         }

@@ -803,9 +803,10 @@ class PetView(
         super.onDraw(canvas)
         // Run frames and care frames share this same pet window; never draw both.
         if (desktopCare?.isActive == true) {
-            if (desktopCare?.draw(canvas, petSpriteSize, careBaselineOffsetY) != true) {
+            if (desktopCare?.draw(canvas, petSpriteSize, careBaselineOffsetY, cosmeticColorFilter) != true) {
                 behavior?.onDraw(canvas, width / 2f, height / 2f)
             }
+            drawCosmetic(canvas)
             return
         }
         // Sprite base del pet.

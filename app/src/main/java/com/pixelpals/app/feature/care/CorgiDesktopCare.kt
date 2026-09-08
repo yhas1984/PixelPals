@@ -2,6 +2,7 @@ package com.pixelpals.app.feature.care
 
 import android.animation.ValueAnimator
 import android.content.Context
+import android.graphics.ColorFilter
 import android.graphics.Canvas
 import android.util.Log
 import com.pixelpals.app.core.care.scene.*
@@ -103,13 +104,13 @@ class CorgiDesktopCare(
     }
 
     /** True means locomotion must not draw an additional sprite this frame. */
-    override fun draw(canvas: Canvas, spriteSize: Int, baselineOffsetY: Float): Boolean {
+    override fun draw(canvas: Canvas, spriteSize: Int, baselineOffsetY: Float, colorFilter: ColorFilter?): Boolean {
         val loaded: CarePosePack = pack ?: return false
         val playback: CareSceneController = scene ?: return false
         if (fetchPose?.regularFrame != null) return false
         renderer.draw(canvas, loaded, spriteSize, playback.animationMs, facingLeft,
             reducedMotion = !ValueAnimator.areAnimatorsEnabled() || companionPreferences.reducedMotion, action = action,
-            fetchFrame = fetchPose?.careFrame ?: 2, baselineOffsetY = baselineOffsetY)
+            fetchFrame = fetchPose?.careFrame ?: 2, baselineOffsetY = baselineOffsetY, colorFilter = colorFilter)
         return true
     }
 

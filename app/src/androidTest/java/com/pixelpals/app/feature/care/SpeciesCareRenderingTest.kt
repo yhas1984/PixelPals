@@ -27,6 +27,41 @@ import java.util.Locale
 class SpeciesCareRenderingTest {
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 
+    @Test fun equippedTintChangesEveryPetAndDoesNotLeakIntoLaterFrames(): Unit = runBlocking {
+        val shared: SpeciesCareRenderer = SpeciesCareRenderer()
+        val corgi: CorgiDesktopCareRenderer = CorgiDesktopCareRenderer()
+        val filter: android.graphics.ColorFilter = android.graphics.PorterDuffColorFilter(
+            Color.MAGENTA, android.graphics.PorterDuff.Mode.SRC_IN)
+        val bitmap: Bitmap = Bitmap.createBitmap(320, 320, Bitmap.Config.ARGB_8888)
+        try {
+            for (pet: PetType in PetType.entries) {
+                val pack: CarePosePack = CarePoseLoader.load(context.assets, pet)
+                try {
+                    val scene: CareSceneController = CareSceneController(CareSceneAction.FEED,
+                        CareSceneMode.AUTOMATIC, pack.spec.timings.getValue(CareSceneAction.FEED))
+                    fun render(tint: android.graphics.ColorFilter?): IntArray {
+                        bitmap.eraseColor(Color.TRANSPARENT)
+                        if (pet == PetType.CORGI) {
+                            corgi.draw(Canvas(bitmap), pack, 160, scene.animationMs, false, false,
+                                colorFilter = tint)
+                        } else {
+                            shared.draw(Canvas(bitmap), pack, scene, false, false,
+                                desktopSize = 160, colorFilter = tint)
+                        }
+                        return IntArray(320 * 320).also { bitmap.getPixels(it, 0, 320, 0, 0, 320, 320) }
+                    }
+                    val original: IntArray = render(null)
+                    val tinted: IntArray = render(filter)
+                    assertTrue("$pet tint is missing", original.indices.count { original[it] != tinted[it] } > 100)
+                    assertTrue("$pet props should keep their color", original.indices.count {
+                        Color.alpha(original[it]) > 128 && original[it] == tinted[it]
+                    } > 20)
+                    assertArrayEquals("$pet retained a removed tint", original, render(null))
+                } finally { pack.bitmap.recycle() }
+            }
+        } finally { bitmap.recycle() }
+    }
+
     @Test fun statsNameIsLocalizedAndDoesNotClipAtLargeFontSizes(): Unit {
         InstrumentationRegistry.getInstrumentation().runOnMainSync {
             for (language: String in listOf("es", "en")) for (scale: Float in listOf(1f, 1.6f)) {

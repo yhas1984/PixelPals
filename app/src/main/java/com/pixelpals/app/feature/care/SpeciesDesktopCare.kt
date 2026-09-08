@@ -2,6 +2,7 @@ package com.pixelpals.app.feature.care
 
 import android.animation.ValueAnimator
 import android.content.Context
+import android.graphics.ColorFilter
 import android.graphics.Canvas
 import android.util.Log
 import com.pixelpals.app.core.care.scene.CareSceneAction
@@ -106,7 +107,7 @@ class SpeciesDesktopCare(
         finishIfReady()
     }
 
-    override fun draw(canvas: Canvas, spriteSize: Int, baselineOffsetY: Float): Boolean {
+    override fun draw(canvas: Canvas, spriteSize: Int, baselineOffsetY: Float, colorFilter: ColorFilter?): Boolean {
         val loaded: CarePosePack = pack ?: return false
         val playback: CareSceneController = scene ?: return false
         canvas.save()
@@ -117,6 +118,7 @@ class SpeciesDesktopCare(
             gentle = false,
             desktopSize = spriteSize,
             desktopBaselineOffsetY = baselineOffsetY,
+            colorFilter = colorFilter,
         )
         canvas.restore()
         return true

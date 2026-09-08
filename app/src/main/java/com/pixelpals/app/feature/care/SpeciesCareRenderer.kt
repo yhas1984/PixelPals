@@ -1,5 +1,6 @@
 package com.pixelpals.app.feature.care
 
+import android.graphics.ColorFilter
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Matrix
@@ -35,7 +36,7 @@ class SpeciesCareRenderer {
 
     private fun prepare(pack: CarePosePack, action: CareSceneAction, elapsed: Long, progress: Float,
                         width: Float, height: Float, reduced: Boolean, desktopSize: Int?,
-                        variation: CarePlayVariation, desktopBaselineOffsetY: Float? = null): Unit {
+                        variation: CarePlayVariation, desktopBaselineOffsetY: Float? = null, colorFilter: ColorFilter? = null): Unit {
         val next: PetType = PetType.valueOf(pack.spec.atlas.petId.uppercase(java.util.Locale.ROOT))
         if (pet != next) { pet = next; profile = PetCareProfile.forPet(next) }
         val poseElapsed: Long = if (action == CareSceneAction.PLAY && !reduced && profile.play != CarePlayStyle.BALLOON_POP)
@@ -94,7 +95,7 @@ class SpeciesCareRenderer {
 
     fun draw(canvas: Canvas, pack: CarePosePack, scene: CareSceneController?, reduced: Boolean,
              gentle: Boolean, idleMs: Long = 0L, desktopSize: Int? = null,
-             desktopBaselineOffsetY: Float? = null): Unit {
+             desktopBaselineOffsetY: Float? = null, colorFilter: ColorFilter? = null): Unit {
         val action: CareSceneAction = scene?.action ?: CareSceneAction.PET
         val elapsed: Long = when {
             reduced -> if (scene?.isComplete == true) scene.timing.durationMs else 0L
@@ -123,7 +124,9 @@ class SpeciesCareRenderer {
         val wingCenter: CarePoint = CarePoint(actor.left + anchors.body.x * actor.width(), actor.top + anchors.body.y * actor.height())
         val wingFold: Float = ImpCareMotion.getWingFold(scene?.progress ?: 0f, reduced)
         if (isWingRest) impWings.draw(canvas, wingCenter, actor.width(), wingFold, false)
+        paint.colorFilter = colorFilter
         canvas.drawBitmap(pack.bitmap, source, actor, paint)
+        paint.colorFilter = null
         if (isWingRest) impWings.draw(canvas, wingCenter, actor.width(), wingFold, true)
         canvas.restore()
         paint.alpha = 255

@@ -1,5 +1,6 @@
 package com.pixelpals.app.feature.care
 
+import android.graphics.ColorFilter
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Rect
@@ -23,7 +24,7 @@ class CorgiDesktopCareRenderer {
 
     fun draw(canvas: Canvas, pack: CarePosePack, spriteSize: Int, elapsedMs: Long,
              facingLeft: Boolean, reducedMotion: Boolean, action: CareSceneAction = CareSceneAction.FEED,
-             fetchFrame: Int = 2, baselineOffsetY: Float = spriteSize * .46f): Unit {
+             fetchFrame: Int = 2, baselineOffsetY: Float = spriteSize * .46f, colorFilter: ColorFilter? = null): Unit {
         val size: Float = spriteSize * .94f
         val cx: Float = canvas.width / 2f
         // Match the feet of the regular Corgi sprites, not the bottom of the overlay window.
@@ -54,7 +55,9 @@ class CorgiDesktopCareRenderer {
             canvas.rotate(additional.rotation, cx, baseline)
             canvas.scale(1f, additional.breathScale, cx, baseline)
         }
+        paint.colorFilter = colorFilter
         canvas.drawBitmap(pack.bitmap, source, destination, paint)
+        paint.colorFilter = null
         canvas.restore()
         when (action) {
             CareSceneAction.FEED -> {
