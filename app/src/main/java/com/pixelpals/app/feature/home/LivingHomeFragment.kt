@@ -41,6 +41,8 @@ open class LivingHomeFragment : Fragment() {
     private var isCareOpen: Boolean = false
     private var hasPendingDesktop: Boolean = false
     private var lastWorld: CompanionWorld = CompanionWorld()
+    private var introductionDialog: AlertDialog? = null
+    private var offeredIntroduction: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?): Unit {
         super.onCreate(savedInstanceState)
@@ -125,13 +127,21 @@ open class LivingHomeFragment : Fragment() {
                 launch { while (isActive) { model.refresh(); delay(30_000) } }
             }
         }
-        val preferences: CompanionPreferences = CompanionPreferences(requireContext())
-        if (!preferences.hasSeenIntroduction) {
-            preferences.hasSeenIntroduction = true
-            AlertDialog.Builder(requireContext()).setTitle(R.string.home_title)
-                .setMessage(if (SelectedPetStore(requireContext()).getSelectedAt() != null) R.string.home_welcome else R.string.home_introduction)
-                .setPositiveButton(R.string.home_done) { _, _ -> showAdoption() }.show()
-        }
+    }
+
+    private fun offerIntroduction(home: com.pixelpals.app.database.CompanionHomeEntity): Unit {
+        val preferences = CompanionPreferences(requireContext())
+        if (preferences.hasSeenIntroduction || offeredIntroduction) return
+        val selection = SelectedPetStore(requireContext())
+        val existing: Boolean = selection.hasSavedSelection() || selection.getSelectedAt() != null ||
+            home.adoptedAt > 0L || home.nickname.isNotBlank()
+        offeredIntroduction = true
+        introductionDialog = AlertDialog.Builder(requireContext()).setTitle(R.string.home_title)
+            .setMessage(if (existing) R.string.home_welcome else R.string.home_introduction)
+            .setPositiveButton(R.string.home_done) { _, _ ->
+                preferences.hasSeenIntroduction = true
+                if (!existing) showAdoption()
+            }.create().also { it.show() }
     }
 
     private fun bindPet(pet: PetType): Unit {
@@ -156,6 +166,7 @@ open class LivingHomeFragment : Fragment() {
         lastWorld = world
         val home = world.home ?: return
         if (home.petId != model.pet.value.name.lowercase()) return
+        offerIntroduction(home)
         val name: String = home.nickname.ifBlank { getString(model.pet.value.displayNameResId) }
         heading?.text = name
         scene?.apply {
@@ -288,6 +299,9 @@ open class LivingHomeFragment : Fragment() {
     override fun onPause(): Unit { closeCare(); scene?.pause(); careModel?.setRoomVisible(false); super.onPause() }
     override fun onSaveInstanceState(outState: Bundle): Unit { outState.putBoolean("desktop_pending", hasPendingDesktop); super.onSaveInstanceState(outState) }
     override fun onDestroyView(): Unit {
+        introductionDialog?.dismiss()
+        introductionDialog = null
+        offeredIntroduction = false
         loadJob?.cancel(); closeCare(); scene?.pause(); careModel?.setRoomVisible(false)
         treeButton = null
         scene = null; panel = null; content = null; heading = null; description = null; needs = null
