@@ -17,6 +17,10 @@ class CareSceneRenderer {
     private val actor: RectF = RectF()
     private val props: CarePropPainter = CarePropPainter()
     private val species: SpeciesCareRenderer = SpeciesCareRenderer()
+    var bedDecorationId: String?
+        get() = props.bedDecorationId
+        set(value) { props.bedDecorationId = value; species.bedDecorationId = value }
+
     private val foam: CareFoamPainter = CareFoamPainter()
 
     private fun getPlayDestination(pack: CarePosePack, scene: CareSceneController): Float =

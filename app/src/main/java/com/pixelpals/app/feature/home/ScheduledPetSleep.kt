@@ -13,6 +13,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.catch
 
 /** Display-only sleep: never starts a care session or grants currency/care rewards. */
 class ScheduledPetSleep(private val context: Context, private val pet: PetType, private val scope: CoroutineScope) {
@@ -22,6 +23,22 @@ class ScheduledPetSleep(private val context: Context, private val pet: PetType, 
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
     private val target = RectF()
     private val dreams = PetDreamPainter()
+    private val bedPainter = com.pixelpals.app.feature.care.CarePropPainter()
+    private var placedBed: String? = null
+    private var bedLoaded: Boolean = false
+    init {
+        scope.launch {
+            com.pixelpals.app.core.services.AppServices.companions(context).dao
+                .observePlacements(pet.name.lowercase())
+                .catch { failure ->
+                    android.util.Log.w("ScheduledPetSleep", "Bed selection unavailable", failure)
+                    emit(emptyList())
+                }.collect { placements ->
+                    placedBed = CareDecorationSelection.bed(placements)
+                    bedLoaded = true
+                }
+        }
+    }
     private var art: HomeLocomotion? = null
     private var loading: Job? = null
     private var awakeUntil: Long = 0L
@@ -56,7 +73,8 @@ class ScheduledPetSleep(private val context: Context, private val pet: PetType, 
                 }
             }
         }
-        active = art != null
+        if (!active) bedPainter.bedDecorationId = placedBed
+        active = art != null && bedLoaded
         if (active) motion.advanceScheduledRest(true, delta)
         return active
     }
@@ -68,6 +86,11 @@ class ScheduledPetSleep(private val context: Context, private val pet: PetType, 
         paint.colorFilter = tint
         canvas.save()
         if (facesLeft) canvas.scale(-1f, 1f, canvas.width / 2f, ground)
+        // Bed and body share the same ground anchor; furniture is always behind.
+        if (com.pixelpals.app.core.care.scene.PetCareProfile.forPet(pet).bed != com.pixelpals.app.core.care.scene.CareBed.WING_WRAP) {
+            bedPainter.draw(canvas, com.pixelpals.app.core.care.scene.CareSceneAction.REST,
+                canvas.width / 2f, ground, size * 1.08f, pet = pet)
+        }
         source.draw(canvas, paint, target, motion, preferences.reducedMotion)
         canvas.restore()
         if (motion.activity == CompanionActivity.REST) {

@@ -40,3 +40,16 @@ SharedPropArtworkTest cases passed (5.173s), covering all starter species object
 and the three purchased/reward bed variants (subpixel edge tolerance).
 Pending: alternate toys with compatible choreography, selected beds in scheduled
 sleep and in the separate manual-care room renderer, and full visual contact review.
+
+## Manual care and scheduled rest continuity
+
+CareScenePanel loads the placed bed with its pose pack, and CareStageView forwards
+it to both Corgi and shared species renderers. ScheduledPetSleep observes placed
+beds with its owning view scope, waits for the initial selection and artwork before
+resting, and draws its captured bed behind the body through the same CarePropPainter.
+Body wing wrapping remains exempt. A failed bed query uses the native default rather
+than crashing. No standing desktop furniture is added outside rest/wake presentation.
+
+Focused selection/scheduled-motion JVM tests and debug build passed; final debug
+build and lint passed after coordinating initial load. Full on-device sleep/wake
+visual acceptance remains pending. Alternate toy choreography is still outstanding.

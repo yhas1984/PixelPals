@@ -17,6 +17,9 @@ class CareStageView(context: Context) : View(context) {
     var onFinished: (() -> Unit)? = null
     var onTimeout: (() -> Unit)? = null
     private val renderer: CareSceneRenderer = CareSceneRenderer()
+    var bedDecorationId: String?
+        get() = renderer.bedDecorationId
+        set(value) { renderer.bedDecorationId = value; invalidate() }
     private var controller: CareSceneController? = null
     private var lastFrame: Long = 0L
     private var didFinish: Boolean = false
