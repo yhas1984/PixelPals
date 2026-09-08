@@ -30,7 +30,7 @@ class CorgiDesktopCareRenderer {
     fun draw(canvas: Canvas, pack: CarePosePack, spriteSize: Int, elapsedMs: Long,
              facingLeft: Boolean, reducedMotion: Boolean, action: CareSceneAction = CareSceneAction.FEED,
              fetchFrame: Int = 2, baselineOffsetY: Float = spriteSize * .46f, colorFilter: ColorFilter? = null): Unit {
-        val size: Float = spriteSize * .94f
+        val size: Float = spriteSize * com.pixelpals.app.core.motion.CorgiArtworkScale.CARE_CELL
         val cx: Float = canvas.width / 2f
         // Match the feet of the regular Corgi sprites, not the bottom of the overlay window.
         val baseline: Float = canvas.height / 2f + baselineOffsetY

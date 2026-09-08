@@ -96,6 +96,10 @@ abstract class BaseBehavior(
 
     abstract val resourceIds: List<Int>
 
+    protected open fun getFrameCameraScale(index: Int): Float = 1f
+    protected open val frameGround: Float = .5f
+    protected open val preloadAllFrames: Boolean = false
+
     protected fun loadFramesAsync() {
         val startedAt = System.currentTimeMillis()
         scope.launch {
@@ -126,7 +130,7 @@ abstract class BaseBehavior(
             val total = resourceIds.size
             // Para mascotas con pocos frames (ej. Bloop 0..8) cargamos todo de golpe para que
             // las transiciones (incluida la transparencia) no ocurran con frames aun nulos.
-            val initialCount = if (total <= 9) total else minOf(8, total)
+            val initialCount = if (preloadAllFrames || total <= 9) total else minOf(8, total)
             val tmp = MutableList<Bitmap?>(total) { null }
 
             // 1) Carga inicial para que el pet no se vea "en blanco" mientras decodifica todo.
@@ -510,16 +514,18 @@ abstract class BaseBehavior(
         // índices altos (ej. Corgi walk 10..13) aún son null y el pet se
         // mostraría invisible hasta terminar de decodificar.
         var bitmap: Bitmap? = null
+        var drawnFrame: Int = frameIdx
         if (frames.isNotEmpty()) {
             val requested = frameIdx.coerceIn(0, frames.size - 1)
+            drawnFrame = requested
             bitmap = frames[requested]
             if (bitmap == null) {
                 for (i in requested - 1 downTo 0) {
-                    frames[i]?.let { bitmap = it; break }
+                    frames[i]?.let { bitmap = it; drawnFrame = i; break }
                 }
                 if (bitmap == null) {
                     for (i in requested + 1 until frames.size) {
-                        frames[i]?.let { bitmap = it; break }
+                        frames[i]?.let { bitmap = it; drawnFrame = i; break }
                     }
                 }
             }
@@ -549,6 +555,13 @@ abstract class BaseBehavior(
         canvas.rotate(bridge.renderRotation + conditionRotation)
         canvas.scale(bridge.renderScaleX, bridge.renderScaleY)
         spriteDestinationRect.set(-halfSize, -halfSize, halfSize, halfSize)
+        val cameraScale: Float = getFrameCameraScale(drawnFrame)
+        if (cameraScale != 1f) {
+            val ground: Float = (frameGround * 2f - 1f) * halfSize
+            spriteDestinationRect.set(-halfSize * cameraScale,
+                ground + (-halfSize - ground) * cameraScale,
+                halfSize * cameraScale, ground + (halfSize - ground) * cameraScale)
+        }
         when {
             bitmap != null -> canvas.drawBitmap(bitmap, null, spriteDestinationRect, paint)
             spriteSheet != null && srcRect != null -> {

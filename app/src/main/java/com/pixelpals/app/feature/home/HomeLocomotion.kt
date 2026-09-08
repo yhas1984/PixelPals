@@ -17,8 +17,10 @@ class HomeLocomotion private constructor(
     private val nativeFacesLeft: Boolean,
     private val anchor: android.graphics.PointF? = null,
     private val restArtwork: HomeRestArtwork? = null,
+    private val cellScale: Float? = null,
+    private val frameScales: List<Float>? = null,
 ) {
-    private val sprites: HomeSpriteFrames = HomeSpriteFrames(frames, anchor)
+    private val sprites: HomeSpriteFrames = HomeSpriteFrames(frames, anchor, cellScale, frameScales)
     fun draw(canvas: Canvas, paint: Paint, target: RectF, motion: CompanionMotion, reduced: Boolean, poseClip: String? = null, poseSeconds: Float = 0f): Unit {
         if (poseClip == null && restArtwork != null && (motion.activity == CompanionActivity.REST || motion.activity == CompanionActivity.WAKE)) {
             restArtwork.draw(canvas, paint, target, motion.elapsed, motion.activity == CompanionActivity.WAKE, reduced)
@@ -61,6 +63,8 @@ class HomeLocomotion private constructor(
     }
     companion object {
         suspend fun load(context: Context, pet: PetType): HomeLocomotion = withContext(Dispatchers.IO) {
+            // Corgi shares the original desktop camera and gait in every build.
+            if (pet == PetType.CORGI) return@withContext loadLegacy(context, pet)
             val folder: String = "pets/${pet.name.lowercase()}"
             val filename: String? = context.assets.list(folder).orEmpty().filter { it.endsWith(".json") && !it.startsWith("care") }
                 .sortedWith(compareByDescending<String> { it.contains("motion_v2") }.thenByDescending { it }).firstOrNull()
@@ -97,6 +101,14 @@ class HomeLocomotion private constructor(
             val frames: List<Pair<Bitmap, Rect>> = bank.resources.map { resource ->
                 val bitmap: Bitmap = requireNotNull(BitmapFactory.decodeResource(context.resources, resource, BitmapFactory.Options().apply { inScaled = false; inSampleSize = 2 }))
                 bitmap to Rect(0, 0, bitmap.width, bitmap.height)
+            }
+            if (pet == PetType.CORGI) {
+                val size: Float = frames.first().second.width().toFloat()
+                return HomeLocomotion(frames, bank.clips, false,
+                    anchor = PointF(size / 2f, size * com.pixelpals.app.core.motion.CorgiArtworkScale.ORIGINAL_GROUND),
+                    restArtwork = HomeRestArtwork.load(context, pet),
+                    cellScale = com.pixelpals.app.core.motion.CorgiArtworkScale.ORIGINAL_CELL,
+                    frameScales = listOf(0, 2, 6, 7, 10, 11, 12, 13).map { com.pixelpals.app.core.motion.CorgiArtworkScale.originalFrame(it) })
             }
             return HomeLocomotion(frames, bank.clips, false, restArtwork = HomeRestArtwork.load(context, pet))
         }

@@ -25,8 +25,8 @@ data class CorgiFetchFrame(
         fun fromPose(plan: CorgiFetchPlan, pose: CorgiFetchPose, anchors: CarePoseAnchors): CorgiFetchFrame {
             val held: Boolean = pose.isCaught || plan.reducedMotion
             val ball: CarePoint = if (held) CarePoint(
-                pose.petX + plan.spriteSize * .5f + plan.direction * (anchors.mouth.x - .5f) * plan.spriteSize * .94f,
-                pose.petY + plan.spriteSize * .96f + (anchors.mouth.y - anchors.ground.y) * plan.spriteSize * .94f,
+                pose.petX + plan.spriteSize * .5f + plan.direction * (anchors.mouth.x - .5f) * plan.spriteSize * com.pixelpals.app.core.motion.CorgiArtworkScale.CARE_CELL,
+                pose.petY + plan.spriteSize * .96f + (anchors.mouth.y - anchors.ground.y) * plan.spriteSize * com.pixelpals.app.core.motion.CorgiArtworkScale.CARE_CELL,
             ) else CarePoint(pose.ballX, pose.ballY)
             return CorgiFetchFrame(CarePoint(pose.petX, pose.petY), ball, pose.regularFrame,
                 plan.direction < 0f, if (held) 0f else pose.ballRotation)

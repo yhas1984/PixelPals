@@ -28,6 +28,7 @@ internal class HomeRestArtwork(private val sprites: HomeSpriteFrames, private va
     companion object {
         fun load(context: Context, pet: PetType): HomeRestArtwork? {
             val sequence: List<Int> = when (pet) {
+                PetType.CORGI -> listOf(16, 17, 18, 19)
                 PetType.PATITO, PetType.BLOOP, PetType.MOKI, PetType.MENTA -> listOf(16, 17, 18)
                 PetType.JELLY -> listOf(16, 17, 17)
                 PetType.DIABLILLO -> listOf(3, 17, 9)
@@ -46,7 +47,9 @@ internal class HomeRestArtwork(private val sprites: HomeSpriteFrames, private va
             return HomeRestArtwork(HomeSpriteFrames((0 until spec.frameCount).map { index ->
                 bitmap to Rect(index % spec.columns * width, index / spec.columns * height,
                     (index % spec.columns + 1) * width, (index / spec.columns + 1) * height)
-            }), sequence, pet == PetType.DIABLILLO)
+            }, anchor = if (pet == PetType.CORGI) PointF(width / 2f, height * .93f) else null,
+                cellScale = if (pet == PetType.CORGI) com.pixelpals.app.core.motion.CorgiArtworkScale.CARE_CELL else null),
+                sequence, pet == PetType.DIABLILLO)
         }
     }
 }

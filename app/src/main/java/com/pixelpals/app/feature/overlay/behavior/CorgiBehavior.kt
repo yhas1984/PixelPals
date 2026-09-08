@@ -12,6 +12,9 @@ class CorgiBehavior(
     bridge: PetViewBridge,
     override val random: PetRandom,
 ) : BaseBehavior(bridge, random) {
+    override fun getFrameCameraScale(index: Int): Float = com.pixelpals.app.core.motion.CorgiArtworkScale.originalFrame(index)
+    override val frameGround: Float = com.pixelpals.app.core.motion.CorgiArtworkScale.ORIGINAL_GROUND
+    override val preloadAllFrames: Boolean = true
     override val resourceIds = listOf(
         R.drawable.corgi_0,
         R.drawable.corgi_1,

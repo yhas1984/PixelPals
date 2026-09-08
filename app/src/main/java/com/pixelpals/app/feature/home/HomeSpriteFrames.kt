@@ -7,7 +7,8 @@ import android.graphics.Rect
 import android.graphics.RectF
 
 /** Measures once when loading. Transparent atlas padding never changes the actor's floor contact. */
-internal class HomeSpriteFrames(frames: List<Pair<Bitmap, Rect>>, private val anchor: android.graphics.PointF? = null) {
+internal class HomeSpriteFrames(frames: List<Pair<Bitmap, Rect>>, private val anchor: android.graphics.PointF? = null,
+    private val cellScale: Float? = null, private val frameScales: List<Float>? = null) {
     private data class Frame(val bitmap: Bitmap, val visible: Rect, val cell: Rect)
     private val frames: List<Frame> = frames.map { (bitmap, cell) ->
         val pixels = IntArray(cell.width() * cell.height())
@@ -33,7 +34,8 @@ internal class HomeSpriteFrames(frames: List<Pair<Bitmap, Rect>>, private val an
 
     fun bounds(target: RectF, index: Int, output: RectF): Unit {
         val frame = frames[index]
-        val scale = target.width() * .8f / extent
+        val scale = (cellScale?.let { target.width() * it / frame.cell.width() }
+            ?: (target.width() * .8f / extent)) * (frameScales?.get(index) ?: 1f)
         val width = frame.visible.width() * scale
         val height = frame.visible.height() * scale
         val ground = target.bottom - target.height() * .04f

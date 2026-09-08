@@ -7,7 +7,7 @@ import com.pixelpals.app.feature.overlay.behavior.PetClipSpec
 internal data class HomeLegacyClips(val resources: List<Int>, val clips: Map<String, PetClipSpec>) {
     companion object {
         fun forPet(pet: PetType): HomeLegacyClips = when (pet) {
-            PetType.CORGI -> create(listOf(R.drawable.corgi_1, R.drawable.corgi_2, R.drawable.corgi_6, R.drawable.corgi_7,
+            PetType.CORGI -> create(listOf(R.drawable.corgi_0, R.drawable.corgi_2, R.drawable.corgi_6, R.drawable.corgi_7,
                 R.drawable.corgi_10, R.drawable.corgi_11, R.drawable.corgi_12, R.drawable.corgi_13), listOf(0), listOf(4, 5, 6, 7), listOf(1, 0), listOf(2, 3))
             PetType.PATITO -> create(listOf(R.drawable.patito_4, R.drawable.patito_5, R.drawable.patito_8, R.drawable.patito_9), listOf(2), listOf(0, 1), listOf(3, 2), listOf(2))
             PetType.DIABLILLO -> create(listOf(R.drawable.diablillo_0, R.drawable.diablillo_1, R.drawable.diablillo_2, R.drawable.diablillo_3), listOf(0, 1), listOf(2, 3), listOf(0, 1), listOf(0))

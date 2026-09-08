@@ -86,6 +86,8 @@ class ScheduledPetSleep(private val context: Context, private val pet: PetType, 
         val source = art ?: return
         val ground = canvas.height / 2f + baseline
         target.set(canvas.width / 2f - size / 2f, ground - size, canvas.width / 2f + size / 2f, ground)
+        // Home artwork reserves 4% below its feet; the desktop baseline is already the feet.
+        target.offset(0f, size * .04f)
         paint.colorFilter = tint
         canvas.save()
         if (facesLeft) canvas.scale(-1f, 1f, canvas.width / 2f, ground)
