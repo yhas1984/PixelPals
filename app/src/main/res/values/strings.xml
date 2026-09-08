@@ -503,4 +503,6 @@
     <string name="rest_schedule_enabled">Use a sleep schedule</string>
     <string name="rest_start">Bedtime: %1$s</string>
     <string name="rest_end">Wake-up: %1$s</string>
+    <string name="decor_species_toy">%1$s’s toy</string>
+    <string name="decor_species_rest">%1$s’s resting spot</string>
 </resources>

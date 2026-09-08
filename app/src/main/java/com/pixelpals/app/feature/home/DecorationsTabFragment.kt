@@ -32,15 +32,15 @@ class DecorationsTabFragment : Fragment() {
         DecorationCatalog.all.forEach { item ->
             val owned: Boolean = world.inventory.any { it.decorationId == item.id }
             val card: LinearLayout = HomeUi.card(requireContext())
-            card.addView(DecorationPreview(requireContext(), item), LinearLayout.LayoutParams(-1, HomeUi.dp(requireContext(), 100)))
-            card.addView(HomeUi.text(requireContext(), getString(item.title), 19f))
+            card.addView(DecorationPreview(requireContext(), item, model.pet.value), LinearLayout.LayoutParams(-1, HomeUi.dp(requireContext(), 100)))
+            card.addView(HomeUi.text(requireContext(), DecorationPresentation.title(requireContext(), item, model.pet.value), 19f))
             card.addView(HomeUi.button(requireContext(), getString(if (owned) R.string.home_owned else R.string.home_preview)) { preview(item, owned) })
             column.addView(card)
         }
     }
     private fun preview(item: Decoration, owned: Boolean): Unit {
-        val builder: AlertDialog.Builder = AlertDialog.Builder(requireContext()).setTitle(item.title)
-            .setView(DecorationPreview(requireContext(), item))
+        val builder: AlertDialog.Builder = AlertDialog.Builder(requireContext()).setTitle(DecorationPresentation.title(requireContext(), item, model.pet.value))
+            .setView(DecorationPreview(requireContext(), item, model.pet.value))
             .setNegativeButton(android.R.string.cancel, null)
         if (owned) builder.setPositiveButton(R.string.home_place) { _, _ ->
             DecorationDialogs.show(requireContext(), item, model.world.value, model.pet.value, model)

@@ -10,15 +10,15 @@ import com.pixelpals.app.R
 import com.pixelpals.app.core.care.scene.CareSceneAction
 import com.pixelpals.app.core.domain.PetType
 
-class DecorationPreview(context: Context, private val item: Decoration) : View(context) {
+class DecorationPreview(context: Context, private val item: Decoration, private val pet: PetType = PetType.CORGI) : View(context) {
     private val painter: HomeScenePainter = HomeScenePainter()
     private val bounds: RectF = RectF()
-    init { contentDescription = context.getString(item.title); minimumHeight = HomeUi.dp(context, 150) }
+    init { contentDescription = DecorationPresentation.title(context, item, pet); minimumHeight = HomeUi.dp(context, 150) }
     override fun onDraw(canvas: Canvas): Unit {
         super.onDraw(canvas)
         val size: Float = minOf(width.toFloat(), height.toFloat()) * .88f
         bounds.set((width - size) / 2, (height - size) / 2, (width + size) / 2, (height + size) / 2)
-        painter.drawObject(canvas, item, bounds)
+        painter.drawObject(canvas, item, bounds, pet = pet)
     }
 }
 
@@ -26,8 +26,8 @@ object DecorationDialogs {
     fun show(context: Context, item: Decoration, world: CompanionWorld, pet: PetType, model: CompanionViewModel,
              onUse: ((CareSceneAction) -> Unit)? = null, onPlaceByTouch: (() -> Unit)? = null): Unit {
         val column = HomeUi.column(context)
-        column.addView(DecorationPreview(context, item), android.widget.LinearLayout.LayoutParams(-1, HomeUi.dp(context, 150)))
-        val dialog: AlertDialog = AlertDialog.Builder(context).setTitle(item.title).setView(column)
+        column.addView(DecorationPreview(context, item, pet), android.widget.LinearLayout.LayoutParams(-1, HomeUi.dp(context, 150)))
+        val dialog: AlertDialog = AlertDialog.Builder(context).setTitle(DecorationPresentation.title(context, item, pet)).setView(column)
             .setNegativeButton(R.string.home_done, null).create()
         column.addView(HomeUi.button(context, context.getString(R.string.home_place), true) {
             dialog.dismiss(); if (onPlaceByTouch != null) onPlaceByTouch() else choosePosition(context, item, world, pet, model)

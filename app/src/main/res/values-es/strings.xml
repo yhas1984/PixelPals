@@ -502,4 +502,6 @@
     <string name="rest_schedule_enabled">Usar horario de sueño</string>
     <string name="rest_start">Dormir: %1$s</string>
     <string name="rest_end">Despertar: %1$s</string>
+    <string name="decor_species_toy">Juguete de %1$s</string>
+    <string name="decor_species_rest">Descanso de %1$s</string>
 </resources>

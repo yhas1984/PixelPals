@@ -97,15 +97,15 @@ class HomeScenePainter {
         canvas.restore()
     }
 
-    fun drawObject(canvas: Canvas, item: Decoration, bounds: RectF, treasure: String? = null): Unit {
+    fun drawObject(canvas: Canvas, item: Decoration, bounds: RectF, treasure: String? = null, pet: com.pixelpals.app.core.domain.PetType = com.pixelpals.app.core.domain.PetType.CORGI): Unit {
         canvas.save(); canvas.translate(bounds.left, bounds.top); canvas.scale(bounds.width() / 100f, bounds.height() / 100f)
         val color: Int = item.color
         oval(canvas, 0x22736C54, 8f, 83f, 86f, 13f)
         when {
             item.id == "ball" -> careProps.draw(canvas,
-                com.pixelpals.app.core.care.scene.CareSceneAction.PLAY, 50f, 60f, 67f)
+                com.pixelpals.app.core.care.scene.CareSceneAction.PLAY, 50f, 60f, 67f, pet = pet)
             item.id == "linen_bed" -> careProps.draw(canvas,
-                com.pixelpals.app.core.care.scene.CareSceneAction.REST, 50f, 77f, 94f)
+                com.pixelpals.app.core.care.scene.CareSceneAction.REST, 50f, 77f, 94f, pet = pet)
             else -> drawDecorationVariant(canvas, item, color, treasure)
         }
         canvas.restore()

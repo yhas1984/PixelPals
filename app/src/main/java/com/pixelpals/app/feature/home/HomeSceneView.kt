@@ -188,7 +188,7 @@ class HomeSceneView(context: Context) : View(context) {
             paint.color = if (canPlace(item.decorationId, slot)) 0xff426b56.toInt() else 0xffac3e42.toInt()
             canvas.drawRoundRect(draggedBounds, 18f, 18f, paint)
             paint.style = Paint.Style.FILL
-            painter.drawObject(canvas, it, draggedBounds, treasure)
+            painter.drawObject(canvas, it, draggedBounds, treasure, pet)
         } }
         canvas.restore()
     }
@@ -220,7 +220,7 @@ class HomeSceneView(context: Context) : View(context) {
             canvas.translate(nudge * 24f * direction, -nudge * 14f)
             canvas.rotate(nudge * 25f * direction, bounds.centerX(), bounds.bottom - 30f)
         }
-        painter.drawObject(canvas, item, bounds, treasure)
+        painter.drawObject(canvas, item, bounds, treasure, pet)
         canvas.restore()
     }
 

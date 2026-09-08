@@ -160,7 +160,7 @@ open class LivingHomeFragment : Fragment() {
             invalidate()
         }
         scene?.environment?.let { panel?.setHomeEnvironment(it) }
-        DecorationCatalog.find(home.favoriteObject)?.let { favorite?.text = getString(R.string.home_favorite, getString(it.title), home.playCount) }
+        DecorationCatalog.find(home.favoriteObject)?.let { favorite?.text = getString(R.string.home_favorite, DecorationPresentation.title(requireContext(), it, model.pet.value), home.playCount) }
         val economy = AppServices.repository(requireContext())
         val cosmetic = economy.getEquippedCosmetic(home.petId)?.let { com.pixelpals.app.data.catalog.CosmeticCatalog.findById(requireContext(), it) }
         scene?.let { CompanionPreview.applyEffect(it, cosmetic?.effect) }
@@ -233,7 +233,7 @@ open class LivingHomeFragment : Fragment() {
     private fun showDecorations(): Unit {
         scene?.isEditing = true; scene?.invalidate()
         val titles: Array<String> = arrayOf(getString(R.string.home_environment)) +
-            lastWorld.inventory.mapNotNull { DecorationCatalog.find(it.decorationId)?.let { item -> getString(item.title) } }.toTypedArray()
+            lastWorld.inventory.mapNotNull { DecorationCatalog.find(it.decorationId)?.let { item -> DecorationPresentation.title(requireContext(), item, model.pet.value) } }.toTypedArray()
         AlertDialog.Builder(requireContext()).setTitle(R.string.home_decorate).setItems(titles) { _, index ->
             if (index == 0) showEnvironments() else lastWorld.inventory.getOrNull(index - 1)?.let { owned ->
                 DecorationCatalog.find(owned.decorationId)?.let(::showDecoration)

@@ -22,7 +22,9 @@ class CarePropPainter {
         canvas.translate(x, y)
         canvas.scale(size / 2f, size / 2f)
         if (pet != lastPet) { lastPet = pet; profile = PetCareProfile.forPet(pet) }
-        if (pet != PetType.CORGI && species.draw(canvas, profile, action, amount)) {
+        // Wing wrapping is body choreography, never detached bedroom furniture.
+        val bodyWrap: Boolean = action == CareSceneAction.REST && profile.bed == com.pixelpals.app.core.care.scene.CareBed.WING_WRAP
+        if (pet != PetType.CORGI && !bodyWrap && species.draw(canvas, profile, action, amount)) {
             canvas.restore()
             return
         }
