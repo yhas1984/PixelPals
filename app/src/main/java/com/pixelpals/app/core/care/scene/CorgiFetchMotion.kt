@@ -28,6 +28,7 @@ data class CorgiFetchPose(
     val ballY: Float,
     val ballRotation: Float,
     val isCaught: Boolean,
+    val pickupProgress: Float = 0f,
 )
 
 /** World-space fetch: the pet window runs after an independent rolling prop. */
@@ -83,6 +84,7 @@ object CorgiFetchMotion {
             (1f - elapsed / 450f).coerceAtLeast(0f) * plan.spriteSize * .06f
         return CorgiFetchPose(petX, petY, regularFrame, careFrame, ballX,
             plan.floorY + plan.spriteSize * .86f - bounce,
-            (ballX - initialBall) / (plan.spriteSize * .10f) * 57.29578f, elapsed >= plan.catchMs)
+            (ballX - initialBall) / (plan.spriteSize * .10f) * 57.29578f, elapsed >= plan.catchMs,
+            GroundGait.progress((elapsed - plan.catchMs + LOWER_HEAD_MS).toFloat(), LOWER_HEAD_MS.toFloat()))
     }
 }

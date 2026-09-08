@@ -24,12 +24,19 @@ data class CorgiFetchFrame(
     companion object {
         fun fromPose(plan: CorgiFetchPlan, pose: CorgiFetchPose, anchors: CarePoseAnchors): CorgiFetchFrame {
             val held: Boolean = pose.isCaught || plan.reducedMotion
-            val ball: CarePoint = if (held) CarePoint(
+            val mouth: CarePoint = CarePoint(
                 pose.petX + plan.spriteSize * .5f + plan.direction * (anchors.mouth.x - .5f) * plan.spriteSize * com.pixelpals.app.core.motion.CorgiArtworkScale.CARE_CELL,
                 pose.petY + plan.spriteSize * .96f + (anchors.mouth.y - anchors.ground.y) * plan.spriteSize * com.pixelpals.app.core.motion.CorgiArtworkScale.CARE_CELL,
-            ) else CarePoint(pose.ballX, pose.ballY)
+            )
+            // Arrive at the actual scaled mouth before changing ownership to a held prop.
+            // A fixed rolling endpoint otherwise teleports when the care camera changes.
+            val pickup: Float = if (held) 1f else pose.pickupProgress
+            val ball: CarePoint = CarePoint(
+                pose.ballX + (mouth.x - pose.ballX) * pickup,
+                pose.ballY + (mouth.y - pose.ballY) * pickup,
+            )
             return CorgiFetchFrame(CarePoint(pose.petX, pose.petY), ball, pose.regularFrame,
-                plan.direction < 0f, if (held) 0f else pose.ballRotation)
+                plan.direction < 0f, if (plan.reducedMotion) 0f else pose.ballRotation)
         }
     }
 }
