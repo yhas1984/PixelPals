@@ -129,11 +129,15 @@ class HomeSceneView(context: Context) : View(context) {
 
     internal fun advanceScene(delta: Long): Unit {
         activeTime += delta.coerceIn(0, 100)
-        if (reviewSeed == null && motion.advanceScheduledRest(deviceRest.shouldRest(preferences.restSchedule), delta / 1000f)) return
-        if (isMotionReduced) { motion.settleWithoutMovement(energy <= 25 || isUnwell); return }
         val toy = placements.firstOrNull { it.decorationId == home?.favoriteObject && DecorationCatalog.find(it.decorationId)?.kind == DecorationKind.TOY }
             ?: placements.firstOrNull { DecorationCatalog.find(it.decorationId)?.kind == DecorationKind.TOY }
         val bed = placements.firstOrNull { DecorationCatalog.find(it.decorationId)?.kind == DecorationKind.BED }
+        if (reviewSeed == null && motion.advanceScheduledRest(
+                deviceRest.shouldRest(preferences.restSchedule), delta / 1000f,
+                bed?.takeUnless { isMotionReduced }?.let { objectBounds(it).centerX() },
+                bed?.let { objectBounds(it).bottom - 30f } ?: 650f,
+                profile.tempo * traits.tempo * traits.initiative)) return
+        if (isMotionReduced) { motion.settleWithoutMovement(energy <= 25 || isUnwell); return }
         val toyCenter: Float = toy?.let { objectBounds(it).centerX() } ?: 500f
         val toyStand: Float = if (toy == null) 500f else toyCenter + if (toyCenter < 500f) 100f else -100f
         motion.context = CompanionIntentContext(energy, isUnwell, toy != null, bed != null, profile.curiosity,

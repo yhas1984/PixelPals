@@ -6,6 +6,29 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ScheduledMotionTest {
+    @Test fun scheduledRestWalksToBedAndStaysThere() {
+        val motion = CompanionMotion()
+        assertTrue(motion.advanceScheduledRest(true, 1f / 60f, 312.5f, 548f))
+        assertEquals(CompanionActivity.APPROACH_BED, motion.activity)
+        assertEquals(500f, motion.x, .001f)
+        repeat(3000) { motion.advanceScheduledRest(true, 1f / 60f, 312.5f, 548f) }
+        assertEquals(CompanionActivity.REST, motion.activity)
+        assertEquals(312.5f, motion.x, .001f)
+        assertEquals(548f, motion.y, .001f)
+        repeat(1000) { motion.advanceScheduledRest(true, .1f, 312.5f, 548f) }
+        assertEquals(CompanionActivity.REST, motion.activity)
+    }
+
+    @Test fun removedBedAndCancelledScheduleDoNotTrapApproach() {
+        val motion = CompanionMotion()
+        motion.advanceScheduledRest(true, .1f, 300f, 445f)
+        motion.advanceScheduledRest(false, .1f)
+        assertEquals(CompanionActivity.OBSERVE, motion.activity)
+        motion.advanceScheduledRest(true, .1f, 300f, 445f)
+        motion.advanceScheduledRest(true, .1f)
+        assertEquals(CompanionActivity.REST, motion.activity)
+    }
+
     @Test fun wakeCompletesWithoutResumingLocomotionEarly() {
         val motion = CompanionMotion()
         motion.advanceScheduledRest(true, .1f)

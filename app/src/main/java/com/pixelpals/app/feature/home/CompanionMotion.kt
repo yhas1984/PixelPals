@@ -65,17 +65,20 @@ class CompanionMotion(private val selector: CompanionIntentSelector = CompanionI
         if (activity != target) transition(target)
     }
     private var scheduledRest: Boolean = false
-    fun advanceScheduledRest(rest: Boolean, delta: Float): Boolean {
+    fun advanceScheduledRest(rest: Boolean, delta: Float, bedX: Float? = null, bedY: Float = 650f, tempo: Float = 1f): Boolean {
         if (rest) {
-            if (!scheduledRest) transition(CompanionActivity.REST)
+            if (!scheduledRest) transition(if (bedX != null) CompanionActivity.APPROACH_BED else CompanionActivity.REST)
             scheduledRest = true
-            elapsed = (elapsed + delta.coerceIn(0f, .1f)).coerceAtMost(3600f)
+            val dt: Float = delta.coerceIn(0f, .1f)
+            elapsed = (elapsed + dt).coerceAtMost(3600f)
+            if (activity == CompanionActivity.APPROACH_BED &&
+                (bedX == null || approach(bedX, bedY, dt, tempo))) transition(CompanionActivity.REST)
             return true
         }
         if (scheduledRest) {
             scheduledRest = false
             pendingIntent = CompanionIntent.OBSERVE
-            transition(CompanionActivity.WAKE)
+            transition(if (activity == CompanionActivity.REST) CompanionActivity.WAKE else CompanionActivity.OBSERVE)
         }
         return false
     }

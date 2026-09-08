@@ -7,6 +7,7 @@ import kotlin.math.*
 class HomeScenePainter {
     private val paint: Paint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val path: Path = Path()
+    private val careProps = com.pixelpals.app.feature.care.CarePropPainter()
     private var gradient: LinearGradient? = null
     private var gradientColors: Pair<Int, Int>? = null
 
@@ -100,6 +101,17 @@ class HomeScenePainter {
         canvas.save(); canvas.translate(bounds.left, bounds.top); canvas.scale(bounds.width() / 100f, bounds.height() / 100f)
         val color: Int = item.color
         oval(canvas, 0x22736C54, 8f, 83f, 86f, 13f)
+        when {
+            item.id == "ball" -> careProps.draw(canvas,
+                com.pixelpals.app.core.care.scene.CareSceneAction.PLAY, 50f, 60f, 67f)
+            item.id == "linen_bed" -> careProps.draw(canvas,
+                com.pixelpals.app.core.care.scene.CareSceneAction.REST, 50f, 77f, 94f)
+            else -> drawDecorationVariant(canvas, item, color, treasure)
+        }
+        canvas.restore()
+    }
+
+    private fun drawDecorationVariant(canvas: Canvas, item: Decoration, color: Int, treasure: String?): Unit {
         when (item.kind) {
             DecorationKind.BED -> {
                 oval(canvas, 0xFF987B68.toInt(), 3f, 47f, 94f, 42f)
@@ -162,7 +174,6 @@ class HomeScenePainter {
                 if (item.id == "moon_lamp") oval(canvas, 0xFFB5B59A.toInt(), 47f, 13f, 32f, 34f)
             }
         }
-        canvas.restore()
     }
 
     private fun drawStar(canvas: Canvas, color: Int, x: Float, y: Float, radius: Float): Unit {
