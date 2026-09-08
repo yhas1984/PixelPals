@@ -83,7 +83,7 @@ class HomeLocomotion private constructor(
                 "walk" to choose("walk", "crawl_loop", "right", "glide", "hover"),
                 "turn" to (spec.clip("turn")?.copy(loop = false) ?: idle),
                 "play" to choose("play", "playful_delight", "happy", "front_social", "groom", "grace", "tongue_strike", "idle"),
-                "sleep" to (if (pet == PetType.MENTA) choose("blink", "idle") else choose("sleep", "prayer", "perch_loop", "idle")).copy(loop = false),
+                "sleep" to (if (pet == PetType.ANGEL) choose("prayer").let { it.copy(frames = it.frames.take(2)) } else if (pet == PetType.MENTA) choose("blink", "idle") else choose("sleep", "prayer", "perch_loop", "idle")).copy(loop = false),
             )
             val sleep: PetClipSpec = requireNotNull(selected["sleep"])
             val withWake: Map<String, PetClipSpec> = selected + ("wake" to (spec.clip("wake") ?: sleep.copy(id = "wake", frames = sleep.frames.reversed(), loop = false)))

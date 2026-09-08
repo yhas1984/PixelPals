@@ -27,15 +27,20 @@ internal class HomeSpriteFrames(frames: List<Pair<Bitmap, Rect>>, private val an
 
     fun draw(canvas: Canvas, paint: Paint, target: RectF, index: Int): Unit {
         val frame = frames[index]
+        bounds(target, index, destination)
+        canvas.drawBitmap(frame.bitmap, if (anchor != null) frame.cell else frame.visible, destination, paint)
+    }
+
+    fun bounds(target: RectF, index: Int, output: RectF): Unit {
+        val frame = frames[index]
         val scale = target.width() * .8f / extent
         val width = frame.visible.width() * scale
         val height = frame.visible.height() * scale
         val ground = target.bottom - target.height() * .04f
-        destination.set(target.centerX() - width / 2, ground - height, target.centerX() + width / 2, ground)
+        output.set(target.centerX() - width / 2, ground - height, target.centerX() + width / 2, ground)
         if (anchor != null) {
-            destination.set(target.centerX() - anchor.x * scale, ground - anchor.y * scale,
+            output.set(target.centerX() - anchor.x * scale, ground - anchor.y * scale,
                 target.centerX() + (frame.cell.width() - anchor.x) * scale, ground + (frame.cell.height() - anchor.y) * scale)
-            canvas.drawBitmap(frame.bitmap, frame.cell, destination, paint)
-        } else canvas.drawBitmap(frame.bitmap, frame.visible, destination, paint)
+        }
     }
 }

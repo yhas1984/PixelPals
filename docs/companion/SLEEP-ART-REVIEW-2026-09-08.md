@@ -25,3 +25,7 @@ Installed on 192.168.1.160:43041 preserving data. The final review export passed
 (2.159 seconds); visually inspected after-0.png and after-1.png. Patito now has a
 closed-eye tucked pose and Jelly a closed-eye flattened pose. Remaining affected
 pets are deliberately visible as unresolved in the same comparison artifacts.
+
+Follow-up: `SLEEP-ART-SECOND-PASS-2026-09-08.md` records the subsequent correction
+of those five poses and the remaining identity/proportion issues. The before/after
+files above remain evidence of this first pass, not the current final appearance.
