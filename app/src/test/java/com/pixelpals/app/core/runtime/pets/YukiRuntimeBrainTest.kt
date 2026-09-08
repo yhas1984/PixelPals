@@ -41,7 +41,17 @@ class YukiRuntimeBrainTest {
         assertEquals(.84f, melted.transform.scaleY, .001f)
         assertEquals(melted.transform.scaleY, runtime.dispatch(PetEvent.Paused).transform.scaleY, .001f)
         assertEquals(melted.transform.scaleY, runtime.dispatch(PetEvent.Resumed).transform.scaleY, .001f)
-        assertEquals("idle", runtime.dispatch(PetEvent.EnvironmentChanged(environment(38f))).clipId)
+        val cooling = runtime.dispatch(PetEvent.EnvironmentChanged(environment(38f)))
+        assertEquals(melted.transform.scaleY, cooling.transform.scaleY, .001f)
+        val reforming = runtime.dispatch(PetEvent.Tick(.48f))
+        assertTrue(reforming.transform.scaleY > cooling.transform.scaleY)
+        assertTrue(reforming.frame < cooling.frame)
+        assertEquals(reforming.transform.scaleY, runtime.dispatch(PetEvent.Paused).transform.scaleY, .001f)
+        assertEquals(reforming.transform.scaleY, runtime.dispatch(PetEvent.Resumed).transform.scaleY, .001f)
+        val reheated = runtime.dispatch(PetEvent.EnvironmentChanged(environment(41f)))
+        assertEquals(reforming.transform.scaleY, reheated.transform.scaleY, .001f)
+        runtime.dispatch(PetEvent.EnvironmentChanged(environment(38f)))
+        assertEquals("idle", runtime.dispatch(PetEvent.Tick(.5f)).clipId)
     }
 
     @Test

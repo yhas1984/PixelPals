@@ -55,6 +55,12 @@ class PetAnimationPlayer(
         return frameFor(clip, elapsedSeconds)
     }
 
+    /** Select a pose along a reversible animation without changing its clip. */
+    fun seek(seconds: Float) {
+        require(seconds.isFinite() && seconds >= 0f)
+        elapsedSeconds = seconds
+    }
+
     fun currentFrame(): Int = activeClip?.let { frameFor(it, elapsedSeconds) } ?: 0
 
     fun reset(): Unit {

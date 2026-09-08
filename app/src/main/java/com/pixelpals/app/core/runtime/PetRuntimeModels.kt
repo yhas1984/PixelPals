@@ -222,9 +222,11 @@ data class PetBrainResult<S : PetBrainState>(
     val effects: List<PetEffectCommand> = emptyList(),
     val bubble: String? = null,
     val hapticDurationMs: Long? = null,
+    val playbackSeconds: Float? = null,
 ) {
     init {
         require(clipId.isNotBlank()) { "Pet brain result clip id cannot be blank" }
+        require(playbackSeconds == null || playbackSeconds.isFinite() && playbackSeconds >= 0f)
         require(hapticDurationMs == null || hapticDurationMs >= 0L) {
             "Haptic duration must be non-negative when present"
         }
