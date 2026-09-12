@@ -173,6 +173,20 @@ class PetService : Service() {
     private val homeCheckRunnable = object : Runnable {
         override fun run() {
             try {
+                if (!canDrawOverlays()) {
+                    Log.w(TAG, "Overlay permission revoked; stopping pet service")
+                    selectedPetStore.setPetEnabled(false)
+                    PetCareNotificationScheduler.cancel(this@PetService)
+                    try {
+                        removePetOverlay()
+                    } catch (exception: Exception) {
+                        Log.w(TAG, "Overlay cleanup after permission revocation failed", exception)
+                    } finally {
+                        stopForeground(STOP_FOREGROUND_REMOVE)
+                        stopSelf()
+                    }
+                    return
+                }
                 if (!isViewAttached) {
                     homeCheckHandler.postDelayed(this, HOME_POLL_INTERVAL_SLOW_MS)
                     return
@@ -453,7 +467,9 @@ class PetService : Service() {
         companionHomeJob?.cancel(); companionHomeJob = null
         val previousCare: CorgiCareCloud? = careOverlay
         careOverlay = null
-        previousCare?.close()
+        try { previousCare?.close() } catch (exception: Exception) {
+            Log.w(TAG, "Care overlay detach failed", exception)
+        }
         homeCheckHandler.removeCallbacks(homeCheckRunnable)
         petView?.let {
             it.pauseAnimation()
@@ -463,9 +479,13 @@ class PetService : Service() {
             }
         }
         petView = null
-        fetchBall?.close()
+        try { fetchBall?.close() } catch (exception: Exception) {
+            Log.w(TAG, "Fetch overlay detach failed", exception)
+        }
         fetchBall = null
-        telaWebOverlay?.destroy()
+        try { telaWebOverlay?.destroy() } catch (exception: Exception) {
+            Log.w(TAG, "Tela overlay cleanup failed", exception)
+        }
         telaWebOverlay = null
         lastAppliedPetVisible = null
     }

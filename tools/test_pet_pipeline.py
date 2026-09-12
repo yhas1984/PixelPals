@@ -123,10 +123,12 @@ class PetPipelineTest(unittest.TestCase):
             (candidate / "taro_motion_v2.png").read_bytes(),
             (debug / "taro_motion_v2.png").read_bytes(),
         )
-        self.assertEqual(
-            (candidate / "taro_motion_v2.json").read_bytes(),
-            (debug / "taro_motion_v2.json").read_bytes(),
-        )
+        # Runtime sleep holds the final shell pose instead of looping the entry.
+        # Keep the reviewed source unchanged and allow exactly this semantic edit.
+        runtime_spec = json.loads((candidate / "taro_motion_v2.json").read_text())
+        sleep_clip = next(clip for clip in runtime_spec["clips"] if clip["id"] == "sleep")
+        sleep_clip["loop"] = False
+        self.assertEqual(runtime_spec, json.loads((debug / "taro_motion_v2.json").read_text()))
         self.assertEqual(
             (candidate / "taro_motion_v2.png").read_bytes(),
             (approved / "taro_motion_v2.png").read_bytes(),
@@ -139,10 +141,7 @@ class PetPipelineTest(unittest.TestCase):
             (candidate / "taro_motion_v2.png").read_bytes(),
             (main / "taro_motion_v2.png").read_bytes(),
         )
-        self.assertEqual(
-            (candidate / "taro_motion_v2.json").read_bytes(),
-            (main / "taro_motion_v2.json").read_bytes(),
-        )
+        self.assertEqual(runtime_spec, json.loads((main / "taro_motion_v2.json").read_text()))
         report = validate_atlas(
             candidate / "taro_motion_v2.png",
             candidate / "taro_motion_v2.json",

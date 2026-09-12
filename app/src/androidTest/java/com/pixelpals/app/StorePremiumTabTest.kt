@@ -12,6 +12,7 @@ import com.pixelpals.app.core.domain.PetType
 import com.pixelpals.app.data.prefs.SelectedPetStore
 import com.pixelpals.app.database.AppDatabase
 import com.pixelpals.app.feature.store.StoreFragment
+import com.pixelpals.app.feature.store.StoreNoticeType
 import com.pixelpals.app.navigation.PixelPalsDestination
 import com.pixelpals.app.navigation.StoreSection
 import org.junit.After
@@ -71,6 +72,39 @@ class StorePremiumTabTest {
             Thread.sleep(100)
         }
         throw AssertionError("The store did not finish loading")
+    }
+
+    @Test
+    fun restoreButtonReportsEmptyResultAndKeepsItAfterRecreation() {
+        scenario = ActivityScenario.launch(
+            MainActivity.createIntent(context, PixelPalsDestination.STORE, StoreSection.PREMIUM),
+        )
+        awaitStateReady()
+        scenario!!.onActivity { activity ->
+            val button: Button = activity.findViewById(R.id.btnRestorePurchases)
+            assertTrue(button.isShown)
+            assertTrue(button.isEnabled)
+            button.performClick()
+        }
+        val deadline: Long = System.currentTimeMillis() + 10_000
+        var restored: Boolean = false
+        while (!restored && System.currentTimeMillis() < deadline) {
+            scenario!!.onActivity { activity ->
+                val store = activity.supportFragmentManager
+                    .findFragmentByTag(PixelPalsDestination.STORE.fragmentTag) as StoreFragment
+                restored = store.getStoreViewModel().uiState.value.notice?.type == StoreNoticeType.NOTHING_TO_RESTORE
+            }
+            if (!restored) Thread.sleep(50)
+        }
+        assertTrue("Manual restoration must report its result", restored)
+        scenario!!.recreate()
+        awaitStateReady()
+        scenario!!.onActivity { activity ->
+            val message: TextView = activity.findViewById(R.id.txtStoreStatus)
+            assertTrue(message.isShown)
+            assertTrue(message.text == activity.getString(R.string.store_restore_nothing))
+            assertTrue(activity.findViewById<Button>(R.id.btnRestorePurchases).isEnabled)
+        }
     }
 
     private fun collectTexts(view: View): List<String> {

@@ -77,8 +77,10 @@ class TreasureAlbumActivity : AppCompatActivity() {
     }
 
     private fun configureAlbum(): Unit {
-        adapter = TreasureAdapter(::showGiftConfirmation)
-        recyclerView.layoutManager = GridLayoutManager(this, ALBUM_COLUMN_COUNT)
+        adapter = TreasureAdapter(::showTreasure)
+        val configuration = resources.configuration
+        val columns = if (configuration.screenWidthDp / configuration.fontScale < 320f) 1 else ALBUM_COLUMN_COUNT
+        recyclerView.layoutManager = GridLayoutManager(this, columns)
         recyclerView.adapter = adapter
         albumRetryButton.setOnClickListener { viewModel.refresh() }
     }
@@ -96,12 +98,19 @@ class TreasureAlbumActivity : AppCompatActivity() {
         when {
             state.hasError && collection == null -> showErrorState()
             collection == null -> showLoadingState()
-            else -> renderCollection(collection, state.isGiftInProgress)
+            else -> {
+                renderCollection(collection, state.isGiftInProgress,
+                    allowGift = !state.hasError && !state.isLoading && !state.isGiftInProgress)
+                when {
+                    state.isLoading -> showLoadingState(keepCollection = true)
+                    state.hasError -> showErrorState(keepCollection = true)
+                }
+            }
         }
         state.giftResult?.let(::handleGiftResult)
     }
 
-    private fun renderCollection(collection: TreasureCollection, isGiftInProgress: Boolean): Unit {
+    private fun renderCollection(collection: TreasureCollection, isGiftInProgress: Boolean, allowGift: Boolean = true): Unit {
         collectionSummaryCard.visibility = View.VISIBLE
         recyclerView.visibility = View.VISIBLE
         recyclerView.alpha = if (isGiftInProgress) 0.65f else 1f
@@ -118,7 +127,7 @@ class TreasureAlbumActivity : AppCompatActivity() {
         )
         collectionNextRewardText.text = getNextRewardText(collection.summary)
         dailyGiftStatusText.text = getDailyGiftStatus(collection.summary)
-        adapter.submitList(collection.items)
+        adapter.submitList(if (allowGift) collection.items else collection.items.map { item -> item.copy(canGift = false) })
         showContentState()
         trackAlbumOpen(collection.summary)
     }
@@ -144,6 +153,19 @@ class TreasureAlbumActivity : AppCompatActivity() {
             },
             petName,
         )
+    }
+
+    private fun showTreasure(item: TreasureCollectionItem) {
+        val state = viewModel.uiState.value
+        if (item.canGift && !state.hasError && !state.isLoading && !state.isGiftInProgress) {
+            showGiftConfirmation(item)
+            return
+        }
+        MaterialAlertDialogBuilder(this)
+            .setTitle(if (item.isDiscovered) item.name else getString(R.string.treasure_mystery_name))
+            .setMessage(if (item.isDiscovered) item.story else item.hint)
+            .setPositiveButton(android.R.string.ok, null)
+            .show()
     }
 
     private fun showGiftConfirmation(item: TreasureCollectionItem): Unit =
@@ -250,14 +272,14 @@ class TreasureAlbumActivity : AppCompatActivity() {
         TreasureBadge.LEGENDARY -> R.string.treasure_badge_legendary
     }
 
-    private fun showLoadingState(): Unit {
+    private fun showLoadingState(keepCollection: Boolean = false): Unit {
         albumStateText.text = getString(R.string.treasure_album_loading)
         albumStateText.setTextColor(ContextCompat.getColor(this, R.color.status_info_fg))
         albumStateCard.setBackgroundResource(R.drawable.bg_status_info)
         albumLoadingProgress.visibility = View.VISIBLE
         albumRetryButton.visibility = View.GONE
-        collectionSummaryCard.visibility = View.GONE
-        recyclerView.visibility = View.GONE
+        collectionSummaryCard.visibility = if (keepCollection) View.VISIBLE else View.GONE
+        recyclerView.visibility = if (keepCollection) View.VISIBLE else View.GONE
     }
 
     private fun showContentState(): Unit {
@@ -268,14 +290,14 @@ class TreasureAlbumActivity : AppCompatActivity() {
         albumRetryButton.visibility = View.GONE
     }
 
-    private fun showErrorState(): Unit {
+    private fun showErrorState(keepCollection: Boolean = false): Unit {
         albumStateText.text = getString(R.string.treasure_album_error)
         albumStateText.setTextColor(ContextCompat.getColor(this, R.color.red_error))
         albumStateCard.setBackgroundResource(R.drawable.bg_status_error)
         albumLoadingProgress.visibility = View.GONE
         albumRetryButton.visibility = View.VISIBLE
-        collectionSummaryCard.visibility = View.GONE
-        recyclerView.visibility = View.GONE
+        collectionSummaryCard.visibility = if (keepCollection) View.VISIBLE else View.GONE
+        recyclerView.visibility = if (keepCollection) View.VISIBLE else View.GONE
     }
 
     private fun edgeToEdge(): Unit {

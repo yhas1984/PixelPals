@@ -11,6 +11,8 @@ import com.pixelpals.app.core.domain.PetType
 import com.pixelpals.app.data.repository.CoinSpendResult
 import com.pixelpals.app.data.repository.PixelPalsRepository
 import com.pixelpals.app.database.AppDatabase
+import com.pixelpals.app.database.TreasureItem
+import com.pixelpals.app.feature.treasure.TreasureCatalog
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
 import org.junit.*
@@ -42,6 +44,20 @@ class CompanionRepositoryTest {
         assertEquals("", createRepository().ensureHome(PetType.CORGI).desktopObject)
         assertNotNull(repository.dao.getOwned("ball"))
         assertTrue(repository.dao.getPlacements("corgi").any { it.decorationId == "ball" })
+    }
+
+    @Test fun treasureSelectionIsPerPetAndOnlyAllowsDiscoveredCatalogItems(): Unit = runBlocking {
+        val first = TreasureCatalog.all.first()
+        val second = TreasureCatalog.all[1]
+        db.treasureDao().insertTreasure(TreasureItem(first.emoji, 0, wall, wall, 1))
+
+        assertTrue(repository.selectTreasure(PetType.CORGI, first.id))
+        assertTrue(repository.selectTreasure(PetType.BLOOP, ""))
+        assertTrue(repository.selectTreasure(PetType.CORGI, null))
+        assertFalse(repository.selectTreasure(PetType.BLOOP, second.id))
+        assertFalse(repository.selectTreasure(PetType.BLOOP, "unknown_treasure"))
+        assertEquals(null, db.companionDao().getHome("corgi")?.selectedTreasureId)
+        assertEquals("", db.companionDao().getHome("bloop")?.selectedTreasureId)
     }
 
     @Test fun homesAreIndependentAndAdoptionDoesNotResetProgress(): Unit = runBlocking {
@@ -120,6 +136,40 @@ class CompanionRepositoryTest {
         repository.startExpedition(PetType.CORGI, ExpeditionDestination.FOREST)
         assertFalse(repository.finishExpedition(request, cancel = true))
         assertNotNull(repository.dao.getExpedition())
+    }
+    @Test fun unknownDestinationCanBeCancelledAfterReopeningWithoutNeglectOrRewards(): Unit = runBlocking {
+        repository.ensureHome(PetType.CORGI)
+        val before = economy.getStatusSnapshot(PetType.CORGI)
+        assertTrue(repository.startExpedition(PetType.CORGI, ExpeditionDestination.MEADOW))
+        val trip = requireNotNull(repository.dao.getExpedition())
+        repository.dao.saveExpedition(trip.copy(destination = "future_destination"))
+        wall += 8 * 86_400_000L; uptime += 8 * 86_400_000L
+        repository = createRepository()
+        assertFalse(repository.finishExpedition(trip.requestId))
+        assertTrue(repository.finishExpedition(trip.requestId, cancel = true))
+        assertNull(repository.dao.getExpedition())
+        assertFalse(repository.finishExpedition(trip.requestId, cancel = true))
+        val after = economy.getStatusSnapshot(PetType.CORGI)
+        assertEquals(before.hunger, after.hunger)
+        assertEquals(before.energy, after.energy)
+        assertEquals(before.hygiene, after.hygiene)
+        assertEquals(before.condition, after.condition)
+        assertEquals(0, economy.getCoinBalance(null))
+        assertTrue(db.treasureDao().getAllTreasuresSnapshot().isEmpty())
+        assertNull(repository.dao.getOwned("wildflowers"))
+        assertTrue(repository.startExpedition(PetType.CORGI, ExpeditionDestination.FOREST))
+    }
+
+    @Test fun unknownPetCannotClaimButDoesNotLockFutureTravel(): Unit = runBlocking {
+        repository.ensureHome(PetType.CORGI)
+        assertTrue(repository.startExpedition(PetType.CORGI, ExpeditionDestination.MEADOW))
+        val trip = requireNotNull(repository.dao.getExpedition())
+        repository.dao.saveExpedition(trip.copy(petId = "future_pet", elapsedMs = ExpeditionDestination.MEADOW.durationMs))
+        assertFalse(repository.finishExpedition(trip.requestId))
+        assertTrue(repository.finishExpedition(trip.requestId, cancel = true))
+        assertNull(repository.dao.getExpedition())
+        assertTrue(db.treasureDao().getAllTreasuresSnapshot().isEmpty())
+        assertTrue(repository.startExpedition(PetType.CORGI, ExpeditionDestination.FOREST))
     }
     @Test fun interactionLearnsWithoutDuplicateJournalEntries(): Unit = runBlocking {
         repository.ensureHome(PetType.CORGI)

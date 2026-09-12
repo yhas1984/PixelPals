@@ -25,6 +25,18 @@ interface PetBehavior {
     /** Safe handoff to scheduled rest, after committed jumps and care reactions finish. */
     fun canStartScheduledSleep(reducedMotion: Boolean): Boolean = true
 
+    /** Carry an already seated pose into sleep instead of repeating the sit-down. */
+    val isSeatedForScheduledRest: Boolean get() = false
+
+    /** Optional shared rest atlas pose already reached before the schedule takes over. */
+    val scheduledRestFrame: Int? get() = null
+
+    /** The shared wake renderer has reached its upright endpoint. */
+    fun onScheduledWakeCompleted() {}
+
+    /** Preserve a shared atlas pose when direct input takes over scheduled sleep. */
+    fun onScheduledSleepInterrupted(frame: Int) {}
+
     /** Semantic facing, independent of whether the source artwork was drawn mirrored. */
     val facingLeft: Boolean? get() = null
     /** Current rendered ground contact relative to the pet window's vertical center. */

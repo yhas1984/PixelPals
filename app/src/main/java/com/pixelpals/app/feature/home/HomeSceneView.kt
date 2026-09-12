@@ -44,11 +44,19 @@ class HomeSceneView(context: Context) : View(context) {
     var isTravelling: Boolean = false
     var isEditing: Boolean = false
         set(value) {
+            val changed: Boolean = field != value
             field = value
             if (!value) { pendingPlacement = null; dragged = null }
             onEditingChanged?.invoke(value)
+            if (changed) { cancelTick(); schedule() }
             invalidate()
         }
+    private var isDrawingPostcard: Boolean = false
+    internal fun drawPostcard(canvas: Canvas) {
+        val previous: Boolean = isDrawingPostcard
+        isDrawingPostcard = true
+        try { draw(canvas) } finally { isDrawingPostcard = previous }
+    }
     var onEditingChanged: ((Boolean) -> Unit)? = null
     var showPet: Boolean = true
     var energy: Int = 75
@@ -85,6 +93,32 @@ class HomeSceneView(context: Context) : View(context) {
     private val toyAngles: MutableMap<String, Float> = mutableMapOf()
     private val deviceRest = com.pixelpals.app.core.rest.DeviceRestState(context)
     private var treeVisit: GingerTreeVisit? = null
+    private var yukiHeat: YukiHomeHeat = YukiHomeHeat()
+    private val thermalMemory: com.pixelpals.app.core.thermal.YukiThermalMemory =
+        com.pixelpals.app.core.thermal.YukiThermalMemory(context)
+    private var nextTemperatureRead: Long = 0L
+    internal var temperatureReader: () -> Float? = {
+        try {
+            context.registerReceiver(null, android.content.IntentFilter(android.content.Intent.ACTION_BATTERY_CHANGED))
+                ?.getIntExtra(android.os.BatteryManager.EXTRA_TEMPERATURE, Int.MIN_VALUE)
+                ?.takeUnless { it == Int.MIN_VALUE }?.div(10f)
+        } catch (_: SecurityException) { null }
+    }
+    private var web: TelaHomeWeb = TelaHomeWeb()
+    private var jellyHomeMotion: JellyHomeMotion = JellyHomeMotion()
+    private val webPainter: TelaHomeWebPainter = TelaHomeWebPainter()
+    var onWebHuntRequested: ((Int) -> Unit)? = null
+    var onWebMealReady: (() -> Unit)? = null
+    fun huntFly(index: Int = -1): Boolean {
+        if (pet != PetType.TELA || isEditing || isTravelling || !showPet || isPaused) return false
+        val selected: Int = if (index < 0) web.flies.indices.firstOrNull(web::isFlyVisible) ?: return false else index
+        val started: Boolean = web.hunt(selected)
+        if (started) { invalidate(); schedule() }
+        return started
+    }
+    fun cancelWebHunt(): Unit { web.cancelHunt(); invalidate() }
+    fun finishWebMeal(success: Boolean): Unit { web.finishMeal(success); invalidate() }
+
     fun exploreTree(): Unit {
         if (pet != PetType.GINGER || isEditing || isTravelling || !showPet || isMotionReduced || treeVisit != null) return
         treeVisit = GingerTreeVisit(motion.x, motion.y)
@@ -98,10 +132,11 @@ class HomeSceneView(context: Context) : View(context) {
     private var describedDream: Boolean? = null
     private var lastFrame: Long = 0L
     private var running: Boolean = false
+    private var isPaused: Boolean = false
     private val tick: Runnable = object : Runnable {
         override fun run(): Unit {
             running = false
-            if (!isAttachedToWindow || !isShown) { lastFrame = 0; return }
+            if (isPaused || !isAttachedToWindow || !isShown) { lastFrame = 0; return }
             val now: Long = SystemClock.uptimeMillis()
             if (lastFrame > 0 && now - lastFrame < 16) { schedule(); return }
             val minute: Long = System.currentTimeMillis() / 60_000
@@ -111,7 +146,7 @@ class HomeSceneView(context: Context) : View(context) {
             lastFrame = now
             val dreaming: Boolean = treeVisit == null && motion.activity == CompanionActivity.REST && !isTravelling && !isEditing && showPet &&
                 (isMotionReduced || motion.elapsed >= 1.4f)
-            if (describedDream != dreaming) {
+            if (isClickable && describedDream != dreaming) {
                 describedDream = dreaming
                 contentDescription = context.getString(if (dreaming) R.string.home_scene_dreaming else R.string.home_scene_description,
                     context.getString(pet.displayNameResId))
@@ -136,9 +171,34 @@ class HomeSceneView(context: Context) : View(context) {
 
     internal fun advanceScene(delta: Long): Unit {
         activeTime += delta.coerceIn(0, 100)
+        if (pet == PetType.YUKI) {
+            if (activeTime >= nextTemperatureRead) {
+                val temperature: Float? = temperatureReader()
+                yukiHeat.updateTemperature(temperature, thermalMemory.update(temperature))
+                nextTemperatureRead = activeTime + 4_000L
+            }
+            val wasHot: Boolean = yukiHeat.active
+            yukiHeat.advance(delta / 1000f, isMotionReduced)
+            if (yukiHeat.active) {
+                motion.settleWithoutMovement(false)
+                return
+            }
+            if (wasHot) motion.settleWithoutMovement(false)
+        }
+        if (pet == PetType.TELA) {
+            val resting: Boolean = reviewSeed == null && deviceRest.shouldRest(preferences.restSchedule)
+            val sleeping: Boolean = motion.advanceScheduledRest((resting || energy <= 25 || isUnwell) && !web.isHunting, delta / 1000f)
+            val waking: Boolean = motion.advanceScheduledWake(delta / 1000f)
+            if (web.advance(delta / 1000f, isMotionReduced, sleeping || waking,
+                    profile.tempo * traits.tempo, traits.initiative)) onWebMealReady?.invoke()
+            return
+        }
         treeVisit?.let { visit ->
             visit.advance(delta / 1000f)
-            if (visit.phase == GingerTreeVisit.Phase.DONE) { treeVisit = null; motion.settleWithoutMovement(false) }
+            if (visit.phase == GingerTreeVisit.Phase.DONE) {
+                motion.finishExcursion(visit.facingLeft)
+                treeVisit = null
+            }
             return
         }
         val toy = placements.firstOrNull { it.decorationId == home?.favoriteObject && DecorationCatalog.find(it.decorationId)?.kind == DecorationKind.TOY }
@@ -153,8 +213,15 @@ class HomeSceneView(context: Context) : View(context) {
                 deviceRest.shouldRest(preferences.restSchedule), delta / 1000f,
                 bed?.takeUnless { isMotionReduced }?.let { objectBounds(it).centerX() },
                 bed?.let { objectBounds(it).bottom - 30f } ?: 650f,
-                profile.tempo * traits.tempo * traits.initiative)) return
-        if (isMotionReduced) { motion.settleWithoutMovement(energy <= 25 || isUnwell); return }
+                profile.tempo * traits.tempo * traits.initiative)) {
+            if (pet == PetType.JELLY) jellyHomeMotion.advance(delta / 1000f, motion.distanceTravelled, motion.activity, motion.speed, isMotionReduced)
+            return
+        }
+        if (isMotionReduced) {
+            motion.settleWithoutMovement(energy <= 25 || isUnwell, reduced = true)
+            if (pet == PetType.JELLY) jellyHomeMotion.advance(delta / 1000f, motion.distanceTravelled, motion.activity, motion.speed, true)
+            return
+        }
         val toyCenter: Float = toy?.let { objectBounds(it).centerX() } ?: 500f
         val toyStand: Float = if (toy == null) 500f else toyCenter + if (toyCenter < 500f) 100f else -100f
         motion.context = CompanionIntentContext(energy, isUnwell, toy != null, bed != null, profile.curiosity,
@@ -162,18 +229,35 @@ class HomeSceneView(context: Context) : View(context) {
         motion.advance(delta / 1000f, toyStand,
             bed?.let { objectBounds(it).centerX() } ?: 500f, profile.tempo * traits.tempo * traits.initiative, bond,
             toy?.let { objectBounds(it).bottom - 30f } ?: 650f, bed?.let { objectBounds(it).bottom - 30f } ?: 650f, toy?.let { toyCenter < toyStand })
+        if (pet == PetType.JELLY) jellyHomeMotion.advance(delta / 1000f, motion.distanceTravelled,
+            motion.activity, motion.speed, isMotionReduced)
     }
 
     suspend fun loadPet(type: PetType): Unit {
+        if (pet != type) {
+            isEditing = false
+            didMove = true // Ignore the release of a gesture begun with the previous pet.
+            parent?.requestDisallowInterceptTouchEvent(false)
+        }
         pet = type
+        jellyHomeMotion = JellyHomeMotion()
         treeVisit = null
+        yukiHeat = YukiHomeHeat()
+        nextTemperatureRead = 0L
+        web = TelaHomeWeb()
         describedDream = null
         profile = CompanionProfiles.forPet(type)
         traits = CompanionTraits.derive(type, home, bond)
-        motion = CompanionMotion(CompanionIntentSelector(reviewSeed?.let { kotlin.random.Random(it) } ?: kotlin.random.Random.Default))
         locomotion = null
         val walk: HomeLocomotion = HomeLocomotion.load(context, type)
         if (pet != type) return
+        motion = CompanionMotion(
+            CompanionIntentSelector(reviewSeed?.let { kotlin.random.Random(it) } ?: kotlin.random.Random.Default),
+            walk.turnDurationSeconds,
+            walk.turnCommitSeconds,
+            gingerPostures = walk.gingerPosturePack,
+            gingerRestArtwork = walk.gingerRestPack,
+        )
         locomotion = walk
         contentDescription = context.getString(R.string.home_scene_description, context.getString(type.displayNameResId))
         invalidate(); schedule()
@@ -193,12 +277,14 @@ class HomeSceneView(context: Context) : View(context) {
         canvas.save(); canvas.scale(width / 1000f, height / 760f)
         canvas.clipRect(0f, 0f, 1000f, 760f)
         painter.drawBackground(canvas, environment, hour, pet)
-        if (isEditing) drawGrid(canvas)
+        if (isEditing && !isDrawingPostcard) drawGrid(canvas)
         val actorVisible = showPet && !isTravelling
-        drawDecorations(canvas) { !actorVisible || HomeDepth.isBehindPet(objectBounds(it).bottom - 30f, motion.y) }
+        drawDecorations(canvas) { pet == PetType.TELA || !actorVisible || HomeDepth.isBehindPet(objectBounds(it).bottom - 30f, motion.y) }
+        if (pet == PetType.TELA) webPainter.draw(canvas, web, activeTime / 1000f, isMotionReduced)
         if (actorVisible) drawCompanion(canvas)
-        if (actorVisible) drawDecorations(canvas) { !HomeDepth.isBehindPet(objectBounds(it).bottom - 30f, motion.y) }
-        dragged?.let { item -> DecorationCatalog.find(item.decorationId)?.let {
+        if (pet == PetType.TELA && web.isEating) webPainter.drawFlies(canvas, web, activeTime / 1000f, isMotionReduced)
+        if (actorVisible && pet != PetType.TELA) drawDecorations(canvas) { !HomeDepth.isBehindPet(objectBounds(it).bottom - 30f, motion.y) }
+        if (!isDrawingPostcard) dragged?.let { item -> DecorationCatalog.find(item.decorationId)?.let {
             val slot: Pair<Int, Int> = placementSlot(dragX, dragY)
             draggedBounds.set(gridBounds[slot.second * HomeGrid.COLUMNS + slot.first])
             paint.style = Paint.Style.STROKE
@@ -221,7 +307,7 @@ class HomeSceneView(context: Context) : View(context) {
 
     private inline fun drawDecorations(canvas: Canvas, include: (HomeDecorationEntity) -> Boolean): Unit {
         placements.forEach { position ->
-            if (include(position) && position.decorationId != dragged?.decorationId) {
+            if (include(position) && (isDrawingPostcard || position.decorationId != dragged?.decorationId)) {
                 DecorationCatalog.find(position.decorationId)?.let { drawDecoration(canvas, it, position) }
             }
         }
@@ -234,8 +320,9 @@ class HomeSceneView(context: Context) : View(context) {
         canvas.save()
         val spinningToy: Boolean = item.id == "pinwheel" || (item.id == "ball" && pet == com.pixelpals.app.core.domain.PetType.TARO)
         val toyRotation: Float = if (spinningToy) toyAngles[item.id] ?: 0f else 0f
-        if (!isMotionReduced && !isEditing && motion.activity == CompanionActivity.PLAY && !motion.isTurning && position == activeToy) {
-            val nudge: Float = locomotion?.toyResponse(motion.elapsed) ?: 0f
+        if (!isMotionReduced && motion.activity == CompanionActivity.PLAY && !motion.isTurning && position == activeToy) {
+            val nudge: Float = if (pet == PetType.JELLY) jellyHomeMotion.toyResponse
+                else locomotion?.toyResponse(motion.elapsed) ?: 0f
             val direction: Float = if (motion.x < bounds.centerX()) 1f else -1f
             if (!spinningToy) {
                 canvas.translate(nudge * 24f * direction, -nudge * 14f)
@@ -248,33 +335,57 @@ class HomeSceneView(context: Context) : View(context) {
 
     private fun drawCompanion(canvas: Canvas): Unit {
         val sprites: HomeLocomotion = locomotion ?: return
-        val reduced: Boolean = isMotionReduced || isEditing
+        // Editing pauses scene time; keep the exact pose instead of switching to an idle frame.
+        val reduced: Boolean = isMotionReduced
         val visit = treeVisit
-        val x: Float = visit?.x ?: motion.x
-        val actorY: Float = visit?.y ?: motion.y
-        val size: Float = 290f
+        val size: Float = 290f * com.pixelpals.app.core.motion.PetArtworkScale.speciesSize(pet)
+        val onWeb: Boolean = pet == PetType.TELA
+        val webRadians: Float = web.angleDegrees * PI.toFloat() / 180f
+        val x: Float = if (onWeb) web.x - cos(webRadians) * size * .24f else visit?.x ?: motion.x
+        val actorY: Float = if (onWeb) web.y - sin(webRadians) * size * .24f + size * .4f else visit?.y ?: motion.y
         val gait: HomeGait = HomeGait.forPet(pet)
-        val phase: Float = motion.distanceTravelled / 105f * (2f * PI.toFloat())
+        val jellyPose: JellyHomeMotion.Pose? = if (pet == PetType.JELLY) jellyHomeMotion.pose else null
+        val phase: Float = (if (pet == PetType.CORGI) com.pixelpals.app.core.motion.CorgiGait.phaseAt(motion.distanceTravelled, size)
+            else motion.distanceTravelled / 105f) * (2f * PI.toFloat())
         val amount: Float = if (visit != null || reduced) 0f else (motion.speed / 75f).coerceIn(0f, 1f)
-        val lift: Float = if (reduced) 0f else if (gait.isFloating && motion.activity != CompanionActivity.REST)
+        val lift: Float = if (pet == PetType.JELLY || reduced) 0f else if (gait.isFloating && motion.activity != CompanionActivity.REST)
             7f + sin(activeTime / 1000f * 2f) * 3f else abs(sin(phase)) * gait.bounce * amount
         val preparation: Float = if (visit == null && !reduced && motion.isPreparing) sin(motion.elapsed / CompanionMotion.ANTICIPATION_SECONDS * PI.toFloat()) else 0f
-        val breath: Float = if (reduced) 0f else sin(activeTime / 1000f * 2f) * 1.1f
+        val breath: Float = if (pet == PetType.JELLY || reduced) 0f else sin(activeTime / 1000f * 2f) * 1.1f
         actor.set(x - size / 2, actorY - size, x + size / 2, actorY)
         paint.color = 0x25736954
         val shadowWidth: Float = size * .21f * (1f - lift / 100f)
-        if (visit?.isAirborne != true) canvas.drawOval(x - shadowWidth, actorY - 21f, x + shadowWidth, actorY - 7f, paint)
+        if (!onWeb && pet != PetType.BLOOP && visit?.isAirborne != true)
+            canvas.drawOval(x - shadowWidth, actorY - 21f, x + shadowWidth, actorY - 7f, paint)
         paint.color = Color.WHITE
         paint.colorFilter = cosmeticFilter
         canvas.save()
         canvas.translate(0f, -lift)
-        canvas.rotate(if (reduced) 0f else sin(phase) * gait.sway * amount, x, actorY)
-        canvas.scale(1f + preparation * .035f, 1f - preparation * .035f + breath / size, x, actorY)
-        if (visit?.facingLeft ?: if (motion.isTurning) motion.turnFromFacingLeft else motion.isFacingLeft) canvas.scale(-1f, 1f, x, actorY)
-        sprites.draw(canvas, paint, actor, motion, reduced, visit?.clip, visit?.clipSeconds ?: 0f)
+        canvas.rotate(if (pet == PetType.JELLY || reduced) 0f else sin(phase) * gait.sway * amount, x, actorY)
+        // Anticipation must not stretch shells, bones or wings. Only the three
+        // amorphous companions use whole-body deformation; other pets use their poses.
+        if (pet == PetType.BLOOP || pet == PetType.NUBE_MICHI)
+            canvas.scale(1f + preparation * .035f, 1f - preparation * .035f + breath / size, x, actorY)
+        if (pet == PetType.JELLY && motion.activity != CompanionActivity.REST && motion.activity != CompanionActivity.WAKE) {
+            val scale = jellyPose?.scaleY ?: 1f
+            canvas.translate(0f, jellyPose?.lift ?: 0f)
+            // The source art's feet sit a little above the logical actor bottom.
+            // Keep that artistic ground fixed while the body compresses.
+            val jellyGround = actorY - size * .04f
+            canvas.scale(1f / scale, scale, x, jellyGround)
+        }
+        if (!onWeb && (visit?.facingLeft ?: if (motion.isTurning) motion.turnFromFacingLeft else motion.isFacingLeft)) canvas.scale(-1f, 1f, x, actorY)
+        if (onWeb) canvas.rotate(web.angleDegrees, x, actorY - size * .4f)
+        val webClip: String? = if (onWeb && motion.activity != CompanionActivity.REST && motion.activity != CompanionActivity.WAKE) "walk" else null
+        val melting: Boolean = pet == PetType.YUKI && yukiHeat.active
+        sprites.draw(canvas, paint, actor, motion, reduced, if (melting) "melt" else webClip ?: visit?.clip,
+            if (melting) yukiHeat.elapsedSeconds else if (onWeb) web.distanceTravelled / 105f * 1.44f else visit?.clipSeconds ?: 0f)
         canvas.restore()
         paint.colorFilter = null
+        canvas.save()
+        if (onWeb) canvas.rotate(web.angleDegrees, x, actorY - size * .4f)
         cosmetics.draw(canvas, cosmeticEffect, actor, if (reduced) 0f else activeTime / 1000f)
+        canvas.restore()
         if (visit == null && motion.activity == CompanionActivity.REST && !isEditing && (reduced || motion.elapsed >= 1.4f))
             dreamPainter.draw(canvas, x, actorY, size, motion.elapsed, reduced)
     }
@@ -318,6 +429,13 @@ class HomeSceneView(context: Context) : View(context) {
                         announceForAccessibility(context.getString(R.string.home_occupied))
                     }
                 } else if (!didMove) {
+                    val fly: Int = if (pet == PetType.TELA && !isEditing && !isTravelling && showPet)
+                        web.flies.indexOfFirst { hypot(x - it.x, y - it.y) <= 65f } else -1
+                    if (fly >= 0 && web.isFlyVisible(fly)) {
+                        onWebHuntRequested?.invoke(fly)
+                        invalidate()
+                        return true
+                    }
                     val hit: HomeDecorationEntity? = placements.lastOrNull { objectBounds(it).contains(x, y) }
                     val definition: Decoration? = hit?.let { DecorationCatalog.find(it.decorationId) }
                     if (definition != null) onObject?.invoke(definition) else if (!isTravelling) performClick()
@@ -329,17 +447,25 @@ class HomeSceneView(context: Context) : View(context) {
         return true
     }
 
-    override fun performClick(): Boolean { super.performClick(); if (!isEditing && !isTravelling && showPet) onPet?.invoke(); return true }
-    fun pause(): Unit { removeCallbacks(tick); running = false; lastFrame = 0 }
-    fun resume(): Unit { schedule() }
+    override fun performClick(): Boolean {
+        super.performClick()
+        if (!isEditing && !isTravelling && showPet) {
+            if (pet == PetType.JELLY) jellyHomeMotion.touch()
+            onPet?.invoke()
+        }
+        return true
+    }
+    private fun cancelTick(): Unit { removeCallbacks(tick); running = false; lastFrame = 0 }
+    fun pause(): Unit { isPaused = true; cancelTick() }
+    fun resume(): Unit { isPaused = false; nextTemperatureRead = 0L; schedule() }
     private fun schedule(): Unit {
-        if (running || !isAttachedToWindow || !isShown) return
+        if (isPaused || running || !isAttachedToWindow || !isShown) return
         running = true
         if (!showPet) postDelayed(tick, 60_000)
-        else if (isMotionReduced || isTravelling) postDelayed(tick, 1000)
+        else if (isMotionReduced || isTravelling || isEditing) postDelayed(tick, 1000)
         else postOnAnimation(tick)
     }
     override fun onAttachedToWindow(): Unit { super.onAttachedToWindow(); schedule() }
-    override fun onWindowVisibilityChanged(visibility: Int): Unit { super.onWindowVisibilityChanged(visibility); if (visibility == VISIBLE) schedule() else pause() }
-    override fun onDetachedFromWindow(): Unit { pause(); super.onDetachedFromWindow() }
+    override fun onWindowVisibilityChanged(visibility: Int): Unit { super.onWindowVisibilityChanged(visibility); if (visibility == VISIBLE) schedule() else cancelTick() }
+    override fun onDetachedFromWindow(): Unit { cancelTick(); super.onDetachedFromWindow() }
 }

@@ -35,6 +35,8 @@ class AppDatabaseMigrationTest {
                 AppDatabase.MIGRATION_7_8,
                 COMPANION_MIGRATION_8_9,
                 COMPANION_MIGRATION_9_10,
+                COMPANION_MIGRATION_10_11,
+                COMPANION_MIGRATION_10_11,
             )
             .build()
 
@@ -73,6 +75,8 @@ class AppDatabaseMigrationTest {
                 AppDatabase.MIGRATION_7_8,
                 COMPANION_MIGRATION_8_9,
                 COMPANION_MIGRATION_9_10,
+                COMPANION_MIGRATION_10_11,
+                COMPANION_MIGRATION_10_11,
             )
             .build()
 

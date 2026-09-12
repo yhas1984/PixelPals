@@ -11,6 +11,7 @@ import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
+import android.view.ViewGroup
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -27,6 +28,7 @@ class CareScenePanel @JvmOverloads constructor(context: Context, attrs: Attribut
     private val message: TextView = TextView(context)
     private val cancelButton: Button = Button(context)
     private val retryButton: Button = Button(context)
+    private val actionGrid: CareButtonGrid = CareButtonGrid(context)
     private val buttons: MutableMap<CareSceneAction, Button> = mutableMapOf()
     private var model: CareSceneViewModel? = null
     private var scope: CoroutineScope? = null
@@ -53,53 +55,65 @@ class CareScenePanel @JvmOverloads constructor(context: Context, attrs: Attribut
         }
         addView(message, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
         addView(stage, LayoutParams(LayoutParams.MATCH_PARENT, dp(220)))
-        for (row: List<CareSceneAction> in CareSceneAction.entries.chunked(3)) {
-            val line: LinearLayout = LinearLayout(context).apply { orientation = HORIZONTAL }
-            row.forEach { action ->
-                val button: Button = Button(context).apply {
-                    text = context.getString(label(action)); isAllCaps = false; textSize = 12f
-                    minWidth = 0; minimumWidth = 0; setPadding(dp(2), 0, dp(2), 0)
-                    background = toolBackground()
-                    setTextColor(ColorStateList(arrayOf(intArrayOf(-android.R.attr.state_enabled), intArrayOf()),
-                        intArrayOf(Color.parseColor("#91869D"), ContextCompat.getColor(context, R.color.text_primary))))
-                    setCompoundDrawables(null, CareToolDrawable(action, dp(22)), null, null)
-                    compoundDrawablePadding = dp(2)
-                    elevation = 0f
-                    contentDescription = context.getString(R.string.care_scene_tool_description, text)
-                    setOnClickListener { start(action, CareSceneMode.AUTOMATIC) }
-                }
-                wireDrag(button, action)
-                buttons[action] = button
-                line.addView(button, LayoutParams(0, dp(62), 1f).apply { setMargins(dp(3), dp(3), dp(3), dp(3)) })
+        for (action: CareSceneAction in CareSceneAction.entries) {
+            val button: Button = Button(context).apply {
+                text = context.getString(label(action)); isAllCaps = false; textSize = 12f
+                minWidth = 0; minimumWidth = 0; minimumHeight = dp(62); setPadding(dp(2), 0, dp(2), 0)
+                background = toolBackground()
+                setTextColor(ColorStateList(arrayOf(intArrayOf(-android.R.attr.state_enabled), intArrayOf()),
+                    intArrayOf(ContextCompat.getColor(context, R.color.text_secondary), ContextCompat.getColor(context, R.color.text_primary))))
+                setCompoundDrawables(null, CareToolDrawable(action, dp(22)), null, null)
+                compoundDrawablePadding = dp(2)
+                elevation = 0f
+                contentDescription = context.getString(R.string.care_scene_tool_description, text)
+                setOnClickListener { start(action, CareSceneMode.AUTOMATIC) }
             }
-            addView(line, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
+            wireDrag(button, action)
+            buttons[action] = button
+            actionGrid.addView(button, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
         }
-        val footer: LinearLayout = LinearLayout(context).apply { orientation = HORIZONTAL }
+        addView(actionGrid, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
+        val footer: LinearLayout = com.pixelpals.app.feature.home.HomeUi.row(context, cancelButton, retryButton).apply {
+            isBaselineAligned = false
+        }
         cancelButton.apply {
             text = context.getString(R.string.care_scene_close); isAllCaps = false
             background = toolBackground()
             setTextColor(ContextCompat.getColor(context, R.color.text_secondary))
             textSize = 12f
+            minimumHeight = dp(48)
+            setPadding(dp(2), 0, dp(2), 0)
             elevation = 0f
             setOnClickListener { cancel(); onClose?.invoke() }
         }
         retryButton.apply {
             text = context.getString(R.string.dashboard_retry); isAllCaps = false; visibility = GONE
+            background = toolBackground()
+            setTextColor(ContextCompat.getColor(context, R.color.text_primary))
+            minimumHeight = dp(48)
+            setPadding(dp(2), 0, dp(2), 0)
             setOnClickListener { cancel(); model?.refresh(); loadPack() }
         }
-        footer.addView(cancelButton, LayoutParams(0, dp(48), 1f))
-        footer.addView(retryButton, LayoutParams(0, dp(48), 1f))
         addView(footer)
     }
 
     fun bind(viewModel: CareSceneViewModel): Unit {
-        if (model?.pet != viewModel.pet) { pausePresentation(); stage.pack = null }
-        model = viewModel
-        buttons.forEach { (action, button) ->
-            button.setCompoundDrawables(null, CareToolDrawable(action, dp(22), viewModel.pet), null, null)
+        if (model?.pet != viewModel.pet) {
+            pausePresentation()
+            stage.toyDecorationId = null
+            stage.bedDecorationId = null
         }
+        model = viewModel
+        refreshToolIcons(viewModel.pet)
         stage.contentDescription = context.getString(R.string.care_scene_pet_description, context.getString(viewModel.pet.displayNameResId))
         if (isAttachedToWindow) connect()
+    }
+
+    private fun refreshToolIcons(pet: com.pixelpals.app.core.domain.PetType) {
+        buttons.forEach { (action, button) ->
+            button.setCompoundDrawables(null, CareToolDrawable(action, dp(22), pet,
+                bedDecorationId = stage.bedDecorationId, toyDecorationId = stage.toyDecorationId), null, null)
+        }
     }
 
     fun start(action: CareSceneAction, mode: CareSceneMode = CareSceneMode.AUTOMATIC): Unit {
@@ -149,6 +163,7 @@ class CareScenePanel @JvmOverloads constructor(context: Context, attrs: Attribut
                     current.pet, placements, decorationDao.getHome(current.pet.name.lowercase())?.favoriteObject)
                 stage.bedDecorationId = com.pixelpals.app.feature.home.CareDecorationSelection.bed(
                     placements)
+                refreshToolIcons(current.pet)
                 stage.pack = CarePoseLoader.load(context.assets, current.pet)
                 render(current.state.value)
                 pendingAction?.let { (action, mode) -> pendingAction = null; current.start(action, mode) }
@@ -211,7 +226,7 @@ class CareScenePanel @JvmOverloads constructor(context: Context, attrs: Attribut
         if (displayedResult == session.request.id) return
         displayedResult = session.request.id
         message.text = when (result) {
-            is CareSceneResult.Completed -> CareResultFormatter.describe(context, result)
+            is CareSceneResult.Completed -> CareResultFormatter.describe(context, result, session.request.action)
             CareSceneResult.Cancelled -> context.getString(R.string.care_scene_cancelled)
             CareSceneResult.Unavailable -> context.getString(R.string.care_scene_medicine_unavailable)
             CareSceneResult.Error -> context.getString(R.string.dashboard_error)
@@ -219,6 +234,14 @@ class CareScenePanel @JvmOverloads constructor(context: Context, attrs: Attribut
         retryButton.visibility = if (result == CareSceneResult.Error) VISIBLE else GONE
         if (result is CareSceneResult.Completed) stage.celebrate()
         onResult?.invoke(result)
+        // Jelly's REST and MEDICINE actions finish on authored poses. Keep the
+        // final frame while releasing ownership; resetting here would switch to
+        // the idle PET pose at a different room baseline.
+        if (result is CareSceneResult.Completed &&
+            session.request.pet == com.pixelpals.app.core.domain.PetType.JELLY &&
+            session.request.action in setOf(CareSceneAction.REST, CareSceneAction.MEDICINE) && isAnimationFinished) {
+            activeRequest = null
+        }
         model?.cancel()
         model?.refresh()
     }
@@ -262,19 +285,65 @@ class CareScenePanel @JvmOverloads constructor(context: Context, attrs: Attribut
     }
 
     private fun toolBackground(): StateListDrawable {
-        fun shape(color: String): GradientDrawable = GradientDrawable().apply {
-            setColor(Color.parseColor(color)); cornerRadius = dp(14).toFloat()
+        fun shape(color: Int): GradientDrawable = GradientDrawable().apply {
+            setColor(ContextCompat.getColor(context, color)); cornerRadius = dp(14).toFloat()
         }
         return StateListDrawable().apply {
-            addState(intArrayOf(-android.R.attr.state_enabled), shape("#F0ECF4"))
-            addState(intArrayOf(android.R.attr.state_pressed), shape("#DDD1F5"))
-            addState(intArrayOf(), shape("#F3ECFC"))
+            addState(intArrayOf(-android.R.attr.state_enabled), shape(R.color.surface_subtle))
+            addState(intArrayOf(android.R.attr.state_pressed), shape(R.color.surface_tinted))
+            addState(intArrayOf(), shape(R.color.surface_warm))
         }
     }
 
     override fun onAttachedToWindow(): Unit { super.onAttachedToWindow(); if (model != null) connect() }
     override fun onDetachedFromWindow(): Unit { pausePresentation(); super.onDetachedFromWindow() }
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
+
+    private class CareButtonGrid(context: Context) : ViewGroup(context) {
+        private val horizontalMargin: Int = dp(3)
+        private val minimumCellWidth: Int = (dp(108) * resources.configuration.fontScale).toInt()
+        private var columnCount: Int = 1
+        private val rowHeights: MutableList<Int> = mutableListOf()
+
+        override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int): Unit {
+            val width: Int = MeasureSpec.getSize(widthMeasureSpec)
+            columnCount = (width / minimumCellWidth).coerceIn(1, 3)
+            rowHeights.clear()
+            val cellWidth: Int = width / columnCount
+            for (index: Int in 0 until childCount) {
+                val child: View = getChildAt(index)
+                val childWidth: Int = (cellWidth - horizontalMargin * 2).coerceAtLeast(0)
+                child.measure(MeasureSpec.makeMeasureSpec(childWidth, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED))
+                val row: Int = index / columnCount
+                while (rowHeights.size <= row) rowHeights.add(0)
+                rowHeights[row] = maxOf(rowHeights[row], child.measuredHeight)
+            }
+            for (index: Int in 0 until childCount) {
+                val child: View = getChildAt(index)
+                child.measure(MeasureSpec.makeMeasureSpec(child.measuredWidth, MeasureSpec.EXACTLY),
+                    MeasureSpec.makeMeasureSpec(rowHeights[index / columnCount], MeasureSpec.EXACTLY))
+            }
+            val height: Int = rowHeights.sum() + rowHeights.size * horizontalMargin * 2
+            setMeasuredDimension(resolveSize(width, widthMeasureSpec), resolveSize(height, heightMeasureSpec))
+        }
+
+        override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int): Unit {
+            val cellWidth: Int = width / columnCount
+            var rowTop: Int = horizontalMargin
+            for (row: Int in rowHeights.indices) {
+                for (column: Int in 0 until columnCount) {
+                    val index: Int = row * columnCount + column
+                    if (index >= childCount) break
+                    val child: View = getChildAt(index)
+                    val childLeft: Int = column * cellWidth + horizontalMargin
+                    child.layout(childLeft, rowTop, childLeft + child.measuredWidth, rowTop + child.measuredHeight)
+                }
+                rowTop += rowHeights[row] + horizontalMargin * 2
+            }
+        }
+
+        private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
+    }
 
     companion object {
         fun label(action: CareSceneAction): Int = when (action) {

@@ -1,0 +1,8 @@
+source=tools/patito/source/walk-2026-09-12.png
+dimensions=(1536, 1024)
+frame=00 bbox=(66, 29, 434, 472) opaque_pixels=81870 interior_rgb_min=[0, 0, 0] interior_rgb_max=[255, 255, 255]
+frame=01 bbox=(68, 29, 431, 475) opaque_pixels=80880 interior_rgb_min=[0, 0, 0] interior_rgb_max=[255, 255, 255]
+frame=02 bbox=(72, 28, 464, 474) opaque_pixels=86188 interior_rgb_min=[0, 0, 0] interior_rgb_max=[255, 255, 255]
+frame=03 bbox=(72, 29, 435, 468) opaque_pixels=79748 interior_rgb_min=[0, 0, 0] interior_rgb_max=[255, 255, 255]
+frame=04 bbox=(67, 28, 424, 473) opaque_pixels=79344 interior_rgb_min=[0, 0, 0] interior_rgb_max=[255, 255, 255]
+frame=05 bbox=(72, 30, 457, 465) opaque_pixels=85151 interior_rgb_min=[0, 0, 0] interior_rgb_max=[255, 255, 255]

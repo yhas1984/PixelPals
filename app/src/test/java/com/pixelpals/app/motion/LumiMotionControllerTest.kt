@@ -28,6 +28,103 @@ class LumiMotionControllerTest {
         }
     }
 
+    @Test
+    fun longSleepHoldsLastCurlFrameWithoutLooping() {
+        val controller = controller()
+        advance(controller, 1.25f, 60)
+        advance(controller, 8f, 60)
+        assertEquals(LumiMode.SLEEP, controller.mode)
+        assertEquals(35, controller.getPose().frameIndex)
+    }
+
+    @Test
+    fun wakeReversesFromPartialSleepPoseAndRunsQueuedTap() {
+        val controller = controller()
+        advance(controller, 1.25f, 60)
+        advance(controller, 0.25f, 60)
+        assertEquals("front_social", controller.startInteraction())
+        assertEquals(LumiMode.WAKE, controller.mode)
+        assertEquals(33, controller.getPose().frameIndex)
+        advance(controller, 0.2f, 60)
+        assertEquals(32, controller.getPose().frameIndex)
+        assertEquals("front_social", controller.startInteraction())
+        advance(controller, 0.2f, 60)
+        assertEquals(LumiMode.SOCIAL, controller.mode)
+        assertEquals(24, controller.getPose().frameIndex)
+        assertEquals("magic", controller.startInteraction())
+    }
+
+    @Test
+    fun fullCurlWakeTakesFourFramesAndKeepsPosition() {
+        val controller = controller()
+        advance(controller, 1.25f, 60)
+        advance(controller, 6.4f, 60)
+        controller.setPosition(321f, 654f)
+        val before = controller.getPose()
+        assertEquals(35, before.frameIndex)
+        controller.startInteraction()
+        advance(controller, 0.2f, 60)
+        assertEquals(34, controller.getPose().frameIndex)
+        advance(controller, 0.2f, 60)
+        assertEquals(33, controller.getPose().frameIndex)
+        advance(controller, 0.2f, 60)
+        assertEquals(32, controller.getPose().frameIndex)
+        advance(controller, 0.2f, 60)
+        val after = controller.getPose()
+        assertEquals(LumiMode.SOCIAL, after.mode)
+        assertEquals(before.x, after.x, 0f)
+        assertEquals(before.y, after.y, 0f)
+        assertEquals(before.facingRight, after.facingRight)
+    }
+
+    @Test
+    fun wakeCompletesAtThirtySixtyAndOneTwentyHertz() {
+        listOf(30, 60, 120).forEach { rate ->
+            val controller = controller()
+            controller.setPosition(321f, 654f)
+            advance(controller, 1.25f, rate)
+            advance(controller, 6.4f, rate)
+            val before = controller.getPose()
+            controller.startInteraction()
+            advance(controller, 0.8f, rate)
+            val after = controller.getPose()
+            assertEquals("rate=$rate", LumiMode.SOCIAL, after.mode)
+            assertEquals("rate=$rate", before.x, after.x, 0f)
+            assertEquals("rate=$rate", before.y, after.y, 0f)
+        }
+    }
+
+    @Test
+    fun clearingSleepConditionReversesBeforeIdle() {
+        val controller = controller()
+        advance(controller, 8f, 60)
+        val sleeping = controller.getPose()
+        val waking = controller.update(1f / 60f, shouldSleep = false)
+        assertEquals(LumiMode.WAKE, waking.mode)
+        assertEquals(sleeping.frameIndex, waking.frameIndex)
+        advance(controller, .8f, 60)
+        assertEquals(LumiMode.IDLE, controller.mode)
+        assertEquals(sleeping.x, controller.getPose().x, 0f)
+        assertEquals(sleeping.y, controller.getPose().y, 0f)
+    }
+
+    @Test
+    fun resetClearsQueuedSleepInteraction() {
+        val controller = controller()
+        advance(controller, 1.25f, 60)
+        assertEquals("front_social", controller.startInteraction())
+        controller.reset()
+        assertEquals(LumiMode.IDLE, controller.mode)
+        assertEquals("magic", controller.startInteraction())
+        assertEquals(LumiMode.MAGIC, controller.mode)
+    }
+
+    private fun advance(controller: LumiMotionController, seconds: Float, rate: Int): Unit {
+        val steps: Int = kotlin.math.ceil(seconds * rate).toInt()
+        val delta: Float = 1f / rate
+        repeat(steps) { controller.update(delta, shouldSleep = controller.mode != LumiMode.WAKE) }
+    }
+
     private fun controller(): LumiMotionController {
         val controller = LumiMotionController(FixedRandom(0.7f))
         controller.setSpec(
@@ -39,9 +136,9 @@ class LumiMotionControllerTest {
                     LumiMotionClip("hop_up", listOf(6), loop = false, frameDurationSeconds = 0.1f),
                     LumiMotionClip("hop_down", listOf(7), loop = false, frameDurationSeconds = 0.1f),
                     LumiMotionClip("pounce", listOf(8), loop = false, frameDurationSeconds = 0.1f),
-                    LumiMotionClip("front_social", listOf(9), loop = false, frameDurationSeconds = 0.1f),
-                    LumiMotionClip("sleep", listOf(10), loop = true, frameDurationSeconds = 0.2f),
-                    LumiMotionClip("magic", listOf(11), loop = false, frameDurationSeconds = 0.1f),
+                    LumiMotionClip("front_social", listOf(24, 25, 26, 27), loop = false, frameDurationSeconds = 0.1f),
+                    LumiMotionClip("sleep", listOf(32, 33, 34, 35), loop = false, frameDurationSeconds = 0.2f),
+                    LumiMotionClip("magic", listOf(36, 37, 38, 39), loop = false, frameDurationSeconds = 0.1f),
                 ).associateBy { it.id },
             )
         )

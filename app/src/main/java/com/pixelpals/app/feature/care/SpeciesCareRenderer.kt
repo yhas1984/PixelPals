@@ -1,5 +1,9 @@
 package com.pixelpals.app.feature.care
 
+import com.pixelpals.app.core.motion.JellySpringPlayMotion
+import com.pixelpals.app.core.motion.JellyMedicineMotion
+import com.pixelpals.app.core.motion.JellyMedicinePose
+import com.pixelpals.app.core.motion.JellyRestMotion
 import android.graphics.ColorFilter
 import android.graphics.Canvas
 import android.graphics.Color
@@ -41,6 +45,7 @@ class SpeciesCareRenderer {
     private var frame: Int = 0
     private var stageCenterX: Float = 0f
     private var stageGround: Float = 0f
+    private var interactionDirection: Float = 1f
     private var pose: SpeciesCarePose = SpeciesCarePose()
     private var pet: PetType = PetType.DIABLILLO
     private var profile: PetCareProfile = PetCareProfile.forPet(pet)
@@ -50,16 +55,37 @@ class SpeciesCareRenderer {
                         variation: CarePlayVariation, desktopBaselineOffsetY: Float? = null, colorFilter: ColorFilter? = null): Unit {
         val next: PetType = PetType.valueOf(pack.spec.atlas.petId.uppercase(java.util.Locale.ROOT))
         if (pet != next) { pet = next; profile = PetCareProfile.forPet(next) }
-        val poseElapsed: Long = if (action == CareSceneAction.PLAY && !reduced && profile.play != CarePlayStyle.BALLOON_POP && profile.play != CarePlayStyle.SNOW_THROW)
-            (CarePlayChoreography.sample(progress, variation).poseProgress * pack.spec.timings.getValue(action).durationMs).toLong()
-            else elapsed
+        val jellyRest: Boolean = action == CareSceneAction.REST && pet == PetType.JELLY &&
+            pack.spec.atlas.frameCount >= 30
+        val entryAnchors: CarePoseAnchors = pack.spec.anchors[pack.spec.getFrame(action, 0L)]
+        interactionDirection = if (entryAnchors.mouth.x < entryAnchors.body.x) -1f else 1f
+        val poseElapsed: Long = when {
+            action == CareSceneAction.MEDICINE && pet == PetType.JELLY && reduced && progress < 1f ->
+                pack.spec.timings.getValue(action).durationMs / 4L
+            action == CareSceneAction.PLAY && !reduced && profile.play != CarePlayStyle.BALLOON_POP && profile.play != CarePlayStyle.SNOW_THROW && profile.play != CarePlayStyle.BOUNCE ->
+                (CarePlayChoreography.sample(progress, variation).poseProgress * pack.spec.timings.getValue(action).durationMs).toLong()
+            else -> elapsed
+        }
         frame = pack.spec.getFrame(action, poseElapsed)
+        // One material/camera throughout the elastic jump; old PLAY poses change
+        // body mass abruptly and do not describe contact with a spring.
+        if (action == CareSceneAction.PLAY && profile.play == CarePlayStyle.BOUNCE)
+            frame = pack.spec.getFrame(action, 0L)
         if (pet == PetType.DIABLILLO && reduced) frame = ImpCareMotion.getReducedFrame(action,
             (progress * pack.spec.timings.getValue(action).durationMs).toLong()) ?: frame
+        if (action == CareSceneAction.REST && !jellyRest)
+            SpeciesRestRecovery.getFrame(profile.bed, progress, reduced)?.let { frame = it }
         if (pet == PetType.YUKI && action == CareSceneAction.PLAY && !reduced)
             frame = YukiCareMotion.playFrame(progress)
-        pose = SpeciesCareMotion.sample(profile, action, progress, reduced, variation)
-        val size: Float = desktopSize?.times(.94f) ?: minOf(height * .76f, width * .66f)
+        if (jellyRest) {
+            val rest: com.pixelpals.app.core.motion.JellyRestPose = JellyRestMotion.sampleCare(progress, reduced)
+            frame = rest.frame
+            pose = rest.body
+        } else {
+            pose = SpeciesCareMotion.sample(profile, action, progress, reduced, variation)
+        }
+        val size: Float = desktopSize?.times(com.pixelpals.app.core.motion.PetArtworkScale.desktopCare(pet))
+            ?: (minOf(height * .76f, width * .66f) * com.pixelpals.app.core.motion.PetArtworkScale.speciesSize(pet))
         // Leave room above a tossed toy and below a hammock, even in a short room panel.
         val baseline: Float = desktopSize?.let { height / 2f + (desktopBaselineOffsetY ?: it * .46f) }
             ?: height * if (action == CareSceneAction.REST) .75f else .88f
@@ -123,12 +149,17 @@ class SpeciesCareRenderer {
         val anchors: CarePoseAnchors = pack.spec.anchors[frame]
         val ground: CarePoint = point(anchors.ground)
         if (action == CareSceneAction.REST && scene != null && profile.bed != CareBed.WING_WRAP) {
+            val bedAlpha: Float = SpeciesRestRecovery.getBedAlpha(profile.bed, scene.progress, reduced)
+            if (bedAlpha < 1f) canvas.saveLayerAlpha(null, (255 * bedAlpha).toInt()) else canvas.save()
             props.draw(canvas, action, ground.x, ground.y, actor.width() * 1.08f, pet = pet)
+            canvas.restore()
         }
         if (pet == PetType.NUBE_MICHI) cloud.draw(canvas, ground, actor.width(),
             if (reduced) .2f else sin((scene?.progress ?: 0f) * PI).toFloat())
         if (pet == PetType.YUKI && action == CareSceneAction.CLEAN && scene?.hasContact == true && !reduced)
             yukiEffects.drawPuddle(canvas, ground, actor.width(), YukiCareMotion.meltAt(scene.progress))
+        val springPlay: Boolean = action == CareSceneAction.PLAY && profile.play == CarePlayStyle.BOUNCE &&
+            scene?.hasContact == true && !scene.isCancelled
         val atlas: PetAtlasSpec = pack.spec.atlas
         source.set(frame % atlas.columns * atlas.frameWidth, frame / atlas.columns * atlas.frameHeight,
             (frame % atlas.columns + 1) * atlas.frameWidth, (frame / atlas.columns + 1) * atlas.frameHeight)
@@ -140,28 +171,55 @@ class SpeciesCareRenderer {
             scene?.hasContact == true && !scene.isCancelled
         val wingCenter: CarePoint = CarePoint(actor.left + anchors.body.x * actor.width(), actor.top + anchors.body.y * actor.height())
         val wingFold: Float = ImpCareMotion.getWingFold(scene?.progress ?: 0f, reduced)
-        if (isWingRest) impWings.draw(canvas, wingCenter, actor.width(), wingFold, false)
+        val wingRest: Float = ImpCareMotion.getWingRest(scene?.progress ?: 0f, reduced)
+        if (isWingRest) impWings.draw(canvas, wingCenter, actor.width(), wingFold, false, wingRest)
         paint.colorFilter = colorFilter
         canvas.drawBitmap(pack.bitmap, source, actor, paint)
         paint.colorFilter = null
-        if (isWingRest) impWings.draw(canvas, wingCenter, actor.width(), wingFold, true)
+        if (isWingRest) impWings.draw(canvas, wingCenter, actor.width(), wingFold, true, wingRest)
         canvas.restore()
         paint.alpha = 255
+        if (springPlay) drawSpring(canvas, requireNotNull(scene), reduced)
         if (scene?.hasContact == true && action == CareSceneAction.CLEAN && pet != PetType.YUKI) {
             foam.draw(canvas, contact(anchors, action), actor.width(), CareWashMotion.sample(scene.progress, reduced))
         }
-        if (scene != null && action != CareSceneAction.REST) drawTool(canvas, scene, anchors, reduced)
+        if (scene != null && action != CareSceneAction.REST && !springPlay) drawTool(canvas, scene, anchors, reduced)
         if (pet == PetType.DIABLILLO && action == CareSceneAction.FEED && scene?.hasContact == true && !scene.isCancelled) {
             impFire.draw(canvas, point(anchors.mouth), actor.width(), ImpCareMotion.sampleFire(scene.animationMs, reduced || gentle))
         }
         if (scene?.hasContact == true && !reduced && !gentle) drawReaction(canvas, scene, anchors)
-        if (desktopSize != null && action == CareSceneAction.REST && scene?.hasContact == true && !scene.isCancelled) {
+        if ((desktopSize != null || pet == PetType.JELLY && pack.spec.atlas.frameCount >= 30) &&
+            action == CareSceneAction.REST && scene?.hasContact == true && !scene.isCancelled) {
+            val dreamAlpha: Float = if (pet == PetType.JELLY && pack.spec.atlas.frameCount >= 30)
+                JellyRestMotion.sampleCare(scene.progress, reduced).sleepAmount
+            else SpeciesRestRecovery.getDreamAlpha(profile.bed, scene.progress)
+            if (dreamAlpha < 1f) canvas.saveLayerAlpha(null, (255 * dreamAlpha).toInt()) else canvas.save()
             dreams.drawDesktop(canvas, ground.x, ground.y, actor.width(), scene.animationMs / 1_000f, reduced)
+            canvas.restore()
         }
+    }
+
+    private fun drawSpring(canvas: Canvas, scene: CareSceneController, reduced: Boolean): Unit {
+        val size: Float = actor.width()
+        val toySize: Float = size * JellySpringPlayMotion.TOOL_SCALE
+        val x: Float = stageCenterX + size * JellySpringPlayMotion.SPRING_X
+        val compression: Float = JellySpringPlayMotion.sample(scene.progress, reduced, scene.playVariation).springCompression
+        canvas.save()
+        // Transform around the spring's lower painted edge, never the pet's
+        // ground anchor: its base stays planted while the coils compress.
+        canvas.scale(1f, compression, x, stageGround)
+        props.toyRotation = 0f
+        props.draw(canvas, CareSceneAction.PLAY, x,
+            stageGround - toySize * JellySpringPlayMotion.SPRING_BOTTOM, toySize, pet = pet)
+        canvas.restore()
     }
 
     private fun drawTool(canvas: Canvas, scene: CareSceneController, anchors: CarePoseAnchors, reduced: Boolean): Unit {
         val size: Float = actor.width()
+        if (pet == PetType.JELLY && scene.action == CareSceneAction.MEDICINE && scene.hasContact && !scene.isCancelled) {
+            drawJellyMedicine(canvas, scene, point(anchors.mouth), reduced)
+            return
+        }
         if (pet == PetType.YUKI && scene.hasContact && !scene.isCancelled) {
             if (scene.action == CareSceneAction.PLAY) {
                 val hand: CarePoint = point(CarePoint(.74f, .59f))
@@ -215,7 +273,7 @@ class SpeciesCareRenderer {
             }
             CareSceneAction.PLAY -> {
                 val beat: CarePlayBeat = CarePlayChoreography.sample(if (reduced) 0f else p, scene.playVariation)
-                position = playingPosition(target, mouth, body, size, beat)
+                position = playingPosition(target, size, beat)
                 if (profile.play == CarePlayStyle.FOLLOW) {
                     // The pinwheel's support ends 58/134 of its drawn size below its origin.
                     // Anchor it to the scene, not to Taro's advancing body or changing pose.
@@ -232,7 +290,7 @@ class SpeciesCareRenderer {
             }
             CareSceneAction.CLEAN -> position = CarePoint(target.x + size * .12f * if (reduced) 1f else sin(phase), target.y)
             CareSceneAction.MEDICINE -> {
-                position = CarePoint(mouth.x + size * .055f, mouth.y + size * .07f)
+                position = CareSpoonGeometry.originAt(mouth, size * .30f)
                 amount = (1f - p).coerceIn(0f, 1f)
             }
             CareSceneAction.REST -> Unit
@@ -247,8 +305,20 @@ class SpeciesCareRenderer {
         props.draw(canvas, scene.action, position.x, position.y, size * toolScale, amount, pet)
     }
 
+    private fun drawJellyMedicine(canvas: Canvas, scene: CareSceneController, mouth: CarePoint, reduced: Boolean): Unit {
+        val motion: JellyMedicinePose = JellyMedicineMotion.sample(scene.progress, reduced)
+        if (motion.spoonAlpha <= 0f) return
+        val size: Float = actor.width()
+        val origin: CarePoint = CareSpoonGeometry.originAt(mouth, size * .30f)
+        val retreat: Float = 1f - motion.spoonReach
+        canvas.saveLayerAlpha(null, (255 * motion.spoonAlpha).toInt())
+        props.draw(canvas, CareSceneAction.MEDICINE, origin.x + size * .28f * retreat,
+            origin.y + size * .12f * retreat, size * .30f, motion.medicineAmount, pet)
+        canvas.restore()
+    }
+
     private fun feedingPosition(mouth: CarePoint, body: CarePoint, ground: CarePoint, size: Float, p: Float, reduced: Boolean): CarePoint {
-        val direction: Float = if (mouth.x < body.x) -1f else 1f
+        val direction: Float = interactionDirection
         return when (profile.feeding) {
             CareFeedingStyle.HANDS -> {
                 // One readable hand-to-mouth gesture; fast chewing must not make the food orbit.
@@ -264,14 +334,15 @@ class SpeciesCareRenderer {
         }
     }
 
-    private fun playingPosition(target: CarePoint, mouth: CarePoint, body: CarePoint, size: Float, beat: CarePlayBeat): CarePoint {
+    private fun playingPosition(target: CarePoint, size: Float, beat: CarePlayBeat): CarePoint {
         val wave: Float = beat.travel
         val orbit: Float = beat.lift
-        val direction: Float = if (mouth.x < body.x) -1f else 1f
+        // A head turn within a clip does not teleport the object to the opposite side.
+        val direction: Float = interactionDirection
         val offset: CarePoint = when (profile.play) {
             // The imp's catching hands are on its right; do not toss through its eyes.
             CarePlayStyle.BALLOON_POP -> CarePoint(.35f, -.35f)
-            CarePlayStyle.PAW -> CarePoint((if (mouth.x < body.x) -1f else 1f) * (.30f + .07f * wave), .03f + .05f * orbit)
+            CarePlayStyle.PAW -> CarePoint(direction * (.30f + .07f * wave), .03f + .05f * orbit)
             CarePlayStyle.FLOAT -> CarePoint(.30f * orbit, -.17f + .23f * wave)
             CarePlayStyle.GLIDE -> CarePoint(.30f + .07f * wave, -.03f + .08f * orbit)
             CarePlayStyle.MAGIC_CHASE -> CarePoint(direction * (.30f + .08f * wave), -.025f - .16f * orbit)

@@ -80,6 +80,7 @@ class CareStageView(context: Context) : View(context) {
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
+        if (controller?.isComplete == true || controller?.isCancelled == true) return super.onTouchEvent(event)
         if (controller?.mode != CareSceneMode.MANUAL) return super.onTouchEvent(event)
         if (event.actionMasked == MotionEvent.ACTION_CANCEL) { onTimeout?.invoke(); return true }
         parent?.requestDisallowInterceptTouchEvent(true)

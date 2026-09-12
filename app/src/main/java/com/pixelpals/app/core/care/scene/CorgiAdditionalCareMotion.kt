@@ -1,6 +1,5 @@
 package com.pixelpals.app.core.care.scene
 
-import kotlin.math.PI
 import kotlin.math.sin
 
 data class CorgiAdditionalCarePose(
@@ -19,6 +18,7 @@ object CorgiAdditionalCareMotion {
     val actions: Set<CareSceneAction> = setOf(CareSceneAction.CLEAN, CareSceneAction.REST, CareSceneAction.MEDICINE)
     private val cleanTiming: CareSceneTiming = CareSceneTiming(4_000L, 3_400L)
     private val restTiming: CareSceneTiming = CareSceneTiming(7_000L, 5_800L)
+    const val REST_WAKE_START_MS: Long = 5_800L
     private val medicineTiming: CareSceneTiming = CareSceneTiming(4_000L, 3_200L)
 
     fun getTiming(action: CareSceneAction): CareSceneTiming = when (action) {
@@ -60,15 +60,15 @@ object CorgiAdditionalCareMotion {
 
     private fun getRestingPose(elapsed: Long, reduced: Boolean): CorgiAdditionalCarePose {
         val frame: Int = if (reduced) 18 else when {
+            elapsed >= 6_600L -> 16
+            elapsed >= 6_200L -> 17
+            elapsed >= REST_WAKE_START_MS -> 18
             elapsed < 700L -> 16
             elapsed < 1_500L -> 17
             elapsed < 2_300L -> 18
             else -> 19
         }
-        val breath: Float = if (reduced || elapsed < 1_500L) 0f
-            else sin((elapsed - 1_500L) / 2_200f * PI.toFloat()) * .012f
-        return CorgiAdditionalCarePose(frame, propAlpha = if (reduced) 1f else fraction(elapsed, 0L, 400L),
-            breathScale = 1f + breath)
+        return CorgiAdditionalCarePose(frame, propAlpha = if (reduced) 1f else fraction(elapsed, 0L, 400L) * (1f - fraction(elapsed, 6_600L, 7_000L)))
     }
 
     private fun getMedicinePose(elapsed: Long, reduced: Boolean): CorgiAdditionalCarePose {

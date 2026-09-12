@@ -7,9 +7,16 @@ object CorgiGait {
     private const val WALK_STRIDE: Float = .44f
     private const val RUN_STRIDE: Float = .34f
 
-    fun frameAt(distance: Float, spriteSize: Float, running: Boolean = false): Int {
+    fun frameAt(distance: Float, spriteSize: Float, running: Boolean = false): Int =
+        FIRST_FRAME + cycleIndexAt(distance, spriteSize, running)
+
+    fun cycleIndexAt(distance: Float, spriteSize: Float, running: Boolean = false): Int {
+        val phase: Float = phaseAt(distance, spriteSize, running) % 1f
+        return (phase * FRAME_COUNT).toInt().coerceIn(0, FRAME_COUNT - 1)
+    }
+
+    fun phaseAt(distance: Float, spriteSize: Float, running: Boolean = false): Float {
         val stride: Float = spriteSize * if (running) RUN_STRIDE else WALK_STRIDE
-        val phase: Float = GroundGait.phase(distance, stride) % 1f
-        return FIRST_FRAME + (phase * FRAME_COUNT).toInt().coerceIn(0, FRAME_COUNT - 1)
+        return GroundGait.phase(distance, stride)
     }
 }

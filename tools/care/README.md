@@ -413,6 +413,13 @@ adb -s emulator-5554 shell am start -n com.pixelpals.app.debug/com.pixelpals.app
 python3 tools/care/monitor_soak.py --serial emulator-5554 --output tools/care/runtime/soak.json
 ```
 
+The monitor excludes completion records present when monitoring begins. It handles
+overlapping/rotated log snapshots, rejects regressions within the same PID, and
+never accepts success alongside a fatal exception. Parser regressions are covered
+by `python3 -m unittest tools.care.test_monitor_soak`. There is still no lab run ID:
+start a fresh lab process and begin monitoring before it finishes; these checks
+do not establish real input delivery or repository reward correctness.
+
 ## Care metadata contract
 
 Pet IDs use `PetType.name.lowercase()` (including `nube_michi`). Atlas fields

@@ -65,6 +65,48 @@ class StoreViewModelTest {
     }
 
     @Test
+    fun restorationBlocksDuplicateRequestsAndCanRetryAfterFailure() = runTest(dispatcher) {
+        val billing = FakeBillingRepository()
+        val viewModel = createViewModel(FakeStoreDataSource(), billing)
+        advanceUntilIdle()
+        billing.restoreResult = RestoreResult.Failure("internal billing detail")
+        viewModel.restorePurchases()
+        viewModel.restorePurchases()
+        assertTrue(!viewModel.beginCoinPurchase("coins"))
+        runCurrent()
+        assertEquals(ActiveStoreOperation.RestorePurchases, viewModel.uiState.value.activeOperation)
+        viewModel.refresh()
+        advanceUntilIdle()
+        assertEquals(1, billing.restoreCalls)
+        assertEquals(StoreNoticeType.RESTORE_FAILED, viewModel.uiState.value.notice?.type)
+        assertNull(viewModel.uiState.value.notice?.detail)
+        assertNull(viewModel.uiState.value.activeOperation)
+        billing.restoreResult = RestoreResult.Restored(2)
+        viewModel.restorePurchases()
+        advanceUntilIdle()
+        assertEquals(2, billing.restoreCalls)
+        assertEquals(StoreNoticeType.RESTORE_SUCCEEDED, viewModel.uiState.value.notice?.type)
+        assertEquals(2, viewModel.uiState.value.notice?.count)
+        assertNull(viewModel.uiState.value.activeOperation)
+    }
+
+    @Test
+    fun automaticReconciliationRunsOnceAndManualEmptyResultIsVisible() = runTest(dispatcher) {
+        val billing = FakeBillingRepository()
+        val viewModel = createViewModel(FakeStoreDataSource(), billing)
+        viewModel.reconcilePurchasesOnce()
+        advanceUntilIdle()
+        viewModel.reconcilePurchasesOnce()
+        advanceUntilIdle()
+        assertEquals(1, billing.restoreCalls)
+        assertNull(viewModel.uiState.value.notice)
+        assertTrue(!viewModel.uiState.value.isInitialLoading)
+        viewModel.restorePurchases()
+        advanceUntilIdle()
+        assertEquals(StoreNoticeType.NOTHING_TO_RESTORE, viewModel.uiState.value.notice?.type)
+    }
+
+    @Test
     fun unavailableCoinCatalogDoesNotRepeatUntilExplicitRetry() = runTest(dispatcher) {
         val billing = FakeBillingRepository(
             catalogResult = ProductCatalogResult.Unavailable("Play unavailable"),
@@ -83,6 +125,38 @@ class StoreViewModelTest {
         viewModel.loadCoinCatalog(isForced = true)
         advanceUntilIdle()
         assertEquals(2, billing.prefetchCalls)
+    }
+
+    @Test
+    fun cosmeticPurchaseFailureWhileEquippingReleasesOperationForRetry() = runTest(dispatcher) {
+        val dataSource = CosmeticFailureDataSource()
+        val cosmetic = dataSource.cosmetic
+        val viewModel = createViewModel(dataSource, FakeBillingRepository())
+        advanceUntilIdle()
+
+        var completed = true
+        viewModel.purchaseCosmetic(cosmetic) { completed = it }
+        advanceUntilIdle()
+
+        assertTrue(!completed)
+        assertEquals(null, viewModel.uiState.value.activeOperation)
+        assertEquals(StoreNoticeType.EQUIP_AFTER_PURCHASE_FAILED, viewModel.uiState.value.notice?.type)
+        assertTrue(dataSource.owned)
+        assertEquals(90, dataSource.balance)
+        viewModel.equipCosmetic(cosmetic)
+        advanceUntilIdle()
+        assertEquals(cosmetic.id, dataSource.equipped)
+        viewModel.unequipCosmetic()
+        advanceUntilIdle()
+        assertNull(dataSource.equipped)
+        assertNull(viewModel.uiState.value.equippedCosmeticId)
+        assertTrue(cosmetic.productId in viewModel.uiState.value.ownedCosmeticIds)
+        viewModel.equipCosmetic(cosmetic)
+        advanceUntilIdle()
+        assertEquals(cosmetic.id, viewModel.uiState.value.equippedCosmeticId)
+        assertEquals(1, dataSource.purchaseCalls)
+        assertEquals(90, dataSource.balance)
+        assertEquals(null, viewModel.uiState.value.activeOperation)
     }
 
     @Test
@@ -199,6 +273,8 @@ class StoreViewModelTest {
         private val catalogResult: ProductCatalogResult? = null,
     ) : BillingRepository {
         var prefetchCalls: Int = 0
+        var restoreCalls: Int = 0
+        var restoreResult: RestoreResult = RestoreResult.NothingToRestore
 
         override suspend fun prefetch(productIds: List<String>): ProductCatalogResult {
             prefetchCalls += 1
@@ -214,7 +290,11 @@ class StoreViewModelTest {
             onFinished(PurchaseResult.Success)
         }
 
-        override suspend fun reconcilePurchases(): RestoreResult = RestoreResult.NothingToRestore
+        override suspend fun reconcilePurchases(): RestoreResult {
+            restoreCalls++
+            delay(100)
+            return restoreResult
+        }
     }
 
     private class FakeStoreDataSource(
@@ -268,5 +348,32 @@ class StoreViewModelTest {
             petId: String,
             cosmeticId: String,
         ): CoinSpendResult = CoinSpendResult.Failure("Not used")
+    }
+
+    private class CosmeticFailureDataSource : StoreDataSource {
+        val cosmetic = Cosmetic("test_cosmetic", "Test", "", "test_product",
+            com.pixelpals.app.data.catalog.CosmeticEffect.AuraEffect("✨", 1, 1f, 1.0f, .2f), 10)
+        var equipped: String? = null
+        var owned = false
+        var balance = 100
+        var purchaseCalls = 0
+        private var failEquip = true
+        override suspend fun getCatalog(selectedPet: PetType) = emptyList<PetCatalogItem>()
+        override suspend fun getBalance() = balance
+        override fun getCosmetics() = listOf(cosmetic)
+        override suspend fun isCosmeticOwned(productId: String) = owned
+        override fun getEquippedCosmetic(petId: String) = equipped
+        override fun setEquippedCosmetic(petId: String, cosmeticId: String?) {
+            if (failEquip) { failEquip = false; error("equip failed") }
+            equipped = cosmeticId
+        }
+        override suspend fun purchasePet(petType: PetType) = CoinSpendResult.Failure("unused")
+        override suspend fun purchaseCosmetic(petId: String, cosmeticId: String): CoinSpendResult {
+            purchaseCalls++
+            if (owned) return CoinSpendResult.AlreadyOwned
+            balance -= 10
+            owned = true
+            return CoinSpendResult.Purchased
+        }
     }
 }

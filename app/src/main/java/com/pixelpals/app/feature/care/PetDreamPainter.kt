@@ -17,11 +17,12 @@ internal class PetDreamPainter {
         drawCloud(canvas, center, top, 1f, seconds, reduced)
     }
     fun drawDesktop(canvas: Canvas, x: Float, floor: Float, size: Float, seconds: Float, reduced: Boolean): Unit {
-        val scale: Float = (size / 290f).coerceAtMost(minOf(canvas.width / 140f, canvas.height / 140f))
+        // Keep pixel padding as well as room for the cloud's animated vertical drift.
+        val scale: Float = (size / 290f).coerceAtMost(minOf(canvas.width / 140f, (canvas.height - 4f) / 132f))
         if (scale <= 0f) return
         val margin: Float = 70f * scale
         val center: Float = (x + size * .26f).coerceIn(margin, canvas.width - margin)
-        val top: Float = (floor - size * .82f).coerceIn(82f * scale, canvas.height - 46f * scale)
+        val top: Float = (floor - size * .82f).coerceIn(82f * scale + 2f, canvas.height - 50f * scale - 2f)
         drawCloud(canvas, center, top, scale, seconds, reduced)
     }
     private fun drawCloud(canvas: Canvas, center: Float, top: Float, scale: Float, seconds: Float, reduced: Boolean): Unit {

@@ -1,6 +1,7 @@
 package com.pixelpals.app.feature.home
 
 import android.graphics.*
+import com.pixelpals.app.feature.treasure.TreasureSymbol
 import kotlin.math.*
 
 /** Resolution-independent artwork shared by the room, shop, postcards and encounters. */
@@ -114,12 +115,19 @@ class HomeScenePainter {
                 com.pixelpals.app.core.care.scene.CareSceneAction.PLAY, 50f, 60f, 67f, pet = pet)
             item.id == "linen_bed" -> careProps.draw(canvas,
                 com.pixelpals.app.core.care.scene.CareSceneAction.REST, 50f, 77f, 94f, pet = pet)
-            else -> drawDecorationVariant(canvas, item, color, treasure, toyRotation)
+            else -> drawDecorationVariant(canvas, item, color, treasure, toyRotation, pet)
         }
         canvas.restore()
     }
 
-    private fun drawDecorationVariant(canvas: Canvas, item: Decoration, color: Int, treasure: String?, toyRotation: Float): Unit {
+    private fun drawDecorationVariant(
+        canvas: Canvas,
+        item: Decoration,
+        color: Int,
+        treasure: String?,
+        toyRotation: Float,
+        pet: com.pixelpals.app.core.domain.PetType,
+    ): Unit {
         when (item.kind) {
             DecorationKind.BED -> {
                 oval(canvas, 0xFF987B68.toInt(), 3f, 47f, 94f, 42f)
@@ -146,10 +154,29 @@ class HomeScenePainter {
                 }
             }
             DecorationKind.BOWL -> {
-                box(canvas, color, 15f, 56f, 70f, 30f, 14f)
-                oval(canvas, color, 12f, 45f, 76f, 28f)
-                oval(canvas, 0xFF716A5C.toInt(), 21f, 49f, 58f, 19f)
-                for (i: Int in 0..4) oval(canvas, 0xFFD6B376.toInt(), 29f + i * 8f, 54f + i % 2 * 3f, 8f, 6f)
+                if (pet == com.pixelpals.app.core.domain.PetType.TELA) {
+                    drawTelaFeedingWeb(canvas, color)
+                    careProps.draw(
+                        canvas,
+                        com.pixelpals.app.core.care.scene.CareSceneAction.FEED,
+                        50f,
+                        52f,
+                        45f,
+                        pet = pet,
+                    )
+                } else {
+                    // A colored feeding spot preserves purchased variants without
+                    // replacing the species' actual food with generic kibble.
+                    oval(canvas, color, 16f, 77f, 68f, 10f)
+                    careProps.draw(
+                            canvas,
+                            com.pixelpals.app.core.care.scene.CareSceneAction.FEED,
+                            50f,
+                            54f,
+                            67f,
+                            pet = pet,
+                        )
+                }
             }
             DecorationKind.PLANT -> {
                 box(canvas, 0xFFBD8C73.toInt(), 32f, 62f, 37f, 27f, 6f)
@@ -169,8 +196,10 @@ class HomeScenePainter {
                 if (item.id == "glass_case") box(canvas, 0x559BC4C2, 16f, 20f, 70f, 55f, 8f)
                 box(canvas, color, 10f, 72f, 82f, if (item.id == "treasure_box") 20f else 10f, 4f)
                 box(canvas, color, 19f, 81f, 6f, 12f, 0f); box(canvas, color, 78f, 81f, 6f, 12f, 0f)
-                if (treasure == null || !paint.hasGlyph(treasure)) drawStar(canvas, 0xFFE8C77E.toInt(), 52f, 53f, 19f)
-                else { paint.color = Color.WHITE; paint.textSize = 35f; paint.textAlign = Paint.Align.CENTER; canvas.drawText(treasure, 50f, 66f, paint); paint.textAlign = Paint.Align.LEFT }
+                if (treasure != null && TreasureSymbol.hasDrawing(treasure)) {
+                    TreasureSymbol.draw(canvas, treasure, RectF(28f, 20f, 72f, 67f))
+                } else if (treasure != null && !paint.hasGlyph(treasure)) drawStar(canvas, 0xFFE8C77E.toInt(), 52f, 53f, 19f)
+                else if (treasure != null) { paint.color = Color.WHITE; paint.textSize = 35f; paint.textAlign = Paint.Align.CENTER; canvas.drawText(treasure, 50f, 66f, paint); paint.textAlign = Paint.Align.LEFT }
             }
             DecorationKind.LAMP -> {
                 oval(canvas, 0x20FFF3B9, 2f, 0f, 96f, 96f)
@@ -182,6 +211,22 @@ class HomeScenePainter {
                 if (item.id == "moon_lamp") oval(canvas, 0xFFB5B59A.toInt(), 47f, 13f, 32f, 34f)
             }
         }
+    }
+
+    private fun drawTelaFeedingWeb(canvas: Canvas, color: Int): Unit {
+        paint.color = 0xFF987B68.toInt()
+        paint.style = Paint.Style.STROKE
+        paint.strokeWidth = 3f
+        paint.strokeCap = Paint.Cap.ROUND
+        canvas.drawLine(17f, 79f, 42f, 61f, paint)
+        canvas.drawLine(83f, 79f, 58f, 61f, paint)
+        paint.color = color
+        paint.strokeWidth = 2f
+        canvas.drawLine(28f, 74f, 72f, 74f, paint)
+        canvas.drawLine(34f, 68f, 66f, 68f, paint)
+        canvas.drawLine(41f, 62f, 59f, 62f, paint)
+        canvas.drawLine(50f, 59f, 50f, 78f, paint)
+        paint.style = Paint.Style.FILL
     }
 
     private fun drawStar(canvas: Canvas, color: Int, x: Float, y: Float, radius: Float): Unit {

@@ -17,6 +17,38 @@ import org.junit.Test
 
 class YukiRuntimeBrainTest {
     private val bounds = PetBounds.compute(1_080, 2_400, 160, 100, 200)
+    @Test fun affectionPreservesHotAndPartiallyReformingBodies(): Unit {
+        val runtime = runtime(YukiSequenceRandom(), temperatureCelsius = 24f)
+        runtime.dispatch(PetEvent.EnvironmentChanged(environment(42f)))
+        runtime.dispatch(PetEvent.Tick(.96f))
+        for (cooling: Boolean in listOf(false, true)) {
+            if (cooling) {
+                runtime.dispatch(PetEvent.EnvironmentChanged(environment(37f)))
+                runtime.dispatch(PetEvent.Tick(.32f))
+            }
+            val before = runtime.dispatch(PetEvent.Tick(0f))
+            val elapsed: Float = runtime.snapshot().brainState.elapsedSeconds
+            for (event: PetEvent in listOf(PetEvent.Tap, PetEvent.HoldStarted, PetEvent.HoldReleased)) {
+                val after = runtime.dispatch(event)
+                assertEquals("melt", after.clipId)
+                assertEquals(before.frame, after.frame)
+                assertEquals(before.transform, after.transform)
+                assertEquals(elapsed, runtime.snapshot().brainState.elapsedSeconds, .001f)
+            }
+        }
+        assertEquals("idle", runtime.dispatch(PetEvent.Tick(.96f)).clipId)
+        assertEquals("happy", runtime.dispatch(PetEvent.Tap).clipId)
+    }
+    @Test fun restoredSharedHeatKeepsIntermediateTemperatureMelted(): Unit {
+        val runtime = runtime(YukiSequenceRandom(), temperatureCelsius = 39f)
+        assertEquals("melt", runtime.dispatch(PetEvent.EnvironmentChanged(
+            environment(39f).copy(yukiHeatLatched = true))).clipId)
+        runtime.dispatch(PetEvent.Tick(.96f))
+        runtime.dispatch(PetEvent.EnvironmentChanged(environment(38f).copy(yukiHeatLatched = false)))
+        assertEquals("idle", runtime.dispatch(PetEvent.Tick(.96f)).clipId)
+        assertEquals("idle", runtime.dispatch(PetEvent.EnvironmentChanged(
+            environment(39f).copy(yukiHeatLatched = false))).clipId)
+    }
 
     @Test
     fun temperatureUsesHysteresisBeforeLeavingMelt() {

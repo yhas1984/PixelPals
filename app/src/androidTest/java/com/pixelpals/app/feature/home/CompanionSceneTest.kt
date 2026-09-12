@@ -18,6 +18,15 @@ import java.io.File
 
 @RunWith(AndroidJUnit4::class)
 class CompanionSceneTest {
+    private var originalReducedMotion: Boolean = false
+    @org.junit.Before fun enableMotionForAnimationChecks(): Unit {
+        val preferences = CompanionPreferences(InstrumentationRegistry.getInstrumentation().targetContext)
+        originalReducedMotion = preferences.reducedMotion
+        preferences.reducedMotion = false
+    }
+    @org.junit.After fun restoreMotionPreference(): Unit {
+        CompanionPreferences(InstrumentationRegistry.getInstrumentation().targetContext).reducedMotion = originalReducedMotion
+    }
     @Test fun changingDepthAndBondDoesNotResizeActor(): Unit {
         InstrumentationRegistry.getInstrumentation().runOnMainSync {
             val context: Context = ApplicationProvider.getApplicationContext()
@@ -108,7 +117,8 @@ class CompanionSceneTest {
     @Test fun reviewDecoratedHomeAcrossMovementAndRest(): Unit {
         val context: Context = ApplicationProvider.getApplicationContext()
         val directory = File(context.getExternalFilesDir(null), "home-transitions").apply { mkdirs() }
-        for (pet in PetType.entries) {
+        // Tela's web replaces the floor furniture route; its hunt/rest path has a dedicated render test.
+        for (pet in PetType.entries.filter { it != PetType.TELA }) {
             InstrumentationRegistry.getInstrumentation().runOnMainSync {
                 val scene = HomeSceneView(context).apply { reviewSeed = 42 }
                 scene.placements = listOf(

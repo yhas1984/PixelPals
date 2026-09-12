@@ -36,7 +36,7 @@ data class PetCareProfile(
             PetType.PIRU -> PetCareProfile(CareFood.LITTLE_FISH, CareToy.PUCK, CareBed.ICE, CareFeedingStyle.PECK, CarePlayStyle.SLIDE, CareTouchStyle.WINGS, CareWashStyle.SPLASH, 1.25f)
             PetType.TARO -> PetCareProfile(CareFood.LETTUCE, CareToy.PINWHEEL, CareBed.MOSS, CareFeedingStyle.NIBBLE, CarePlayStyle.FOLLOW, CareTouchStyle.SHELL, CareWashStyle.BRUSH, .45f)
             PetType.MENTA -> PetCareProfile(CareFood.EGG, CareToy.HOOP, CareBed.WARM_LEAF, CareFeedingStyle.SWALLOW, CarePlayStyle.SLITHER, CareTouchStyle.COIL, CareWashStyle.MIST, .6f)
-            PetType.TELA -> PetCareProfile(CareFood.CRICKET, CareToy.SILK, CareBed.WEB, CareFeedingStyle.WEB, CarePlayStyle.WEB, CareTouchStyle.SILK, CareWashStyle.MIST, 1.15f)
+            PetType.TELA -> PetCareProfile(CareFood.FLY, CareToy.SILK, CareBed.WEB, CareFeedingStyle.WEB, CarePlayStyle.WEB, CareTouchStyle.SILK, CareWashStyle.MIST, 1.15f)
             PetType.LUMI -> PetCareProfile(CareFood.BERRIES, CareToy.MAGIC_ORB, CareBed.STARLIGHT, CareFeedingStyle.NIBBLE, CarePlayStyle.MAGIC_CHASE, CareTouchStyle.GLOW, CareWashStyle.SPARKLES, .95f)
         }
     }

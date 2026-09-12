@@ -14,7 +14,10 @@ object CompanionPreview {
         scene.isClickable = false
         scene.minimumHeight = HomeUi.dp(fragment.requireContext(), 180)
         fragment.viewLifecycleOwner.lifecycleScope.launch {
-            try { scene.loadPet(pet)
+            try {
+                scene.loadPet(pet)
+                scene.contentDescription = fragment.getString(com.pixelpals.app.R.string.store_pet_preview_description,
+                    fragment.getString(pet.displayNameResId))
             } catch (exception: CancellationException) { throw exception
             } catch (_: Exception) { scene.contentDescription = fragment.getString(com.pixelpals.app.R.string.care_scene_assets_error) }
         }

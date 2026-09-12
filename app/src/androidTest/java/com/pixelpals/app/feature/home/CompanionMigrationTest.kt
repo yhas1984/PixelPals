@@ -18,6 +18,84 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class CompanionMigrationTest {
     private val context: Context = ApplicationProvider.getApplicationContext()
+    @Test fun everyExportedLegacySchemaPreservesRecordsAcrossMigrationAndReopen(): Unit {
+        for (version: Int in 2..10) {
+            val name: String = "companion-matrix-$version-test"
+            context.deleteDatabase(name)
+            try {
+                val schema: JSONObject = readSchema(version)
+                val helper: SupportSQLiteOpenHelper = createFixture(name, version)
+                val expected: Map<String, List<List<String?>>>
+                try {
+                    val database: SupportSQLiteDatabase = helper.writableDatabase
+                    val tables: Set<String> = seedLegacyRecords(database, schema, version)
+                    expected = tables.associateWith { snapshot(database, schema, it) }
+                } finally { helper.close() }
+                repeat(2) { opening: Int ->
+                    val room: AppDatabase = Room.databaseBuilder(context, AppDatabase::class.java, name).addMigrations(
+                        AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3, AppDatabase.MIGRATION_3_4,
+                        AppDatabase.MIGRATION_4_5, AppDatabase.MIGRATION_5_6, AppDatabase.MIGRATION_6_7,
+                        AppDatabase.MIGRATION_7_8, COMPANION_MIGRATION_8_9, COMPANION_MIGRATION_9_10,
+                        COMPANION_MIGRATION_10_11,
+                    ).build()
+                    try {
+                        val database: SupportSQLiteDatabase = room.openHelper.writableDatabase
+                        assertEquals(11, database.version)
+                        expected.forEach { (table: String, rows: List<List<String?>>) ->
+                            assertEquals("v$version opening $opening table $table", rows, snapshot(database, schema, table))
+                        }
+                        if (version < 8) database.query("SELECT count, totalFound FROM treasures").use { cursor ->
+                            while (cursor.moveToNext()) assertEquals(cursor.getInt(0), cursor.getInt(1))
+                        }
+                    } finally { room.close() }
+                }
+            } finally { context.deleteDatabase(name) }
+        }
+    }
+
+    private fun seedLegacyRecords(db: SupportSQLiteDatabase, schema: JSONObject, version: Int): Set<String> {
+        val tables: MutableSet<String> = mutableSetOf()
+        fun seed(table: String, values: Map<String, Any>) { insertFixture(db, schema, table, values); tables += table }
+        seed("pet_bond", mapOf("petId" to "wallet", "softCurrency" to 435))
+        for (pet: com.pixelpals.app.core.domain.PetType in com.pixelpals.app.core.domain.PetType.entries) {
+            val id: String = pet.name.lowercase(java.util.Locale.ROOT)
+            seed("pet_bond", mapOf("petId" to id, "bondPoints" to 123, "careStreakDays" to 7,
+                "memoriesUnlocked" to 3, "activeMinutes" to 81, "illnessRecoveries" to 2))
+            seed("pet_status", mapOf("petId" to id, "health" to 78, "energy" to 61, "hunger" to 52,
+                "hygiene" to 43, "mood" to 84, "lastUpdatedAt" to 1_000_000L, "condition" to "RECOVERING", "recoveryProgress" to 35))
+        }
+        seed("owned_product", mapOf("productId" to "pet_taro_premium", "productType" to "pet", "source" to "play", "acknowledged" to 1))
+        seed("owned_product", mapOf("productId" to "remove_ads", "productType" to "entitlement", "source" to "play", "acknowledged" to 1))
+        seed("treasures", mapOf("emoji" to "🌸", "count" to 3, "totalFound" to 8, "firstFoundAt" to 100L, "lastFoundAt" to 900L))
+        seed("treasures", mapOf("emoji" to "🌟", "count" to 0, "totalFound" to 5, "firstFoundAt" to 200L, "lastFoundAt" to 800L))
+        if (version >= 6) {
+            seed("processed_purchase", mapOf("purchaseToken" to "test-granted", "productId" to "pet_taro_premium", "quantity" to 1,
+                "purchaseTime" to 500L, "source" to "play", "grantedAt" to 600L, "acknowledgedAt" to 700L, "lastSeenAt" to 800L))
+            seed("processed_purchase", mapOf("purchaseToken" to "test-pending", "productId" to "test_coins", "quantity" to 1,
+                "purchaseTime" to 900L, "source" to "play", "lastSeenAt" to 950L))
+        }
+        if (version >= 8) seed("treasure_collection_state", mapOf("id" to 1, "lastRewardedMilestone" to 3, "completedAt" to 700L, "finalCollectorPetId" to "corgi"))
+        if (version >= 9) {
+            seed("companion_home", mapOf("petId" to "corgi", "nickname" to "Nieve 🐾", "environment" to "GARDEN", "playCount" to 14, "favoriteObject" to "ball"))
+            seed("home_decoration", mapOf("petId" to "corgi", "decorationId" to "ball", "column" to 3, "row" to 1))
+            seed("decoration_inventory", mapOf("decorationId" to "ball", "acquiredAt" to 600L))
+            seed("companion_journal", mapOf("id" to "test-memory", "petId" to "corgi", "kind" to "adoption", "detail" to "Nieve 🐾", "occurredAt" to 700L))
+            seed("companion_expedition", mapOf("slot" to 1, "requestId" to "test-journey", "petId" to "corgi", "destination" to "meadow", "elapsedMs" to 15_000L))
+        }
+        return tables
+    }
+
+    private fun snapshot(db: SupportSQLiteDatabase, schema: JSONObject, table: String): List<List<String?>> {
+        val entities = schema.getJSONArray("entities")
+        val fields = (0 until entities.length()).map { entities.getJSONObject(it) }.first { it.getString("tableName") == table }.getJSONArray("fields")
+        val columns: List<String> = (0 until fields.length()).map { fields.getJSONObject(it).getString("columnName") }
+        return db.query("SELECT ${columns.joinToString { "`$it`" }} FROM `$table`").use { cursor ->
+            val rows: MutableList<List<String?>> = mutableListOf()
+            while (cursor.moveToNext()) rows += columns.indices.map { if (cursor.isNull(it)) null else cursor.getString(it) }
+            rows.sortedBy { it.toString() }
+        }
+    }
+
     @Test fun versionEightPreservesWalletPurchasesTreasuresAndStatus(): Unit = runBlocking {
         val name: String = "companion-migration-eight-test"
         context.deleteDatabase(name)
@@ -30,7 +108,7 @@ class CompanionMigrationTest {
         insertFixture(database, schema, "treasures", mapOf("emoji" to "🌸", "count" to 3, "totalFound" to 5))
         helper.close()
         val room: AppDatabase = Room.databaseBuilder(context, AppDatabase::class.java, name)
-            .addMigrations(COMPANION_MIGRATION_8_9, COMPANION_MIGRATION_9_10).build()
+            .addMigrations(COMPANION_MIGRATION_8_9, COMPANION_MIGRATION_9_10, COMPANION_MIGRATION_10_11).build()
         try {
             assertEquals(435, room.petBondDao().getByPetId("wallet")?.softCurrency)
             assertEquals(78, room.petStatusDao().getByPetId("corgi")?.health)
@@ -50,7 +128,7 @@ class CompanionMigrationTest {
         insertFixture(database, schema, "companion_home", mapOf("petId" to "corgi", "nickname" to "Maple", "environment" to "GARDEN"))
         insertFixture(database, schema, "companion_expedition", mapOf("slot" to 1, "requestId" to "old-trip", "petId" to "corgi", "destination" to "meadow", "elapsedMs" to 10))
         helper.close()
-        val room: AppDatabase = Room.databaseBuilder(context, AppDatabase::class.java, name).addMigrations(COMPANION_MIGRATION_9_10).build()
+        val room: AppDatabase = Room.databaseBuilder(context, AppDatabase::class.java, name).addMigrations(COMPANION_MIGRATION_9_10, COMPANION_MIGRATION_10_11).build()
         try {
             assertEquals("Maple", room.companionDao().getHome("corgi")?.nickname)
             assertEquals("old-trip", room.companionDao().getExpedition()?.requestId)

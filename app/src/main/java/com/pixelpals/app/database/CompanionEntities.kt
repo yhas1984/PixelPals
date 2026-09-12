@@ -2,6 +2,7 @@ package com.pixelpals.app.database
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import androidx.room.ColumnInfo
 
 @Entity(tableName = "companion_home")
 data class CompanionHomeEntity(
@@ -15,6 +16,7 @@ data class CompanionHomeEntity(
     val lastLearnedAt: Long = 0,
     val favoriteObject: String = "ball",
     val desktopObject: String = "",
+    @ColumnInfo(defaultValue = "NULL") val selectedTreasureId: String? = null,
 )
 
 @Entity(tableName = "home_decoration", primaryKeys = ["petId", "decorationId"])

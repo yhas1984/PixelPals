@@ -26,6 +26,7 @@ enum class TaroRuntimeMode {
     PLAYFUL_DELIGHT,
     PLAYFUL_SURPRISE,
     SLEEP,
+    WAKE,
     CURIOSITY,
     DRAG,
     AIRBORNE,
@@ -61,29 +62,24 @@ class TaroRuntimeBrain(
         event: PetEvent,
         context: PetBrainContext,
     ): PetBrainResult<TaroRuntimeState> = when (event) {
-        PetEvent.Tap -> output(
-            state.copy(
-                mode = TaroRuntimeMode.TOUCH,
-                elapsedSeconds = 0f,
-                surpriseAfterPeek = true,
-            ),
+        PetEvent.Tap -> if (state.mode == TaroRuntimeMode.SLEEP || state.mode == TaroRuntimeMode.WAKE) {
+            beginWake(state)
+        } else output(
+            state.copy(mode = TaroRuntimeMode.TOUCH, elapsedSeconds = 0f, surpriseAfterPeek = true),
             "touch",
         )
-        PetEvent.HoldStarted -> output(
-            state.copy(
-                mode = TaroRuntimeMode.TOUCH,
-                elapsedSeconds = 0f,
-                surpriseAfterPeek = false,
-            ),
+        PetEvent.HoldStarted -> if (state.mode == TaroRuntimeMode.SLEEP || state.mode == TaroRuntimeMode.WAKE) {
+            beginWake(state)
+        } else output(
+            state.copy(mode = TaroRuntimeMode.TOUCH, elapsedSeconds = 0f, surpriseAfterPeek = false),
             "touch",
             hapticDurationMs = TaroRuntimeDefinition.value.interaction.holdHapticDurationMs,
         )
-        PetEvent.HoldReleased -> if (
-            canPlay(state, context, INTERACTION_PLAYFUL_MINIMUM_ENERGY)
-        ) {
-            beginPlayful(state, TaroRuntimeMode.PLAYFUL_WAVE, "playful_wave")
-        } else {
-            idle(state, context)
+        PetEvent.HoldReleased -> when {
+            state.mode == TaroRuntimeMode.SLEEP || state.mode == TaroRuntimeMode.WAKE -> beginWake(state)
+            canPlay(state, context, INTERACTION_PLAYFUL_MINIMUM_ENERGY) ->
+                beginPlayful(state, TaroRuntimeMode.PLAYFUL_WAVE, "playful_wave")
+            else -> idle(state, context)
         }
         is PetEvent.DragStarted,
         is PetEvent.DragMoved,
@@ -94,7 +90,6 @@ class TaroRuntimeBrain(
                 surpriseAfterPeek = false,
             ),
             "hide",
-            transform = PetTransform(scaleX = 0.96f, scaleY = 1.04f),
         )
         is PetEvent.Released,
         is PetEvent.Flung,
@@ -179,9 +174,17 @@ class TaroRuntimeBrain(
             TaroRuntimeMode.CURIOSITY,
             -> if (context.playback.isFinished) idle(advanced, context) else output(advanced, clipFor(state.mode))
             TaroRuntimeMode.SLEEP -> if (advanced.elapsedSeconds >= state.durationSeconds) {
-                idle(advanced, context)
+                output(
+                    advanced.copy(mode = TaroRuntimeMode.WAKE, elapsedSeconds = 0f),
+                    "peek",
+                )
             } else {
                 output(advanced, "sleep")
+            }
+            TaroRuntimeMode.WAKE -> if (context.playback.isFinished) {
+                idle(advanced, context)
+            } else {
+                output(advanced, "peek")
             }
             TaroRuntimeMode.DRAG -> output(advanced, "hide")
             TaroRuntimeMode.AIRBORNE -> output(advanced, "hide")
@@ -326,6 +329,15 @@ class TaroRuntimeBrain(
         position,
     )
 
+    private fun beginWake(state: TaroRuntimeState): PetBrainResult<TaroRuntimeState> = output(
+        state.copy(
+            mode = TaroRuntimeMode.WAKE,
+            elapsedSeconds = if (state.mode == TaroRuntimeMode.WAKE) state.elapsedSeconds else 0f,
+            surpriseAfterPeek = false,
+        ),
+        "peek",
+    )
+
     private fun output(
         state: TaroRuntimeState,
         clipId: String,
@@ -356,6 +368,7 @@ class TaroRuntimeBrain(
         TaroRuntimeMode.PLAYFUL_DELIGHT -> "playful_delight"
         TaroRuntimeMode.PLAYFUL_SURPRISE -> "playful_surprise"
         TaroRuntimeMode.SLEEP -> "sleep"
+        TaroRuntimeMode.WAKE -> "peek"
         TaroRuntimeMode.CURIOSITY -> "curiosity"
     }
 
@@ -371,6 +384,7 @@ class TaroRuntimeBrain(
         TaroRuntimeMode.PLAYFUL_SURPRISE,
         -> PetIntent.SOCIAL
         TaroRuntimeMode.SLEEP -> PetIntent.SLEEP
+        TaroRuntimeMode.WAKE -> PetIntent.PEEK
         TaroRuntimeMode.CURIOSITY -> PetIntent.CURIOSITY
         TaroRuntimeMode.DRAG -> PetIntent.DRAG
         TaroRuntimeMode.AIRBORNE -> PetIntent.AIRBORNE

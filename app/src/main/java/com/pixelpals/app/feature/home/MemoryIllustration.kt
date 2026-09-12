@@ -10,11 +10,24 @@ class MemoryIllustration(context: Context, private val kind: String, private val
     private val painter = HomeScenePainter()
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val heart = Path()
+    private val careTool = if (kind == "care") com.pixelpals.app.core.care.scene.CareSceneAction.entries
+        .firstOrNull { it.name == detail }?.let { com.pixelpals.app.feature.care.CareToolDrawable(it, 1, pet) }
+        else null
     init { importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO }
     override fun onDraw(canvas: Canvas) {
         canvas.save()
         canvas.scale(width / 1000f, height / 760f)
         painter.drawBackground(canvas, if (kind == "expedition" && detail == "forest") HomeEnvironment.GARDEN else ExpeditionDestination.find(detail)?.environment ?: HomeEnvironment.COZY, 14)
+        careTool?.let { tool ->
+            canvas.restore()
+            // The card is wide: draw tools in screen space to keep balls, food and beds proportional.
+            val size: Int = (minOf(width, height) * .90f).toInt()
+            val left: Int = (width - size) / 2
+            val top: Int = (height - size) / 2
+            tool.setBounds(left, top, left + size, top + size)
+            tool.draw(canvas)
+            return
+        }
         val decoration: Decoration? = if (kind == "object") DecorationCatalog.find(detail) else null
         if (decoration != null) {
             painter.drawObject(canvas, decoration, RectF(320f, 190f, 680f, 550f), pet = pet)

@@ -26,3 +26,8 @@ __pycache__/
 
 # Copias de trabajo locales (importadores)
 /tools/*/backup/
+
+# Local review exports and device captures (keep selected fixtures explicitly tracked).
+/artifacts/
+/evidence/
+/docs/companion/evidence/

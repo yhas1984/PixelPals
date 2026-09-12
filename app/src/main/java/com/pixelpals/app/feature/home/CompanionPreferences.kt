@@ -4,6 +4,17 @@ import android.content.Context
 
 class CompanionPreferences(context: Context) {
     private val preferences = context.getSharedPreferences("pixelpals_companion", Context.MODE_PRIVATE)
+    val firstHomePet: String? get() = preferences.getString("first_home_pet", null)
+    val hasCompletedFirstHomeCare: Boolean get() = preferences.getBoolean("first_home_care", false)
+    fun beginFirstHome(petId: String) {
+        preferences.edit().putString("first_home_pet", petId).putBoolean("first_home_care", false).apply()
+    }
+    fun completeFirstHomeCare(petId: String) {
+        if (firstHomePet == petId) preferences.edit().putBoolean("first_home_care", true).apply()
+    }
+    fun finishFirstHome() {
+        preferences.edit().remove("first_home_pet").remove("first_home_care").apply()
+    }
     var restSchedule: com.pixelpals.app.core.rest.PetRestSchedule
         get() = com.pixelpals.app.core.rest.PetRestSchedule(
             enabled = preferences.getBoolean("rest_schedule_enabled", true),

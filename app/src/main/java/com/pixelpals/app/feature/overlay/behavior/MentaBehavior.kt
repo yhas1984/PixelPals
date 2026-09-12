@@ -219,7 +219,7 @@ class MentaBehavior(
         bridge.animOffsetY = sin(time * 2.2f) * 2f
         bridge.animRotation = 0f
         bridge.animScaleX = 1f
-        bridge.animScaleY = 1f + sin(time * 2.8f) * 0.03f
+        bridge.animScaleY = 1f
         if (modeTimer >= modeDuration) {
             modeTimer = 0f
             pickTarget()
@@ -236,8 +236,8 @@ class MentaBehavior(
         val clip = spec.clip("happy") ?: return
         val idx = ((animClock / 0.24f).toInt() % clip.frames.size)
         bridge.currentFrame = clip.frames[idx]
-        bridge.animScaleY = 1f + sin(time * 6f) * 0.05f
-        bridge.animScaleX = 1f - sin(time * 6f) * 0.04f
+        bridge.animScaleX = 1f
+        bridge.animScaleY = 1f
         bridge.animOffsetY = sin(time * 4f) * 3f
     }
 
@@ -255,6 +255,8 @@ class MentaBehavior(
         val clip = spec.clip("touch") ?: return
         val idx = ((animClock / 0.26f).toInt() % clip.frames.size)
         bridge.currentFrame = clip.frames[idx]
+        bridge.animScaleX = 1f
+        bridge.animScaleY = 1f
     }
 
     private fun updateSleep(dt: Float) {

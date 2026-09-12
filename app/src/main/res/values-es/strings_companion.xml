@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="adventure_unknown">No se reconoce este viaje guardado. Puedes cancelarlo para seguir jugando; no se concederán recompensas.</string>
+    <string name="home_guide_name">Toda amistad empieza con un nombre. Elige uno para tu nuevo compañero.</string>
+    <string name="home_guide_care">Saluda a %1$s con una caricia. También puedes tocar a tu mascota en el hogar.</string>
+    <string name="home_guide_desktop">¡Vuestro primer momento juntos! %1$s también puede acompañarte en la pantalla. Es opcional: el hogar funciona sin ese permiso.</string>
+    <string name="home_guide_pet">Dar una caricia</string>
+    <string name="home_guide_skip">Explorar por mi cuenta</string>
     <string name="home_title">Un pequeño mundo, juntos</string>
     <string name="home_subtitle">Aquí empieza vuestra historia</string>
     <string name="home_cozy">Habitación acogedora</string>
@@ -19,12 +25,17 @@
     <string name="home_greeting_new">%1$s está conociéndote. Prueba una caricia.</string>
     <string name="home_greeting_friend">%1$s te reconoce y se acerca un poquito más.</string>
     <string name="home_greeting_close">%1$s se siente en casa contigo.</string>
-    <string name="home_favorite">Favorito: %1$s · %2$d juegos compartidos</string>
+    <plurals name="home_favorite">
+        <item quantity="one">Favorito: %1$s · %2$d juego compartido</item>
+        <item quantity="other">Favorito: %1$s · %2$d juegos compartidos</item>
+    </plurals>
     <string name="home_needs">Comida %1$d · Energía %2$d · Higiene %3$d · Vínculo %4$d</string>
     <string name="home_loading">Preparando vuestro hogar…</string>
     <string name="home_error">No se ha podido guardar o cargar este cambio. Inténtalo de nuevo.</string>
     <string name="home_retry">Reintentar</string>
     <string name="home_done">Listo</string>
+    <string name="home_save_name">Guardar nombre</string>
+    <string name="home_saving_name">Guardando…</string>
     <string name="home_close">Volver al hogar</string>
     <string name="home_environment">Elige vuestro ambiente</string>
     <string name="home_place">Colocar en el hogar</string>
@@ -124,4 +135,6 @@
     <string-array name="home_depth_names"><item>Fondo</item><item>Zona intermedia</item><item>Delante</item></string-array>
     <string-array name="home_side_names"><item>Izquierda</item><item>Centro izquierda</item><item>Centro</item><item>Centro derecha</item><item>Derecha</item></string-array>
     <string name="home_add_object">Añadir objeto</string>
+    <string name="adventure_ready">%1$s ha terminado su aventura en %2$s.</string>
+    <string name="adventure_ready_hint">Recoge sus hallazgos para volver al hogar y reanudar sus cuidados.</string>
 </resources>

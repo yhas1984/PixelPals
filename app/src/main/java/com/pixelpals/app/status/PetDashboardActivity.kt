@@ -540,18 +540,23 @@ class PetDashboardActivity : AppCompatActivity() {
 
     private fun applySystemBarsInsets() {
         val view = findViewById<ScrollView>(R.id.dashboardScroll)
-        val initialLeft = view.paddingLeft
-        val initialTop = view.paddingTop
-        val initialRight = view.paddingRight
-        val initialBottom = view.paddingBottom
+        val initial = view.layoutParams as android.view.ViewGroup.MarginLayoutParams
+        val initialLeft = initial.leftMargin
+        val initialTop = initial.topMargin
+        val initialRight = initial.rightMargin
+        val initialBottom = initial.bottomMargin
         ViewCompat.setOnApplyWindowInsetsListener(view) { v, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(
+            // Keep the scroll viewport itself clear of system controls. Padding alone
+            // allows requestChildRectangleOnScreen to scroll a button under the nav bar.
+            val params = v.layoutParams as android.view.ViewGroup.MarginLayoutParams
+            params.setMargins(
                 initialLeft + bars.left,
                 initialTop + bars.top,
                 initialRight + bars.right,
                 initialBottom + bars.bottom
             )
+            v.layoutParams = params
             insets
         }
         ViewCompat.requestApplyInsets(view)

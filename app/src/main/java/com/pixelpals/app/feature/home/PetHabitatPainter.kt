@@ -77,11 +77,12 @@ class PetHabitatPainter {
         val night = environment == HomeEnvironment.NIGHT || hour < 7 || hour >= 20
         val frozen = pet == PetType.YUKI || pet == PetType.PIRU
         val skyPet = pet == PetType.ANGEL || pet == PetType.NUBE_MICHI
-        val water = pet == PetType.BLOOP || pet == PetType.PATITO
+        val water = pet == PetType.PATITO
         val sky = when {
             night -> "#283C4D"
             frozen -> "#BBDDE8"
             skyPet -> "#D7D7EA"
+            pet == PetType.BLOOP -> "#CDD8E3"
             pet == PetType.DIABLILLO -> "#E4C6B6"
             pet == PetType.JELLY -> "#E1D4DE"
             else -> "#CDE1D8"
@@ -140,16 +141,14 @@ class PetHabitatPainter {
             cloud(c, if (night) "#BAC3CD" else "#FAF4E9", 730f, 430f, 350f)
         }
         if (water) {
-            oval(c, if (night) "#527F8A" else "#98C5C8", 70f, 475f, 860f, 255f)
-            for (i in 0..3) line(c, if (night) "#83ABB0" else "#DCECE0", 3f, 160f + i * 210f, 690f, 235f + i * 210f, 688f)
-            if (pet == PetType.PATITO) for (i in 0..4) {
+            oval(c, if (night) "#527F8A" else "#98C5C8", 70f, 330f, 860f, 95f)
+            for (i in 0..3) line(c, if (night) "#83ABB0" else "#DCECE0", 3f, 160f + i * 210f, 400f, 235f + i * 210f, 398f)
+            for (i in 0..4) {
                 line(c, leaf, 6f, 50f + i * 17f, 505f, 40f + i * 22f, 340f + i % 2 * 30f)
                 oval(c, "#B79874", 34f + i * 22f, 310f + i % 2 * 30f, 14f, 46f)
-            } else for (i in 0..7) {
-                paint.color = color("#DAEEE7"); paint.style = Paint.Style.STROKE; paint.strokeWidth = 3f
-                c.drawCircle(50f + i * 127f, 245f + i % 3 * 55f, 9f + i % 3 * 4f, paint); paint.style = Paint.Style.FILL
             }
         }
+        if (pet == PetType.BLOOP) drawMistClearing(c, night)
         if (pet == PetType.JELLY || pet == PetType.LUMI) for (x in listOf(30f, 890f)) {
             line(c, "#DFCCAF", 17f, x + 40f, 455f, x + 40f, 385f)
             oval(c, if (pet == PetType.JELLY) "#C99EAF" else "#C6BE8D", x, 350f, 100f, 55f)
@@ -161,5 +160,35 @@ class PetHabitatPainter {
             line(c, "#EFE2B6", 3f, x, y - 4f, x, y + 4f)
         }
         drawShelter(c, environment, night)
+    }
+
+    private fun drawMistClearing(c: Canvas, night: Boolean) {
+        val bark: String = if (night) "#697689" else "#9BA7AF"
+        val mist: String = if (night) "#557C91A0" else "#99EDF0EB"
+        // Distant trunks and drifting mist leave the furniture grid unobstructed.
+        for (x: Float in listOf(45f, 950f)) {
+            line(c, bark, 14f, x, 465f, x - 15f, 210f)
+            line(c, bark, 8f, x - 7f, 335f, x + 40f, 280f)
+            line(c, bark, 7f, x - 10f, 290f, x - 42f, 245f)
+        }
+        paint.color = color(mist)
+        for (layer: Int in 0..2) {
+            val y: Float = 405f + layer * 48f
+            path.reset()
+            path.moveTo(-30f, y)
+            path.cubicTo(180f, y - 35f, 330f, y + 30f, 570f, y - 8f)
+            path.cubicTo(780f, y - 35f, 920f, y + 20f, 1030f, y - 5f)
+            path.lineTo(1030f, y + 14f)
+            path.cubicTo(820f, y + 45f, 700f, y - 5f, 490f, y + 22f)
+            path.cubicTo(240f, y + 55f, 110f, y - 5f, -30f, y + 23f)
+            path.close()
+            c.drawPath(path, paint)
+        }
+        for (i: Int in 0..6) {
+            val x: Float = 105f + i * 127f
+            val y: Float = 240f + i % 3 * 57f
+            oval(c, if (night) "#25D6E9DD" else "#55FFFFFF", x - 9f, y - 9f, 22f, 22f)
+            oval(c, if (night) "#B3E6EED1" else "#EBF2E6", x, y, 4f, 4f)
+        }
     }
 }

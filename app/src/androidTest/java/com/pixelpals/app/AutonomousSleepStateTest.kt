@@ -16,22 +16,28 @@ class AutonomousSleepStateTest {
         instrumentation.runOnMainSync {
             val safeModes: Map<PetType, Set<String>> = mapOf(
                 PetType.CORGI to setOf("REST", "ALERT"),
-                PetType.GINGER to setOf("SIT", "SLEEP"),
+                PetType.GINGER to setOf("SIT", "SLEEP", "STANDING"),
                 PetType.PIRU to setOf("SLEEP"),
                 PetType.MENTA to setOf("COIL", "SLEEP"),
                 PetType.JELLY to setOf("IDLE"),
                 PetType.PATITO to setOf("QUACK"),
             )
             for ((pet, safe) in safeModes) {
-                val behavior: PetBehavior = PetBehaviorFactory.create(pet,
-                    TestPetBridge(instrumentation.targetContext, pet), SeededPetRandom(12))
+                val bridge = TestPetBridge(instrumentation.targetContext, pet)
+                if (pet == PetType.JELLY) {
+                    bridge.getWindowParams().y = bridge.groundY
+                    bridge.updateWindowLayout(bridge.getWindowParams())
+                }
+                val behavior: PetBehavior = PetBehaviorFactory.create(pet, bridge, SeededPetRandom(12))
                 try {
                     val mode = behavior.javaClass.getDeclaredField("mode").apply { isAccessible = true }
                     for (value in requireNotNull(mode.type.enumConstants)) {
                         mode.set(behavior, value)
                         val name: String = (value as Enum<*>).name
+                        settlePiruYawn(pet, behavior, name)
                         assertEquals("$pet $name handoff", name in safe, behavior.canStartScheduledSleep(false))
-                        val staticTravel: Boolean = name in setOf("WALK", "WADDLE", "SLITHER")
+                        val staticTravel: Boolean = name in setOf("WALK", "WADDLE", "SLITHER") ||
+                            (pet == PetType.GINGER && name == "STALK")
                         assertEquals("$pet $name reduced handoff", name in safe || staticTravel,
                             behavior.canStartScheduledSleep(true))
                     }
@@ -62,6 +68,7 @@ class AutonomousSleepStateTest {
                     for (value in requireNotNull(mode.type.enumConstants)) {
                         mode.set(behavior, value)
                         val name: String = (value as Enum<*>).name
+                        settlePiruYawn(pet, behavior, name)
                         assertEquals("$pet $name must report its actual sleep state",
                             name == "SLEEP" || name == "SLEEP_FLOAT", behavior.isSleeping)
                     }
@@ -77,5 +84,14 @@ class AutonomousSleepStateTest {
                 }
             } finally { corgi.destroy() }
         }
+    }
+
+    private fun settlePiruYawn(pet: PetType, behavior: PetBehavior, mode: String): Unit {
+        if (pet != PetType.PIRU || mode != "SLEEP") return
+        val timer = behavior.javaClass.getDeclaredField("modeTimer").apply { isAccessible = true }
+        timer.setFloat(behavior, 0f)
+        assertFalse("Piru is still yawning", behavior.isSleeping)
+        assertFalse("Piru must finish its yawn before handoff", behavior.canStartScheduledSleep(false))
+        timer.setFloat(behavior, .35f)
     }
 }

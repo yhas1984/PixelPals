@@ -20,12 +20,18 @@ class PiruBehavior(
     override val random: PetRandom,
 ) : BaseBehavior(bridge, random) {
 
-    override val isSleeping: Boolean get() = mode == Mode.SLEEP
+    override val isSleeping: Boolean get() = mode == Mode.SLEEP && modeTimer >= REST_SETTLE_SECONDS
 
     override val resourceIds: List<Int> = emptyList()
 
     override fun canStartScheduledSleep(reducedMotion: Boolean): Boolean =
-        mode == Mode.SLEEP || (reducedMotion && mode == Mode.WADDLE)
+        isSleeping || (reducedMotion && mode == Mode.WADDLE)
+
+    private var restRequested: Boolean = false
+
+    override fun onScheduledRestRequested(requested: Boolean): Unit {
+        restRequested = requested
+    }
 
     private enum class Mode { WADDLE, SLIDE, JUMP, HAPPY, TOUCH, SLEEP }
 
@@ -62,6 +68,18 @@ class PiruBehavior(
         swimStartX = params.x.toFloat().coerceIn(minX, maxX)
         params.y = baseY.roundToInt()
         bridge.updateWindowLayout(params)
+
+        if (restRequested) {
+            mode = Mode.SLEEP
+            modeTimer = 0f
+            bridge.animScaleX = facingScale(facingDir)
+            bridge.animScaleY = 1f
+            bridge.animOffsetX = 0f
+            bridge.animOffsetY = 0f
+            bridge.animRotation = 0f
+            spriteSheetSpec?.clip("sleep")?.frames?.firstOrNull()?.let { bridge.currentFrame = it }
+            return
+        }
 
         swimTargetX = random.nextFloat() * (maxX - minX) + minX
         val dx = swimTargetX - swimStartX
@@ -121,6 +139,10 @@ class PiruBehavior(
     private fun updateWaddle(dt: Float) {
         val params = bridge.getWindowParams() ?: return
         if (swimDuration <= 0f) startWaddle(resetTimer = false)
+        if (mode == Mode.SLEEP) {
+            updateSleep(0f)
+            return
+        }
 
         val t = (modeTimer / swimDuration).coerceIn(0f, 1f)
         val easedT = GroundGait.progress(modeTimer, swimDuration)
@@ -142,6 +164,10 @@ class PiruBehavior(
         bridge.animOffsetY = -abs(sin(phase * 2f * PI.toFloat())) * bridge.petSpriteSize * .018f
         bridge.animRotation = facingDir * sin(phase * 2f * PI.toFloat()) * 2f
 
+        if (restRequested) {
+            if (t >= 1f) startWaddle()
+            return
+        }
         val roll = random.nextFloat()
         if (roll < 0.0004f) {
             mode = Mode.HAPPY
@@ -208,8 +234,11 @@ class PiruBehavior(
         val idx = ((animClock / 0.24f).toInt() % clip.frames.size)
         bridge.currentFrame = clip.frames[idx]
         bridge.animScaleX = facingScale(facingDir)
-        bridge.animScaleY = 1f + sin(time * 6f) * 0.05f
-        bridge.animOffsetY = sin(time * 4f) * 3f
+        // Wing and head poses carry the reaction; keep the penguin's body and feet stable.
+        bridge.animScaleY = 1f
+        bridge.animOffsetX = 0f
+        bridge.animOffsetY = 0f
+        bridge.animRotation = 0f
     }
 
     private fun updateTouch(dt: Float) {
@@ -232,14 +261,23 @@ class PiruBehavior(
     private fun updateSleep(dt: Float) {
         val spec = spriteSheetSpec ?: return
         val clip = spec.clip("sleep") ?: return
-        bridge.currentFrame = clip.frames[0]
+        bridge.currentFrame = if (modeTimer < REST_SETTLE_SECONDS) clip.frames.first() else clip.frames.last()
         bridge.animScaleX = facingScale(facingDir)
-        bridge.animOffsetY = sin(time * 1.2f) * 1.5f
-        if (modeTimer >= modeDuration) startWaddle()
+        bridge.animScaleY = 1f
+        bridge.animOffsetY = 0f
+        // ScheduledPetSleep owns the wake clip and resumes this update only when it ends.
+        if (!restRequested && modeTimer >= REST_SETTLE_SECONDS) startWaddle()
     }
 
     override fun onInteract() {
+        val keepJumping: Boolean = mode == Mode.JUMP
         super.onInteract()
+        // Affection must not suspend an autonomous jump and then snap it to the floor.
+        // PetView owns externally launched falls; leave that separate path unchanged.
+        if (keepJumping) {
+            bridge.state = PetState.IDLE
+            return
+        }
         mode = Mode.TOUCH
         modeDuration = 0.9f + random.nextFloat() * 0.6f
         modeTimer = 0f
@@ -262,6 +300,8 @@ class PiruBehavior(
         bridge.currentFrame = clip.frames[idx]
         bridge.animScaleX = facingScale(facingDir)
         bridge.animScaleY = 1f
+        bridge.animOffsetX = 0f
+        bridge.animOffsetY = 0f
         bridge.animRotation = 0f
     }
 
@@ -278,5 +318,9 @@ class PiruBehavior(
         params.x = params.x.coerceIn(0, safeMaxX())
         params.y = params.y.coerceIn(safeMinY(), safeMaxY())
         bridge.updateWindowLayout(params)
+    }
+
+    private companion object {
+        const val REST_SETTLE_SECONDS: Float = .35f
     }
 }

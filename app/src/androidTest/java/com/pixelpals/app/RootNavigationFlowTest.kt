@@ -197,7 +197,13 @@ class RootNavigationFlowTest {
             measureAndLayout(storeRoot, widthSpec, heightSpec)
             assertTrue(banner.height > 0)
             assertTrue(pager.height < hiddenPagerHeight)
-            assertTrue(pager.bottom <= banner.top)
+            // The collapsing header lets the pager extend beyond its clipped
+            // viewport. Compare visible bounds in the same coordinate space.
+            val visiblePager = android.graphics.Rect()
+            val visibleBanner = android.graphics.Rect()
+            assertTrue(pager.getGlobalVisibleRect(visiblePager))
+            assertTrue(banner.getGlobalVisibleRect(visibleBanner))
+            assertTrue("Visible store content overlaps the banner", visiblePager.bottom <= visibleBanner.top)
 
             banner.visibility = View.GONE
             measureAndLayout(storeRoot, widthSpec, heightSpec)

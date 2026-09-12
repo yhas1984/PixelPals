@@ -15,8 +15,10 @@
 
         <TextView
             android:id="@+id/txtCosmeticEmoji"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="48dp"
+            android:minHeight="48dp"
             android:gravity="center"
             android:textSize="30sp" />
 
@@ -31,7 +33,6 @@
                 android:id="@+id/txtCosmeticTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:maxLines="2"
                 android:textColor="@color/text_primary"
                 android:textSize="16sp"
                 android:textStyle="bold" />
@@ -41,7 +42,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:maxLines="2"
                 android:textColor="@color/text_secondary"
                 android:textSize="13sp" />
 
@@ -59,9 +59,20 @@
     </LinearLayout>
 
     <Button
+        android:id="@+id/btnCosmeticPreview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:backgroundTint="@color/surface_tinted"
+        android:minHeight="48dp"
+        android:text="@string/store_preview_cosmetic"
+        android:textAllCaps="false"
+        android:textColor="@color/text_primary" />
+
+    <Button
         android:id="@+id/btnCosmeticAction"
         android:layout_width="match_parent"
-        android:layout_height="48dp"
+        android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
         android:backgroundTint="@color/golden_accent"
         android:minHeight="48dp"

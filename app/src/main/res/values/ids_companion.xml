@@ -1,4 +1,8 @@
 <resources>
+    <item name="firstHomeGuide" type="id" />
+    <item name="firstHomeAction" type="id" />
+    <item name="firstHomeSkip" type="id" />
+    <item name="petNameDraft" type="id" />
     <item name="companionScene" type="id" />
     <item name="companionCare" type="id" />
     <item name="companionSettings" type="id" />

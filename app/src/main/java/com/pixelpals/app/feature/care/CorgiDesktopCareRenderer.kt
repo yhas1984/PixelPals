@@ -30,7 +30,7 @@ class CorgiDesktopCareRenderer {
     fun draw(canvas: Canvas, pack: CarePosePack, spriteSize: Int, elapsedMs: Long,
              facingLeft: Boolean, reducedMotion: Boolean, action: CareSceneAction = CareSceneAction.FEED,
              fetchFrame: Int = 2, baselineOffsetY: Float = spriteSize * .46f, colorFilter: ColorFilter? = null): Unit {
-        val size: Float = spriteSize * com.pixelpals.app.core.motion.CorgiArtworkScale.CARE_CELL
+        val size: Float = spriteSize * com.pixelpals.app.core.motion.CorgiArtworkScale.careCell(action)
         val cx: Float = canvas.width / 2f
         // Match the feet of the regular Corgi sprites, not the bottom of the overlay window.
         val baseline: Float = canvas.height / 2f + baselineOffsetY
@@ -93,15 +93,16 @@ class CorgiDesktopCareRenderer {
                 val pose: CorgiAdditionalCarePose = requireNotNull(additional)
                 val mouth = pack.spec.anchors[frame].mouth
                 val spoonSize: Float = size * .29f
-                // The spoon bowl is above-left of its origin; align it with the mouth.
+                val origin: CarePoint = com.pixelpals.app.core.care.scene.CareSpoonGeometry.originAt(
+                    CarePoint(destination.left + mouth.x * size, destination.top + mouth.y * size), spoonSize)
                 drawFadedProp(canvas, action,
-                    destination.left + mouth.x * size + spoonSize * .10f + pose.propOffsetX * size,
-                    destination.top + mouth.y * size + spoonSize * .20f + pose.propOffsetY * size,
+                    origin.x + pose.propOffsetX * size,
+                    origin.y + pose.propOffsetY * size,
                     spoonSize, pose)
             }
         }
         canvas.restore()
-        if (action == CareSceneAction.REST) {
+        if (action == CareSceneAction.REST && (reducedMotion || elapsedMs < CorgiAdditionalCareMotion.REST_WAKE_START_MS)) {
             dreams.drawDesktop(canvas, cx, baseline, size, elapsedMs / 1_000f, reducedMotion)
         }
     }

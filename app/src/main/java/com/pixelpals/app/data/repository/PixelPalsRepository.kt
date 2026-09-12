@@ -1,6 +1,8 @@
 package com.pixelpals.app.data.repository
 
 import android.content.Context
+import android.content.res.Configuration
+import android.os.LocaleList
 import com.pixelpals.app.BuildConfig
 import com.pixelpals.app.R
 import com.pixelpals.app.core.care.PetCareState
@@ -42,6 +44,7 @@ import java.time.format.FormatStyle
 import java.time.temporal.ChronoUnit
 import java.util.Locale
 import androidx.room.withTransaction
+import androidx.appcompat.app.AppCompatDelegate
 import kotlin.math.max
 import kotlin.math.min
 
@@ -64,6 +67,19 @@ class PixelPalsRepository(
     private val selectedPetStore = SelectedPetStore(appContext)
     private val timeProvider: TimeProvider = timeProvider
     private val petNeedsEngine = PetNeedsEngine(timeProvider)
+    private data class PresentationContextCache(val localeTags: String, val context: Context)
+    @Volatile private var presentationCache: PresentationContextCache? = null
+
+    private val presentationContext: Context
+        get() {
+            val localeTags: String = AppCompatDelegate.getApplicationLocales().toLanguageTags()
+            if (localeTags.isBlank()) return appContext
+            presentationCache?.takeIf { it.localeTags == localeTags }?.let { return it.context }
+            val configuration = Configuration(appContext.resources.configuration).apply {
+                setLocales(LocaleList.forLanguageTags(localeTags))
+            }
+            return appContext.createConfigurationContext(configuration).also { presentationCache = PresentationContextCache(localeTags, it) }
+        }
 
     /** Monedero GLOBAL: las monedas son del jugador, no del pet (v1.6+). */
     private val walletId = "wallet"
@@ -278,36 +294,36 @@ class PixelPalsRepository(
         return listOf(
             DailyTask(
                 "check_in",
-                appContext.getString(R.string.daily_task_check_in_title),
-                appContext.getString(R.string.daily_task_check_in_description),
+                presentationContext.getString(R.string.daily_task_check_in_title),
+                presentationContext.getString(R.string.daily_task_check_in_description),
                 8,
                 "check_in" in completedIds,
             ),
             DailyTask(
                 "feed",
-                appContext.getString(R.string.daily_task_feed_title),
-                appContext.getString(R.string.daily_task_feed_description),
+                presentationContext.getString(R.string.daily_task_feed_title),
+                presentationContext.getString(R.string.daily_task_feed_description),
                 14,
                 "feed" in completedIds,
             ),
             DailyTask(
                 "play",
-                appContext.getString(R.string.daily_task_play_title),
-                appContext.getString(R.string.daily_task_play_description),
+                presentationContext.getString(R.string.daily_task_play_title),
+                presentationContext.getString(R.string.daily_task_play_description),
                 14,
                 "play" in completedIds,
             ),
             DailyTask(
                 "clean",
-                appContext.getString(R.string.daily_task_clean_title),
-                appContext.getString(R.string.daily_task_clean_description),
+                presentationContext.getString(R.string.daily_task_clean_title),
+                presentationContext.getString(R.string.daily_task_clean_description),
                 12,
                 "clean" in completedIds,
             ),
             DailyTask(
                 "rest",
-                appContext.getString(R.string.daily_task_rest_title),
-                appContext.getString(R.string.daily_task_rest_description),
+                presentationContext.getString(R.string.daily_task_rest_title),
+                presentationContext.getString(R.string.daily_task_rest_description),
                 10,
                 "rest" in completedIds,
             ),
@@ -322,32 +338,32 @@ class PixelPalsRepository(
             val date = java.time.Instant.ofEpochMilli(bond.firstSeenAt)
                 .atZone(java.time.ZoneId.systemDefault())
                 .toLocalDate()
-            appContext.getString(
+            presentationContext.getString(
                 R.string.memory_first_day_since,
                 DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
                     .withLocale(currentLocale())
                     .format(date),
             )
-        } else appContext.getString(R.string.memory_first_day_default)
+        } else presentationContext.getString(R.string.memory_first_day_default)
         val memories = mutableListOf(
             MemoryMoment(
                 "first_day",
-                appContext.getString(R.string.memory_first_day_title),
+                presentationContext.getString(R.string.memory_first_day_title),
                 firstDay,
             )
         )
         if (snapshot.bond >= 15) {
             memories += MemoryMoment(
                 "bond_15",
-                appContext.getString(R.string.memory_bond_15_title),
-                appContext.getString(R.string.memory_bond_15_subtitle),
+                presentationContext.getString(R.string.memory_bond_15_title),
+                presentationContext.getString(R.string.memory_bond_15_subtitle),
             )
         }
         if (snapshot.careStreakDays >= 3) {
             memories += MemoryMoment(
                 "streak_3",
-                appContext.getString(R.string.memory_streak_3_title),
-                appContext.getString(
+                presentationContext.getString(R.string.memory_streak_3_title),
+                presentationContext.getString(
                     R.string.memory_streak_3_subtitle,
                     snapshot.careStreakDays,
                 ),
@@ -356,37 +372,37 @@ class PixelPalsRepository(
         if (snapshot.bond >= 35) {
             memories += MemoryMoment(
                 "bond_35",
-                appContext.getString(R.string.memory_bond_35_title),
-                appContext.getString(R.string.memory_bond_35_subtitle),
+                presentationContext.getString(R.string.memory_bond_35_title),
+                presentationContext.getString(R.string.memory_bond_35_subtitle),
             )
         }
         if (snapshot.memoriesUnlocked >= 3) {
             memories += MemoryMoment(
                 "bond_50",
-                appContext.getString(R.string.memory_bond_50_title),
-                appContext.getString(R.string.memory_bond_50_subtitle),
+                presentationContext.getString(R.string.memory_bond_50_title),
+                presentationContext.getString(R.string.memory_bond_50_subtitle),
             )
         }
         if (snapshot.careStreakDays >= 7) {
             memories += MemoryMoment(
                 "streak_7",
-                appContext.getString(R.string.memory_streak_7_title),
-                appContext.getString(R.string.memory_streak_7_subtitle),
+                presentationContext.getString(R.string.memory_streak_7_title),
+                presentationContext.getString(R.string.memory_streak_7_subtitle),
             )
         }
         if (bond.illnessRecoveries > 0) {
             memories += MemoryMoment(
                 "first_recovery",
-                appContext.getString(R.string.memory_first_recovery_title),
-                appContext.getString(R.string.memory_first_recovery_subtitle),
+                presentationContext.getString(R.string.memory_first_recovery_title),
+                presentationContext.getString(R.string.memory_first_recovery_subtitle),
             )
         }
         val collectionState: TreasureCollectionStateEntity? = db.treasureCollectionStateDao().getState()
         if (collectionState?.finalCollectorPetId == petId && collectionState.completedAt > 0L) {
             memories += MemoryMoment(
                 "treasure_collection_complete",
-                appContext.getString(R.string.memory_treasure_collection_title),
-                appContext.getString(R.string.memory_treasure_collection_subtitle),
+                presentationContext.getString(R.string.memory_treasure_collection_title),
+                presentationContext.getString(R.string.memory_treasure_collection_subtitle),
             )
         }
         return memories
@@ -406,8 +422,8 @@ class PixelPalsRepository(
             }
             PetCatalogItem(
                 id = petIdOf(petType),
-                displayName = appContext.getString(petType.displayNameResId),
-                description = appContext.getString(petType.descriptionResId),
+                displayName = presentationContext.getString(petType.displayNameResId),
+                description = presentationContext.getString(petType.descriptionResId),
                 previewResId = petType.spriteResId,
                 petType = petType,
                 productId = productId,
@@ -415,9 +431,9 @@ class PixelPalsRepository(
                 state = state,
                 coinPrice = premiumPetCoinPrices[petType],
                 badge = when {
-                    productId != null -> appContext.getString(R.string.selection_premium_badge)
-                    petType == selectedType -> appContext.getString(R.string.store_badge_current)
-                    else -> appContext.getString(R.string.store_badge_base)
+                    productId != null -> presentationContext.getString(R.string.selection_premium_badge)
+                    petType == selectedType -> presentationContext.getString(R.string.store_badge_current)
+                    else -> presentationContext.getString(R.string.store_badge_base)
                 }
             )
         }
@@ -761,7 +777,7 @@ class PixelPalsRepository(
     }
 
     fun moodLabel(mood: PetMood): String {
-        return appContext.getString(
+        return presentationContext.getString(
             when (mood) {
                 PetMood.HAPPY -> R.string.mood_happy
                 PetMood.SLEEPY -> R.string.mood_sleepy
@@ -774,7 +790,7 @@ class PixelPalsRepository(
     }
 
     fun careActionLabel(action: CareAction): String {
-        return appContext.getString(
+        return presentationContext.getString(
             when (action) {
                 CareAction.FEED -> R.string.action_feed
                 CareAction.CLEAN -> R.string.action_clean
@@ -787,7 +803,7 @@ class PixelPalsRepository(
     }
 
     fun personalityLabel(personality: PetPersonality): String {
-        return appContext.getString(
+        return presentationContext.getString(
             when (personality) {
                 PetPersonality.SWEET -> R.string.personality_sweet
                 PetPersonality.DREAMY -> R.string.personality_dreamy
@@ -802,25 +818,25 @@ class PixelPalsRepository(
     }
 
     fun dashboardCompanionLine(petType: PetType, snapshot: PetStatusSnapshot): String {
-        return appContext.getString(
+        return presentationContext.getString(
             R.string.dashboard_companion_line_format,
-            appContext.getString(petType.displayNameResId),
+            presentationContext.getString(petType.displayNameResId),
             moodLabel(snapshot.mood),
             personalityLabel(getPersonality(petType)),
         )
     }
 
     fun selectionSpotlight(petType: PetType, snapshot: PetStatusSnapshot): String {
-        return appContext.getString(
+        return presentationContext.getString(
             R.string.selection_spotlight_format,
-            appContext.getString(petType.displayNameResId),
+            presentationContext.getString(petType.displayNameResId),
             moodLabel(snapshot.mood),
             careActionLabel(snapshot.dominantSuggestion),
         )
     }
 
     fun premiumPetPerk(petType: PetType): String {
-        return appContext.getString(
+        return presentationContext.getString(
             when (petType) {
                 PetType.ANGEL -> R.string.premium_pet_perk_angel
                 PetType.DIABLILLO -> R.string.premium_pet_perk_diablillo
@@ -942,7 +958,7 @@ class PixelPalsRepository(
         .toLocalDate()
         .toString()
 
-    private fun currentLocale(): Locale = appContext.resources.configuration.locales[0]
+    private fun currentLocale(): Locale = presentationContext.resources.configuration.locales[0]
 
     private fun daysBetween(fromDay: String, toDay: String): Long {
         return runCatching {
@@ -978,9 +994,9 @@ class PixelPalsRepository(
                 TreasureCollectionItem(
                     id = definition.id,
                     emoji = definition.emoji,
-                    name = appContext.getString(definition.nameResourceId),
-                    story = appContext.getString(definition.storyResourceId),
-                    hint = appContext.getString(definition.hintResourceId),
+                    name = presentationContext.getString(definition.nameResourceId),
+                    story = presentationContext.getString(definition.storyResourceId),
+                    hint = presentationContext.getString(definition.hintResourceId),
                     inventoryCount = inventoryCount,
                     totalFound = totalFound,
                     lastFoundAt = stored?.lastFoundAt ?: 0L,

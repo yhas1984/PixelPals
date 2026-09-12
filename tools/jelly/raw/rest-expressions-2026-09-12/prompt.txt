@@ -1,0 +1,12 @@
+Use case: precise-object-edit
+Asset type: six animation sprite expressions for PixelPals Jelly.
+Use the attached image as the exact character and body reference. Create a transparent PNG sprite sheet of SIX equal-size drawings arranged in TWO COLUMNS and THREE ROWS. Row-major order.
+Jelly is a glossy lime-green translucent gelatin dome with two dark round eyes and a tiny curved smile. Preserve the reference's exact body width, height, silhouette, lower rim, material, reflection placement, camera, and lighting in ALL SIX cells. Keep each whole body visible and centered in a generous transparent square cell. Do NOT flatten, stretch, rotate or resize the body in any cell; the game code animates that separately.
+Only change the facial expression in this gradual falling-asleep sequence:
+1: just beginning to feel sleepy, eyes 90 percent open, gentle smile.
+2: eyes 75 percent open, gentle smile.
+3: eyelids halfway closed, relaxed smile.
+4: eyes one quarter open, small relaxed mouth.
+5: eyes nearly closed, only narrow dark slits, soft smile.
+6: fully asleep, eyes as peaceful closed downward-curved eyelid strokes, tiny relaxed curved smile.
+The closed eyelid shapes must read as sleep, not extra eyebrows; only two eyes total, no eyebrows. Maintain eye centers, spacing and mouth position. No arms, legs, wings, ears or nose. No lettering, no labels, no grid, no border, no props, no dream bubbles, no floor, no cast shadow. Absolutely no white sticker outline. Real transparent background, not a checkerboard image. The six bodies must look like one identical Jelly with increasingly sleepy eyelids.

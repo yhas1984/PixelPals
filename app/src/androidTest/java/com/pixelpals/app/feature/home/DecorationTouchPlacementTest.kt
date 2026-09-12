@@ -9,6 +9,33 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class DecorationTouchPlacementTest {
+    @Test fun changingPetCancelsTheOldGestureWithoutPlacingOrPettingTheNewPet(): Unit {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        instrumentation.runOnMainSync {
+            val view = HomeSceneView(instrumentation.targetContext)
+            view.layout(0, 0, 1000, 760)
+            var placed: String? = null
+            var petted: Boolean = false
+            view.onPlace = { id, _, _ -> placed = id }
+            view.onPet = { petted = true }
+            view.beginPlacement("ball")
+            val down = MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 500f, 470f, 0)
+            view.onTouchEvent(down); down.recycle()
+            kotlinx.coroutines.runBlocking { view.loadPet(com.pixelpals.app.core.domain.PetType.GINGER) }
+            assertFalse(view.isEditing)
+            val up = MotionEvent.obtain(0, 10, MotionEvent.ACTION_UP, 500f, 470f, 0)
+            view.onTouchEvent(up); up.recycle()
+            assertNull("The old pet's drag must not reach the new home", placed)
+            assertFalse("An old touch release must not start care for the new pet", petted)
+            view.beginPlacement("yarn")
+            for (action: Int in listOf(MotionEvent.ACTION_DOWN, MotionEvent.ACTION_UP)) {
+                val event = MotionEvent.obtain(20, 20, action, 500f, 470f, 0)
+                view.onTouchEvent(event); event.recycle()
+            }
+            assertEquals("New gestures still work", "yarn", placed)
+        }
+    }
+
     @Test fun finishingEditCancelsTheUnplacedObject(): Unit {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         instrumentation.runOnMainSync {

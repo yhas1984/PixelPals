@@ -11,9 +11,9 @@ internal data class HomeGait(val bounce: Float, val sway: Float, val isFloating:
         private val BOUNCE: HomeGait = HomeGait(4f, .6f)
         private val WADDLE: HomeGait = HomeGait(2.4f, 2f)
         fun forPet(pet: PetType): HomeGait = when (pet) {
-            PetType.BLOOP, PetType.NUBE_MICHI, PetType.ANGEL, PetType.DIABLILLO, PetType.PATITO -> FLOAT
+            PetType.BLOOP, PetType.NUBE_MICHI, PetType.ANGEL, PetType.DIABLILLO -> FLOAT
             PetType.MOKI, PetType.TARO, PetType.MENTA, PetType.TELA -> CRAWL
-            PetType.PIRU, PetType.YUKI -> WADDLE
+            PetType.PIRU, PetType.YUKI, PetType.PATITO -> WADDLE
             PetType.JELLY -> BOUNCE
             else -> WALK
         }

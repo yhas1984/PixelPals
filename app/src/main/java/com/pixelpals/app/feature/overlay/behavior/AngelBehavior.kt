@@ -27,7 +27,7 @@ class AngelBehavior(
             cancelRestFade()
             return
         }
-        if (!restFade.active && mode != Mode.RECOVER) return
+        if (!restFade.active && (mode == Mode.TOUCH || canStartScheduledSleep(true))) return
         val params = bridge.getWindowParams() ?: return
         if (!restFade.active) restFade.start()
         val settle: Boolean = restFade.advance(delta)
@@ -53,8 +53,7 @@ class AngelBehavior(
         super.destroy()
     }
     override fun canStartScheduledSleep(reducedMotion: Boolean): Boolean =
-        !restFade.active && (if (reducedMotion) mode != Mode.TOUCH && mode != Mode.RECOVER
-        else (mode == Mode.HOVER || mode == Mode.PRAYER) && hypot(velocityX, velocityY) <= 1f)
+        !restFade.active && (mode == Mode.HOVER || mode == Mode.PRAYER) && hypot(velocityX, velocityY) <= 1f
 
     override val resourceIds: List<Int> = emptyList()
 

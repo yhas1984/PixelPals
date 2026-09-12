@@ -85,13 +85,14 @@ class PetsTabFragment : Fragment() {
         val price: Int = item.coinPrice ?: return
         val viewModel: StoreViewModel = storeFragment.getStoreViewModel()
         val balance: Int = viewModel.uiState.value.balance
+        val displayName: String = item.petType?.let { getString(it.displayNameResId) } ?: item.displayName
         AlertDialog.Builder(requireContext())
             .setTitle(R.string.store_confirm_purchase_title)
             .setView(com.pixelpals.app.feature.home.CompanionPreview.create(this, item.petType ?: com.pixelpals.app.core.domain.PetType.CORGI))
             .setMessage(
                 if (balance < price) getString(R.string.store_insufficient_coins_detail) else getString(
                     R.string.store_confirm_pet_purchase,
-                    item.displayName,
+                    displayName,
                     price,
                     balance - price,
                 ),

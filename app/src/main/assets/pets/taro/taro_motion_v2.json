@@ -159,7 +159,7 @@
         34,
         35
       ],
-      "loop": true,
+      "loop": false,
       "frameDurationMs": 1600
     },
     {

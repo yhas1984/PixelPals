@@ -4,6 +4,19 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class CorgiAdditionalCareMotionTest {
+    @Test fun restWakesBeforeReturningToLocomotionAndRemovesTheBedAfterSittingUp(): Unit {
+        assertEquals(19, pose(CareSceneAction.REST, 5_799L).frame)
+        assertEquals(18, pose(CareSceneAction.REST, 5_800L).frame)
+        assertEquals(17, pose(CareSceneAction.REST, 6_200L).frame)
+        assertEquals(16, pose(CareSceneAction.REST, 6_600L).frame)
+        assertEquals(1f, pose(CareSceneAction.REST, 6_600L).propAlpha, 0f)
+        assertEquals(.5f, pose(CareSceneAction.REST, 6_800L).propAlpha, .001f)
+        assertEquals(0f, pose(CareSceneAction.REST, 7_000L).propAlpha, 0f)
+        for (elapsed: Long in 5_800L..7_000L step 16L) {
+            assertEquals("Wake must not scale the body", 1f, pose(CareSceneAction.REST, elapsed).breathScale, 0f)
+        }
+    }
+
     @Test fun cleaningScrubsThenRemovesTheSpongeBeforeTheFinalReaction(): Unit {
         val beginning: CorgiAdditionalCarePose = pose(CareSceneAction.CLEAN, 0L)
         val scrub: CorgiAdditionalCarePose = pose(CareSceneAction.CLEAN, 1_400L)
@@ -19,13 +32,13 @@ class CorgiAdditionalCareMotionTest {
         assertEquals(0f, done.rotation, 0f)
     }
 
-    @Test fun restSettlesOnTheCushionAndBreathesWithoutWandering(): Unit {
+    @Test fun restSettlesOnTheCushionWithoutRescalingOrWandering(): Unit {
         assertEquals(16, pose(CareSceneAction.REST, 0L).frame)
         assertEquals(17, pose(CareSceneAction.REST, 1_000L).frame)
         assertEquals(18, pose(CareSceneAction.REST, 2_000L).frame)
         val sleeping: CorgiAdditionalCarePose = pose(CareSceneAction.REST, 3_000L)
         assertEquals(19, sleeping.frame)
-        assertTrue(sleeping.breathScale > 1f)
+        assertEquals(1f, sleeping.breathScale, 0f)
         assertEquals(0f, sleeping.propOffsetX, 0f)
         assertEquals(0f, sleeping.propOffsetY, 0f)
         assertEquals(1f, sleeping.propAlpha, 0f)

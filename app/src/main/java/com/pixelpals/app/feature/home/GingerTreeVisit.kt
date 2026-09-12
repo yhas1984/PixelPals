@@ -5,7 +5,7 @@ import kotlin.math.hypot
 
 /** A return trip using existing feline pounce/landing poses, never a rotated walk. */
 internal class GingerTreeVisit(val startX: Float, val startY: Float) {
-    enum class Phase { APPROACH, COIL, ASCEND, LAND_BRANCH, PERCH, DESCEND, LAND_FLOOR, RETURN, DONE }
+    enum class Phase { APPROACH, COIL, ASCEND, LAND_BRANCH, PERCH, COIL_BRANCH, DESCEND, LAND_FLOOR, RETURN, DONE }
     var phase: Phase = Phase.APPROACH
         private set
     var elapsed: Float = 0f
@@ -18,13 +18,13 @@ internal class GingerTreeVisit(val startX: Float, val startY: Float) {
     val isAirborne: Boolean get() = phase == Phase.ASCEND || phase == Phase.DESCEND
     val facingLeft: Boolean get() = when (phase) {
         Phase.APPROACH -> TAKEOFF_X < startX
-        Phase.DESCEND, Phase.LAND_FLOOR -> false
-        Phase.RETURN -> startX < TAKEOFF_X
+        Phase.DESCEND, Phase.LAND_FLOOR, Phase.COIL_BRANCH -> false
+        Phase.RETURN, Phase.DONE -> startX < TAKEOFF_X
         else -> true
     }
     val clip: String get() = when (phase) {
         Phase.APPROACH, Phase.RETURN -> "walk"
-        Phase.COIL -> "stalk"
+        Phase.COIL, Phase.COIL_BRANCH -> "pounce"
         Phase.ASCEND, Phase.DESCEND -> "pounce"
         Phase.LAND_BRANCH, Phase.LAND_FLOOR -> "land"
         else -> "idle"
@@ -33,7 +33,7 @@ internal class GingerTreeVisit(val startX: Float, val startY: Float) {
         Phase.APPROACH -> hypot(x - startX, y - startY) / 105f * .54f
         Phase.RETURN -> hypot(x - TAKEOFF_X, y - FLOOR_Y) / 105f * .54f
         Phase.ASCEND, Phase.DESCEND -> .13f
-        Phase.COIL -> 0f
+        Phase.COIL, Phase.COIL_BRANCH -> 0f
         else -> elapsed
     }
     fun advance(delta: Float) {
@@ -46,6 +46,7 @@ internal class GingerTreeVisit(val startX: Float, val startY: Float) {
             Phase.DESCEND -> 1.1f
             Phase.LAND_BRANCH, Phase.LAND_FLOOR -> .35f
             Phase.PERCH -> 3f
+            Phase.COIL_BRANCH -> .35f
             Phase.DONE -> return
         }
         val t = (elapsed / duration).coerceIn(0f, 1f)

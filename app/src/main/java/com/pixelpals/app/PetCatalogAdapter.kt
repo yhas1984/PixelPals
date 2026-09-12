@@ -68,9 +68,11 @@ class PetCatalogAdapter(
         ) {
             val context = itemView.context
             val item: PetCatalogItem = row.item
+            val displayName: String = item.petType?.let { context.getString(it.displayNameResId) } ?: item.displayName
+            val descriptionText: String = item.petType?.let { context.getString(it.descriptionResId) } ?: item.description
             image.setImageResource(item.previewResId)
-            name.text = item.displayName
-            description.text = item.description.replace('\n', ' ')
+            name.text = displayName
+            description.text = descriptionText.replace('\n', ' ')
             badge.text = context.getString(
                 if (item.isPremium) R.string.selection_premium_badge else R.string.selection_base_badge,
             )
@@ -92,7 +94,7 @@ class PetCatalogAdapter(
             val accessibleState: String = getStateText(item)
             itemView.contentDescription = context.getString(
                 R.string.selection_item_content_description,
-                item.displayName,
+                displayName,
                 accessibleState,
                 description.text.toString(),
             )

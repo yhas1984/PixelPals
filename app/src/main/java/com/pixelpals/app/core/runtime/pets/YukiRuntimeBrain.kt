@@ -58,16 +58,18 @@ class YukiRuntimeBrain(
         event: PetEvent,
         context: PetBrainContext,
     ): PetBrainResult<YukiRuntimeState> = when (event) {
-        PetEvent.Tap -> output(
+        PetEvent.Tap -> if (state.mode == YukiRuntimeMode.MELT) meltPose(state) else output(
             state.copy(mode = YukiRuntimeMode.CURIOSITY, elapsedSeconds = 0f),
             "happy",
         )
-        PetEvent.HoldStarted -> output(
+        PetEvent.HoldStarted -> if (state.mode == YukiRuntimeMode.MELT) meltPose(state).copy(
+            hapticDurationMs = YukiRuntimeDefinition.value.interaction.holdHapticDurationMs,
+        ) else output(
             state.copy(mode = YukiRuntimeMode.TOUCH, elapsedSeconds = 0f),
             "touch",
             hapticDurationMs = YukiRuntimeDefinition.value.interaction.holdHapticDurationMs,
         )
-        PetEvent.HoldReleased -> output(
+        PetEvent.HoldReleased -> if (state.mode == YukiRuntimeMode.MELT) meltPose(state) else output(
             state.copy(mode = YukiRuntimeMode.RECOVER, elapsedSeconds = 0f),
             "happy",
         )
@@ -244,6 +246,9 @@ class YukiRuntimeBrain(
         if (thermalMode(state, context) == YukiRuntimeMode.MELT) melt(state) else idle(state, context)
 
     private fun thermalMode(state: YukiRuntimeState, context: PetBrainContext): YukiRuntimeMode {
+        context.environment.yukiHeatLatched?.let {
+            return if (it) YukiRuntimeMode.MELT else YukiRuntimeMode.IDLE
+        }
         val temperature = context.environment.batteryTemperatureCelsius
         val remainsMelted = state.meltLatched && (temperature == null || temperature > YukiRuntimeDefinition.MELT_EXIT_CELSIUS)
         return if (remainsMelted || temperature != null && temperature >= YukiRuntimeDefinition.MELT_ENTER_CELSIUS) {
@@ -253,9 +258,9 @@ class YukiRuntimeBrain(
         }
     }
 
-    private fun isHot(context: PetBrainContext): Boolean =
+    private fun isHot(context: PetBrainContext): Boolean = context.environment.yukiHeatLatched ?: (
         (context.environment.batteryTemperatureCelsius ?: Float.NEGATIVE_INFINITY) >=
-            YukiRuntimeDefinition.MELT_ENTER_CELSIUS
+            YukiRuntimeDefinition.MELT_ENTER_CELSIUS)
 
     private fun melt(state: YukiRuntimeState): PetBrainResult<YukiRuntimeState> {
         val elapsed: Float = if (state.mode == YukiRuntimeMode.MELT) state.elapsedSeconds else 0f
@@ -355,7 +360,7 @@ class YukiRuntimeBrain(
     }
 
     private companion object {
-        const val MELT_SECONDS: Float = .96f
+        const val MELT_SECONDS: Float = YukiRuntimeDefinition.MELT_SECONDS
         const val MINIMUM_WALK_DISTANCE_PIXELS: Float = 24f
         const val MINIMUM_WALK_DURATION_SECONDS: Float = 0.8f
         const val CURIOSITY_SECONDS: Float = 1.6f

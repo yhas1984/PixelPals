@@ -1,6 +1,7 @@
 package com.pixelpals.app
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -32,6 +33,8 @@ import com.pixelpals.app.notifications.PetCareReminderPreferences
 class SettingsFragment : Fragment() {
     companion object {
         private const val STATE_HAS_ANIMATED: String = "home_has_animated"
+        private const val PERMISSIONS_PREFS: String = "pixelpals_permissions"
+        private const val REQUESTED_NOTIFICATIONS: String = "requested_notifications"
     }
 
     private var bindingReference: ActivityMainBinding? = null
@@ -43,13 +46,10 @@ class SettingsFragment : Fragment() {
         PetCareReminderPreferences(requireContext())
     }
     private var hasAnimated: Boolean = false
-    private var isNotificationRequestAutomatic: Boolean = false
-
     private val overlayPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult(),
     ) {
         updatePermissionUi()
-        requestNotificationAutomatically()
     }
 
     private val notificationPermissionLauncher = registerForActivityResult(
@@ -177,33 +177,40 @@ class SettingsFragment : Fragment() {
     }
 
     private fun requestNotificationPermission() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
-        val isGranted: Boolean = ContextCompat.checkSelfPermission(
+        if (hasNotificationPermission()) {
+            if (!PetCareNotificationManager.isCareChannelEnabled(requireContext())) {
+                startActivity(Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
+                    .putExtra(Settings.EXTRA_APP_PACKAGE, requireContext().packageName)
+                    .putExtra(Settings.EXTRA_CHANNEL_ID, PetCareNotificationManager.CHANNEL_ID))
+            }
+            return
+        }
+        val needsRuntimePermission: Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && ContextCompat.checkSelfPermission(
             requireContext(),
             Manifest.permission.POST_NOTIFICATIONS,
-        ) == PackageManager.PERMISSION_GRANTED
-        if (!isGranted) {
-            analytics.track("notification_permission_requested")
+        ) != PackageManager.PERMISSION_GRANTED
+        analytics.track("notification_permission_requested")
+        if (needsRuntimePermission && !needsNotificationSettings()) {
+            requireContext().getSharedPreferences(PERMISSIONS_PREFS, Context.MODE_PRIVATE)
+                .edit().putBoolean(REQUESTED_NOTIFICATIONS, true).apply()
             notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-        }
-    }
-
-    private fun requestNotificationAutomatically() {
-        if (isNotificationRequestAutomatic) return
-        if (hasOverlayPermission() && !hasNotificationPermission()) {
-            isNotificationRequestAutomatic = true
-            requestNotificationPermission()
+        } else {
+            startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                .putExtra(Settings.EXTRA_APP_PACKAGE, requireContext().packageName))
         }
     }
 
     private fun hasOverlayPermission(): Boolean = Settings.canDrawOverlays(requireContext())
 
-    private fun hasNotificationPermission(): Boolean {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return true
-        return ContextCompat.checkSelfPermission(
-            requireContext(),
-            Manifest.permission.POST_NOTIFICATIONS,
-        ) == PackageManager.PERMISSION_GRANTED
+    private fun hasNotificationPermission(): Boolean = PetCareNotificationManager.canNotify(requireContext())
+
+    private fun needsNotificationSettings(): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return false
+        val context = requireContext()
+        val denied = ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        val requested = context.getSharedPreferences(PERMISSIONS_PREFS, Context.MODE_PRIVATE)
+            .getBoolean(REQUESTED_NOTIFICATIONS, false)
+        return denied && requested && !shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)
     }
 
     private fun hasUsageAccess(): Boolean = DesktopForegroundHelper.hasUsageAccess(requireContext())
@@ -213,13 +220,20 @@ class SettingsFragment : Fragment() {
         val isOverlayGranted: Boolean = hasOverlayPermission()
         val isNotificationGranted: Boolean = hasNotificationPermission()
         val isUsageGranted: Boolean = hasUsageAccess()
+        renderPermissionUi(isOverlayGranted, isNotificationGranted, isUsageGranted)
+    }
+
+    private fun renderPermissionUi(
+        isOverlayGranted: Boolean,
+        isNotificationGranted: Boolean,
+        isUsageGranted: Boolean,
+    ) {
         updatePermissionSummary(isOverlayGranted, isNotificationGranted, isUsageGranted)
         updateOverlayCard(isOverlayGranted)
         updateNotificationCard(isNotificationGranted)
         updateUsageCard(isUsageGranted)
-        val areRequiredPermissionsGranted: Boolean = isOverlayGranted && isNotificationGranted
-        binding.btnLaunch.isEnabled = areRequiredPermissionsGranted
-        binding.btnLaunch.alpha = if (areRequiredPermissionsGranted) 1f else 0.4f
+        binding.btnLaunch.isEnabled = isOverlayGranted
+        binding.btnLaunch.alpha = if (isOverlayGranted) 1f else 0.4f
         val isPetEnabled: Boolean = selectedPetStore.isPetEnabled()
         binding.btnStopPet.isEnabled = isPetEnabled
         binding.btnStopPet.alpha = if (isPetEnabled) 1f else 0.5f
@@ -232,16 +246,15 @@ class SettingsFragment : Fragment() {
         isUsageGranted: Boolean,
     ) {
         val launchReason: String = when {
-            !isOverlayGranted && !isNotificationGranted -> getString(R.string.launch_disabled_reason_both)
             !isOverlayGranted -> getString(R.string.launch_disabled_reason_overlay)
-            !isNotificationGranted -> getString(R.string.launch_disabled_reason_notification)
+            !isNotificationGranted -> getString(R.string.launch_ready_without_notifications)
             else -> getString(R.string.launch_ready)
         }
         binding.txtLaunchReason.text = launchReason
         binding.txtLaunchReason.setTextColor(
             ContextCompat.getColor(
                 requireContext(),
-                if (isOverlayGranted && isNotificationGranted) {
+                if (isOverlayGranted) {
                     R.color.status_success_fg
                 } else {
                     R.color.status_info_fg
@@ -277,15 +290,21 @@ class SettingsFragment : Fragment() {
             if (isGranted) R.color.green_success else R.color.coral_accent,
         )
         binding.statusNotification.text = getString(
-            if (isGranted) R.string.permission_granted else R.string.permission_required,
+            if (isGranted) R.string.permission_granted else R.string.permission_optional,
         )
         binding.statusNotification.setTextColor(color)
         binding.iconNotification.setColorFilter(color)
-        binding.btnNotification.visibility = if (isGranted) View.GONE else View.VISIBLE
-        binding.btnNotification.isEnabled = !isGranted
+        val channelBlocked: Boolean = isGranted && !PetCareNotificationManager.isCareChannelEnabled(requireContext())
+        binding.btnNotification.visibility = if (isGranted && !channelBlocked) View.GONE else View.VISIBLE
+        binding.btnNotification.isEnabled = !isGranted || channelBlocked
         binding.btnNotification.text = getString(
-            if (isGranted) R.string.permission_granted else R.string.grant_permission,
+            when {
+                channelBlocked -> R.string.care_channel_settings
+                !isGranted && needsNotificationSettings() -> R.string.notification_open_settings
+                else -> R.string.grant_permission
+            },
         )
+        binding.txtCareReminderSummary.setText(if (channelBlocked) R.string.care_channel_blocked else R.string.care_reminders_summary)
         binding.switchCareReminders.isEnabled = isGranted
         binding.switchCareReminders.alpha = if (isGranted) 1f else 0.5f
         binding.txtCareReminderSummary.alpha = if (isGranted) 1f else 0.5f
@@ -297,7 +316,7 @@ class SettingsFragment : Fragment() {
             if (isGranted) R.color.green_success else R.color.coral_accent,
         )
         binding.statusUsage.text = getString(
-            if (isGranted) R.string.permission_granted else R.string.permission_required,
+            if (isGranted) R.string.permission_granted else R.string.permission_optional,
         )
         binding.statusUsage.setTextColor(color)
         binding.iconUsage.setColorFilter(color)
@@ -311,14 +330,6 @@ class SettingsFragment : Fragment() {
     private fun openPetSelection() {
         if (!hasOverlayPermission()) {
             Toast.makeText(requireContext(), getString(R.string.overlay_needed), Toast.LENGTH_SHORT).show()
-            return
-        }
-        if (!hasNotificationPermission()) {
-            Toast.makeText(
-                requireContext(),
-                getString(R.string.notification_needed),
-                Toast.LENGTH_SHORT,
-            ).show()
             return
         }
         (requireActivity() as RootNavigator).navigate(PixelPalsDestination.PETS)

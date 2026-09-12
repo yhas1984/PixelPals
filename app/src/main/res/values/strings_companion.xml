@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="adventure_unknown">This saved trip cannot be recognised. You can cancel it to continue playing; no rewards will be granted.</string>
+    <string name="home_guide_name">Every friendship starts with a name. Choose one for your new companion.</string>
+    <string name="home_guide_care">Say hello to %1$s with a gentle stroke. You can also touch your pet in the home.</string>
+    <string name="home_guide_desktop">Your first moment together! %1$s can also keep you company on your screen. This is optional: your home works without that permission.</string>
+    <string name="home_guide_pet">Give some affection</string>
+    <string name="home_guide_skip">Explore on my own</string>
     <string name="home_title">A little world, together</string>
     <string name="home_subtitle">Make yourself at home</string>
     <string name="home_cozy">Cozy room</string>
@@ -19,12 +25,17 @@
     <string name="home_greeting_new">%1$s is getting to know you. Try a gentle touch.</string>
     <string name="home_greeting_friend">%1$s recognises you and comes a little closer.</string>
     <string name="home_greeting_close">%1$s feels at home with you.</string>
-    <string name="home_favorite">Favourite: %1$s · %2$d shared games</string>
+    <plurals name="home_favorite">
+        <item quantity="one">Favourite: %1$s · %2$d shared game</item>
+        <item quantity="other">Favourite: %1$s · %2$d shared games</item>
+    </plurals>
     <string name="home_needs">Food %1$d · Energy %2$d · Hygiene %3$d · Bond %4$d</string>
     <string name="home_loading">Preparing your home…</string>
     <string name="home_error">We could not save or load this change. Please try again.</string>
     <string name="home_retry">Try again</string>
     <string name="home_done">Done</string>
+    <string name="home_save_name">Save name</string>
+    <string name="home_saving_name">Saving…</string>
     <string name="home_close">Back to home</string>
     <string name="home_environment">Choose your surroundings</string>
     <string name="home_place">Place in the room</string>
@@ -34,7 +45,7 @@
     <string name="home_occupied">That spot is occupied. Choose a free one.</string>
     <string name="home_object">%1$s. Tap to interact; drag in decorating mode.</string>
     <string name="home_desktop_object">Use on desktop</string>
-    <string name="home_use">Play with this object</string>
+    <string name="home_use">Use this object</string>
     <string name="home_wallet">%1$d coins</string>
     <string name="home_buy">Get for %1$d coins</string>
     <string name="home_owned">In your collection</string>
@@ -124,4 +135,6 @@
     <string-array name="home_depth_names"><item>Back</item><item>Middle</item><item>Front</item></string-array>
     <string-array name="home_side_names"><item>Left</item><item>Left of centre</item><item>Centre</item><item>Right of centre</item><item>Right</item></string-array>
     <string name="home_add_object">Add object</string>
+    <string name="adventure_ready">%1$s has finished exploring %2$s.</string>
+    <string name="adventure_ready_hint">Collect the discoveries to bring your companion home and resume care.</string>
 </resources>

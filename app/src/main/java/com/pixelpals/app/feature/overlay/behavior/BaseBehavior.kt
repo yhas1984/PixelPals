@@ -54,9 +54,13 @@ abstract class BaseBehavior(
             }
             val size: Float = bridge.petSpriteSize * bridge.spriteScale * spriteAtlasDrawScale
             val pivot: Float = spec?.pivot?.y?.toFloat()?.div(spec.frameHeight) ?: .5f
+            val halfSize: Float = size * .5f
+            val cameraScale: Float = getFrameCameraScale(index)
+            val ground: Float = (frameGround * 2f - 1f) * halfSize
+            val cameraBottom: Float = ground + ((bottom - .5f) * size - ground) * cameraScale
             val radians: Double = Math.toRadians(bridge.renderRotation.toDouble())
             return bridge.renderOffsetY + (.5f - pivot) * size +
-                (bottom - .5f) * size * bridge.renderScaleY * cos(radians).toFloat()
+                cameraBottom * bridge.renderScaleY * cos(radians).toFloat()
         }
 
     protected var time: Float = 0f
@@ -97,6 +101,7 @@ abstract class BaseBehavior(
     abstract val resourceIds: List<Int>
 
     protected open fun getFrameCameraScale(index: Int): Float = 1f
+    protected open fun isFrameMirrored(index: Int): Boolean = false
     protected open val frameGround: Float = .5f
     protected open val preloadAllFrames: Boolean = false
 
@@ -400,7 +405,7 @@ abstract class BaseBehavior(
     override fun updateDrag(dt: Float) {
         time += dt
         bridge.animRotation = 0f
-        bridge.animScaleX = 1f
+        bridge.animScaleX = if (bridge.animScaleX < 0f) -1f else 1f
         bridge.animScaleY = 1f
         bridge.animOffsetX = 0f
         bridge.animOffsetY = 0f
@@ -423,14 +428,14 @@ abstract class BaseBehavior(
         }
         params.y = newY.toInt()
         bridge.updateWindowLayout(params)
-        bridge.animScaleY = 1.15f
-        bridge.animScaleX = 0.9f
+        bridge.animScaleY = 1f
+        bridge.animScaleX = if (bridge.animScaleX < 0f) -1f else 1f
     }
 
     override fun updateJumping(dt: Float) {
         time += dt
-        bridge.animScaleY = 1.2f
-        bridge.animScaleX = 0.8f
+        bridge.animScaleY = 1f
+        bridge.animScaleX = if (bridge.animScaleX < 0f) -1f else 1f
     }
 
     override fun updateAutonomous(dt: Float) {
@@ -554,6 +559,7 @@ abstract class BaseBehavior(
         val conditionRotation = if (bridge.petStatus.condition == PetCondition.SICK) sin(time * 18f) * 2.2f else 0f
         canvas.rotate(bridge.renderRotation + conditionRotation)
         canvas.scale(bridge.renderScaleX, bridge.renderScaleY)
+        if (isFrameMirrored(drawnFrame)) canvas.scale(-1f, 1f)
         spriteDestinationRect.set(-halfSize, -halfSize, halfSize, halfSize)
         val cameraScale: Float = getFrameCameraScale(drawnFrame)
         if (cameraScale != 1f) {
@@ -603,9 +609,13 @@ abstract class BaseBehavior(
         val scaleX = bridge.renderScaleX
         val scaleY = bridge.renderScaleY
         if (kotlin.math.abs(scaleX) < MINIMUM_HIT_SCALE || kotlin.math.abs(scaleY) < MINIMUM_HIT_SCALE) return false
-        val spriteX = unrotatedX / scaleX
-        val spriteY = unrotatedY / scaleY
-        val frameX = (((spriteX / halfSize) + 1f) * 0.5f * spec.frameWidth).toInt()
+        val cameraScale = getFrameCameraScale(frameIndex)
+        if (!cameraScale.isFinite() || kotlin.math.abs(cameraScale) < MINIMUM_HIT_SCALE) return false
+        val ground = (frameGround * 2f - 1f) * halfSize
+        val spriteX = unrotatedX / scaleX / cameraScale
+        val spriteY = ground + (unrotatedY / scaleY - ground) / cameraScale
+        val sourceX = if (isFrameMirrored(frameIndex)) -spriteX else spriteX
+        val frameX = (((sourceX / halfSize) + 1f) * 0.5f * spec.frameWidth).toInt()
         val frameY = (((spriteY / halfSize) + 1f) * 0.5f * spec.frameHeight).toInt()
         return mask.isOpaque(frameIndex, frameX, frameY)
     }

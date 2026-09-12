@@ -11,6 +11,63 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class FloatingRestTest {
+    @Test fun angelReducedRestSettlesEveryFloatingModeBeforeHandoff(): Unit {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        instrumentation.runOnMainSync {
+            val modes: List<String> = listOf("CRUISE", "GLIDE", "GRACE", "HOVER")
+            for (modeName: String in modes) {
+                val bridge = TestPetBridge(instrumentation.targetContext, PetType.ANGEL)
+                val behavior = AngelBehavior(bridge, SeededPetRandom(12))
+                try {
+                    val modeField = AngelBehavior::class.java.getDeclaredField("mode").apply { isAccessible = true }
+                    val modeValue = modeField.type.enumConstants!!.first { (it as Enum<*>).name == modeName }
+                    modeField.set(behavior, modeValue)
+                    val velocityX = AngelBehavior::class.java.getDeclaredField("velocityX").apply { isAccessible = true }
+                    val velocityY = AngelBehavior::class.java.getDeclaredField("velocityY").apply { isAccessible = true }
+                    velocityX.setFloat(behavior, 100f)
+                    velocityY.setFloat(behavior, 100f)
+                    assertFalse("$modeName must not hand off while moving", behavior.canStartScheduledSleep(true))
+                    val originalX: Int = bridge.getWindowParams().x
+                    val originalY: Int = bridge.getWindowParams().y
+                    behavior.onScheduledRestRequested(true)
+                    repeat(90) {
+                        behavior.advanceScheduledRestTransition(1f / 60f, true)
+                        assertEquals(originalX, bridge.getWindowParams().x)
+                        assertEquals(originalY, bridge.getWindowParams().y)
+                        if (bridge.alpha < 1f) {
+                            assertFalse("$modeName handed off during fade", behavior.canStartScheduledSleep(true))
+                        }
+                    }
+                    assertEquals("PRAYER", (modeField.get(behavior) as Enum<*>).name)
+                    assertEquals(0f, velocityX.getFloat(behavior), 0.001f)
+                    assertEquals(0f, velocityY.getFloat(behavior), 0.001f)
+                    val params = bridge.getWindowParams()
+                    val targetX = AngelBehavior::class.java.getDeclaredField("flightTargetX").apply { isAccessible = true }
+                    val targetY = AngelBehavior::class.java.getDeclaredField("flightTargetY").apply { isAccessible = true }
+                    assertEquals(params.x.toFloat(), targetX.getFloat(behavior), 0.001f)
+                    assertEquals(params.y.toFloat(), targetY.getFloat(behavior), 0.001f)
+                    assertTrue(behavior.canStartScheduledSleep(true))
+                } finally { behavior.destroy() }
+            }
+        }
+    }
+
+    @Test fun angelTouchNeverStartsReducedRestFade(): Unit {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        instrumentation.runOnMainSync {
+            val bridge = TestPetBridge(instrumentation.targetContext, PetType.ANGEL)
+            val behavior = AngelBehavior(bridge, SeededPetRandom(12))
+            try {
+                val mode = AngelBehavior::class.java.getDeclaredField("mode").apply { isAccessible = true }
+                mode.set(behavior, mode.type.enumConstants!!.first { (it as Enum<*>).name == "TOUCH" })
+                behavior.onScheduledRestRequested(true)
+                repeat(10) { behavior.advanceScheduledRestTransition(1f / 60f, true) }
+                assertEquals(1f, bridge.alpha, 0f)
+                assertFalse(behavior.canStartScheduledSleep(true))
+            } finally { behavior.destroy() }
+        }
+    }
+
     @Test fun angelRecoveryCanFinishWithoutTravelInReducedMotion(): Unit {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         instrumentation.runOnMainSync {

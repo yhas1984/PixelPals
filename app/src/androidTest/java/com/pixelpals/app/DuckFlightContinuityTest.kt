@@ -16,15 +16,22 @@ import kotlin.math.abs
 class DuckFlightContinuityTest {
     @Test fun flightReturnsToGroundWithoutResettingTakeoffHeight(): Unit {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
+        lateinit var bridge: TestPetBridge
+        lateinit var behavior: DuckBehavior
         instrumentation.runOnMainSync {
-            val bridge = TestPetBridge(instrumentation.targetContext, PetType.PATITO)
-            val behavior = DuckBehavior(bridge, SeededPetRandom(12))
-            try {
-                // Exercise the real motion controller without depending on asynchronous bitmap IO.
-                BaseBehavior::class.java.getDeclaredField("isLoading").apply { isAccessible = true }.setBoolean(behavior, false)
-                val frames = BaseBehavior::class.java.getDeclaredField("frames").apply { isAccessible = true }
-                @Suppress("UNCHECKED_CAST")
-                (frames.get(behavior) as MutableList<android.graphics.Bitmap?>).add(null)
+            bridge = TestPetBridge(instrumentation.targetContext, PetType.PATITO)
+            behavior = DuckBehavior(bridge, SeededPetRandom(12))
+        }
+        try {
+            val loading = BaseBehavior::class.java.getDeclaredField("isLoading").apply { isAccessible = true }
+            var ready = false
+            for (attempt in 0 until 80) {
+                instrumentation.runOnMainSync { ready = !loading.getBoolean(behavior) }
+                if (ready) break
+                Thread.sleep(50)
+            }
+            assertTrue("Real duck assets must load", ready)
+            instrumentation.runOnMainSync {
                 val mode = DuckBehavior::class.java.getDeclaredField("mode").apply { isAccessible = true }
                 bridge.getWindowParams().y = bridge.groundY
                 behavior.onInteract()
@@ -50,7 +57,7 @@ class DuckFlightContinuityTest {
                 }
                 assertTrue("A flight must reach a sleep-safe pause", reachedRest)
                 assertTrue(phases.containsAll(setOf("TAKEOFF", "FLUTTER", "LANDING", "LAND_END", "QUACK")))
-            } finally { behavior.destroy() }
-        }
+            }
+        } finally { instrumentation.runOnMainSync { behavior.destroy() } }
     }
 }

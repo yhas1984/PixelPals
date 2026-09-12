@@ -34,6 +34,21 @@ class CompanionRepository(
         home
     }
 
+    /**
+     * Selects the souvenir displayed in this pet's home. A null value enables the
+     * compatibility fallback (the first discovered item); an empty value hides it.
+     */
+    suspend fun selectTreasure(pet: PetType, treasureId: String?): Boolean = db.withTransaction {
+        if (treasureId != null && treasureId.isNotEmpty()) {
+            val definition = TreasureCatalog.getById(treasureId) ?: return@withTransaction false
+            val treasure = db.treasureDao().getTreasure(definition.emoji)
+            if ((treasure?.totalFound ?: 0) <= 0) return@withTransaction false
+        }
+        val home = ensureHome(pet)
+        dao.saveHome(home.copy(selectedTreasureId = treasureId))
+        true
+    }
+
     suspend fun adopt(pet: PetType, name: String): Unit = db.withTransaction {
         val home: CompanionHomeEntity = ensureHome(pet)
         val nickname: String = name.trim().take(24)
@@ -108,8 +123,9 @@ class CompanionRepository(
         refreshExpedition()
         val expedition: CompanionExpeditionEntity = dao.getExpedition() ?: return@withTransaction false
         if (expedition.requestId != requestId) return@withTransaction false
-        val destination: ExpeditionDestination = ExpeditionDestination.find(expedition.destination) ?: return@withTransaction false
-        if (!cancel && expedition.elapsedMs < destination.durationMs) return@withTransaction false
+        val destination: ExpeditionDestination? = ExpeditionDestination.find(expedition.destination)
+        if (!cancel && (destination == null || PetType.entries.none { it.name.lowercase() == expedition.petId } ||
+                expedition.elapsedMs < destination.durationMs)) return@withTransaction false
         val now: Long = wallTime()
         // Shift illness timers as well as needs, so travel never counts as neglect.
         db.petStatusDao().getByPetId(expedition.petId)?.let { status ->
@@ -123,9 +139,10 @@ class CompanionRepository(
                 criticalNeedsStartedAt = if (status.criticalNeedsStartedAt > 0) status.criticalNeedsStartedAt + paused else 0))
         }
         if (!cancel) {
-            economy.grantExpeditionTreasure(expedition.petId, TreasureCatalog.all[destination.treasureIndex].emoji)
-            DecorationCatalog.all.filter { it.expedition == destination.id }.forEach { dao.own(DecorationInventoryEntity(it.id, now)) }
-            dao.remember(CompanionJournalEntity("expedition:$requestId", expedition.petId, "expedition", destination.id, now))
+            val knownDestination: ExpeditionDestination = requireNotNull(destination)
+            economy.grantExpeditionTreasure(expedition.petId, TreasureCatalog.all[knownDestination.treasureIndex].emoji)
+            DecorationCatalog.all.filter { it.expedition == knownDestination.id }.forEach { dao.own(DecorationInventoryEntity(it.id, now)) }
+            dao.remember(CompanionJournalEntity("expedition:$requestId", expedition.petId, "expedition", knownDestination.id, now))
         }
         dao.clearExpedition(requestId)
         true

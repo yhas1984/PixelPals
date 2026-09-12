@@ -103,6 +103,39 @@ class PetPhysicsTest {
     }
 
     @Test
+    fun groundSettlingSnapsNearFloorWithoutChangingHorizontalPosition() {
+        val initialX: Float = 500f
+        val result: PhysicsStepResult = PetPhysics.step(
+            PhysicsBody(initialX, bounds.floor - .75f, 3f, 1f),
+            0f,
+            bounds,
+            PhysicsProfile.GROUND,
+        )
+        assertEquals(PhysicsEvent.SETTLED, result.event)
+        assertEquals(initialX, result.body.x, 0f)
+        assertEquals(bounds.floor.toFloat(), result.body.y, 0f)
+        assertEquals(0f, result.body.velocityX, 0f)
+        assertEquals(0f, result.body.velocityY, 0f)
+    }
+
+    @Test
+    fun profilesWithoutFloorRequirementSettleInPlace() {
+        val initialY: Float = bounds.floor - .75f
+        for (profile: PhysicsProfile in listOf(PhysicsProfile.AQUATIC, PhysicsProfile.FLYING)) {
+            val result: PhysicsStepResult = PetPhysics.step(
+                PhysicsBody(500f, initialY, 1f, 1f),
+                0f,
+                bounds,
+                profile,
+            )
+            assertEquals(profile.name, PhysicsEvent.SETTLED, result.event)
+            assertEquals(profile.name, initialY, result.body.y, 0f)
+            assertEquals(profile.name, 0f, result.body.velocityX, 0f)
+            assertEquals(profile.name, 0f, result.body.velocityY, 0f)
+        }
+    }
+
+    @Test
     fun flyingProfileDampsAndSettlesInAir() {
         val body = PhysicsBody(x = 500f, y = 1_000f, velocityX = 400f, velocityY = 0f)
         val result = simulate(body, PhysicsProfile.FLYING, 3f)

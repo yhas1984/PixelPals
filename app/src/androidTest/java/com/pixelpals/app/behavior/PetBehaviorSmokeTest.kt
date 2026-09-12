@@ -51,7 +51,7 @@ class PetBehaviorSmokeTest {
                     80f,
                     80f
                 )
-                assertBridgeIsValid(petType, bridge)
+                assertBridgeIsValid(petType, bridge, behavior)
                 assertTrue(
                     "$petType quedó atrapado en DRAGGING tras el fling",
                     bridge.state != PetState.DRAGGING
@@ -82,11 +82,13 @@ class PetBehaviorSmokeTest {
         }
     }
 
-    private fun assertBridgeIsValid(petType: PetType, bridge: TestPetBridge) {
+    private fun assertBridgeIsValid(petType: PetType, bridge: TestPetBridge, behavior: PetBehavior) {
         val params = bridge.getWindowParams()
         val maxX = bridge.screenWidth - bridge.petSpriteSize
         val maxY = bridge.screenHeight - bridge.petSpriteSize
-        val maxFrame = maxFrameByPet[petType] ?: Int.MAX_VALUE
+        val atlasRects = BaseBehavior::class.java.getDeclaredField("spriteFrameRects").apply { isAccessible = true }
+            .get(behavior) as List<*>
+        val maxFrame = if (atlasRects.isNotEmpty()) atlasRects.lastIndex else maxFrameByPet[petType] ?: Int.MAX_VALUE
         assertTrue("$petType x out of bounds: ${params.x}", params.x in 0..maxX)
         assertTrue("$petType y out of bounds: ${params.y}", params.y in 0..maxY)
         assertTrue("$petType frame out of range: ${bridge.currentFrame}", bridge.currentFrame in 0..maxFrame)
@@ -127,7 +129,7 @@ class PetBehaviorSmokeTest {
             PetType.DIABLILLO to 9,
             PetType.MOKI to 19,
             PetType.ANGEL to 15,
-            PetType.GINGER to 15,
+            PetType.GINGER to 18,
             PetType.YUKI to 15,
             PetType.PIRU to 15,
             PetType.TARO to 39,

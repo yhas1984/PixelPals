@@ -19,3 +19,10 @@ val COMPANION_MIGRATION_9_10: Migration = object : Migration(9, 10) {
         db.execSQL("ALTER TABLE companion_expedition ADD COLUMN resumeDesktop INTEGER NOT NULL DEFAULT 0")
     }
 }
+
+/** Preserve existing homes while adding the optional per-pet exhibited treasure. */
+val COMPANION_MIGRATION_10_11: Migration = object : Migration(10, 11) {
+    override fun migrate(db: SupportSQLiteDatabase): Unit {
+        db.execSQL("ALTER TABLE companion_home ADD COLUMN selectedTreasureId TEXT DEFAULT NULL")
+    }
+}

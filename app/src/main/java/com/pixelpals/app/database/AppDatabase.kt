@@ -23,7 +23,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         CompanionJournalEntity::class,
         CompanionExpeditionEntity::class,
     ],
-    version = 10,
+    version = 11,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -235,6 +235,7 @@ abstract class AppDatabase : RoomDatabase() {
                     MIGRATION_7_8,
                     COMPANION_MIGRATION_8_9,
                     COMPANION_MIGRATION_9_10,
+                    COMPANION_MIGRATION_10_11,
                 )
                 .build()
                 INSTANCE = instance

@@ -17,8 +17,10 @@ class ImpWingPainter {
         null, Shader.TileMode.CLAMP)
     private val edge: Int = Color.rgb(91, 40, 30)
     private val rib: Int = Color.rgb(236, 146, 94)
+    private var resting: Float = 0f
 
-    fun draw(canvas: Canvas, center: CarePoint, size: Float, fold: Float, foreground: Boolean): Unit {
+    fun draw(canvas: Canvas, center: CarePoint, size: Float, fold: Float, foreground: Boolean, rest: Float = 0f): Unit {
+        resting = rest.coerceIn(0f, 1f)
         val amount: Float = fold.coerceIn(0f, 1f)
         val alpha: Int = if (foreground) (255 * amount).toInt() else 255
         if (alpha == 0) return
@@ -61,13 +63,15 @@ class ImpWingPainter {
     private fun createMembrane(fold: Float): Unit {
         path.reset()
         path.moveTo(.15f, -.05f)
-        path.cubicTo(.23f, mix(-.29f, -.10f, fold), mix(.43f, .04f, fold), mix(-.39f, -.05f, fold),
-            mix(.60f, -.16f, fold), mix(-.34f, .01f, fold))
-        path.quadTo(mix(.49f, -.12f, fold), mix(-.10f, .12f, fold),
-            mix(.55f, -.16f, fold), mix(.11f, .20f, fold))
-        path.quadTo(mix(.42f, -.05f, fold), mix(.04f, .16f, fold),
-            mix(.35f, -.04f, fold), mix(.23f, .27f, fold))
-        path.quadTo(mix(.28f, .05f, fold), mix(.14f, .21f, fold), mix(.20f, .12f, fold), .29f)
+        path.cubicTo(settle(.23f, .20f), settle(mix(-.29f, -.10f, fold), -.01f),
+            settle(mix(.43f, .04f, fold), .28f), settle(mix(-.39f, -.05f, fold), .16f),
+            settle(mix(.60f, -.16f, fold), .30f), settle(mix(-.34f, .01f, fold), .28f))
+        path.quadTo(settle(mix(.49f, -.12f, fold), .25f), settle(mix(-.10f, .12f, fold), .26f),
+            settle(mix(.55f, -.16f, fold), .22f), settle(mix(.11f, .20f, fold), .23f))
+        path.quadTo(settle(mix(.42f, -.05f, fold), .20f), settle(mix(.04f, .16f, fold), .23f),
+            settle(mix(.35f, -.04f, fold), .18f), settle(mix(.23f, .27f, fold), .18f))
+        path.quadTo(settle(mix(.28f, .05f, fold), .17f), settle(mix(.14f, .21f, fold), .17f),
+            settle(mix(.20f, .12f, fold), .16f), settle(.29f, .13f))
         path.quadTo(mix(.19f, .24f, fold), .17f, mix(.13f, .23f, fold), .06f)
         path.close()
     }
@@ -78,14 +82,16 @@ class ImpWingPainter {
         paint.strokeWidth = .009f
         path.reset()
         path.moveTo(.17f, -.04f)
-        path.quadTo(mix(.34f, .01f, fold), mix(-.20f, .05f, fold),
-            mix(.55f, -.16f, fold), mix(.11f, .20f, fold))
+        path.quadTo(settle(mix(.34f, .01f, fold), .24f), settle(mix(-.20f, .05f, fold), .12f),
+            settle(mix(.55f, -.16f, fold), .22f), settle(mix(.11f, .20f, fold), .23f))
         path.moveTo(.17f, -.04f)
-        path.quadTo(mix(.27f, .10f, fold), .04f, mix(.35f, -.04f, fold), mix(.23f, .27f, fold))
+        path.quadTo(settle(mix(.27f, .10f, fold), .20f), settle(.04f, .10f),
+            settle(mix(.35f, -.04f, fold), .18f), settle(mix(.23f, .27f, fold), .18f))
         path.moveTo(.17f, -.04f)
-        path.quadTo(.16f, .13f, mix(.20f, .12f, fold), .29f)
+        path.quadTo(.16f, .13f, settle(mix(.20f, .12f, fold), .16f), settle(.29f, .13f))
         canvas.drawPath(path, paint)
     }
 
     private fun mix(open: Float, closed: Float, amount: Float): Float = open + (closed - open) * amount
+    private fun settle(value: Float, target: Float): Float = mix(value, target, resting)
 }

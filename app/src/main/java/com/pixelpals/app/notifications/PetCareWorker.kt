@@ -40,7 +40,7 @@ class PetCareWorker(
         )
         val wasShown: Boolean = if (
             decision != null &&
-            PetCareNotificationManager.canNotify(applicationContext)
+            PetCareNotificationManager.canSendCareReminder(applicationContext)
         ) {
             PetCareNotificationManager.show(applicationContext, petType, decision)
         } else {

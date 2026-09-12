@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.pixelpals.app.core.domain.PetType
 import com.pixelpals.app.core.services.AppServices
 import com.pixelpals.app.data.repository.PixelPalsRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,52 +22,67 @@ data class TreasureAlbumUiState(
     val giftResult: TreasureGiftResult? = null,
 )
 
-class TreasureAlbumViewModel(
-    private val repository: PixelPalsRepository,
-    private val petType: PetType,
+class TreasureAlbumViewModel internal constructor(
+    private val loadCollection: suspend () -> TreasureCollection,
+    private val sendGift: suspend (String, Boolean) -> TreasureGiftResult,
 ) : ViewModel() {
+    constructor(repository: PixelPalsRepository, petType: PetType) : this(
+        loadCollection = { repository.getTreasureCollection(petType) },
+        sendGift = { id, acceptsNoReward -> repository.giftTreasure(petType, id, acceptsNoReward) },
+    )
+
     private val mutableUiState: MutableStateFlow<TreasureAlbumUiState> =
         MutableStateFlow(TreasureAlbumUiState())
     val uiState: StateFlow<TreasureAlbumUiState> = mutableUiState.asStateFlow()
+    private var isRefreshing: Boolean = false
 
     init {
         refresh()
     }
 
     fun refresh(): Unit {
+        if (isRefreshing || mutableUiState.value.isGiftInProgress) return
+        isRefreshing = true
+        mutableUiState.update { state -> state.copy(isLoading = true, hasError = false) }
         viewModelScope.launch {
-            mutableUiState.update { state -> state.copy(isLoading = true, hasError = false) }
-            runCatching { repository.getTreasureCollection(petType) }
-                .onSuccess { collection ->
-                    mutableUiState.update { state ->
-                        state.copy(isLoading = false, collection = collection, hasError = false)
-                    }
+            try {
+                val collection = loadCollection()
+                mutableUiState.update { state ->
+                    state.copy(isLoading = false, collection = collection, hasError = false)
                 }
-                .onFailure {
-                    mutableUiState.update { state -> state.copy(isLoading = false, hasError = true) }
-                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                mutableUiState.update { state -> state.copy(isLoading = false, hasError = true) }
+            } finally {
+                isRefreshing = false
+            }
         }
     }
 
     fun giftTreasure(item: TreasureCollectionItem, acceptsNoBondReward: Boolean): Unit {
-        if (mutableUiState.value.isGiftInProgress) return
+        val state = mutableUiState.value
+        if (state.isGiftInProgress || state.isLoading || state.hasError) return
+        val currentItem = state.collection?.items?.firstOrNull { it.id == item.id } ?: return
+        if (!currentItem.canGift) return
+        // Reserve synchronously, before dispatch, so repeated taps share one operation.
+        mutableUiState.update { it.copy(isGiftInProgress = true, giftResult = null) }
         viewModelScope.launch {
-            mutableUiState.update { state -> state.copy(isGiftInProgress = true, giftResult = null) }
             val result: TreasureGiftResult = runCatching {
-                repository.giftTreasure(
-                    petType = petType,
-                    treasureId = item.id,
-                    acceptsNoBondReward = acceptsNoBondReward,
-                )
+                sendGift(item.id, acceptsNoBondReward)
             }.getOrElse {
+                if (it is CancellationException) throw it
                 mutableUiState.update { state ->
                     state.copy(isGiftInProgress = false, hasError = true)
                 }
                 return@launch
             }
             val collection: TreasureCollection? = runCatching {
-                repository.getTreasureCollection(petType)
-            }.getOrNull()
+                loadCollection()
+            }.getOrElse {
+                if (it is CancellationException) throw it
+                null
+            }
             mutableUiState.update { state ->
                 state.copy(
                     isGiftInProgress = false,

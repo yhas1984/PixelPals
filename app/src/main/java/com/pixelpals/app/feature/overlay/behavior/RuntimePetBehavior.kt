@@ -43,6 +43,9 @@ open class RuntimePetBehavior<S : PetBrainState>(
     private var batteryPercent: Int = 100
     private var isCharging: Boolean = false
     private var batteryTemperatureCelsius: Float? = null
+    private val thermalMemory: com.pixelpals.app.core.thermal.YukiThermalMemory? =
+        (bridge as? android.view.View)?.takeIf { definition.petId == "yuki" }?.context
+            ?.let { com.pixelpals.app.core.thermal.YukiThermalMemory(it) }
     private var isKeyboardVisible: Boolean = false
     private var isAirplaneModeEnabled: Boolean = false
     private var lastStatus: PetRuntimeStatus = bridge.petStatus.toRuntimeStatus()
@@ -148,6 +151,7 @@ open class RuntimePetBehavior<S : PetBrainState>(
 
     final override fun onBatteryTemperatureChanged(temperatureCelsius: Float?) {
         batteryTemperatureCelsius = temperatureCelsius?.takeIf(Float::isFinite)
+        thermalMemory?.update(batteryTemperatureCelsius)
         publishEnvironment()
     }
 
@@ -248,6 +252,7 @@ open class RuntimePetBehavior<S : PetBrainState>(
         batteryTemperatureCelsius = batteryTemperatureCelsius,
         isKeyboardVisible = isKeyboardVisible,
         isAirplaneModeEnabled = isAirplaneModeEnabled,
+        yukiHeatLatched = thermalMemory?.update(null),
     )
 
     private fun com.pixelpals.app.status.PetStatusSnapshot.toRuntimeStatus(): PetRuntimeStatus = PetRuntimeStatus(

@@ -123,6 +123,7 @@ data class PetEnvironment(
     val batteryTemperatureCelsius: Float? = null,
     val isKeyboardVisible: Boolean = false,
     val isAirplaneModeEnabled: Boolean = false,
+    val yukiHeatLatched: Boolean? = null,
 ) {
     init {
         require(batteryPercent in 0..100) { "Battery percent must be between zero and one hundred" }

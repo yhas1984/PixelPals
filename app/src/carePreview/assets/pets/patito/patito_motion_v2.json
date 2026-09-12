@@ -1,0 +1,185 @@
+{
+  "version": 2,
+  "petId": "patito",
+  "atlasPath": "pets/patito/patito_motion_v2.png",
+  "frameWidth": 256,
+  "frameHeight": 256,
+  "columns": 4,
+  "rows": 4,
+  "frameCount": 16,
+  "pivot": {
+    "x": 128,
+    "y": 128
+  },
+  "renderHints": {
+    "innerTransparentPaddingPx": 4,
+    "recommendedBleedInsetPx": 0,
+    "filterBitmap": true,
+    "preserveFrameAnchors": true,
+    "drawScale": 1.0
+  },
+  "clips": [
+    {
+      "id": "idle",
+      "frames": [
+        8
+      ],
+      "loop": true,
+      "frameDurationMs": 500
+    },
+    {
+      "id": "walk",
+      "frames": [
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "loop": true,
+      "frameDurationMs": 130
+    },
+    {
+      "id": "swim",
+      "frames": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "loop": true,
+      "frameDurationMs": 250
+    },
+    {
+      "id": "takeoff",
+      "frames": [
+        8,
+        4,
+        9
+      ],
+      "loop": false,
+      "frameDurationMs": 120
+    },
+    {
+      "id": "flutter",
+      "frames": [
+        4,
+        9
+      ],
+      "loop": true,
+      "frameDurationMs": 120
+    },
+    {
+      "id": "land",
+      "frames": [
+        6,
+        7,
+        8
+      ],
+      "loop": false,
+      "frameDurationMs": 140
+    },
+    {
+      "id": "play",
+      "frames": [
+        8,
+        8,
+        7,
+        8
+      ],
+      "loop": true,
+      "frameDurationMs": 350
+    },
+    {
+      "id": "sleep",
+      "frames": [
+        8
+      ],
+      "loop": false,
+      "frameDurationMs": 500
+    },
+    {
+      "id": "wake",
+      "frames": [
+        8
+      ],
+      "loop": false,
+      "frameDurationMs": 300
+    },
+    {
+      "id": "legacy_wing",
+      "frames": [
+        5
+      ],
+      "loop": false,
+      "frameDurationMs": 120
+    }
+  ],
+  "frames": [
+    {
+      "index": 0,
+      "name": "legacy_0"
+    },
+    {
+      "index": 1,
+      "name": "legacy_1"
+    },
+    {
+      "index": 2,
+      "name": "legacy_2"
+    },
+    {
+      "index": 3,
+      "name": "legacy_3"
+    },
+    {
+      "index": 4,
+      "name": "legacy_4"
+    },
+    {
+      "index": 5,
+      "name": "legacy_5"
+    },
+    {
+      "index": 6,
+      "name": "legacy_6"
+    },
+    {
+      "index": 7,
+      "name": "legacy_7"
+    },
+    {
+      "index": 8,
+      "name": "legacy_8"
+    },
+    {
+      "index": 9,
+      "name": "legacy_9"
+    },
+    {
+      "index": 10,
+      "name": "walk_0"
+    },
+    {
+      "index": 11,
+      "name": "walk_1"
+    },
+    {
+      "index": 12,
+      "name": "walk_2"
+    },
+    {
+      "index": 13,
+      "name": "walk_3"
+    },
+    {
+      "index": 14,
+      "name": "walk_4"
+    },
+    {
+      "index": 15,
+      "name": "walk_5"
+    }
+  ]
+}

@@ -5,6 +5,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
 import com.pixelpals.app.core.care.scene.CareSceneAction
+import com.pixelpals.app.core.care.scene.CareSpoonGeometry
 import com.pixelpals.app.core.care.scene.PetCareProfile
 import com.pixelpals.app.core.domain.PetType
 
@@ -110,9 +111,10 @@ class CarePropPainter {
 
     private fun drawSpoon(canvas: Canvas, amount: Float): Unit {
         canvas.save()
-        canvas.rotate(-25f)
+        canvas.rotate(CareSpoonGeometry.TILT_DEGREES)
         canvas.drawRoundRect(-.12f, -.15f, .13f, 1f, .10f, .10f, fill("#88BAC5"))
-        canvas.drawOval(-.42f, -.94f, .43f, .07f, fill("#D9E8E8"))
+        canvas.drawOval(CareSpoonGeometry.BOWL_LEFT, CareSpoonGeometry.BOWL_TOP,
+            CareSpoonGeometry.BOWL_RIGHT, CareSpoonGeometry.BOWL_BOTTOM, fill("#D9E8E8"))
         if (amount > 0f) {
             canvas.save()
             canvas.scale(amount.coerceIn(0f, 1f), amount.coerceIn(0f, 1f), 0f, -.43f)

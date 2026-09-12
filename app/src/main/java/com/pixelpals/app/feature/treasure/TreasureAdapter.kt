@@ -4,6 +4,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import android.text.SpannableString
+import android.text.Spanned
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -30,7 +32,16 @@ class TreasureAdapter(
 
         fun bind(item: TreasureCollectionItem): Unit {
             val context = itemView.context
-            emojiText.text = if (item.isDiscovered) item.emoji else context.getString(R.string.treasure_mystery_symbol)
+            val symbol = if (item.isDiscovered) item.emoji else context.getString(R.string.treasure_mystery_symbol)
+            emojiText.text = symbol
+            if (item.isDiscovered && TreasureSymbol.hasDrawing(symbol)) {
+                val size = emojiText.paint.textSize.toInt().coerceAtLeast(1)
+                val drawable = TreasureSymbolDrawable(symbol, size)
+                drawable.setBounds(0, 0, size, size)
+                emojiText.text = SpannableString(symbol).apply {
+                    setSpan(android.text.style.ImageSpan(drawable, android.text.style.ImageSpan.ALIGN_BASELINE), 0, length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                }
+            }
             emojiText.alpha = if (item.isDiscovered) 1f else 0.38f
             nameText.text = if (item.isDiscovered) item.name else context.getString(R.string.treasure_mystery_name)
             storyText.text = if (item.isDiscovered) item.story else item.hint
@@ -40,10 +51,10 @@ class TreasureAdapter(
                 if (item.isFavorite) R.string.treasure_favorite_label else R.string.treasure_regular_label,
             )
             itemView.alpha = if (item.isDiscovered) 1f else 0.82f
-            itemView.isClickable = item.canGift
-            itemView.isFocusable = item.canGift
+            itemView.isClickable = true
+            itemView.isFocusable = true
             itemView.contentDescription = getContentDescription(item)
-            itemView.setOnClickListener(if (item.canGift) View.OnClickListener { onTreasureClicked(item) } else null)
+            itemView.setOnClickListener { onTreasureClicked(item) }
         }
 
         private fun getCountText(item: TreasureCollectionItem): String {

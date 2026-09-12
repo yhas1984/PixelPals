@@ -42,8 +42,36 @@ object HomeUi {
         background = surface(Color.WHITE, dp(context, 22).toFloat())
         layoutParams = LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(context, 12) }
     }
-    fun row(context: Context, vararg views: View): LinearLayout = LinearLayout(context).apply {
+    fun row(context: Context, vararg views: View): LinearLayout = object : LinearLayout(context) {
+        override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+            val visibleCount: Int = (0 until childCount).count { getChildAt(it).visibility != View.GONE }
+            val available: Int = View.MeasureSpec.getSize(widthMeasureSpec) - paddingLeft - paddingRight
+            val minimumCell: Float = dp(context, 144) * resources.configuration.fontScale.coerceAtLeast(1f)
+            val visibleMargins: Int = (0 until childCount).sumOf { index: Int ->
+                val child: View = getChildAt(index)
+                if (child.visibility == View.GONE) 0
+                else (child.layoutParams as LayoutParams).leftMargin + (child.layoutParams as LayoutParams).rightMargin
+            }
+            val nextOrientation: Int = if (View.MeasureSpec.getMode(widthMeasureSpec) == View.MeasureSpec.UNSPECIFIED) {
+                VERTICAL
+            } else if (available >= minimumCell * visibleCount + visibleMargins) HORIZONTAL else VERTICAL
+            if (orientation != nextOrientation) {
+                orientation = nextOrientation
+                for (index: Int in 0 until childCount) {
+                    val child: View = getChildAt(index)
+                    child.layoutParams = (child.layoutParams as LayoutParams).apply {
+                        width = if (nextOrientation == HORIZONTAL) 0 else LayoutParams.MATCH_PARENT
+                        weight = if (nextOrientation == HORIZONTAL) 1f else 0f
+                    }
+                }
+            }
+            super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+        }
+    }.apply {
         orientation = LinearLayout.HORIZONTAL
-        views.forEach { view -> addView(view, LinearLayout.LayoutParams(0, -2, 1f).apply { setMargins(3, 3, 3, 3) }) }
+        views.forEach { view -> addView(view, LinearLayout.LayoutParams(0, -2, 1f).apply {
+            val margin: Int = dp(context, 3)
+            setMargins(margin, margin, margin, margin)
+        }) }
     }
 }

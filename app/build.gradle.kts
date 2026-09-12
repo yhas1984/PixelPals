@@ -22,6 +22,12 @@ val companionCandidate = providers.gradleProperty("pixelpals.companion.releaseCa
     .map(String::toBooleanStrict).getOrElse(false)
 
 android {
+    // Keep the in-app language selector available without downloading language packs.
+    bundle {
+        language {
+            enableSplit = false
+        }
+    }
     namespace = "com.pixelpals.app"
     compileSdk = 36
 
@@ -29,8 +35,8 @@ android {
         applicationId = "com.pixelpals.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 21
-        versionName = "2.4.0"
+        versionCode = 22
+        versionName = "2.5.0"
         // Visual approval is required before enabling new care assets in production.
         buildConfigField("boolean", "CARE_SCENES_ENABLED", "false")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

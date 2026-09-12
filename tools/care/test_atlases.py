@@ -39,12 +39,13 @@ class CareAtlasTests(unittest.TestCase):
                 spec = json.loads(path.read_text())
                 image = Image.open(path.with_suffix(".png"))
                 self.assertEqual(image.mode, "RGBA")
-                self.assertEqual(image.size, (1024, 1536))
+                expected_count = 30 if spec["petId"] == "jelly" else 24
+                self.assertEqual(image.size, (1024, 2048 if expected_count == 30 else 1536))
                 self.assertLessEqual(image.width * image.height * 4, 16 * 1024 * 1024)
-                self.assertEqual(spec["frameCount"], 24)
+                self.assertEqual(spec["frameCount"], expected_count)
                 self.assertEqual([clip["id"] for clip in spec["clips"]], list(ACTIONS))
                 digests = set()
-                for index in range(24):
+                for index in range(expected_count):
                     frame = image.crop((index % 4 * CELL, index // 4 * CELL,
                                         (index % 4 + 1) * CELL, (index // 4 + 1) * CELL))
                     alpha = np.asarray(frame)[:, :, 3]
@@ -56,7 +57,7 @@ class CareAtlasTests(unittest.TestCase):
                     digests.add(hashlib.sha256(frame.tobytes()).hexdigest())
                     for anchor in spec["anchors"][index].values():
                         self.assertTrue(all(0 <= value <= 1 for value in anchor))
-                self.assertEqual(len(digests), 24)
+                self.assertEqual(len(digests), expected_count)
                 for clip in spec["clips"]:
                     self.assertFalse(clip["loop"])
                     minimum_unique_frames = 1 if spec["petId"] == "diablillo" and clip["id"] == "play" else 3

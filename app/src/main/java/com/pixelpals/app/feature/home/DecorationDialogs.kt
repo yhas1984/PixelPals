@@ -14,6 +14,11 @@ class DecorationPreview(context: Context, private val item: Decoration, private 
     private val painter: HomeScenePainter = HomeScenePainter()
     private val bounds: RectF = RectF()
     init { contentDescription = DecorationPresentation.title(context, item, pet); minimumHeight = HomeUi.dp(context, 150) }
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int): Unit {
+        // A dialog supplies AT_MOST: plain View otherwise consumes its entire height.
+        setMeasuredDimension(getDefaultSize(suggestedMinimumWidth, widthMeasureSpec),
+            resolveSize(suggestedMinimumHeight, heightMeasureSpec))
+    }
     override fun onDraw(canvas: Canvas): Unit {
         super.onDraw(canvas)
         val size: Float = minOf(width.toFloat(), height.toFloat()) * .88f
