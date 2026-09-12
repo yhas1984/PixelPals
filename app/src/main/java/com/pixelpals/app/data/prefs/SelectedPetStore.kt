@@ -43,6 +43,10 @@ class SelectedPetStore(context: Context) {
         return prefs.getLong(KEY_SELECTED_AT, 0L).takeIf { it > 0L }
     }
 
+    fun hasSavedSelection(): Boolean = prefs.getString(KEY_SELECTED_PET, null)?.let { raw ->
+        PetType.entries.any { it.name == raw }
+    } ?: false
+
     fun load(default: PetType = PetType.CORGI): PetType {
         val raw = prefs.getString(KEY_SELECTED_PET, null) ?: return default
         return runCatching { PetType.valueOf(raw) }.getOrElse { default }

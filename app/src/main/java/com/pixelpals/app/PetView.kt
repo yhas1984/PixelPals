@@ -48,6 +48,7 @@ import com.pixelpals.app.status.PetMood
 import com.pixelpals.app.status.PetPersonality
 import com.pixelpals.app.status.PetStatusSnapshot
 import com.pixelpals.app.feature.treasure.TreasureDiscoveryResult
+import com.pixelpals.app.feature.treasure.TreasureSymbol
 import com.pixelpals.app.notifications.PetCareNotificationManager
 import com.pixelpals.app.notifications.PetCareNotificationScheduler
 import kotlinx.coroutines.CoroutineScope
@@ -72,7 +73,18 @@ class PetView(
     private val repository: PixelPalsRepository = AppServices.repository(context)
     private val analytics: AnalyticsTracker = AppServices.analytics(context)
     private val uiScope = CoroutineScope(Dispatchers.Main + Job())
+    private val scheduledSleep by lazy { com.pixelpals.app.feature.home.ScheduledPetSleep(context, petType, uiScope) }
+    private var companionHome: com.pixelpals.app.database.CompanionHomeEntity? = null
+    private var companionTraits = com.pixelpals.app.feature.home.CompanionTraits(1f, 1f)
+    fun setCompanionHome(home: com.pixelpals.app.database.CompanionHomeEntity?) {
+        companionHome = home
+        companionTraits = com.pixelpals.app.feature.home.CompanionTraits.derive(petType, home, petStatus.bond)
+    }
+    private val companionPreferences = com.pixelpals.app.feature.home.CompanionPreferences(context)
+    private val dreamPainter = com.pixelpals.app.feature.care.PetDreamPainter()
+    private var dreamSeconds: Float = 0f
     private var desktopCare: DesktopCarePlayback? = null
+    private var careBaselineOffsetY: Float = petSpriteSize * .46f
     private var activeSecondsAccumulator = 0f
     private var ambientBubbleCooldown = 12f
     private var lastFrameTimeNanos = 0L
@@ -99,8 +111,7 @@ class PetView(
         val gesture = gestureRecognizer.onTime(android.os.SystemClock.uptimeMillis())
         if (gesture.type != PetGestureType.HOLD_STARTED) return@Runnable
         isTouchPending = false
-        state = PetState.INTERACTING
-        behavior?.onHold()
+        performAffection { behavior?.onHold() }
     }
 
     override var state = PetState.IDLE
@@ -135,23 +146,7 @@ class PetView(
      * distintos en pantalla. Factor = occMoki / occIdleDelPet (0.802 / occ).
      * Solo afecta al DIBUJO. Ocupaciones medidas con bbox de alfa (PIL).
      */
-    override val spriteScale: Float = when (petType) {
-        PetType.MOKI -> 1.000f          // referencia: idle perch 0.802
-        PetType.CORGI -> 0.996f         // idle REST corgi_6 0.805 -> 0.802
-        PetType.JELLY -> 1.302f         // idle jelly_0 0.616 -> 0.802
-        PetType.BLOOP -> 1.112f         // idle fantasma_1 0.721 -> 0.802
-        PetType.NUBE_MICHI -> 1.149f    // idle gato_0 0.698 -> 0.802
-        PetType.ANGEL -> 0.875f         // hover/prayer (celda sheet) 0.917 -> 0.802
-        PetType.GINGER -> 0.875f        // sit/groom (celda sheet) 0.917 -> 0.802
-        PetType.DIABLILLO -> 0.929f     // idle 0.863 -> 0.802
-        PetType.PATITO -> 1.317f        // ciclo idle 0.36-0.60 (irregular por diseño)
-        PetType.YUKI -> 0.901f          // idle alto Pixar opaco 0.891 -> 0.802
-        PetType.PIRU -> 0.881f          // idle pingüino Pixar 0.910 -> 0.802
-        PetType.TARO -> 0.929f          // idle tortuga (hoja nueva) 0.863 -> 0.802
-        PetType.MENTA -> 0.908f         // idle serpiente Pixar opaco 0.883 -> 0.802
-        PetType.TELA -> 0.880f          // idle araña Pixar 0.910 -> 0.802
-        PetType.LUMI -> 0.963f          // idle Lumi V2 0.833 -> 0.802
-    }
+    override val spriteScale: Float = com.pixelpals.app.core.motion.PetArtworkScale.forPet(petType)
 
     /**
      * Fracción de contenido del frame IDLE de cada pet (medida con bbox de alfa).
@@ -242,6 +237,7 @@ class PetView(
     private val bubbleDurationMs = 2200f
     private var treasureReactionTimer = 0f
     private val treasureReactionDuration = 0.95f
+    private val bubbleSymbolBounds = RectF()
     private val bubblePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.WHITE
         textAlign = Paint.Align.CENTER
@@ -335,6 +331,7 @@ class PetView(
      *   - 12 FPS en idle profundo (la mascota está quieta y sin efectos).
      */
     private fun nextFrameDelayMs(wasMoving: Boolean): Long {
+        if (companionPreferences.reducedMotion && state == PetState.IDLE && desktopCare?.isActive != true) return 100L
         if (desktopCare?.isActive == true || state != PetState.IDLE || bubbleTimer > 0f || treasureReactionTimer > 0f || wasMoving) {
             return FRAME_INTERVAL_ACTIVE_MS
         }
@@ -459,6 +456,7 @@ class PetView(
     }
     
     override fun playHaptic(durationMs: Long) {
+        if (!companionPreferences.haptics) return
         try {
             val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 (context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
@@ -546,12 +544,13 @@ class PetView(
         if (!BuildConfig.CARE_SCENES_ENABLED || petType !in DesktopCarePlayback.SUPPORTED_PETS || !isAnimating ||
             !isAttachedToWindow || visibility != VISIBLE || desktopCare?.isActive == true ||
             action !in DesktopCarePlayback.ACTIONS) return
-        val facingLeft: Boolean = animScaleX < 0f
+        val facingLeft: Boolean = behavior?.facingLeft ?: (animScaleX < 0f)
+        careBaselineOffsetY = behavior?.careBaselineOffsetY ?: (petSpriteSize * .46f)
         val fetch: CorgiFetchPlan? = if (petType == PetType.CORGI && action == CareSceneAction.PLAY) {
             val position: WindowManager.LayoutParams = getWindowParams() ?: return
             CorgiFetchMotion.createPlan(
                 CarePoint(position.x.toFloat(), position.y.toFloat()), bounds, petSpriteSize, facingLeft,
-                reducedMotion = !android.animation.ValueAnimator.areAnimatorsEnabled(),
+                reducedMotion = !android.animation.ValueAnimator.areAnimatorsEnabled() || companionPreferences.reducedMotion,
             )
         } else null
         physicsBody = null
@@ -572,9 +571,8 @@ class PetView(
                 )
             }
         }
-        behavior?.reset()
-        currentFrame = 0
-        animScaleX = if (facingLeft) -1f else 1f
+        // Keep the current pose and position until care assets are ready. Resetting
+        // here can teleport a ground pet and flash an unrelated drag frame.
         desktopCare?.start(action, facingLeft, fetch)
         invalidate()
     }
@@ -583,12 +581,13 @@ class PetView(
 
     private fun finishDesktopCare(completedAction: CareSceneAction, result: CareSceneResult?): Unit {
         state = PetState.IDLE
-        if (petType == PetType.CORGI && completedAction == CareSceneAction.PLAY) {
-            (behavior as? CorgiBehavior)?.resumeAfterFetch(animScaleX < 0f)
+        val corgi: CorgiBehavior? = behavior as? CorgiBehavior
+        if (corgi != null) {
+            corgi.resumeAfterCare(animScaleX < 0f,
+                completedAction == CareSceneAction.REST && result is CareSceneResult.Completed)
         } else {
             behavior?.reset()
         }
-        currentFrame = 0
         if (result is CareSceneResult.Completed) {
             updatePetStatus(result.after)
             val message: String = context.getString(when (completedAction) {
@@ -642,18 +641,19 @@ class PetView(
     private fun drawCosmetic(canvas: Canvas) {
         val effect = equippedCosmetic?.effect as? com.pixelpals.app.data.catalog.CosmeticEffect
             ?: return
+        val artworkSize = petSpriteSize.toFloat() * com.pixelpals.app.core.motion.PetArtworkScale.speciesSize(petType)
         // Siguen la posición y escala del pet (saltos, vuelo, inflado) pero NO su
         // rotación: corona/paraguas flotan "arriba" en pantalla, no giran con él.
         val cx = width / 2f + renderOffsetX
         val cy = height / 2f + renderOffsetY
-        val scale = renderScaleX.coerceAtLeast(0.4f)
+        val scale = abs(renderScaleX).coerceAtLeast(0.4f)
         when (effect) {
             is com.pixelpals.app.data.catalog.CosmeticEffect.TintEffect -> Unit
             is com.pixelpals.app.data.catalog.CosmeticEffect.AuraEffect -> {
-                cosmeticPaint.textSize = petSpriteSize.toFloat() * effect.sizeRatio * scale
+                cosmeticPaint.textSize = artworkSize * effect.sizeRatio * scale
                 cosmeticPaint.alpha = (200 * (animAlpha.coerceIn(0f, 1f))).toInt()
                 val fm = cosmeticPaint.fontMetrics
-                val radius = petSpriteSize.toFloat() * effect.radiusRatio * scale
+                val radius = artworkSize * effect.radiusRatio * scale
                 for (i in 0 until effect.count) {
                     val angle = cosmeticClock * effect.speed + (2f * PI.toFloat() * i) / effect.count
                     val x = cx + cos(angle) * radius
@@ -662,16 +662,16 @@ class PetView(
                 }
             }
             is com.pixelpals.app.data.catalog.CosmeticEffect.FloatEffect -> {
-                val scaleX = renderScaleX.coerceAtLeast(0.4f)
-                val scaleY = renderScaleY.coerceAtLeast(0.4f)
-                cosmeticPaint.textSize = petSpriteSize.toFloat() * effect.sizeRatio * scaleX
+                val scaleX = abs(renderScaleX).coerceAtLeast(0.4f)
+                val scaleY = abs(renderScaleY).coerceAtLeast(0.4f)
+                cosmeticPaint.textSize = artworkSize * effect.sizeRatio * scaleX
                 cosmeticPaint.alpha = (255 * (animAlpha.coerceIn(0f, 1f))).toInt()
                 val fm = cosmeticPaint.fontMetrics
-                val bob = sin(cosmeticClock * effect.bobSpeed) * effect.bobAmplitude * scaleY
+                val bob = sin(cosmeticClock * effect.bobSpeed) * effect.bobAmplitude
                 // Posición: el eje X sigue el squash horizontal y el eje Y el vertical,
                 // para que corona/varita/paraguas acompañen al pet al aplastarse/saltar.
-                var x = cx + petSpriteSize.toFloat() * effect.xRatio * scaleX
-                var y = cy + petSpriteSize.toFloat() * (effect.yRatio + bob) * scaleY
+                var x = cx + artworkSize * effect.xRatio * scaleX
+                var y = cy + artworkSize * (effect.yRatio + bob) * scaleY
                 // Clamp dentro del view (el view puede ser menor que 2x el sprite por
                 // el tope defensivo MAX_VIEW_SIZE_RATIO): el emoji nunca se recorta.
                 val marginX = cosmeticPaint.textSize * 0.55f
@@ -721,12 +721,22 @@ class PetView(
     }
 
     private fun update(dt: Float) {
+        val canRest: Boolean = state == PetState.IDLE && desktopCare?.isActive != true && !isTouchPending
+        behavior?.onScheduledRestRequested(canRest && scheduledSleep.wantsRest())
+        behavior?.advanceScheduledRestTransition(dt, companionPreferences.reducedMotion)
+        val wasScheduledSleeping = scheduledSleep.active
+        if (scheduledSleep.update(dt, canRest &&
+                behavior?.canStartScheduledSleep(companionPreferences.reducedMotion) == true,
+                behavior?.isSeatedForScheduledRest == true, behavior?.scheduledRestFrame)) return
+        if (wasScheduledSleeping && canRest) behavior?.onScheduledWakeCompleted()
+        dreamSeconds = if (desktopCare?.isActive != true && state == PetState.IDLE && behavior?.isSleeping == true)
+            dreamSeconds + dt else 0f
         if (desktopCare?.isActive == true) {
             desktopCare?.advance(dt)
             return
         }
         // No-op: screen metrics are cached at attach/config-change time (see refreshScreenMetrics).
-        cosmeticClock += dt
+        if (!companionPreferences.reducedMotion) cosmeticClock += dt
         activeSecondsAccumulator += dt
         while (activeSecondsAccumulator >= 60f) {
             progress.trackMinute()
@@ -749,7 +759,7 @@ class PetView(
                 bubbleAlpha = 0f
             }
         }
-        ambientBubbleCooldown -= dt
+        ambientBubbleCooldown -= dt * companionTraits.initiative
         if (ambientBubbleCooldown <= 0f && bubbleText == null && state == PetState.IDLE) {
             maybeShowAmbientMoodBubble()
             ambientBubbleCooldown = when (petPersonality) {
@@ -763,7 +773,7 @@ class PetView(
         // preserves the exact grab point and prevents a jump when drag starts.
         if (!isTouchPending) {
             when (state) {
-                PetState.IDLE -> behavior?.updateIdle(dt)
+                PetState.IDLE -> if (!companionPreferences.reducedMotion) behavior?.updateIdle(dt * companionTraits.tempo)
                 PetState.DRAGGING -> behavior?.updateDrag(dt)
                 PetState.FALLING -> updatePhysicsFalling(dt)
                 PetState.JUMPING -> behavior?.updateJumping(dt)
@@ -774,10 +784,13 @@ class PetView(
 
         if (treasureReactionTimer > 0f) {
             treasureReactionTimer = (treasureReactionTimer - dt).coerceAtLeast(0f)
+        }
+        if (treasureReactionTimer > 0f && !companionPreferences.reducedMotion) {
             val progress = 1f - (treasureReactionTimer / treasureReactionDuration)
             val bounce = abs(sin(progress * PI.toFloat() * 3f))
-            treasureEffectScaleX = 1f + bounce * 0.08f
-            treasureEffectScaleY = 1f - bounce * 0.06f
+            // Corgi expresses excitement through the hop, without changing body proportions.
+            treasureEffectScaleX = if (petType == PetType.CORGI) 1f else 1f + bounce * 0.08f
+            treasureEffectScaleY = if (petType == PetType.CORGI) 1f else 1f - bounce * 0.06f
             treasureEffectOffsetX = sin(progress * PI.toFloat() * 4f) * 2f
             treasureEffectOffsetY = -bounce * 6f
             treasureEffectRotation = sin(progress * PI.toFloat() * 2f) * 3f
@@ -794,15 +807,28 @@ class PetView(
         super.onDraw(canvas)
         // Run frames and care frames share this same pet window; never draw both.
         if (desktopCare?.isActive == true) {
-            if (desktopCare?.draw(canvas, petSpriteSize) != true) {
+            if (desktopCare?.draw(canvas, petSpriteSize, careBaselineOffsetY, cosmeticColorFilter) != true) {
                 behavior?.onDraw(canvas, width / 2f, height / 2f)
             }
+            drawCosmetic(canvas)
+            return
+        }
+        if (scheduledSleep.active) {
+            scheduledSleep.draw(canvas, petSpriteSize.toFloat(),
+                behavior?.careBaselineOffsetY ?: petSpriteSize * .46f, animScaleX < 0f, cosmeticColorFilter)
+            drawCosmetic(canvas)
             return
         }
         // Sprite base del pet.
         behavior?.onDraw(canvas, (width / 2).toFloat(), (height / 2).toFloat())
 
         drawCosmetic(canvas)
+        if (state == PetState.IDLE && behavior?.isSleeping == true) {
+            dreamPainter.drawDesktop(canvas, width / 2f + renderOffsetX,
+                height / 2f + (behavior?.careBaselineOffsetY ?: petSpriteSize * .46f),
+                petSpriteSize * com.pixelpals.app.core.motion.PetArtworkScale.speciesSize(petType),
+                dreamSeconds, companionPreferences.reducedMotion)
+        }
 
         // Dibuja el bubble encima del pet.
         val text = bubbleText ?: return
@@ -818,8 +844,14 @@ class PetView(
         val maxCy = height - bubblePaint.textSize * 0.6f
         val cy = desiredCy.coerceIn(minCy, maxCy)
 
-        canvas.drawText(text, cx, cy, bubbleStrokePaint)
-        canvas.drawText(text, cx, cy, bubblePaint)
+        if (TreasureSymbol.hasDrawing(text)) {
+            val size = bubblePaint.textSize * 1.35f
+            bubbleSymbolBounds.set(cx - size / 2f, cy - size, cx + size / 2f, cy)
+            TreasureSymbol.draw(canvas, text, bubbleSymbolBounds, (255 * bubbleAlpha).toInt())
+        } else {
+            canvas.drawText(text, cx, cy, bubbleStrokePaint)
+            canvas.drawText(text, cx, cy, bubblePaint)
+        }
     }
 
     private fun launchPhysics(velocityX: Float, velocityY: Float) {
@@ -845,8 +877,12 @@ class PetView(
         params.x = result.body.x.roundToInt()
         params.y = result.body.y.roundToInt()
         updateWindowLayout(params)
-        animScaleY = 1.15f
-        animScaleX = 0.9f
+        val facing: Float = if (animScaleX < 0f) -1f else 1f
+        animScaleY = com.pixelpals.app.core.motion.PetFallDeformation.heightScale(petType,
+            result.body.velocityY, petSpriteSize, animScaleY, dt,
+            companionPreferences.reducedMotion || !android.animation.ValueAnimator.areAnimatorsEnabled())
+        // Reciprocal width preserves apparent area instead of inflating the pet.
+        animScaleX = facing / animScaleY
         if (result.event == PhysicsEvent.SETTLED) {
             physicsBody = null
             state = PetState.IDLE
@@ -916,6 +952,7 @@ class PetView(
     }
 
     private fun updatePetStatus(updated: PetStatusSnapshot) {
+        companionTraits = com.pixelpals.app.feature.home.CompanionTraits.derive(petType, companionHome, updated.bond)
         val previous: PetStatusSnapshot = petStatus
         petStatus = updated
         onCareStatusChanged?.invoke()
@@ -975,10 +1012,23 @@ class PetView(
     override fun performClick(): Boolean {
         super.performClick()
         if (desktopCare?.isActive == true) return true
-        state = PetState.INTERACTING
-        behavior?.onInteract()
+        performAffection { behavior?.onInteract() }
         onCareAffordance?.invoke()
         return true
+    }
+
+    private fun performAffection(action: () -> Unit): Unit {
+        val keepFalling: Boolean = state == PetState.FALLING && physicsBody != null
+        val fallingScaleX: Float = animScaleX
+        val fallingScaleY: Float = animScaleY
+        state = PetState.INTERACTING
+        action()
+        if (keepFalling) {
+            // Affection must not suspend the shared physics owner mid-flight.
+            state = PetState.FALLING
+            animScaleX = fallingScaleX
+            animScaleY = fallingScaleY
+        }
     }
 
     var onCareAffordance: (() -> Unit)? = null
@@ -988,6 +1038,8 @@ class PetView(
     var onFetchBallChanged: ((CorgiFetchFrame?) -> Unit)? = null
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
+        if (event.actionMasked == MotionEvent.ACTION_DOWN)
+            scheduledSleep.wakeForInteraction()?.let { behavior?.onScheduledSleepInterrupted(it) }
         val params = getWindowParams() ?: return false
 
         when (event.action) {
@@ -1014,7 +1066,6 @@ class PetView(
                 initialY = params.y
                 initialTouchX = event.rawX
                 initialTouchY = event.rawY
-                physicsBody = null
                 isTouchPending = true
                 frameHandler.removeCallbacks(holdRunnable)
                 if (desktopCare?.isActive != true) {
@@ -1031,6 +1082,14 @@ class PetView(
                     cancelDesktopCare()
                     isTouchPending = false
                     frameHandler.removeCallbacks(holdRunnable)
+                    if (physicsBody != null) {
+                        // The pet may have fallen since DOWN; catch it at its current position.
+                        initialX = params.x
+                        initialY = params.y
+                        initialTouchX = event.rawX
+                        initialTouchY = event.rawY
+                    }
+                    physicsBody = null
                     state = PetState.DRAGGING
                     behavior?.onDragStart(
                         pointerX = event.rawX,
@@ -1083,6 +1142,7 @@ class PetView(
                             }
                         } else {
                             if (gesture.type == PetGestureType.FLING) behavior?.onFling(flingVX, flingVY)
+                            else behavior?.onRelease(flingVX, flingVY)
                         }
                         if (behavior?.usesRuntimeInput != true && state == PetState.DRAGGING) {
                             launchPhysics(
@@ -1103,9 +1163,11 @@ class PetView(
                 behaviorOwnsTouch = false
                 gestureRecognizer.onCancel()
                 behavior?.onGestureCancelled()
-                physicsBody = null
-                state = PetState.IDLE
-                behavior?.reset()
+                if (state != PetState.FALLING || physicsBody == null) {
+                    physicsBody = null
+                    state = PetState.IDLE
+                    behavior?.reset()
+                }
                 recycleVelocityTracker()
                 return true
             }
@@ -1133,7 +1195,25 @@ class PetView(
     override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
         cancelDesktopCare()
         super.onConfigurationChanged(newConfig)
+        val previousBounds: PetBounds = bounds
         refreshScreenMetrics()
+        if (bounds != previousBounds) reconcileViewport()
+    }
+
+    private fun reconcileViewport() {
+        val params: WindowManager.LayoutParams = getWindowParams() ?: return
+        frameHandler.removeCallbacks(holdRunnable)
+        isTouchPending = false
+        behaviorOwnsTouch = false
+        recycleVelocityTracker()
+        velocityX = 0f
+        velocityY = 0f
+        state = PetState.IDLE
+        params.x = params.x.coerceIn(bounds.left, bounds.right)
+        params.y = params.y.coerceIn(bounds.top, bounds.floor)
+        updateWindowLayout(params)
+        behavior?.onViewportChanged()
+        invalidate()
     }
 
     private fun recycleVelocityTracker() {

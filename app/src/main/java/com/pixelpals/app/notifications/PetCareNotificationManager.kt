@@ -42,10 +42,18 @@ object PetCareNotificationManager {
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
     }
 
+    fun isCareChannelEnabled(context: Context): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return true
+        val manager = context.getSystemService(NotificationManager::class.java) ?: return true
+        return manager.getNotificationChannel(CHANNEL_ID)?.importance != NotificationManager.IMPORTANCE_NONE
+    }
+
+    fun canSendCareReminder(context: Context): Boolean = canNotify(context) && isCareChannelEnabled(context)
+
     @SuppressLint("MissingPermission")
     fun show(context: Context, petType: PetType, decision: CareReminderDecision): Boolean {
-        if (!canNotify(context)) return false
         createChannel(context)
+        if (!canSendCareReminder(context)) return false
         val petName: String = context.getString(petType.displayNameResId)
         val contentIntent = PendingIntent.getActivity(
             context,

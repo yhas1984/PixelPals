@@ -31,10 +31,21 @@ open class RuntimePetBehavior<S : PetBrainState>(
     final override val resourceIds: List<Int> = emptyList()
     final override val usesRuntimeInput: Boolean = true
 
+    final override var isSleeping: Boolean = false
+        private set
+
+    private var currentIntent: PetIntent? = null
+    final override fun canStartScheduledSleep(reducedMotion: Boolean): Boolean =
+        currentIntent == PetIntent.IDLE || currentIntent == PetIntent.SLEEP ||
+            (reducedMotion && currentIntent == PetIntent.WALK)
+
     private var runtime: PetRuntime<S>? = null
     private var batteryPercent: Int = 100
     private var isCharging: Boolean = false
     private var batteryTemperatureCelsius: Float? = null
+    private val thermalMemory: com.pixelpals.app.core.thermal.YukiThermalMemory? =
+        (bridge as? android.view.View)?.takeIf { definition.petId == "yuki" }?.context
+            ?.let { com.pixelpals.app.core.thermal.YukiThermalMemory(it) }
     private var isKeyboardVisible: Boolean = false
     private var isAirplaneModeEnabled: Boolean = false
     private var lastStatus: PetRuntimeStatus = bridge.petStatus.toRuntimeStatus()
@@ -140,12 +151,18 @@ open class RuntimePetBehavior<S : PetBrainState>(
 
     final override fun onBatteryTemperatureChanged(temperatureCelsius: Float?) {
         batteryTemperatureCelsius = temperatureCelsius?.takeIf(Float::isFinite)
+        thermalMemory?.update(batteryTemperatureCelsius)
         publishEnvironment()
     }
 
     final override fun reset() {
         super.reset()
         dispatch(PetEvent.Cancelled)
+    }
+
+    final override fun onViewportChanged() {
+        publishEnvironment()
+        reset()
     }
 
     final override fun pause() {
@@ -190,6 +207,8 @@ open class RuntimePetBehavior<S : PetBrainState>(
     }
 
     private fun applyOutput(output: PetRuntimeOutput) {
+        currentIntent = output.intent
+        isSleeping = output.intent == PetIntent.SLEEP
         bridge.currentFrame = output.frame
         bridge.animScaleX = output.facing.scaleX * output.transform.scaleX
         bridge.animScaleY = output.transform.scaleY
@@ -233,6 +252,7 @@ open class RuntimePetBehavior<S : PetBrainState>(
         batteryTemperatureCelsius = batteryTemperatureCelsius,
         isKeyboardVisible = isKeyboardVisible,
         isAirplaneModeEnabled = isAirplaneModeEnabled,
+        yukiHeatLatched = thermalMemory?.update(null),
     )
 
     private fun com.pixelpals.app.status.PetStatusSnapshot.toRuntimeStatus(): PetRuntimeStatus = PetRuntimeStatus(

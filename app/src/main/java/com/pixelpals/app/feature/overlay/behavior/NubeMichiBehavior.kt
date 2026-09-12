@@ -4,9 +4,9 @@ import com.pixelpals.app.core.domain.PetState
 import com.pixelpals.app.R
 import kotlin.math.abs
 import kotlin.math.cos
-import kotlin.math.roundToInt
 import kotlin.math.sin
 import com.pixelpals.app.core.motion.PetRandom
+import com.pixelpals.app.core.motion.SubpixelTravel
 
 /**
  * NubeMichiBehavior — Gatito nube. ES una nube con forma de gato:
@@ -24,6 +24,8 @@ class NubeMichiBehavior(
     bridge: PetViewBridge,
     override val random: PetRandom
 ) : BaseBehavior(bridge, random) {
+
+    override val isSleeping: Boolean get() = mode == Mode.SLEEP_FLOAT
 
     override val resourceIds = listOf(
         R.drawable.gato_0,  // dormido flotando
@@ -43,6 +45,9 @@ class NubeMichiBehavior(
         loadFramesAsync()
     }
 
+    override fun canStartScheduledSleep(reducedMotion: Boolean): Boolean =
+        reducedMotion || mode == Mode.SLEEP_FLOAT
+
     private enum class Mode {
         SLEEP_FLOAT,
         WAKE_UP,
@@ -60,6 +65,14 @@ class NubeMichiBehavior(
     private var bandMinY = 0
     private var bandMaxY = 0
     private var gustTimer = 0f
+    private var floatDuration = 4.5f
+    private val travelX = SubpixelTravel()
+    private val travelY = SubpixelTravel()
+
+    private fun resetTravel() {
+        travelX.reset()
+        travelY.reset()
+    }
 
     override fun getBaseSpeed(): Float = 52f
 
@@ -79,6 +92,7 @@ class NubeMichiBehavior(
     private fun startSleepFloat(resetTimer: Boolean = true) {
         mode = Mode.SLEEP_FLOAT
         if (resetTimer) stateTimer = 0f
+        resetTravel()
         velX = 0f
         velY = 0f
         bridge.animRotation = 0f
@@ -108,19 +122,18 @@ class NubeMichiBehavior(
                 velX = 0f
                 velY = 0f
 
-                when {
-                    // A veces una ráfaga la arrastra suavemente.
-                    stateTimer >= 6.5f -> {
+                // Choose once on waking; the previous 6.5s branch could never
+                // run because the 4.5s branch always left sleep first.
+                if (stateTimer >= 4.5f) {
+                    stateTimer = 0f
+                    resetTravel()
+                    if (random.nextBoolean()) {
                         mode = Mode.WIND_GUST
-                        stateTimer = 0f
                         gustTimer = 1.8f + random.nextFloat() * 1.4f
                         driftSpeedX = getBaseSpeed() *
                             if (random.nextBoolean()) 1f else -1f
-                    }
-                    // Y a veces despierta y se pone a derivar.
-                    stateTimer >= 4.5f -> {
+                    } else {
                         mode = Mode.WAKE_UP
-                        stateTimer = 0f
                     }
                 }
             }
@@ -138,6 +151,8 @@ class NubeMichiBehavior(
                 if (stateTimer >= 0.8f) {
                     mode = Mode.PUFF_FLOAT
                     stateTimer = 0f
+                    resetTravel()
+                    floatDuration = 4.5f + random.nextFloat() * 2.5f
                     // Deriva en la banda celeste.
                     walkDirection = if (random.nextBoolean()) 1f else -1f
                     driftSpeedX = walkDirection * getBaseSpeed() * 0.62f
@@ -159,7 +174,7 @@ class NubeMichiBehavior(
                 bridge.animScaleY = 1f + sin(time * 4f) * 0.02f
 
                 val params = bridge.getWindowParams() ?: return
-                params.x = (params.x + (driftSpeedX * dt).roundToInt())
+                params.x = (params.x + travelX.advance(driftSpeedX * dt))
                     .coerceIn(0, (bridge.screenWidth - bridge.petSpriteSize).coerceAtLeast(0))
                 params.y = clampToBand(params.y)
                 bridge.updateWindowLayout(params)
@@ -174,19 +189,19 @@ class NubeMichiBehavior(
                 // Flotación libre: nube con rizos (frame 2) o puff alargado (8),
                 // con micro-transiciones de viento (4/6/7) cada ~0.9s.
                 bridge.currentFrame = if (((time / 0.9f).toInt() % 4) == 0) 8 else 2
-                setFacing(driftSpeedX)
                 bridge.animOffsetY = sin(time * 1.6f) * 9f
                 bridge.animOffsetX = sin(time * 0.9f) * 6f
                 bridge.animRotation = sin(time * 0.7f) * 3.5f
                 bridge.animScaleY = 1f + sin(time * 1.1f) * 0.03f
-                bridge.animScaleX = 1f - sin(time * 1.1f) * 0.015f
+                setFacing(driftSpeedX, 1f - sin(time * 1.1f) * 0.015f)
 
                 val params = bridge.getWindowParams() ?: return
                 val minX = 0
                 val maxX = (bridge.screenWidth - bridge.petSpriteSize).coerceAtLeast(0)
-                var nextX = params.x + (driftSpeedX * dt).roundToInt()
+                var nextX = params.x + travelX.advance(driftSpeedX * dt)
                 if (nextX <= minX || nextX >= maxX) {
                     driftSpeedX *= -1f
+                    travelX.reset()
                     setFacing(driftSpeedX)
                     nextX = nextX.coerceIn(minX, maxX)
                 }
@@ -194,7 +209,7 @@ class NubeMichiBehavior(
                 params.y = clampToBand(params.y)
                 bridge.updateWindowLayout(params)
 
-                if (stateTimer >= 4.5f + random.nextFloat() * 2.5f) {
+                if (stateTimer >= floatDuration) {
                     startSleepFloat()
                 }
             }
@@ -210,6 +225,7 @@ class NubeMichiBehavior(
         super.onInteract()
         mode = Mode.FEATHER_FALL
         stateTimer = 0f
+        resetTravel()
         val params = bridge.getWindowParams()
         val currentX = params?.x ?: bridge.windowX
         walkDirection = if (currentX < bridge.screenWidth / 2) 1f else -1f
@@ -225,6 +241,7 @@ class NubeMichiBehavior(
         super.onInteract()
         mode = Mode.CLOUD_RETURN
         stateTimer = 0f
+        resetTravel()
         refreshCloudBand()
         returnTargetY = (bandMinY + (bandMaxY - bandMinY) * 0.3f)
         walkDirection = if (velocityX >= 0f) 1f else -1f
@@ -255,16 +272,18 @@ class NubeMichiBehavior(
                 bridge.animOffsetX = 0f
                 bridge.animOffsetY = 0f
 
-                val driftX = (sin(stateTimer * 2.4f) * 55f + walkDirection * 18f) * dt
-                val fallY = (55f + abs(sin(stateTimer * 1.8f)) * 28f) * dt
+                val midTime = stateTimer - dt * .5f
+                val driftX = (sin(midTime * 2.4f) * 55f + walkDirection * 18f) * dt
+                val fallY = (55f + abs(sin(midTime * 1.8f)) * 28f) * dt
 
-                params.x = (params.x + driftX.roundToInt()).coerceIn(minX, maxX)
-                params.y = (params.y + fallY.roundToInt().coerceAtLeast(1)).coerceIn(minY, maxY)
+                params.x = (params.x + travelX.advance(driftX)).coerceIn(minX, maxX)
+                params.y = (params.y + travelY.advance(fallY)).coerceIn(minY, maxY)
                 bridge.updateWindowLayout(params)
 
                 if (params.y >= maxY) {
                     mode = Mode.CLOUD_RETURN
                     stateTimer = 0f
+                    resetTravel()
                 }
             }
 
@@ -277,9 +296,11 @@ class NubeMichiBehavior(
                 bridge.animScaleX = 1f + sin(stateTimer * 2.1f) * 0.02f
                 bridge.animScaleY = 1f + sin(stateTimer * 2.1f) * 0.04f
 
-                val riseY = (130f * dt).roundToInt().coerceAtLeast(1)
+                val riseY = travelY.advance(130f * dt)
                 params.y = (params.y - riseY).coerceIn(minY, maxY)
-                params.x = (params.x + (sin(stateTimer * 2f) * 4f).roundToInt()).coerceIn(minX, maxX)
+                // Gentle drift in pixels per second, independent of display Hz.
+                val driftX = sin((stateTimer - dt * .5f) * 2f) * 24f * dt
+                params.x = (params.x + travelX.advance(driftX)).coerceIn(minX, maxX)
                 bridge.updateWindowLayout(params)
 
                 refreshCloudBand()
@@ -299,6 +320,7 @@ class NubeMichiBehavior(
     }
 
     override fun updateDrag(dt: Float) {
+        resetTravel()
         bridge.currentFrame = 0
         bridge.animRotation = 0f
         bridge.animScaleX = 1f
@@ -315,6 +337,7 @@ class NubeMichiBehavior(
 
     override fun reset() {
         super.reset()
+        resetTravel()
         if (bridge.state == PetState.IDLE) {
             bridge.animAlpha = 1f
             startSleepFloat()

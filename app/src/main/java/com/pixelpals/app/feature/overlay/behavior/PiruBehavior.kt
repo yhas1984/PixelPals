@@ -2,6 +2,7 @@ package com.pixelpals.app.feature.overlay.behavior
 
 import com.pixelpals.app.core.domain.PetState
 import com.pixelpals.app.core.motion.PetRandom
+import com.pixelpals.app.core.motion.GroundGait
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -19,7 +20,18 @@ class PiruBehavior(
     override val random: PetRandom,
 ) : BaseBehavior(bridge, random) {
 
+    override val isSleeping: Boolean get() = mode == Mode.SLEEP && modeTimer >= REST_SETTLE_SECONDS
+
     override val resourceIds: List<Int> = emptyList()
+
+    override fun canStartScheduledSleep(reducedMotion: Boolean): Boolean =
+        isSleeping || (reducedMotion && mode == Mode.WADDLE)
+
+    private var restRequested: Boolean = false
+
+    override fun onScheduledRestRequested(requested: Boolean): Unit {
+        restRequested = requested
+    }
 
     private enum class Mode { WADDLE, SLIDE, JUMP, HAPPY, TOUCH, SLEEP }
 
@@ -57,10 +69,22 @@ class PiruBehavior(
         params.y = baseY.roundToInt()
         bridge.updateWindowLayout(params)
 
+        if (restRequested) {
+            mode = Mode.SLEEP
+            modeTimer = 0f
+            bridge.animScaleX = facingScale(facingDir)
+            bridge.animScaleY = 1f
+            bridge.animOffsetX = 0f
+            bridge.animOffsetY = 0f
+            bridge.animRotation = 0f
+            spriteSheetSpec?.clip("sleep")?.frames?.firstOrNull()?.let { bridge.currentFrame = it }
+            return
+        }
+
         swimTargetX = random.nextFloat() * (maxX - minX) + minX
         val dx = swimTargetX - swimStartX
         if (abs(dx) > 10f) facingDir = if (dx >= 0f) 1f else -1f
-        swimDuration = (abs(dx) / 110f).coerceIn(2.0f, 5.0f)
+        swimDuration = GroundGait.duration(dx, bridge.petSpriteSize * .95f, 2f)
     }
 
     private fun startSlide() {
@@ -74,7 +98,7 @@ class PiruBehavior(
         swimTargetX = (swimStartX + dir * bridge.petSpriteSize * (3f + random.nextFloat() * 5f))
             .coerceIn(minX, maxX)
         facingDir = dir
-        swimDuration = 1.1f + random.nextFloat() * 0.9f
+        swimDuration = GroundGait.duration(swimTargetX - swimStartX, bridge.petSpriteSize * 2.4f, .55f)
         params.y = groundY().roundToInt()
         bridge.updateWindowLayout(params)
     }
@@ -115,9 +139,13 @@ class PiruBehavior(
     private fun updateWaddle(dt: Float) {
         val params = bridge.getWindowParams() ?: return
         if (swimDuration <= 0f) startWaddle(resetTimer = false)
+        if (mode == Mode.SLEEP) {
+            updateSleep(0f)
+            return
+        }
 
         val t = (modeTimer / swimDuration).coerceIn(0f, 1f)
-        val easedT = sin((t * PI).toFloat() / 2f)
+        val easedT = GroundGait.progress(modeTimer, swimDuration)
         val x = swimStartX + (swimTargetX - swimStartX) * easedT
         val y = groundY()
 
@@ -127,14 +155,19 @@ class PiruBehavior(
 
         val spec = spriteSheetSpec ?: return
         val clip = spec.clip("walk") ?: return
-        val idx = ((animClock / 0.22f).toInt() % clip.frames.size)
+        val phase: Float = GroundGait.phase(x - swimStartX, bridge.petSpriteSize * .46f)
+        val idx = ((phase * clip.frames.size).toInt() % clip.frames.size)
         bridge.currentFrame = clip.frames[idx]
         bridge.animScaleX = facingScale(facingDir)
-        bridge.animScaleY = 1f + sin(time * 4.4f) * 0.02f
+        bridge.animScaleY = 1f
         bridge.animOffsetX = 0f
-        bridge.animOffsetY = abs(sin(time * 8.5f)) * 2f
-        bridge.animRotation = facingDir * sin(time * 6f) * 2f
+        bridge.animOffsetY = -abs(sin(phase * 2f * PI.toFloat())) * bridge.petSpriteSize * .018f
+        bridge.animRotation = facingDir * sin(phase * 2f * PI.toFloat()) * 2f
 
+        if (restRequested) {
+            if (t >= 1f) startWaddle()
+            return
+        }
         val roll = random.nextFloat()
         if (roll < 0.0004f) {
             mode = Mode.HAPPY
@@ -150,17 +183,18 @@ class PiruBehavior(
     private fun updateSlide(dt: Float) {
         val params = bridge.getWindowParams() ?: return
         val t = (modeTimer / swimDuration).coerceIn(0f, 1f)
-        val x = swimStartX + (swimTargetX - swimStartX) * t
+        val x = swimStartX + (swimTargetX - swimStartX) * GroundGait.progress(modeTimer, swimDuration)
         params.x = x.roundToInt()
         params.y = groundY().roundToInt()
         bridge.updateWindowLayout(params)
 
         val spec = spriteSheetSpec ?: return
         val clip = spec.clip("slide") ?: return
-        val idx = ((animClock / 0.17f).toInt() % clip.frames.size)
+        val phase: Float = GroundGait.phase(x - swimStartX, bridge.petSpriteSize * .6f)
+        val idx = ((phase * clip.frames.size).toInt() % clip.frames.size)
         bridge.currentFrame = clip.frames[idx]
         bridge.animScaleX = facingScale(facingDir)
-        bridge.animScaleY = 0.96f + sin(time * 10f) * 0.02f
+        bridge.animScaleY = 1f
         bridge.animOffsetX = 0f
         bridge.animOffsetY = 0f
         bridge.animRotation = 0f
@@ -172,18 +206,20 @@ class PiruBehavior(
         val params = bridge.getWindowParams() ?: return
         val t = (modeTimer / 0.55f).coerceIn(0f, 1f)
         val x = swimStartX + (swimTargetX - swimStartX) * t
-        val y = jumpStartY + (jumpTargetY - jumpStartY) * sin((t * PI).toFloat())
+        val y = com.pixelpals.app.core.motion.GroundJump.heightAt(jumpStartY, jumpTargetY, t)
         params.x = x.roundToInt()
         params.y = y.roundToInt()
         bridge.updateWindowLayout(params)
 
         val spec = spriteSheetSpec ?: return
         val clip = spec.clip("jump") ?: return
-        val idx = ((animClock / 0.16f).toInt() % clip.frames.size)
+        val idx = (t * clip.frames.size).toInt().coerceAtMost(clip.frames.lastIndex)
         bridge.currentFrame = clip.frames[idx]
         bridge.animScaleX = facingScale(facingDir)
-        bridge.animScaleY = 1f + sin(time * 8f) * 0.05f
-        bridge.animRotation = facingDir * sin(time * 6f) * 3f
+        bridge.animScaleY = 1f
+        bridge.animOffsetX = 0f
+        bridge.animOffsetY = 0f
+        bridge.animRotation = facingDir * sin(t * PI.toFloat()) * 3f
 
         if (t >= 1f) startWaddle()
     }
@@ -198,8 +234,11 @@ class PiruBehavior(
         val idx = ((animClock / 0.24f).toInt() % clip.frames.size)
         bridge.currentFrame = clip.frames[idx]
         bridge.animScaleX = facingScale(facingDir)
-        bridge.animScaleY = 1f + sin(time * 6f) * 0.05f
-        bridge.animOffsetY = sin(time * 4f) * 3f
+        // Wing and head poses carry the reaction; keep the penguin's body and feet stable.
+        bridge.animScaleY = 1f
+        bridge.animOffsetX = 0f
+        bridge.animOffsetY = 0f
+        bridge.animRotation = 0f
     }
 
     private fun updateTouch(dt: Float) {
@@ -222,14 +261,23 @@ class PiruBehavior(
     private fun updateSleep(dt: Float) {
         val spec = spriteSheetSpec ?: return
         val clip = spec.clip("sleep") ?: return
-        bridge.currentFrame = clip.frames[0]
+        bridge.currentFrame = if (modeTimer < REST_SETTLE_SECONDS) clip.frames.first() else clip.frames.last()
         bridge.animScaleX = facingScale(facingDir)
-        bridge.animOffsetY = sin(time * 1.2f) * 1.5f
-        if (modeTimer >= modeDuration) startWaddle()
+        bridge.animScaleY = 1f
+        bridge.animOffsetY = 0f
+        // ScheduledPetSleep owns the wake clip and resumes this update only when it ends.
+        if (!restRequested && modeTimer >= REST_SETTLE_SECONDS) startWaddle()
     }
 
     override fun onInteract() {
+        val keepJumping: Boolean = mode == Mode.JUMP
         super.onInteract()
+        // Affection must not suspend an autonomous jump and then snap it to the floor.
+        // PetView owns externally launched falls; leave that separate path unchanged.
+        if (keepJumping) {
+            bridge.state = PetState.IDLE
+            return
+        }
         mode = Mode.TOUCH
         modeDuration = 0.9f + random.nextFloat() * 0.6f
         modeTimer = 0f
@@ -252,6 +300,8 @@ class PiruBehavior(
         bridge.currentFrame = clip.frames[idx]
         bridge.animScaleX = facingScale(facingDir)
         bridge.animScaleY = 1f
+        bridge.animOffsetX = 0f
+        bridge.animOffsetY = 0f
         bridge.animRotation = 0f
     }
 
@@ -268,5 +318,9 @@ class PiruBehavior(
         params.x = params.x.coerceIn(0, safeMaxX())
         params.y = params.y.coerceIn(safeMinY(), safeMaxY())
         bridge.updateWindowLayout(params)
+    }
+
+    private companion object {
+        const val REST_SETTLE_SECONDS: Float = .35f
     }
 }

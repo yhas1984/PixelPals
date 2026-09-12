@@ -2,6 +2,7 @@ package com.pixelpals.app.feature.care
 
 import android.animation.ValueAnimator
 import android.content.Context
+import android.graphics.ColorFilter
 import android.graphics.Canvas
 import android.util.Log
 import com.pixelpals.app.core.care.scene.CareSceneAction
@@ -31,6 +32,7 @@ class SpeciesDesktopCare(
     private val onFinished: (CareSceneAction, CareSceneResult?) -> Unit,
 ) : DesktopCarePlayback {
     private val renderer: SpeciesCareRenderer = SpeciesCareRenderer()
+    private val companionPreferences = com.pixelpals.app.feature.home.CompanionPreferences(context)
     private var action: CareSceneAction = CareSceneAction.FEED
     private var owner: String? = null
     private var requestId: String? = null
@@ -77,6 +79,12 @@ class SpeciesDesktopCare(
                     return@launch
                 }
                 val loaded: CarePosePack = CarePoseLoader.load(context.assets, pet)
+                val decorationDao = AppServices.companions(context).dao
+                val placements = decorationDao.getPlacements(pet.name.lowercase())
+                renderer.toyDecorationId = com.pixelpals.app.feature.home.CareDecorationSelection.careToy(
+                    pet, placements, decorationDao.getHome(pet.name.lowercase())?.favoriteObject)
+                renderer.bedDecorationId = com.pixelpals.app.feature.home.CareDecorationSelection.bed(
+                    placements)
                 pack = loaded
                 scene = CareSceneController(action, CareSceneMode.AUTOMATIC, loaded.spec.timings.getValue(action))
                 coordinator.session.collect { current: CareSceneSession? ->
@@ -105,16 +113,18 @@ class SpeciesDesktopCare(
         finishIfReady()
     }
 
-    override fun draw(canvas: Canvas, spriteSize: Int): Boolean {
+    override fun draw(canvas: Canvas, spriteSize: Int, baselineOffsetY: Float, colorFilter: ColorFilter?): Boolean {
         val loaded: CarePosePack = pack ?: return false
         val playback: CareSceneController = scene ?: return false
         canvas.save()
         if (facingLeft) canvas.scale(-1f, 1f, canvas.width / 2f, canvas.height / 2f)
         renderer.draw(
             canvas, loaded, playback,
-            reduced = !ValueAnimator.areAnimatorsEnabled(),
+            reduced = !ValueAnimator.areAnimatorsEnabled() || companionPreferences.reducedMotion,
             gentle = false,
             desktopSize = spriteSize,
+            desktopBaselineOffsetY = baselineOffsetY,
+            colorFilter = colorFilter,
         )
         canvas.restore()
         return true

@@ -32,6 +32,13 @@
         android:theme="@style/Theme.PixelPals"
         tools:targetApi="36">
 
+        <activity android:name=".CompanionSettingsActivity" android:exported="false" />
+        <provider android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.postcards" android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/postcard_paths" />
+        </provider>
+
         <!-- AdMob (App Open desde el tercer uso y banner no inmersivo en tienda) -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"

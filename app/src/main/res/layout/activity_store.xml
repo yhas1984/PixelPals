@@ -7,6 +7,18 @@
     android:background="@drawable/bg_app_surface"
     android:orientation="vertical">
 
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/storeAppBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/surface_base"
+        app:elevation="0dp">
+
     <LinearLayout
         android:id="@+id/storeHeader"
         android:layout_width="match_parent"
@@ -14,7 +26,8 @@
         android:background="@color/surface_base"
         android:orientation="vertical"
         android:paddingHorizontal="20dp"
-        android:paddingTop="20dp">
+        android:paddingTop="20dp"
+        app:layout_scrollFlags="scroll|enterAlways">
 
         <TextView
             android:id="@+id/txtStoreTitle"
@@ -45,15 +58,29 @@
             android:textStyle="bold" />
 
         <Button
+            android:id="@+id/btnRestorePurchases"
+            style="?android:attr/borderlessButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:paddingHorizontal="0dp"
+            android:text="@string/store_restore"
+            android:textAllCaps="false"
+            android:textColor="@color/status_info_fg" />
+
+        <Button
             android:id="@+id/btnPrivacyOptions"
             style="?android:attr/borderlessButtonStyle"
             android:layout_width="wrap_content"
-            android:layout_height="48dp"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
             android:paddingHorizontal="0dp"
             android:text="@string/store_privacy_options"
             android:textAllCaps="false"
             android:textColor="@color/status_info_fg"
             android:visibility="gone" />
+
+    </LinearLayout>
 
         <com.google.android.material.tabs.TabLayout
             android:id="@+id/storeTabs"
@@ -61,16 +88,19 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:background="@android:color/transparent"
+            app:tabMode="scrollable"
             app:tabIndicatorColor="@color/purple_soft"
             app:tabSelectedTextColor="@color/purple_soft"
             app:tabTextColor="@color/text_secondary" />
-    </LinearLayout>
+    </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/storePager"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
     <LinearLayout
         android:id="@+id/cardStoreState"
@@ -97,6 +127,7 @@
             android:layout_marginStart="8dp"
             android:layout_weight="1"
             android:textColor="@color/status_info_fg"
+            android:accessibilityLiveRegion="polite"
             android:textSize="13sp" />
 
         <Button

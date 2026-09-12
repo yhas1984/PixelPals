@@ -5,12 +5,19 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
 import com.pixelpals.app.core.care.scene.CareSceneAction
+import com.pixelpals.app.core.care.scene.CareSpoonGeometry
 import com.pixelpals.app.core.care.scene.PetCareProfile
 import com.pixelpals.app.core.domain.PetType
 
 /** Small illustrated tools, drawn in a common [-1,1] coordinate space. */
 class CarePropPainter {
     private val paint: Paint = Paint(Paint.ANTI_ALIAS_FLAG)
+    var bedDecorationId: String? = null
+    var toyDecorationId: String? = null
+    var toyRotation: Float = 0f
+    private val toyBounds: RectF = RectF(-100f / 67f, -120f / 67f, 100f / 67f, 80f / 67f)
+    private val homePainter by lazy { com.pixelpals.app.feature.home.HomeScenePainter() }
+    private val bedBounds: RectF = RectF(-100f / 94f, -154f / 94f, 100f / 94f, 46f / 94f)
     private val species: SpeciesPropPainter = SpeciesPropPainter()
     private var lastPet: PetType = PetType.CORGI
     private var profile: PetCareProfile = PetCareProfile.forPet(lastPet)
@@ -21,8 +28,23 @@ class CarePropPainter {
         canvas.save()
         canvas.translate(x, y)
         canvas.scale(size / 2f, size / 2f)
+        val toyId: String? = if (pet == PetType.TARO && (toyDecorationId == null || toyDecorationId == "ball")) "pinwheel" else toyDecorationId
+        val selectedToy = toyId?.let(com.pixelpals.app.feature.home.DecorationCatalog::find)
+        if (action == CareSceneAction.PLAY && selectedToy?.kind == com.pixelpals.app.feature.home.DecorationKind.TOY && selectedToy.id != "ball") {
+            homePainter.drawObject(canvas, selectedToy, toyBounds, pet = pet, toyRotation = toyRotation)
+            canvas.restore()
+            return
+        }
+        val selectedBed = bedDecorationId?.let(com.pixelpals.app.feature.home.DecorationCatalog::find)
+        if (action == CareSceneAction.REST && selectedBed?.kind == com.pixelpals.app.feature.home.DecorationKind.BED && selectedBed.id != "linen_bed") {
+            homePainter.drawObject(canvas, selectedBed, bedBounds, pet = pet)
+            canvas.restore()
+            return
+        }
         if (pet != lastPet) { lastPet = pet; profile = PetCareProfile.forPet(pet) }
-        if (pet != PetType.CORGI && species.draw(canvas, profile, action, amount)) {
+        // Wing wrapping is body choreography, never detached bedroom furniture.
+        val bodyWrap: Boolean = action == CareSceneAction.REST && profile.bed == com.pixelpals.app.core.care.scene.CareBed.WING_WRAP
+        if (pet != PetType.CORGI && !bodyWrap && species.draw(canvas, profile, action, amount)) {
             canvas.restore()
             return
         }
@@ -89,9 +111,10 @@ class CarePropPainter {
 
     private fun drawSpoon(canvas: Canvas, amount: Float): Unit {
         canvas.save()
-        canvas.rotate(-25f)
+        canvas.rotate(CareSpoonGeometry.TILT_DEGREES)
         canvas.drawRoundRect(-.12f, -.15f, .13f, 1f, .10f, .10f, fill("#88BAC5"))
-        canvas.drawOval(-.42f, -.94f, .43f, .07f, fill("#D9E8E8"))
+        canvas.drawOval(CareSpoonGeometry.BOWL_LEFT, CareSpoonGeometry.BOWL_TOP,
+            CareSpoonGeometry.BOWL_RIGHT, CareSpoonGeometry.BOWL_BOTTOM, fill("#D9E8E8"))
         if (amount > 0f) {
             canvas.save()
             canvas.scale(amount.coerceIn(0f, 1f), amount.coerceIn(0f, 1f), 0f, -.43f)

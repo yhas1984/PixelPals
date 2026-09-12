@@ -18,7 +18,16 @@ ksp {
     arg("room.expandProjection", "true")
 }
 
+val companionCandidate = providers.gradleProperty("pixelpals.companion.releaseCandidate")
+    .map(String::toBooleanStrict).getOrElse(false)
+
 android {
+    // Keep the in-app language selector available without downloading language packs.
+    bundle {
+        language {
+            enableSplit = false
+        }
+    }
     namespace = "com.pixelpals.app"
     compileSdk = 36
 
@@ -26,8 +35,8 @@ android {
         applicationId = "com.pixelpals.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 20
-        versionName = "2.3.0"
+        versionCode = 22
+        versionName = "2.5.0"
         // Visual approval is required before enabling new care assets in production.
         buildConfigField("boolean", "CARE_SCENES_ENABLED", "false")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -124,6 +133,8 @@ android {
             )
         }
         release {
+            // Explicit candidate builds include desktop care for review without changing the production default.
+            buildConfigField("boolean", "CARE_SCENES_ENABLED", companionCandidate.toString())
             isMinifyEnabled = true
             isShrinkResources = true
             // A Play-bound release must never be silently emitted unsigned.
@@ -179,6 +190,14 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+
+    // Share only reviewed care packs with opt-in candidates, never the full debug laboratory.
+    sourceSets.getByName("debug").assets.srcDir("src/carePreview/assets")
+    if (companionCandidate) {
+        sourceSets.getByName("release").assets.srcDir("src/carePreview/assets")
+    }
+
+    sourceSets.getByName("androidTest").assets.srcDir("$projectDir/schemas")
 
     testOptions {
         unitTests.isIncludeAndroidResources = true

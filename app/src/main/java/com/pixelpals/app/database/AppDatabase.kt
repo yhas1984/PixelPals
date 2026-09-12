@@ -17,11 +17,17 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         ProcessedPurchaseEntity::class,
         PetCareNotificationEntity::class,
         TreasureCollectionStateEntity::class,
+        CompanionHomeEntity::class,
+        HomeDecorationEntity::class,
+        DecorationInventoryEntity::class,
+        CompanionJournalEntity::class,
+        CompanionExpeditionEntity::class,
     ],
-    version = 8,
+    version = 11,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
+    abstract fun companionDao(): CompanionDao
     abstract fun treasureDao(): TreasureDao
     abstract fun petStatusDao(): PetStatusDao
     abstract fun petBondDao(): PetBondDao
@@ -227,6 +233,9 @@ abstract class AppDatabase : RoomDatabase() {
                     MIGRATION_5_6,
                     MIGRATION_6_7,
                     MIGRATION_7_8,
+                    COMPANION_MIGRATION_8_9,
+                    COMPANION_MIGRATION_9_10,
+                    COMPANION_MIGRATION_10_11,
                 )
                 .build()
                 INSTANCE = instance

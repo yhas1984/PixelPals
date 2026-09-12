@@ -5,6 +5,7 @@ import android.graphics.Color
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -43,6 +44,9 @@ class PetAlphaHitMaskTest {
         assertFalse(mask.isOpaque(frame = 1, x = 0, y = 0))
         assertTrue(mask.isOpaque(frame = 1, x = 1, y = 1))
         assertFalse(mask.isOpaque(frame = 2, x = 0, y = 0))
+        assertEquals(1, mask.opaqueBottom(0))
+        assertEquals(2, mask.opaqueBottom(1))
+        assertEquals(0, mask.opaqueBottom(2))
         bitmap.recycle()
     }
 }

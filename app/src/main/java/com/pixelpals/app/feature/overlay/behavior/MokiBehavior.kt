@@ -12,6 +12,42 @@ class MokiBehavior(
     bridge: PetViewBridge,
     override val random: PetRandom,
 ) : BaseBehavior(bridge, random) {
+    private var restRequested: Boolean = false
+    private val restFade = com.pixelpals.app.core.rest.RestFadeTransition()
+    override fun onScheduledRestRequested(requested: Boolean) {
+        restRequested = requested
+        controller.requestRest(requested)
+        if (!requested) cancelRestFade()
+    }
+    private fun cancelRestFade() {
+        if (!restFade.active) return
+        restFade.cancel()
+        (bridge as View).alpha = 1f
+    }
+    override fun advanceScheduledRestTransition(delta: Float, reducedMotion: Boolean) {
+        if (!restRequested || !reducedMotion) {
+            cancelRestFade()
+            return
+        }
+        if (!restFade.active && canStartScheduledSleep(true)) return
+        val params = bridge.getWindowParams() ?: return
+        if (!restFade.active) restFade.start()
+        val relocate: Boolean = restFade.advance(delta)
+        (bridge as View).alpha = restFade.opacity
+        if (relocate) {
+            controller.updateViewport(bridge.screenWidth, bridge.screenHeight, bridge.petSpriteSize.toFloat(),
+                bridge.topSystemInsetPx, bridge.bottomSystemInsetPx)
+            pose = controller.settleAtBottom(params.x + bridge.petSpriteSize * .5f)
+            syncPoseToBridge()
+        }
+    }
+    override fun destroy() {
+        cancelRestFade()
+        super.destroy()
+    }
+    override fun canStartScheduledSleep(reducedMotion: Boolean): Boolean =
+        !restFade.active && (controller.readyForRest || (reducedMotion && controller.surface == com.pixelpals.app.core.motion.MokiSurface.BOTTOM && controller.mode == MokiMode.CRAWL))
+
     override val resourceIds: List<Int> = emptyList()
     private val controller: MokiMotionController = MokiMotionController(density = (bridge as View).resources.displayMetrics.density)
     private var pose: MokiPose = controller.getPose()

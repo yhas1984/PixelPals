@@ -13,6 +13,35 @@ import com.pixelpals.app.status.PetStatusSnapshot
  */
 interface PetBehavior {
 
+    /** Actual autonomous sleep, distinct from a sleepy mood or an idle blink. */
+    val isSleeping: Boolean get() = false
+
+    /** Request a natural stopping point without interrupting committed movement. */
+    fun onScheduledRestRequested(requested: Boolean) {}
+
+    /** Optional accessibility transition while ordinary autonomous motion is disabled. */
+    fun advanceScheduledRestTransition(delta: Float, reducedMotion: Boolean) {}
+
+    /** Safe handoff to scheduled rest, after committed jumps and care reactions finish. */
+    fun canStartScheduledSleep(reducedMotion: Boolean): Boolean = true
+
+    /** Carry an already seated pose into sleep instead of repeating the sit-down. */
+    val isSeatedForScheduledRest: Boolean get() = false
+
+    /** Optional shared rest atlas pose already reached before the schedule takes over. */
+    val scheduledRestFrame: Int? get() = null
+
+    /** The shared wake renderer has reached its upright endpoint. */
+    fun onScheduledWakeCompleted() {}
+
+    /** Preserve a shared atlas pose when direct input takes over scheduled sleep. */
+    fun onScheduledSleepInterrupted(frame: Int) {}
+
+    /** Semantic facing, independent of whether the source artwork was drawn mirrored. */
+    val facingLeft: Boolean? get() = null
+    /** Current rendered ground contact relative to the pet window's vertical center. */
+    val careBaselineOffsetY: Float? get() = null
+
     /** True when this behavior, rather than PetView, owns drag and release physics. */
     val usesRuntimeInput: Boolean get() = false
 
@@ -61,6 +90,9 @@ interface PetBehavior {
 
     /** Reset state */
     fun reset()
+
+    /** Rebuild any cached trajectory after the window has been clamped to new bounds. */
+    fun onViewportChanged() { reset() }
 
     // --- Lifecycle and Events ---
     fun resume() {}

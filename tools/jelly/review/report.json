@@ -1,0 +1,119 @@
+[
+  {
+    "file": "jelly_0.png",
+    "sourceSha256": "69dd7c67cea89b8101de54dd0e5e3ce2841abe2b53b6125a46106848f539219a",
+    "cleanSha256": "1399a9157cd9afeee82edb59c70a54f37eabff311ded1ce100e2ce5e020e67a5",
+    "removedPixels": 53162,
+    "bounds": [
+      69,
+      301,
+      698,
+      718
+    ],
+    "rgbIdentical": true
+  },
+  {
+    "file": "jelly_1.png",
+    "sourceSha256": "929e50989e7a3e1703da01eac0e9fd1317f137bc97784bfe6e610e3cf452c13b",
+    "cleanSha256": "0f8e4d2efa39119ad7adc00b51e0ad0b5b26b7949a9286e9570a33943a6e50c5",
+    "removedPixels": 40753,
+    "bounds": [
+      23,
+      494,
+      746,
+      723
+    ],
+    "rgbIdentical": true
+  },
+  {
+    "file": "jelly_2.png",
+    "sourceSha256": "3814e2893a7b48f63bb4eb77c05dd8edcbe7b7d63ceeeb01ed6222a9dd27651f",
+    "cleanSha256": "93432e6ce43949c03651f78a669f453a960c055c6b72f7994464af231820e8c6",
+    "removedPixels": 37131,
+    "bounds": [
+      45,
+      410,
+      722,
+      725
+    ],
+    "rgbIdentical": true
+  },
+  {
+    "file": "jelly_3.png",
+    "sourceSha256": "c9296d0d5336b11428ff891178038f01853e4a847b54187e1ff447331548ab04",
+    "cleanSha256": "4c86e172a830306ece7aa2f6fdbc3015490d1bade3bb27c5f7a6cda6a3ae15a8",
+    "removedPixels": 55078,
+    "bounds": [
+      53,
+      251,
+      715,
+      719
+    ],
+    "rgbIdentical": true
+  },
+  {
+    "file": "jelly_4.png",
+    "sourceSha256": "1850a7a791e978f7f8ad2c1cea584914698896a7eeb38ca86114328427c04970",
+    "cleanSha256": "fe743ac47b5571bdbe91e539e694cd5f8c8710b764a392c1f53bdb59dacc22f9",
+    "removedPixels": 42643,
+    "bounds": [
+      83,
+      286,
+      685,
+      723
+    ],
+    "rgbIdentical": true
+  },
+  {
+    "file": "jelly_5.png",
+    "sourceSha256": "e3144db764a07629997505bd65681d47ca3b98dc5b8726211723909be0449ca3",
+    "cleanSha256": "7511fa4508eba3310d449b48b144c3acdb7683e3cabaf4cb4b9e3d4ea460eeb9",
+    "removedPixels": 36720,
+    "bounds": [
+      124,
+      287,
+      645,
+      724
+    ],
+    "rgbIdentical": true
+  },
+  {
+    "file": "jelly_6.png",
+    "sourceSha256": "c475a4392872b8e7afe2e1988a4e135a17f3b34c117e403621e01c31894ddfc2",
+    "cleanSha256": "fc76c74b91a3af313a7a8daf0ae5dce4293fbb08ac1cd335b4bdb8d939729a43",
+    "removedPixels": 35306,
+    "bounds": [
+      41,
+      488,
+      726,
+      750
+    ],
+    "rgbIdentical": true
+  },
+  {
+    "file": "jelly_7.png",
+    "sourceSha256": "bace41b6d351d851aac016ee8bd2e6db3d2edc16c178d884e11b67dc5bbd1901",
+    "cleanSha256": "01cbf45cf09d3a81d3284ff7f8803de80f2a9f0750cc83c120efe7db33638f26",
+    "removedPixels": 28151,
+    "bounds": [
+      56,
+      478,
+      712,
+      753
+    ],
+    "rgbIdentical": true
+  },
+  {
+    "file": "pet_jelly.png",
+    "sourceSha256": "14332e5dcd25f29ee6499b85742d7ed7b1f502f88afbb644b0d00f551e6ff2e0",
+    "cleanSha256": "6fad946a2aab928b5b99c364a595b874081a425fe765a3d714fe6523394d893d",
+    "removedPixels": 27224,
+    "bounds": [
+      27,
+      104,
+      485,
+      408
+    ],
+    "rgbIdentical": true
+  }
+]

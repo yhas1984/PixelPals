@@ -31,6 +31,7 @@ sealed interface CosmeticCatalogRow {
 
 class CosmeticCatalogAdapter(
     private val onAction: (Cosmetic) -> Unit,
+    private val onPreview: (Cosmetic) -> Unit,
 ) : ListAdapter<CosmeticCatalogRow, RecyclerView.ViewHolder>(DIFF_CALLBACK) {
     companion object {
         private const val VIEW_TYPE_HEADER: Int = 0
@@ -71,7 +72,7 @@ class CosmeticCatalogAdapter(
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (val row: CosmeticCatalogRow = getItem(position)) {
             is CosmeticCatalogRow.Header -> (holder as HeaderViewHolder).bind(row)
-            is CosmeticCatalogRow.Item -> (holder as CosmeticViewHolder).bind(row, onAction)
+            is CosmeticCatalogRow.Item -> (holder as CosmeticViewHolder).bind(row, onAction, onPreview)
         }
     }
 
@@ -88,12 +89,15 @@ class CosmeticCatalogAdapter(
         private val title: TextView = itemView.findViewById(R.id.txtCosmeticTitle)
         private val subtitle: TextView = itemView.findViewById(R.id.txtCosmeticSubtitle)
         private val price: TextView = itemView.findViewById(R.id.txtCosmeticPrice)
+        private val preview: Button = itemView.findViewById(R.id.btnCosmeticPreview)
         private val action: Button = itemView.findViewById(R.id.btnCosmeticAction)
 
-        fun bind(row: CosmeticCatalogRow.Item, onAction: (Cosmetic) -> Unit) {
+        fun bind(row: CosmeticCatalogRow.Item, onAction: (Cosmetic) -> Unit, onPreview: (Cosmetic) -> Unit) {
             val context = itemView.context
             val cosmetic: Cosmetic = row.cosmetic
             emoji.text = getPreviewEmoji(cosmetic.effect)
+            preview.contentDescription = context.getString(R.string.store_preview_cosmetic_named, cosmetic.displayName)
+            preview.setOnClickListener { onPreview(cosmetic) }
             title.text = cosmetic.displayName
             subtitle.text = cosmetic.description
             val isPurchasable: Boolean = row.action == CosmeticAction.BUY && cosmetic.coinPrice != null
@@ -107,9 +111,9 @@ class CosmeticCatalogAdapter(
                     cosmetic.coinPrice ?: 0,
                 )
                 CosmeticAction.EQUIP -> context.getString(R.string.store_equip_button)
-                CosmeticAction.EQUIPPED -> context.getString(R.string.store_equipped_button)
+                CosmeticAction.EQUIPPED -> context.getString(R.string.store_unequip_button)
             }
-            action.isEnabled = row.isActionEnabled && row.action != CosmeticAction.EQUIPPED
+            action.isEnabled = row.isActionEnabled
             action.alpha = if (action.isEnabled) 1f else 0.55f
             action.setOnClickListener { onAction(cosmetic) }
         }

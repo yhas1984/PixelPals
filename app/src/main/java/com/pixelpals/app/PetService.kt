@@ -173,6 +173,20 @@ class PetService : Service() {
     private val homeCheckRunnable = object : Runnable {
         override fun run() {
             try {
+                if (!canDrawOverlays()) {
+                    Log.w(TAG, "Overlay permission revoked; stopping pet service")
+                    selectedPetStore.setPetEnabled(false)
+                    PetCareNotificationScheduler.cancel(this@PetService)
+                    try {
+                        removePetOverlay()
+                    } catch (exception: Exception) {
+                        Log.w(TAG, "Overlay cleanup after permission revocation failed", exception)
+                    } finally {
+                        stopForeground(STOP_FOREGROUND_REMOVE)
+                        stopSelf()
+                    }
+                    return
+                }
                 if (!isViewAttached) {
                     homeCheckHandler.postDelayed(this, HOME_POLL_INTERVAL_SLOW_MS)
                     return
@@ -213,7 +227,7 @@ class PetService : Service() {
         isRunning = true
         selectedPetStore = SelectedPetStore(this)
         currentPetType = selectedPetStore.load()
-        if (BuildConfig.CARE_SCENES_ENABLED) careScope.launch {
+        careScope.launch {
             AppServices.careScenes(this@PetService).roomOwners.collect { owners ->
                 isCareRoomVisible = owners.isNotEmpty()
                 if (isCareRoomVisible) careOverlay?.close()
@@ -221,6 +235,13 @@ class PetService : Service() {
             }
         }
         createNotificationChannel()
+        careScope.launch {
+            AppServices.companions(this@PetService).dao.observeExpedition().collect { expedition ->
+                expeditionVisibility.update(expedition?.petId)
+                if (isOnExpedition) careOverlay?.close()
+                applyPetOverlayVisible(shouldShowPetForPolicy())
+            }
+        }
         PetCareNotificationManager.createChannel(this)
         if (selectedPetStore.isPetEnabled()) PetCareNotificationScheduler.schedule(this)
     }
@@ -377,6 +398,12 @@ class PetService : Service() {
             onTelaSilkChanged = ::onTelaSilkChanged,
             onTelaCornerWebChanged = ::onTelaCornerWebChanged,
         )
+        companionHomeJob?.cancel()
+        companionHomeJob = careScope.launch {
+            AppServices.companions(this@PetService).dao.observeHome(currentPetType.name.lowercase()).collect { home ->
+                petView?.setCompanionHome(home)
+            }
+        }
         if (BuildConfig.CARE_SCENES_ENABLED && currentPetType in DesktopCarePlayback.SUPPORTED_PETS &&
             CarePoseLoader.isAvailable(assets, currentPetType)) {
             if (currentPetType == PetType.CORGI) {
@@ -437,9 +464,12 @@ class PetService : Service() {
     }
 
     private fun removePetOverlay() {
+        companionHomeJob?.cancel(); companionHomeJob = null
         val previousCare: CorgiCareCloud? = careOverlay
         careOverlay = null
-        previousCare?.close()
+        try { previousCare?.close() } catch (exception: Exception) {
+            Log.w(TAG, "Care overlay detach failed", exception)
+        }
         homeCheckHandler.removeCallbacks(homeCheckRunnable)
         petView?.let {
             it.pauseAnimation()
@@ -449,9 +479,13 @@ class PetService : Service() {
             }
         }
         petView = null
-        fetchBall?.close()
+        try { fetchBall?.close() } catch (exception: Exception) {
+            Log.w(TAG, "Fetch overlay detach failed", exception)
+        }
         fetchBall = null
-        telaWebOverlay?.destroy()
+        try { telaWebOverlay?.destroy() } catch (exception: Exception) {
+            Log.w(TAG, "Tela overlay cleanup failed", exception)
+        }
         telaWebOverlay = null
         lastAppliedPetVisible = null
     }
@@ -468,8 +502,12 @@ class PetService : Service() {
      * Con acceso de uso: solo visible en el lanzador. Sin acceso: siempre visible salvo ocultar manual.
      * No se puede poner un TYPE_APPLICATION_OVERLAY detrás de otras apps; se oculta para no taparlas.
      */
+    private val expeditionVisibility = com.pixelpals.app.core.motion.ExpeditionVisibility()
+    private val isOnExpedition: Boolean
+        get() = expeditionVisibility.hides(currentPetType.name.lowercase())
+    private var companionHomeJob: kotlinx.coroutines.Job? = null
     private fun shouldShowPetForPolicy(): Boolean {
-        if (userManuallyHidden || !isScreenOn || isCareRoomVisible) return false
+        if (isOnExpedition || userManuallyHidden || !isScreenOn || isCareRoomVisible) return false
         if (!DesktopForegroundHelper.hasUsageAccess(this)) return true
         return DesktopForegroundHelper.isLauncherForeground(this)
     }
@@ -483,7 +521,7 @@ class PetService : Service() {
 
     private fun applyPetOverlayVisible(visible: Boolean) {
         val v = petView ?: return
-        val effectiveVisible: Boolean = visible && !isCareRoomVisible && isScreenOn
+        val effectiveVisible: Boolean = visible && !isCareRoomVisible && isScreenOn && !isOnExpedition
         if (!effectiveVisible) careOverlay?.close()
         val already = lastAppliedPetVisible == effectiveVisible &&
             v.visibility == if (effectiveVisible) View.VISIBLE else View.GONE

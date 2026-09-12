@@ -21,7 +21,12 @@ object ImpCareMotion {
     }
 
     fun getWingFold(progress: Float, reduced: Boolean): Float =
-        if (reduced) 1f else smoothStep((progress - .10f) / .30f)
+        if (reduced) { if (progress >= 1f) 0f else 1f }
+        else smoothStep((progress - .10f) / .30f) * (1f - smoothStep((progress - .8f) / .1f))
+
+    fun getWingRest(progress: Float, reduced: Boolean): Float =
+        if (reduced) { if (progress >= 1f) 1f else 0f }
+        else smoothStep((progress - .9f) / .1f)
 
     fun getFoodAmount(elapsedMs: Long): Float =
         (1f - ((elapsedMs.toFloat() / EATING_DURATION_MS - .2f) / .65f)).coerceIn(0f, 1f)

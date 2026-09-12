@@ -27,7 +27,7 @@ class ImpCareMotionTest {
     }
 
     @Test fun wingsCloseOnceAndStayWrappedThroughoutTheNap(): Unit {
-        val folds: List<Float> = (-10..110).map { ImpCareMotion.getWingFold(it / 100f, false) }
+        val folds: List<Float> = (-10..80).map { ImpCareMotion.getWingFold(it / 100f, false) }
         assertEquals(0f, folds.first(), 0f)
         assertEquals(1f, folds.last(), 0f)
         assertTrue(folds.zipWithNext().all { (before, after) -> after >= before })
@@ -36,6 +36,18 @@ class ImpCareMotionTest {
         assertEquals(1f, ImpCareMotion.getWingFold(0f, true), 0f)
         assertEquals(CareBed.WING_WRAP, PetCareProfile.forPet(PetType.DIABLILLO).bed)
         assertEquals(CareBed.WEB, PetCareProfile.forPet(PetType.TELA).bed)
+    }
+
+    @Test fun wakingUnwrapsThenSettlesWingsBehindTheBody(): Unit {
+        assertEquals(1f, ImpCareMotion.getWingFold(.8f, false), .00001f)
+        assertEquals(0f, ImpCareMotion.getWingFold(.9f, false), .00001f)
+        assertEquals(0f, ImpCareMotion.getWingRest(.9f, false), .00001f)
+        assertEquals(.5f, ImpCareMotion.getWingRest(.95f, false), .00001f)
+        assertEquals(1f, ImpCareMotion.getWingRest(1f, false), .00001f)
+        assertEquals(1f, ImpCareMotion.getWingFold(.99f, true), 0f)
+        assertEquals(0f, ImpCareMotion.getWingRest(.99f, true), 0f)
+        assertEquals(0f, ImpCareMotion.getWingFold(1f, true), 0f)
+        assertEquals(1f, ImpCareMotion.getWingRest(1f, true), 0f)
     }
 
     @Test fun fireOnlyAppearsAfterFoodIsGoneAndFadesBeforeTheSmile(): Unit {

@@ -2,6 +2,7 @@ package com.pixelpals.app.feature.overlay.behavior
 
 import com.pixelpals.app.core.domain.PetState
 import com.pixelpals.app.core.motion.PetRandom
+import com.pixelpals.app.core.motion.GroundGait
 import kotlin.math.roundToInt
 import kotlin.math.sin
 
@@ -25,11 +26,16 @@ class MentaBehavior(
         const val WAVE_DISTANCE_PX = 42f
     }
 
+    override val isSleeping: Boolean get() = mode == Mode.SLEEP
+
     override val resourceIds: List<Int> = emptyList()
+
+    override fun canStartScheduledSleep(reducedMotion: Boolean): Boolean =
+        mode == Mode.COIL || mode == Mode.SLEEP || (reducedMotion && mode == Mode.SLITHER)
 
     private enum class Mode { SLITHER, CLIMB, COIL, HAPPY, TOUCH, SLEEP }
 
-    private var mode = Mode.SLITHER
+    private var mode = Mode.COIL
     private var modeTimer = 0f
     private var modeDuration = 3f
     private var animClock = 0f
@@ -100,7 +106,7 @@ class MentaBehavior(
         val dx = cruiseTargetX - startX
         val dy = cruiseTargetY - startY
         val dist = kotlin.math.sqrt(dx * dx + dy * dy).coerceAtLeast(1f)
-        modeDuration = (dist / getBaseSpeed()).coerceIn(2.5f, 14.0f)
+        modeDuration = GroundGait.duration(dist, getBaseSpeed(), 2.5f)
     }
 
     /** Deslizamiento horizontal: lento, ondulando el cuerpo, de frente. */
@@ -108,6 +114,12 @@ class MentaBehavior(
         val params = bridge.getWindowParams() ?: return
         val t = (modeTimer / modeDuration).coerceIn(0f, 1f)
         if (t >= 1f) {
+            params.x = cruiseTargetX.roundToInt()
+            params.y = cruiseTargetY.roundToInt()
+            bridge.updateWindowLayout(params)
+            bridge.animOffsetX = 0f
+            bridge.animOffsetY = 0f
+            bridge.animScaleY = 1f
             modeTimer = 0f
             if (random.nextFloat() < 0.20f) {
                 mode = Mode.COIL
@@ -117,7 +129,7 @@ class MentaBehavior(
             }
             return
         }
-        val eased = t
+        val eased = GroundGait.progress(modeTimer, modeDuration)
         val x = startX + (cruiseTargetX - startX) * eased
         val y = startY + (cruiseTargetY - startY) * eased
         params.x = x.roundToInt()
@@ -130,18 +142,19 @@ class MentaBehavior(
             (cruiseTargetX - startX) * (cruiseTargetX - startX) +
                 (cruiseTargetY - startY) * (cruiseTargetY - startY)
         )
-        val travelled = distance * t
+        val travelled = distance * eased
         // Cuatro fases corporales distintas por dirección, repetidas según
         // los píxeles recorridos. right = 4-7; left = 8-11.
         val wave = (travelled / WAVE_DISTANCE_PX).toInt() % 4
         val poseBase = if (facingRight) 4 else 8
         bridge.currentFrame = poseBase + wave
         val bodyPhase = (travelled / WAVE_DISTANCE_PX) * kotlin.math.PI.toFloat()
-        bridge.animOffsetX = sin(bodyPhase) * 3f
-        bridge.animOffsetY = sin(bodyPhase * 0.5f) * 1.5f
+        val motionEnvelope: Float = sin(t * kotlin.math.PI.toFloat())
+        bridge.animOffsetX = sin(bodyPhase) * 3f * motionEnvelope
+        bridge.animOffsetY = sin(bodyPhase * 0.5f) * 1.5f * motionEnvelope
         bridge.animRotation = 0f   // siempre de frente, sin golpeteos de cabeza
         bridge.animScaleX = 1f
-        bridge.animScaleY = 1f + sin(bodyPhase) * 0.015f
+        bridge.animScaleY = 1f
 
         if (random.nextFloat() < 0.00025f) {
             mode = Mode.HAPPY
@@ -155,6 +168,12 @@ class MentaBehavior(
         val params = bridge.getWindowParams() ?: return
         val t = (modeTimer / modeDuration).coerceIn(0f, 1f)
         if (t >= 1f) {
+            params.x = cruiseTargetX.roundToInt()
+            params.y = cruiseTargetY.roundToInt()
+            bridge.updateWindowLayout(params)
+            bridge.animOffsetX = 0f
+            bridge.animOffsetY = 0f
+            bridge.animScaleY = 1f
             modeTimer = 0f
             if (random.nextFloat() < 0.15f) {
                 mode = Mode.COIL
@@ -164,7 +183,7 @@ class MentaBehavior(
             }
             return
         }
-        val eased = t
+        val eased = GroundGait.progress(modeTimer, modeDuration)
         val x = startX + (cruiseTargetX - startX) * eased
         val y = startY + (cruiseTargetY - startY) * eased
         params.x = x.roundToInt()
@@ -177,17 +196,18 @@ class MentaBehavior(
         // auxiliar que pueda quedar desfasado después de otro modo.
         val movingDown = cruiseTargetY > startY
         val distance = kotlin.math.abs(cruiseTargetY - startY)
-        val travelled = distance * t
+        val travelled = distance * eased
         val wave = (travelled / WAVE_DISTANCE_PX).toInt() and 1
         // El atlas tiene dos fases verticales: up = 12-13, down = 14-15.
         // No se voltea la imagen: cada pose conserva la cara y la cabeza líder.
         bridge.currentFrame = (if (movingDown) 14 else 12) + wave
         val bodyPhase = (travelled / WAVE_DISTANCE_PX) * kotlin.math.PI.toFloat()
+        val motionEnvelope: Float = sin(t * kotlin.math.PI.toFloat())
         bridge.animRotation = 0f
         bridge.animScaleX = 1f
         bridge.animScaleY = 1f
-        bridge.animOffsetX = sin(bodyPhase) * 2f
-        bridge.animOffsetY = sin(bodyPhase * 0.5f) * 1.5f
+        bridge.animOffsetX = sin(bodyPhase) * 2f * motionEnvelope
+        bridge.animOffsetY = sin(bodyPhase * 0.5f) * 1.5f * motionEnvelope
     }
 
     private fun updateCoil(dt: Float) {
@@ -199,7 +219,7 @@ class MentaBehavior(
         bridge.animOffsetY = sin(time * 2.2f) * 2f
         bridge.animRotation = 0f
         bridge.animScaleX = 1f
-        bridge.animScaleY = 1f + sin(time * 2.8f) * 0.03f
+        bridge.animScaleY = 1f
         if (modeTimer >= modeDuration) {
             modeTimer = 0f
             pickTarget()
@@ -216,8 +236,8 @@ class MentaBehavior(
         val clip = spec.clip("happy") ?: return
         val idx = ((animClock / 0.24f).toInt() % clip.frames.size)
         bridge.currentFrame = clip.frames[idx]
-        bridge.animScaleY = 1f + sin(time * 6f) * 0.05f
-        bridge.animScaleX = 1f - sin(time * 6f) * 0.04f
+        bridge.animScaleX = 1f
+        bridge.animScaleY = 1f
         bridge.animOffsetY = sin(time * 4f) * 3f
     }
 
@@ -235,6 +255,8 @@ class MentaBehavior(
         val clip = spec.clip("touch") ?: return
         val idx = ((animClock / 0.26f).toInt() % clip.frames.size)
         bridge.currentFrame = clip.frames[idx]
+        bridge.animScaleX = 1f
+        bridge.animScaleY = 1f
     }
 
     private fun updateSleep(dt: Float) {

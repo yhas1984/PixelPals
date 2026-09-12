@@ -36,4 +36,6 @@
     <string name="care_delta_coins">Monedas</string>
     <string name="care_delta_health">Salud</string>
     <string name="care_delta_recovery">Recuperación</string>
+    <string name="care_scene_played_together">Un juego más juntos.</string>
+    <string name="care_scene_play_effort">Jugar gasta energía y abre el apetito.</string>
 </resources>

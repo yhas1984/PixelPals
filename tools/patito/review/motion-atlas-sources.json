@@ -1,0 +1,162 @@
+[
+  {
+    "frame": 0,
+    "source": "app/src/main/res/drawable-nodpi/patito_0.png",
+    "sha256": "789115e5e8cf519ba0e62fc2a2b074312c834c2a57f86eb1b3eb313de74989fc",
+    "cellScale": 1.0,
+    "offset": [
+      0,
+      0
+    ]
+  },
+  {
+    "frame": 1,
+    "source": "app/src/main/res/drawable-nodpi/patito_1.png",
+    "sha256": "c4b6e435e6a1d87bd9ce67af61221084d104bcf9b15a3ae703fb434edb26090c",
+    "cellScale": 1.0,
+    "offset": [
+      0,
+      0
+    ]
+  },
+  {
+    "frame": 2,
+    "source": "app/src/main/res/drawable-nodpi/patito_2.png",
+    "sha256": "ad24229828511adeef248b034fec5934c87354ff5172f2d4f20c81fe42765cd1",
+    "cellScale": 1.0,
+    "offset": [
+      0,
+      0
+    ]
+  },
+  {
+    "frame": 3,
+    "source": "app/src/main/res/drawable-nodpi/patito_3.png",
+    "sha256": "0b947d19d81fcd036aeacb895b53a466eb6f3abb48dae45e00e1f68287dc05a4",
+    "cellScale": 1.0,
+    "offset": [
+      0,
+      0
+    ]
+  },
+  {
+    "frame": 4,
+    "source": "app/src/main/res/drawable-nodpi/patito_4.png",
+    "sha256": "b758cf75b9f4a9b68b5d6a8635a3531c557d106a77d77042eb77982fca3cea5a",
+    "cellScale": 1.0,
+    "offset": [
+      0,
+      0
+    ]
+  },
+  {
+    "frame": 5,
+    "source": "app/src/main/res/drawable-nodpi/patito_5.png",
+    "sha256": "26ffea8a2f096c7fe131bd21b5b6e89891ed66c89bf0a9e4fe0d74b805c98341",
+    "cellScale": 1.0,
+    "offset": [
+      0,
+      0
+    ]
+  },
+  {
+    "frame": 6,
+    "source": "app/src/main/res/drawable-nodpi/patito_6.png",
+    "sha256": "d07c0d5adc7b6512f0ec95e17fa19bb8e80ce73c83f1bf353a9f2be61b1b905e",
+    "cellScale": 1.0,
+    "offset": [
+      0,
+      0
+    ]
+  },
+  {
+    "frame": 7,
+    "source": "app/src/main/res/drawable-nodpi/patito_7.png",
+    "sha256": "e9c8d29da86f7c86ccb6d23285825737b34e5845ec43f063f96e959da2885a19",
+    "cellScale": 1.0,
+    "offset": [
+      0,
+      0
+    ]
+  },
+  {
+    "frame": 8,
+    "source": "app/src/main/res/drawable-nodpi/patito_8.png",
+    "sha256": "24f10f136adb0b103b6e6c936ed3c550b8c69ca14bf66a5fe8ac08505a04e000",
+    "cellScale": 1.0,
+    "offset": [
+      0,
+      0
+    ]
+  },
+  {
+    "frame": 9,
+    "source": "app/src/main/res/drawable-nodpi/patito_9.png",
+    "sha256": "55642bff908d590f316dfb1aea94effb20051a5d75f74b6dd0ff987e9b6dad06",
+    "cellScale": 1.0,
+    "offset": [
+      0,
+      0
+    ]
+  },
+  {
+    "frame": 10,
+    "source": "tools/patito/review/walk-0.png",
+    "sha256": "0e575954d4f40a802fafd6a3ac6e7a520b660dad571090d40cad8d66f1b7c2d6",
+    "cellScale": 0.8,
+    "offset": [
+      26,
+      47
+    ]
+  },
+  {
+    "frame": 11,
+    "source": "tools/patito/review/walk-1.png",
+    "sha256": "ab95bf97576705affbfcceeb3d638a8103bb551c452d4fac40c256ab406125af",
+    "cellScale": 0.8,
+    "offset": [
+      26,
+      47
+    ]
+  },
+  {
+    "frame": 12,
+    "source": "tools/patito/review/walk-2.png",
+    "sha256": "aa3dc0002e4751cc5046d9e6aab6f07ee94b9f06314f819d7f796a50c6be63af",
+    "cellScale": 0.8,
+    "offset": [
+      26,
+      47
+    ]
+  },
+  {
+    "frame": 13,
+    "source": "tools/patito/review/walk-3.png",
+    "sha256": "5ccc2baa299fc29736370142afc820ea6863113d99336ed5bfec5a77a9884874",
+    "cellScale": 0.8,
+    "offset": [
+      26,
+      47
+    ]
+  },
+  {
+    "frame": 14,
+    "source": "tools/patito/review/walk-4.png",
+    "sha256": "6c83b4160984e16775b9a7a27fc50e90c9fda3a8b7d448bf183591eccdf6cba2",
+    "cellScale": 0.8,
+    "offset": [
+      26,
+      47
+    ]
+  },
+  {
+    "frame": 15,
+    "source": "tools/patito/review/walk-5.png",
+    "sha256": "aeb9a41427174195f10887b553925e91234091528fd7f6e9ad5819cedea289d7",
+    "cellScale": 0.8,
+    "offset": [
+      26,
+      47
+    ]
+  }
+]

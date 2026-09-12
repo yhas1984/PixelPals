@@ -141,8 +141,10 @@ object PetPhysics {
         }
         val movingBody: PhysicsBody = PhysicsBody(positionX, positionY, velocityX, velocityY)
         if (!isSettled) return PhysicsStepResult(movingBody, PhysicsEvent.MOVING)
-        val settledBody: PhysicsBody = if (config.snapToEdge) snapToNearestEdge(movingBody, bounds) else {
-            movingBody.copy(velocityX = 0f, velocityY = 0f)
+        val settledBody: PhysicsBody = when {
+            config.snapToEdge -> snapToNearestEdge(movingBody, bounds)
+            config.requireFloorToRest -> movingBody.copy(y = bounds.floor.toFloat(), velocityX = 0f, velocityY = 0f)
+            else -> movingBody.copy(velocityX = 0f, velocityY = 0f)
         }
         return PhysicsStepResult(settledBody, PhysicsEvent.SETTLED)
     }

@@ -1,238 +1,241 @@
 package com.pixelpals.app.feature.overlay.behavior
 
-import com.pixelpals.app.core.domain.PetState
 import com.pixelpals.app.R
-import kotlin.math.PI
+import com.pixelpals.app.core.domain.PetState
+import com.pixelpals.app.core.motion.JellyElasticMotion
+import com.pixelpals.app.core.motion.JellyFlightMotion
+import com.pixelpals.app.core.motion.PetRandom
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.math.sin
-import com.pixelpals.app.core.motion.PetRandom
+import kotlin.math.sqrt
 
+/** Elastic material keeps one camera while momentum and contact drive its shape. */
 class JellyBehavior(
     bridge: PetViewBridge,
-    override val random: PetRandom
+    override val random: PetRandom,
 ) : BaseBehavior(bridge, random) {
+    override val resourceIds: List<Int> = listOf(R.drawable.jelly_0, R.drawable.jelly_1,
+        R.drawable.jelly_2, R.drawable.jelly_3, R.drawable.jelly_4, R.drawable.jelly_5,
+        R.drawable.jelly_6, R.drawable.jelly_7)
 
-    override val resourceIds = listOf(R.drawable.jelly_0, R.drawable.jelly_1, R.drawable.jelly_2, R.drawable.jelly_3, R.drawable.jelly_4, R.drawable.jelly_5, R.drawable.jelly_6, R.drawable.jelly_7)
+    private enum class JellyMode { IDLE, PREPARE_HOP, HOPPING, LANDING, TOUCH }
+    private var mode: JellyMode = JellyMode.IDLE
+    private var modeTimer: Float = 0f
+    private var nextHopDelay: Float = randomIdleDelay()
+    private var flight: JellyFlightMotion? = null
+    private var touchOnLanding: Boolean = false
+    private var reduced: Boolean = false
+    private var initialScaleY: Float = 1f
+    private var flightBlendSeconds: Float = 0f
+    private var handoff: Shape = Shape()
+    private var preparationStartY: Float = 1f
 
-    init {
-        loadFramesAsync()
-    }
+    private data class Shape(val x: Float = 1f, val y: Float = 1f,
+        val offsetX: Float = 0f, val offsetY: Float = 0f, val rotation: Float = 0f)
 
-    private enum class JellyMode {
-        IDLE,
-        PREPARE_HOP,
-        HOPPING,
-        LANDING
-    }
-
-    private var mode = JellyMode.IDLE
-    private var modeTimer = 0f
-    private var nextHopDelay = randomIdleDelay()
-
-    private var hopStartX = 0f
-    private var hopStartY = 0f
-    private var hopTargetX = 0f
-    private var hopTargetY = 0f
-    private var hopHeight = 0f
-
-    private var meltStartX = 0f
-    private var meltStartY = 0f
+    init { loadFramesAsync() }
 
     override fun getBaseSpeed(): Float = 0f
 
-    private fun randomIdleDelay(): Float = 1.0f + random.nextFloat() * 0.9f
+    override fun canStartScheduledSleep(reducedMotion: Boolean): Boolean =
+        mode == JellyMode.IDLE && bridge.windowY >= floorY().roundToInt()
 
-    private fun startIdle(resetTimer: Boolean = true) {
-        mode = JellyMode.IDLE
-        if (resetTimer) modeTimer = 0f
-        nextHopDelay = randomIdleDelay()
-        bridge.currentFrame = 0
-        val params = bridge.getWindowParams() ?: return
-        params.y = floorY().roundToInt()
-        bridge.updateWindowLayout(params)
+    override fun advanceScheduledRestTransition(delta: Float, reducedMotion: Boolean) {
+        reduced = reducedMotion
+        // PetView pauses idle animation in reduced motion; finish only the
+        // pending contact, so Jelly cannot freeze in a compressed takeoff pose.
+        if (reduced && bridge.state == PetState.IDLE) {
+            if (mode == JellyMode.PREPARE_HOP) startIdle()
+            else if (mode == JellyMode.LANDING || mode == JellyMode.TOUCH) updateIdle(delta)
+            else if (mode == JellyMode.IDLE) applyShape(1f)
+        }
     }
 
-    private fun floorY(): Float = bridge.groundY.coerceAtLeast(50).toFloat()
+    private fun randomIdleDelay(): Float = 1f + random.nextFloat() * .9f
+    private fun floorY(): Float = bridge.groundY.toFloat()
+    private fun gravity(): Float = (bridge.petSpriteSize * 24f).coerceAtLeast(900f)
+
+    private fun startIdle() {
+        mode = JellyMode.IDLE
+        modeTimer = 0f
+        flight = null
+        touchOnLanding = false
+        nextHopDelay = randomIdleDelay()
+        bridge.state = PetState.IDLE
+        applyShape(1f)
+    }
 
     private fun startHopPreparation() {
-        val params = bridge.getWindowParams() ?: return
-        val minX = 0f
-        val maxX = (bridge.screenWidth - bridge.petSpriteSize).coerceAtLeast(0).toFloat()
-        val floorY = floorY()
-
-        hopStartX = params.x.toFloat()
-        hopStartY = floorY
-        params.y = floorY.roundToInt()
-        bridge.updateWindowLayout(params)
-
-        val horizontalDistance = random.nextInt(
-            (bridge.petSpriteSize * 0.8f).roundToInt(),
-            (bridge.petSpriteSize * 2.0f).roundToInt()
-        ).toFloat()
-        val moveRight = if (hopStartX < bridge.screenWidth * 0.5f) {
-            random.nextFloat() > 0.25f
-        } else {
-            random.nextFloat() > 0.75f
-        }
-
-        hopTargetX = (hopStartX + if (moveRight) horizontalDistance else -horizontalDistance)
-            .coerceIn(minX, maxX)
-        hopTargetY = floorY
-        hopHeight = bridge.petSpriteSize * (0.55f + random.nextFloat() * 0.35f)
-
         mode = JellyMode.PREPARE_HOP
         modeTimer = 0f
+        preparationStartY = bridge.animScaleY
+    }
+
+    private fun startAutonomousHop() {
+        val params = bridge.getWindowParams() ?: return
+        val distance: Float = bridge.petSpriteSize * (.8f + random.nextFloat() * 1.2f)
+        val direction: Float = if (params.x < bridge.screenWidth / 2) {
+            if (random.nextFloat() > .25f) 1f else -1f
+        } else if (random.nextFloat() > .75f) 1f else -1f
+        val height: Float = bridge.petSpriteSize * (.55f + random.nextFloat() * .35f)
+        val upwardSpeed: Float = sqrt(2f * gravity() * height)
+        val duration: Float = 2f * upwardSpeed / gravity()
+        launch(distance * direction / duration, -upwardSpeed)
+    }
+
+    private fun launch(velocityX: Float, velocityY: Float) {
+        val params = bridge.getWindowParams() ?: return
+        handoff = captureShape()
+        flightBlendSeconds = 0f
+        flight = JellyFlightMotion(params.x.toFloat(), params.y.toFloat(), velocityX, velocityY,
+            gravity(), bridge.bounds.left.toFloat(), bridge.bounds.right.toFloat(),
+            bridge.bounds.top.toFloat(), floorY())
+        mode = JellyMode.HOPPING
+        modeTimer = 0f
+        touchOnLanding = false
+        bridge.state = PetState.JUMPING
+        // No pose or window mutation here: the first flight sample is exactly
+        // the pose the user released, including any interrupted compression.
     }
 
     override fun updateIdle(dt: Float) {
         if (isLoading || frames.isEmpty()) return
-        time += dt
-        modeTimer += dt
-
+        val delta: Float = dt.coerceAtLeast(0f)
+        time += delta
+        modeTimer += delta
         when (mode) {
             JellyMode.IDLE -> {
-                bridge.currentFrame = 0
-                val wobble = sin(time * 3.1f)
-                bridge.animScaleY = 1f + wobble * 0.05f
-                bridge.animScaleX = 1f - wobble * 0.04f
-                bridge.animOffsetY = abs(sin(time * 4.2f)) * 2f
-                bridge.animOffsetX = 0f
-                bridge.animRotation = 0f
-
-                if (modeTimer >= nextHopDelay) {
-                    startHopPreparation()
+                if (bridge.windowY < floorY().roundToInt()) {
+                    launch(0f, 0f)
+                    return
                 }
+                val settled: Float = JellyElasticMotion.ease(modeTimer / .25f)
+                applyShape(if (reduced) 1f else 1f + sin(time * 3.1f) * settled * .018f)
+                if (!reduced && modeTimer >= nextHopDelay) startHopPreparation()
             }
-
             JellyMode.PREPARE_HOP -> {
-                bridge.currentFrame = 1
-                val squash = (modeTimer / 0.28f).coerceIn(0f, 1f)
-                bridge.animScaleY = 1f - squash * 0.24f
-                bridge.animScaleX = 1f + squash * 0.20f
-                bridge.animOffsetY = squash * 6f
-                bridge.animOffsetX = 0f
-                bridge.animRotation = 0f
-
-                if (modeTimer >= 0.28f) {
-                    mode = JellyMode.HOPPING
-                    modeTimer = 0f
-                }
+                val progress: Float = JellyElasticMotion.ease(modeTimer / JellyElasticMotion.PREPARE_SECONDS)
+                applyShape(preparationStartY + (.82f - preparationStartY) * progress)
+                if (modeTimer >= JellyElasticMotion.PREPARE_SECONDS) startAutonomousHop()
             }
-
-            JellyMode.HOPPING -> {
-                val params = bridge.getWindowParams() ?: return
-                val t = (modeTimer / 0.82f).coerceIn(0f, 1f)
-                val x = hopStartX + (hopTargetX - hopStartX) * t
-                val groundY = hopStartY + (hopTargetY - hopStartY) * t
-                val y = groundY - sin((t * PI).toFloat()) * hopHeight
-
-                params.x = x.roundToInt()
-                params.y = y.roundToInt()
-                bridge.updateWindowLayout(params)
-
-                bridge.currentFrame = when {
-                    t < 0.33f -> 2
-                    t < 0.68f -> 3
-                    else -> 4
-                }
-                bridge.animScaleY = 1f + sin((t * PI).toFloat()) * 0.06f
-                bridge.animScaleX = 1f - sin((t * PI).toFloat()) * 0.05f
-                bridge.animOffsetX = 0f
-                bridge.animOffsetY = 0f
-                bridge.animRotation = 0f
-
-                if (t >= 1f) {
-                    mode = JellyMode.LANDING
-                    modeTimer = 0f
-                }
-            }
-
+            JellyMode.HOPPING -> advanceFlight(delta)
             JellyMode.LANDING -> {
-                bridge.currentFrame = 5
-                val rebound = sin((modeTimer / 0.34f).coerceIn(0f, 1f) * PI).toFloat()
-                bridge.animScaleY = 0.82f + rebound * 0.10f
-                bridge.animScaleX = 1.18f - rebound * 0.12f
-                bridge.animOffsetY = (1f - rebound) * 4f
-                bridge.animOffsetX = 0f
-                bridge.animRotation = 0f
-
-                if (modeTimer >= 0.34f) {
-                    startIdle()
-                }
+                applyShape(if (reduced) 1f else JellyElasticMotion.landingScaleY(modeTimer, initialScaleY))
+                if (modeTimer >= JellyElasticMotion.LAND_SECONDS) startIdle()
             }
+            JellyMode.TOUCH -> advanceTouch()
         }
     }
 
-    override fun updateJumping(dt: Float) {
-        updateIdle(dt)
+    override fun updateJumping(dt: Float) { updateIdle(dt) }
+
+    private fun advanceFlight(delta: Float) {
+        val airborne: JellyFlightMotion = flight ?: return
+        airborne.advance(delta)
+        val params = bridge.getWindowParams() ?: return
+        params.x = airborne.x.roundToInt()
+        params.y = airborne.y.roundToInt()
+        bridge.updateWindowLayout(params)
+        flightBlendSeconds += delta
+        if (airborne.landed) {
+            flight = null
+            initialScaleY = bridge.animScaleY
+            modeTimer = 0f
+            mode = if (touchOnLanding) JellyMode.TOUCH else JellyMode.LANDING
+            bridge.state = if (touchOnLanding) PetState.INTERACTING else PetState.IDLE
+            // Keep the contact sample, then compress on subsequent ticks.
+        } else {
+            val scaleY: Float = if (reduced) 1f else JellyElasticMotion.airScaleY(airborne.velocityY, bridge.petSpriteSize.toFloat())
+            val blend: Float = JellyElasticMotion.ease(flightBlendSeconds / .18f)
+            applyShape(scaleY, handoff, blend)
+        }
     }
 
     override fun onInteract() {
         super.onInteract()
+        touchOnLanding = true
+        val existing: JellyFlightMotion? = flight
         val params = bridge.getWindowParams()
-        meltStartX = params?.x?.toFloat() ?: bridge.windowX.toFloat()
-        meltStartY = params?.y?.toFloat() ?: bridge.windowY.toFloat()
+        if (mode == JellyMode.HOPPING && existing != null && params != null &&
+            abs(existing.x - params.x) <= 1f && abs(existing.y - params.y) <= 1f) {
+            // A tap does not cancel velocity. Affection is expressed on contact.
+        } else if (bridge.windowY < floorY().roundToInt()) {
+            launch(0f, 0f)
+            touchOnLanding = true
+            bridge.state = PetState.INTERACTING
+        } else {
+            flight = null
+            initialScaleY = bridge.animScaleY
+            mode = JellyMode.TOUCH
+            modeTimer = 0f
+        }
         bridge.showBubble(localizedString(R.string.bubble_jelly_splash, "splash"))
     }
 
     override fun onFling(velocityX: Float, velocityY: Float) {
         super.onInteract()
-        val params = bridge.getWindowParams() ?: return
-        val maxX = (bridge.screenWidth - bridge.petSpriteSize).coerceAtLeast(0).toFloat()
-        hopStartX = params.x.toFloat()
-        hopStartY = floorY()
-        params.y = hopStartY.roundToInt()
-        bridge.updateWindowLayout(params)
-        hopTargetX = (hopStartX + velocityX * 0.09f).coerceIn(0f, maxX)
-        hopTargetY = floorY()
-        hopHeight = (bridge.petSpriteSize * 0.7f + abs(velocityY) * 0.025f)
-            .coerceAtMost(bridge.petSpriteSize * 1.8f)
-        mode = JellyMode.HOPPING
-        modeTimer = 0f
-        bridge.state = PetState.IDLE
+        launch((velocityX * .4f).coerceIn(-bridge.petSpriteSize * 5f, bridge.petSpriteSize * 5f),
+            (velocityY * .4f).coerceIn(-bridge.petSpriteSize * 8f, bridge.petSpriteSize * 8f))
         bridge.showBubble(localizedString(R.string.bubble_jelly_boing, "boing"))
-        bridge.animRotation = (velocityX * 0.02f).coerceIn(-20f, 20f)
-        bridge.animScaleX = 1.25f
-        bridge.animScaleY = 0.75f
+    }
+
+    override fun onRelease(velocityX: Float, velocityY: Float) { launch(0f, 0f) }
+
+    override fun onKeyboardVisibilityChanged(visible: Boolean, height: Int) {
+        super.onKeyboardVisibilityChanged(visible, height)
+        // The flight captured the old floor. Rebase from the viewport-adjusted
+        // position so its next sample cannot carry Jelly behind the keyboard.
+        reset()
     }
 
     override fun updateInteracting(dt: Float) {
-        if (frames.isEmpty()) return
-        interactionTimer += dt
-        val params = bridge.getWindowParams() ?: return
-        val minX = 0f
-        val maxX = (bridge.screenWidth - bridge.petSpriteSize).coerceAtLeast(0).toFloat()
-        val floorY = floorY()
+        if (isLoading || frames.isEmpty()) return
+        val delta: Float = dt.coerceAtLeast(0f)
+        interactionTimer += delta
+        modeTimer += delta
+        if (flight != null) advanceFlight(delta) else advanceTouch()
+    }
 
-        val fallT = (interactionTimer / 1.45f).coerceIn(0f, 1f)
-        val meltProgress = fallT * fallT
-        val sway = sin(interactionTimer * 3.2f) * (bridge.petSpriteSize * 0.18f)
-        val meltY = meltStartY + (floorY - meltStartY) * meltProgress
+    private fun advanceTouch() {
+        applyShape(if (reduced) 1f else JellyElasticMotion.touchScaleY(modeTimer, initialScaleY))
+        if (modeTimer >= if (reduced) .2f else JellyElasticMotion.TOUCH_SECONDS) startIdle()
+    }
 
-        params.x = (meltStartX + sway).coerceIn(minX, maxX).roundToInt()
-        params.y = meltY.roundToInt()
-        bridge.updateWindowLayout(params)
+    private fun captureShape(): Shape = Shape(bridge.animScaleX, bridge.animScaleY,
+        bridge.animOffsetX, bridge.animOffsetY, bridge.animRotation)
 
-        // Frames 6/7: poses de APLASTADO (slime plano al tocarlo). El canvas
-        // hace un squish suave para que el aplastado "respire" (sin llegar a
-        // deformar las caras nuevas).
-        bridge.currentFrame = if (((interactionTimer / 0.22f).toInt() % 2) == 0) 6 else 7
-        val wobble = abs(sin(interactionTimer * 4.1f))
-        bridge.animScaleY = 0.72f + wobble * 0.20f
-        bridge.animScaleX = 1.08f - wobble * 0.14f
-        bridge.animOffsetX = sin(interactionTimer * 6.4f) * 4f
-        bridge.animOffsetY = sin(interactionTimer * 4.8f) * 3f
-        bridge.animRotation = sin(interactionTimer * 2.8f) * 6f
-
-        if (interactionTimer > 1.75f) {
-            bridge.state = PetState.IDLE
-            reset()
-        }
+    private fun applyShape(scaleY: Float, from: Shape? = null, blend: Float = 1f) {
+        val contact: Float = (JellyElasticMotion.GROUND - .5f) * bridge.petSpriteSize * bridge.spriteScale * spriteAtlasDrawScale
+        fun value(start: Float?, end: Float): Float = if (start == null) end else start + (end - start) * blend
+        // Legacy action drawings change material and camera. The original glossy
+        // body provides continuous elastic motion until replacement art is reviewed.
+        bridge.currentFrame = 0
+        bridge.animScaleY = value(from?.y, scaleY)
+        bridge.animScaleX = value(from?.x, 1f / scaleY)
+        bridge.animOffsetX = value(from?.offsetX, 0f)
+        bridge.animOffsetY = value(from?.offsetY, contact * (1f - scaleY))
+        bridge.animRotation = value(from?.rotation, 0f)
     }
 
     override fun reset() {
+        val previous: Shape = captureShape()
+        val previousFlight: JellyFlightMotion? = flight?.takeIf {
+            abs(it.x - bridge.windowX) <= 1f && abs(it.y - bridge.windowY) <= 1f
+        }
         super.reset()
-        startIdle()
+        flight = null
+        touchOnLanding = false
+        if (bridge.windowY < floorY().roundToInt()) {
+            launch(previousFlight?.velocityX ?: 0f, previousFlight?.velocityY ?: 0f)
+            handoff = previous
+            applyShape(1f, previous, 0f)
+        } else {
+            initialScaleY = previous.y
+            mode = JellyMode.LANDING
+            modeTimer = 0f
+            bridge.state = PetState.IDLE
+            applyShape(previous.y)
+        }
     }
 }

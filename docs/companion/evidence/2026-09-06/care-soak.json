@@ -1,0 +1,426 @@
+{
+  "startedAt": "2026-09-06T09:56:54.246251+00:00",
+  "serial": "emulator-5580",
+  "pid": "22106",
+  "completed": true,
+  "samples": [
+    {
+      "seconds": 0,
+      "pssKb": 41497,
+      "round": 1,
+      "commits": 1,
+      "elapsedMs": 4415,
+      "javaHeapBytes": 1282888,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 40,
+      "pssKb": 42345,
+      "round": 10,
+      "commits": 10,
+      "elapsedMs": 41432,
+      "javaHeapBytes": 1214408,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 80,
+      "pssKb": 44785,
+      "round": 20,
+      "commits": 20,
+      "elapsedMs": 83512,
+      "javaHeapBytes": 1166488,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 120,
+      "pssKb": 44793,
+      "round": 30,
+      "commits": 30,
+      "elapsedMs": 123635,
+      "javaHeapBytes": 1152136,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 160,
+      "pssKb": 49793,
+      "round": 40,
+      "commits": 40,
+      "elapsedMs": 164710,
+      "javaHeapBytes": 1205696,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 200,
+      "pssKb": 48131,
+      "round": 50,
+      "commits": 50,
+      "elapsedMs": 205120,
+      "javaHeapBytes": 1254072,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 240,
+      "pssKb": 44889,
+      "round": 60,
+      "commits": 60,
+      "elapsedMs": 245250,
+      "javaHeapBytes": 1142256,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 281,
+      "pssKb": 43913,
+      "round": 69,
+      "commits": 69,
+      "elapsedMs": 282280,
+      "javaHeapBytes": 1223448,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 321,
+      "pssKb": 44809,
+      "round": 79,
+      "commits": 79,
+      "elapsedMs": 323426,
+      "javaHeapBytes": 1139776,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 361,
+      "pssKb": 43742,
+      "round": 89,
+      "commits": 89,
+      "elapsedMs": 365449,
+      "javaHeapBytes": 1125312,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 401,
+      "pssKb": 49570,
+      "round": 97,
+      "commits": 97,
+      "elapsedMs": 404633,
+      "javaHeapBytes": 1129280,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 441,
+      "pssKb": 45086,
+      "round": 104,
+      "commits": 104,
+      "elapsedMs": 441906,
+      "javaHeapBytes": 1276416,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 481,
+      "pssKb": 45326,
+      "round": 111,
+      "commits": 111,
+      "elapsedMs": 480708,
+      "javaHeapBytes": 1689576,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 521,
+      "pssKb": 49278,
+      "round": 119,
+      "commits": 119,
+      "elapsedMs": 525527,
+      "javaHeapBytes": 1509472,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 561,
+      "pssKb": 45618,
+      "round": 127,
+      "commits": 127,
+      "elapsedMs": 564467,
+      "javaHeapBytes": 1127984,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 601,
+      "pssKb": 46547,
+      "round": 134,
+      "commits": 134,
+      "elapsedMs": 599939,
+      "javaHeapBytes": 1372304,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 641,
+      "pssKb": 50700,
+      "round": 142,
+      "commits": 142,
+      "elapsedMs": 645958,
+      "javaHeapBytes": 1816104,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 681,
+      "pssKb": 45416,
+      "round": 150,
+      "commits": 150,
+      "elapsedMs": 685964,
+      "javaHeapBytes": 1287856,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 722,
+      "pssKb": 44227,
+      "round": 157,
+      "commits": 157,
+      "elapsedMs": 721840,
+      "javaHeapBytes": 1146664,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 762,
+      "pssKb": 44256,
+      "round": 165,
+      "commits": 165,
+      "elapsedMs": 765441,
+      "javaHeapBytes": 1737776,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 802,
+      "pssKb": 44252,
+      "round": 172,
+      "commits": 172,
+      "elapsedMs": 804856,
+      "javaHeapBytes": 1887992,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 842,
+      "pssKb": 43704,
+      "round": 180,
+      "commits": 180,
+      "elapsedMs": 844840,
+      "javaHeapBytes": 1272504,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 882,
+      "pssKb": 44300,
+      "round": 190,
+      "commits": 190,
+      "elapsedMs": 886001,
+      "javaHeapBytes": 1214416,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 922,
+      "pssKb": 44913,
+      "round": 199,
+      "commits": 199,
+      "elapsedMs": 923043,
+      "javaHeapBytes": 1161080,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 962,
+      "pssKb": 44749,
+      "round": 209,
+      "commits": 209,
+      "elapsedMs": 965144,
+      "javaHeapBytes": 1166848,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 1002,
+      "pssKb": 49797,
+      "round": 219,
+      "commits": 219,
+      "elapsedMs": 1005299,
+      "javaHeapBytes": 1228136,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 1042,
+      "pssKb": 44725,
+      "round": 229,
+      "commits": 229,
+      "elapsedMs": 1044750,
+      "javaHeapBytes": 1162320,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 1082,
+      "pssKb": 49588,
+      "round": 239,
+      "commits": 239,
+      "elapsedMs": 1086878,
+      "javaHeapBytes": 1148824,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 1122,
+      "pssKb": 49536,
+      "round": 249,
+      "commits": 249,
+      "elapsedMs": 1127030,
+      "javaHeapBytes": 1196560,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 1162,
+      "pssKb": 44601,
+      "round": 258,
+      "commits": 258,
+      "elapsedMs": 1164080,
+      "javaHeapBytes": 1147552,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 1202,
+      "pssKb": 45032,
+      "round": 268,
+      "commits": 268,
+      "elapsedMs": 1205277,
+      "javaHeapBytes": 1179968,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 1242,
+      "pssKb": 44736,
+      "round": 276,
+      "commits": 276,
+      "elapsedMs": 1245195,
+      "javaHeapBytes": 1274872,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 1282,
+      "pssKb": 44344,
+      "round": 284,
+      "commits": 284,
+      "elapsedMs": 1286262,
+      "javaHeapBytes": 1263832,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 1323,
+      "pssKb": 46100,
+      "round": 291,
+      "commits": 291,
+      "elapsedMs": 1324697,
+      "javaHeapBytes": 1625552,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 1363,
+      "pssKb": 45700,
+      "round": 298,
+      "commits": 298,
+      "elapsedMs": 1364252,
+      "javaHeapBytes": 1899592,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 1403,
+      "pssKb": 45272,
+      "round": 306,
+      "commits": 306,
+      "elapsedMs": 1404192,
+      "javaHeapBytes": 1275688,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 1443,
+      "pssKb": 46080,
+      "round": 314,
+      "commits": 314,
+      "elapsedMs": 1443669,
+      "javaHeapBytes": 1360904,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 1483,
+      "pssKb": 46140,
+      "round": 321,
+      "commits": 321,
+      "elapsedMs": 1481932,
+      "javaHeapBytes": 1791464,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 1523,
+      "pssKb": 45504,
+      "round": 329,
+      "commits": 329,
+      "elapsedMs": 1526499,
+      "javaHeapBytes": 1437960,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 1563,
+      "pssKb": 45193,
+      "round": 337,
+      "commits": 337,
+      "elapsedMs": 1565580,
+      "javaHeapBytes": 1167104,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 1603,
+      "pssKb": 45682,
+      "round": 344,
+      "commits": 344,
+      "elapsedMs": 1602420,
+      "javaHeapBytes": 1282648,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 1643,
+      "pssKb": 45959,
+      "round": 351,
+      "commits": 351,
+      "elapsedMs": 1640953,
+      "javaHeapBytes": 1759920,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 1683,
+      "pssKb": 45578,
+      "round": 359,
+      "commits": 359,
+      "elapsedMs": 1685583,
+      "javaHeapBytes": 1454680,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 1723,
+      "pssKb": 45191,
+      "round": 369,
+      "commits": 369,
+      "elapsedMs": 1725708,
+      "javaHeapBytes": 1196624,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 1763,
+      "pssKb": 45627,
+      "round": 379,
+      "commits": 379,
+      "elapsedMs": 1766848,
+      "javaHeapBytes": 1181576,
+      "activeBitmapBytes": 6291456
+    },
+    {
+      "seconds": 1803,
+      "pssKb": 45751,
+      "round": 388,
+      "commits": 388,
+      "elapsedMs": 1803880,
+      "javaHeapBytes": 1180424,
+      "activeBitmapBytes": 6291456
+    }
+  ],
+  "maxPssKb": 50700,
+  "rounds": 388,
+  "commits": 388,
+  "elapsedMs": 1803880
+}

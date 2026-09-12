@@ -33,6 +33,36 @@ abstract class BaseBehavior(
     protected open val random: PetRandom
 ) : PetBehavior {
 
+    override val facingLeft: Boolean get() = bridge.animScaleX < 0f
+    override val careBaselineOffsetY: Float?
+        get() {
+            val index: Int = bridge.currentFrame.coerceAtLeast(0)
+            val spec: PetAtlasSpec? = spriteSheetSpec
+            val bottom: Float = if (spec != null) {
+                (spriteHitMask?.opaqueBottom(index) ?: return null).toFloat() / spec.frameHeight
+            } else {
+                val bitmap: Bitmap = frames.getOrNull(index) ?: return null
+                val row: IntArray = IntArray(bitmap.width)
+                var y: Int = bitmap.height - 1
+                while (y >= 0) {
+                    bitmap.getPixels(row, 0, bitmap.width, 0, y, bitmap.width, 1)
+                    if (row.any { it ushr 24 >= 32 }) break
+                    y--
+                }
+                if (y < 0) return null
+                (y + 1).toFloat() / bitmap.height
+            }
+            val size: Float = bridge.petSpriteSize * bridge.spriteScale * spriteAtlasDrawScale
+            val pivot: Float = spec?.pivot?.y?.toFloat()?.div(spec.frameHeight) ?: .5f
+            val halfSize: Float = size * .5f
+            val cameraScale: Float = getFrameCameraScale(index)
+            val ground: Float = (frameGround * 2f - 1f) * halfSize
+            val cameraBottom: Float = ground + ((bottom - .5f) * size - ground) * cameraScale
+            val radians: Double = Math.toRadians(bridge.renderRotation.toDouble())
+            return bridge.renderOffsetY + (.5f - pivot) * size +
+                cameraBottom * bridge.renderScaleY * cos(radians).toFloat()
+        }
+
     protected var time: Float = 0f
     protected var interactionTimer: Float = 0f 
 
@@ -70,6 +100,11 @@ abstract class BaseBehavior(
 
     abstract val resourceIds: List<Int>
 
+    protected open fun getFrameCameraScale(index: Int): Float = 1f
+    protected open fun isFrameMirrored(index: Int): Boolean = false
+    protected open val frameGround: Float = .5f
+    protected open val preloadAllFrames: Boolean = false
+
     protected fun loadFramesAsync() {
         val startedAt = System.currentTimeMillis()
         scope.launch {
@@ -100,7 +135,7 @@ abstract class BaseBehavior(
             val total = resourceIds.size
             // Para mascotas con pocos frames (ej. Bloop 0..8) cargamos todo de golpe para que
             // las transiciones (incluida la transparencia) no ocurran con frames aun nulos.
-            val initialCount = if (total <= 9) total else minOf(8, total)
+            val initialCount = if (preloadAllFrames || total <= 9) total else minOf(8, total)
             val tmp = MutableList<Bitmap?>(total) { null }
 
             // 1) Carga inicial para que el pet no se vea "en blanco" mientras decodifica todo.
@@ -370,7 +405,7 @@ abstract class BaseBehavior(
     override fun updateDrag(dt: Float) {
         time += dt
         bridge.animRotation = 0f
-        bridge.animScaleX = 1f
+        bridge.animScaleX = if (bridge.animScaleX < 0f) -1f else 1f
         bridge.animScaleY = 1f
         bridge.animOffsetX = 0f
         bridge.animOffsetY = 0f
@@ -393,14 +428,14 @@ abstract class BaseBehavior(
         }
         params.y = newY.toInt()
         bridge.updateWindowLayout(params)
-        bridge.animScaleY = 1.15f
-        bridge.animScaleX = 0.9f
+        bridge.animScaleY = 1f
+        bridge.animScaleX = if (bridge.animScaleX < 0f) -1f else 1f
     }
 
     override fun updateJumping(dt: Float) {
         time += dt
-        bridge.animScaleY = 1.2f
-        bridge.animScaleX = 0.8f
+        bridge.animScaleY = 1f
+        bridge.animScaleX = if (bridge.animScaleX < 0f) -1f else 1f
     }
 
     override fun updateAutonomous(dt: Float) {
@@ -484,16 +519,18 @@ abstract class BaseBehavior(
         // índices altos (ej. Corgi walk 10..13) aún son null y el pet se
         // mostraría invisible hasta terminar de decodificar.
         var bitmap: Bitmap? = null
+        var drawnFrame: Int = frameIdx
         if (frames.isNotEmpty()) {
             val requested = frameIdx.coerceIn(0, frames.size - 1)
+            drawnFrame = requested
             bitmap = frames[requested]
             if (bitmap == null) {
                 for (i in requested - 1 downTo 0) {
-                    frames[i]?.let { bitmap = it; break }
+                    frames[i]?.let { bitmap = it; drawnFrame = i; break }
                 }
                 if (bitmap == null) {
                     for (i in requested + 1 until frames.size) {
-                        frames[i]?.let { bitmap = it; break }
+                        frames[i]?.let { bitmap = it; drawnFrame = i; break }
                     }
                 }
             }
@@ -508,13 +545,9 @@ abstract class BaseBehavior(
         if (isLoading || (bitmap == null && (spriteSheet == null || srcRect == null))) return
 
         canvas.save()
-        // Tamaño de DIBUJO normalizado (todos los pets visibles al tamaño de Moki).
-        // Normalización por frame: los frames "estirados" (contenido más alto que
-        // el idle) se comprimen al alto del idle; los bajos (squash, sniff, dormir,
-        // gatear) se mantienen a su tamaño natural. Así ningún frame se dibuja más
-        // alto que la referencia y las posturas bajas siguen leyéndose como bajas.
-        val frameScale = frameOccupancyScale(frameIdx)
-        val halfSize = bridge.petSpriteSize * bridge.spriteScale * spriteAtlasDrawScale * frameScale / 2f
+        // Keep the source camera fixed across poses. Alpha height changes with
+        // lifted paws, ears and breathing; it must not resize the whole animal.
+        val halfSize = bridge.petSpriteSize * bridge.spriteScale * spriteAtlasDrawScale / 2f
         val atlasPivot = spriteSheetSpec?.pivot
         val pivotOffsetX = if (atlasPivot != null && spriteSheetSpec != null) {
             (0.5f - atlasPivot.x.toFloat() / spriteSheetSpec!!.frameWidth) * 2f * halfSize
@@ -526,7 +559,15 @@ abstract class BaseBehavior(
         val conditionRotation = if (bridge.petStatus.condition == PetCondition.SICK) sin(time * 18f) * 2.2f else 0f
         canvas.rotate(bridge.renderRotation + conditionRotation)
         canvas.scale(bridge.renderScaleX, bridge.renderScaleY)
+        if (isFrameMirrored(drawnFrame)) canvas.scale(-1f, 1f)
         spriteDestinationRect.set(-halfSize, -halfSize, halfSize, halfSize)
+        val cameraScale: Float = getFrameCameraScale(drawnFrame)
+        if (cameraScale != 1f) {
+            val ground: Float = (frameGround * 2f - 1f) * halfSize
+            spriteDestinationRect.set(-halfSize * cameraScale,
+                ground + (-halfSize - ground) * cameraScale,
+                halfSize * cameraScale, ground + (halfSize - ground) * cameraScale)
+        }
         when {
             bitmap != null -> canvas.drawBitmap(bitmap, null, spriteDestinationRect, paint)
             spriteSheet != null && srcRect != null -> {
@@ -555,8 +596,7 @@ abstract class BaseBehavior(
         val spec = spriteSheetSpec ?: return null
         val mask = spriteHitMask ?: return null
         val frameIndex = bridge.currentFrame.coerceIn(0, spec.frameCount - 1)
-        val frameScale = frameOccupancyScale(frameIndex)
-        val halfSize = bridge.petSpriteSize * bridge.spriteScale * spriteAtlasDrawScale * frameScale / 2f
+        val halfSize = bridge.petSpriteSize * bridge.spriteScale * spriteAtlasDrawScale / 2f
         if (halfSize <= 0f) return false
         val pivot = spec.pivot
         val pivotOffsetX = pivot?.let { (0.5f - it.x.toFloat() / spec.frameWidth) * 2f * halfSize } ?: 0f
@@ -569,21 +609,15 @@ abstract class BaseBehavior(
         val scaleX = bridge.renderScaleX
         val scaleY = bridge.renderScaleY
         if (kotlin.math.abs(scaleX) < MINIMUM_HIT_SCALE || kotlin.math.abs(scaleY) < MINIMUM_HIT_SCALE) return false
-        val spriteX = unrotatedX / scaleX
-        val spriteY = unrotatedY / scaleY
-        val frameX = (((spriteX / halfSize) + 1f) * 0.5f * spec.frameWidth).toInt()
+        val cameraScale = getFrameCameraScale(frameIndex)
+        if (!cameraScale.isFinite() || kotlin.math.abs(cameraScale) < MINIMUM_HIT_SCALE) return false
+        val ground = (frameGround * 2f - 1f) * halfSize
+        val spriteX = unrotatedX / scaleX / cameraScale
+        val spriteY = ground + (unrotatedY / scaleY - ground) / cameraScale
+        val sourceX = if (isFrameMirrored(frameIndex)) -spriteX else spriteX
+        val frameX = (((sourceX / halfSize) + 1f) * 0.5f * spec.frameWidth).toInt()
         val frameY = (((spriteY / halfSize) + 1f) * 0.5f * spec.frameHeight).toInt()
         return mask.isOpaque(frameIndex, frameX, frameY)
-    }
-
-    private fun frameOccupancyScale(frameIndex: Int): Float {
-        if (spriteSheetSpec?.renderHints?.useFrameOccupancyNormalization == false) return 1f
-        val frameFraction = bridge.spriteFrameContentFractions.getOrNull(frameIndex) ?: 0f
-        return if (frameFraction > 0f && bridge.spriteIdleContentFraction > 0f) {
-            (bridge.spriteIdleContentFraction / frameFraction).coerceAtMost(1f)
-        } else {
-            1f
-        }
     }
 
     private fun moodColorFilter(): ColorMatrixColorFilter? {

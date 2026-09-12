@@ -3,6 +3,7 @@ package com.pixelpals.app.core.care.scene
 import com.pixelpals.app.core.motion.PetBounds
 import org.junit.Assert.*
 import org.junit.Test
+import kotlin.math.abs
 
 class CorgiFetchMotionTest {
     private val bounds: PetBounds = PetBounds(0, 1_120, 100, 2_700)
@@ -10,7 +11,7 @@ class CorgiFetchMotionTest {
     @Test fun runsAcrossTheDesktopInsteadOfReturningToTheStart(): Unit {
         val plan: CorgiFetchPlan = plan(100f)
         assertTrue(plan.endX - plan.startX > 640f)
-        assertTrue(plan.timing.durationMs < 2_500L)
+        assertTrue(plan.timing.durationMs < 3_000L)
         val pose: CorgiFetchPose = CorgiFetchMotion.getPose(plan, plan.timing.durationMs)
         assertEquals(plan.endX, pose.petX, 0f)
         assertTrue(pose.isCaught)
@@ -25,6 +26,34 @@ class CorgiFetchMotionTest {
         assertNull(CorgiFetchMotion.getPose(plan, plan.catchMs - 200L).regularFrame)
         assertEquals(0, CorgiFetchMotion.getPose(plan, plan.catchMs - 200L).careFrame)
         assertEquals(1, CorgiFetchMotion.getPose(plan, plan.catchMs + 150L).careFrame)
+    }
+
+    @Test fun plantsFeetBeforePickupWithoutSlidingInEitherDirection(): Unit {
+        for (left: Boolean in listOf(false, true)) {
+            val plan: CorgiFetchPlan = plan(if (left) 1_000f else 100f, left)
+            val stopMs: Long = plan.catchMs - 220L
+            val before: CorgiFetchPose = CorgiFetchMotion.getPose(plan, stopMs - 16L)
+            assertTrue("Braking must finish before the fixed pickup pose", abs(plan.endX - before.petX) < .1f)
+            for (elapsed: Long in stopMs..plan.timing.durationMs step 16L) {
+                val pose: CorgiFetchPose = CorgiFetchMotion.getPose(plan, elapsed)
+                assertNull(pose.regularFrame)
+                assertEquals("Fixed feet must not slide", plan.endX, pose.petX, .001f)
+            }
+        }
+    }
+
+    @Test fun fetchRespectsItsPeakSpeedAndSharedRunningFootCycle(): Unit {
+        val plan: CorgiFetchPlan = plan(100f)
+        var previous: Float = plan.startX
+        for (elapsed: Long in 0L..plan.catchMs step 1L) {
+            val pose: CorgiFetchPose = CorgiFetchMotion.getPose(plan, elapsed)
+            assertTrue(abs(pose.petX - previous) <= plan.spriteSize * 4.31f / 1_000f)
+            if (elapsed in 160L until plan.catchMs - 220L) {
+                assertEquals(com.pixelpals.app.core.motion.CorgiGait.frameAt(
+                    pose.petX - plan.startX, plan.spriteSize, running = true), pose.regularFrame)
+            }
+            previous = pose.petX
+        }
     }
 
     @Test fun ballRollsAheadOfThePetInBothDirectionsUntilPickup(): Unit {

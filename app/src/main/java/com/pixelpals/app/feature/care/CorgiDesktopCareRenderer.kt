@@ -1,5 +1,6 @@
 package com.pixelpals.app.feature.care
 
+import android.graphics.ColorFilter
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Rect
@@ -19,15 +20,20 @@ class CorgiDesktopCareRenderer {
     private val source: Rect = Rect()
     private val destination: RectF = RectF()
     private val props: CarePropPainter = CarePropPainter()
+    var bedDecorationId: String?
+        get() = props.bedDecorationId
+        set(value) { props.bedDecorationId = value }
+
+    private val dreams: PetDreamPainter = PetDreamPainter()
     private val foam: CareFoamPainter = CareFoamPainter()
 
     fun draw(canvas: Canvas, pack: CarePosePack, spriteSize: Int, elapsedMs: Long,
              facingLeft: Boolean, reducedMotion: Boolean, action: CareSceneAction = CareSceneAction.FEED,
-             fetchFrame: Int = 2): Unit {
-        val size: Float = spriteSize * .94f
+             fetchFrame: Int = 2, baselineOffsetY: Float = spriteSize * .46f, colorFilter: ColorFilter? = null): Unit {
+        val size: Float = spriteSize * com.pixelpals.app.core.motion.CorgiArtworkScale.careCell(action)
         val cx: Float = canvas.width / 2f
         // Match the feet of the regular Corgi sprites, not the bottom of the overlay window.
-        val baseline: Float = canvas.height / 2f + spriteSize * .46f
+        val baseline: Float = canvas.height / 2f + baselineOffsetY
         val elapsed: Long = if (reducedMotion) 0L else elapsedMs
         val additional: CorgiAdditionalCarePose? = if (action in CorgiAdditionalCareMotion.actions)
             CorgiAdditionalCareMotion.getPose(action, elapsedMs, reducedMotion) else null
@@ -54,7 +60,9 @@ class CorgiDesktopCareRenderer {
             canvas.rotate(additional.rotation, cx, baseline)
             canvas.scale(1f, additional.breathScale, cx, baseline)
         }
+        paint.colorFilter = colorFilter
         canvas.drawBitmap(pack.bitmap, source, destination, paint)
+        paint.colorFilter = null
         canvas.restore()
         when (action) {
             CareSceneAction.FEED -> {
@@ -85,14 +93,18 @@ class CorgiDesktopCareRenderer {
                 val pose: CorgiAdditionalCarePose = requireNotNull(additional)
                 val mouth = pack.spec.anchors[frame].mouth
                 val spoonSize: Float = size * .29f
-                // The spoon bowl is above-left of its origin; align it with the mouth.
+                val origin: CarePoint = com.pixelpals.app.core.care.scene.CareSpoonGeometry.originAt(
+                    CarePoint(destination.left + mouth.x * size, destination.top + mouth.y * size), spoonSize)
                 drawFadedProp(canvas, action,
-                    destination.left + mouth.x * size + spoonSize * .10f + pose.propOffsetX * size,
-                    destination.top + mouth.y * size + spoonSize * .20f + pose.propOffsetY * size,
+                    origin.x + pose.propOffsetX * size,
+                    origin.y + pose.propOffsetY * size,
                     spoonSize, pose)
             }
         }
         canvas.restore()
+        if (action == CareSceneAction.REST && (reducedMotion || elapsedMs < CorgiAdditionalCareMotion.REST_WAKE_START_MS)) {
+            dreams.drawDesktop(canvas, cx, baseline, size, elapsedMs / 1_000f, reducedMotion)
+        }
     }
 
     private fun drawFadedProp(canvas: Canvas, action: CareSceneAction, x: Float, y: Float,

@@ -144,6 +144,35 @@ class TelaBehaviorPerimeterTest {
     }
 
     @Test
+    fun ceilingEntryKeepsPositionThenSettlesWithoutVerticalDrift(): Unit {
+        instrumentation.runOnMainSync {
+            val update = TelaBehavior::class.java.getDeclaredMethod("updateCeiling", Float::class.javaPrimitiveType).apply { isAccessible = true }
+            for (startY: Float in listOf(150f, 178f)) {
+                setField("modeTimer", 0f)
+                setField("modeDuration", 3f)
+                setField("fromX", 500f)
+                setField("toX", 980f)
+                setField("fromY", startY)
+                bridge.getWindowParams().apply { x = 500; y = startY.toInt() }
+                update.invoke(behavior, 0f)
+                assertEquals("Entry teleported", startY.toInt(), bridge.getWindowParams().y)
+                var previous: Int = bridge.getWindowParams().y
+                for (step: Int in 1..30) {
+                    setField("modeTimer", step / 60f)
+                    update.invoke(behavior, 1f / 60f)
+                    val current: Int = bridge.getWindowParams().y
+                    assertTrue("Contact moved away from ceiling", current in 150..previous)
+                    assertTrue("Contact jumped", previous - current <= 4)
+                    if (step >= 15) assertEquals("Contact must stay planted", 150, current)
+                    assertEquals(1f, bridge.animScaleY, 0f)
+                    assertEquals(0f, bridge.animRotation, 0f)
+                    previous = current
+                }
+            }
+        }
+    }
+
+    @Test
     fun rightEdgeClimbsDown() {
         placeAndDecide(x = 995, y = 1000)
         assertEquals("CLIMB", modeName())
@@ -171,11 +200,19 @@ class TelaBehaviorPerimeterTest {
     fun bothWallsUseADeliberateClimbDuration() {
         placeAndDecide(x = 995, y = 1000)
         assertEquals("CLIMB", modeName())
-        assertTrue("pared derecha más lenta", modeDuration() in 3.6f..5.2f)
+        assertClimbSpeed(995f, 1000f)
 
         placeAndDecide(x = 5, y = 1000)
         assertEquals("CLIMB", modeName())
-        assertTrue("pared izquierda más lenta", modeDuration() in 3.6f..5.2f)
+        assertClimbSpeed(5f, 1000f)
+    }
+
+    private fun assertClimbSpeed(startX: Float, startY: Float) {
+        assertTrue("Climbing keeps its deliberate minimum duration", modeDuration() >= 3.6f)
+        val distance: Float = kotlin.math.hypot(toX() - startX, toY() - startY)
+        val peakSpeed: Float = distance * 1.875f / modeDuration()
+        assertTrue("Long walls must not force Tela to rush",
+            peakSpeed <= bridge.petSpriteSize * bridge.spriteScale * 2.2f + .01f)
     }
 
     @Test

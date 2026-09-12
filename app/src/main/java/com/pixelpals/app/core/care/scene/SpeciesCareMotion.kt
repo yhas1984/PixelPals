@@ -1,5 +1,7 @@
 package com.pixelpals.app.core.care.scene
 
+import com.pixelpals.app.core.motion.JellySpringPlayMotion
+import com.pixelpals.app.core.motion.JellyMedicineMotion
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.sin
@@ -17,6 +19,10 @@ data class SpeciesCarePose(
 object SpeciesCareMotion {
     fun sample(profile: PetCareProfile, action: CareSceneAction, progress: Float, reduced: Boolean,
                variation: CarePlayVariation = CarePlayVariation.DIRECT): SpeciesCarePose {
+        if (action == CareSceneAction.MEDICINE && profile.touch == CareTouchStyle.SQUISH)
+            return JellyMedicineMotion.sample(progress, reduced).body
+        if (action == CareSceneAction.PLAY && profile.play == CarePlayStyle.BOUNCE)
+            return JellySpringPlayMotion.sample(progress, reduced, variation).body
         if (reduced) return SpeciesCarePose()
         if (action == CareSceneAction.PET && profile.touch == CareTouchStyle.MISCHIEF)
             return SpeciesCarePose(rotation = ImpCareMotion.samplePetting(progress, false).leanDegrees)
@@ -25,10 +31,16 @@ object SpeciesCareMotion {
             return SpeciesCarePose(x = game.thrust * .025f, rotation = -game.thrust * 2.5f,
                 y = -game.celebration * .018f)
         }
+        if (action == CareSceneAction.CLEAN && profile.wash == CareWashStyle.SHOWER) {
+            val melt: Float = YukiCareMotion.meltAt(progress)
+            return SpeciesCarePose(scaleX = 1f + .12f * melt, scaleY = 1f - .28f * melt)
+        }
+        if (action == CareSceneAction.PLAY && profile.play == CarePlayStyle.SNOW_THROW)
+            return SpeciesCarePose(rotation = YukiCareMotion.throwLean(progress))
         val p: Float = progress.coerceIn(0f, 1f)
         val envelope: Float = sin(p * PI).toFloat()
         val wave: Float = sin(p * PI * 6 * profile.tempo).toFloat() * envelope
-        return when (action) {
+        val pose: SpeciesCarePose = when (action) {
             CareSceneAction.FEED, CareSceneAction.MEDICINE -> feeding(profile, wave, envelope)
             CareSceneAction.PLAY -> {
                 val beat: CarePlayBeat = CarePlayChoreography.sample(p, variation)
@@ -41,10 +53,13 @@ object SpeciesCareMotion {
                 CareWashStyle.BRUSH -> SpeciesCarePose(scaleY = 1f + .018f * wave)
                 CareWashStyle.MIST -> SpeciesCarePose(scaleX = 1f + .014f * wave)
                 CareWashStyle.SPARKLES -> SpeciesCarePose(y = -.015f * envelope, rotation = wave * 2f)
+                CareWashStyle.SHOWER -> SpeciesCarePose()
                 CareWashStyle.SNOW -> SpeciesCarePose(rotation = wave * 3f)
                 CareWashStyle.SPONGE -> SpeciesCarePose(rotation = wave * 2f)
             }
         }
+        // Head/limb articulation is drawn in the atlas; a turtle's shell must not breathe or squash.
+        return if (profile.touch == CareTouchStyle.SHELL) pose.copy(scaleX = 1f, scaleY = 1f) else pose
     }
 
     private fun feeding(profile: PetCareProfile, wave: Float, envelope: Float): SpeciesCarePose = when (profile.feeding) {
@@ -61,11 +76,12 @@ object SpeciesCareMotion {
         CarePlayStyle.FETCH -> SpeciesCarePose(x = .07f * envelope)
         CarePlayStyle.FLOAT -> SpeciesCarePose(x = .035f * wave, y = -.06f * envelope)
         CarePlayStyle.PAW -> SpeciesCarePose(x = .04f * wave, rotation = wave * 4f)
-        CarePlayStyle.BOUNCE -> SpeciesCarePose(y = -.09f * abs(wave), scaleX = 1f + .08f * wave, scaleY = 1f - .08f * wave)
+        CarePlayStyle.BOUNCE -> SpeciesCarePose() // Coordinated with the planted spring above.
         CarePlayStyle.GLIDE -> SpeciesCarePose(x = .05f * wave, y = -.06f * envelope, rotation = wave * 3f)
         CarePlayStyle.PADDLE -> SpeciesCarePose(x = .07f * wave, rotation = wave * 5f)
         CarePlayStyle.BALLOON_POP -> SpeciesCarePose()
         CarePlayStyle.PEEK -> SpeciesCarePose(x = .045f * wave, rotation = wave * 3f)
+        CarePlayStyle.SNOW_THROW -> SpeciesCarePose()
         CarePlayStyle.TWIRL -> SpeciesCarePose(rotation = wave * 9f)
         CarePlayStyle.SLIDE -> SpeciesCarePose(x = .11f * wave, scaleY = 1f - .05f * envelope, rotation = wave * 7f)
         CarePlayStyle.FOLLOW -> SpeciesCarePose(x = .035f * envelope)
@@ -93,11 +109,11 @@ object SpeciesCareMotion {
     }
 
     private fun resting(profile: PetCareProfile, wave: Float, progress: Float): SpeciesCarePose = when (profile.bed) {
-        CareBed.MOON_MIST, CareBed.CLOUD, CareBed.CLOUD_CRADLE, CareBed.STARLIGHT -> SpeciesCarePose(y = -.025f * wave, alpha = if (profile.bed == CareBed.MOON_MIST) 1f - .15f * progress else 1f)
+        CareBed.MOON_MIST, CareBed.CLOUD, CareBed.CLOUD_CRADLE, CareBed.STARLIGHT -> SpeciesCarePose(y = -.025f * wave, alpha = if (profile.bed == CareBed.MOON_MIST) 1f - .15f * SpeciesRestRecovery.getSleepAmount(progress) else 1f)
         CareBed.WING_WRAP -> SpeciesCarePose(scaleY = 1f + .006f * sin(progress * PI * 4).toFloat())
         CareBed.WEB, CareBed.BRANCH -> SpeciesCarePose(rotation = wave * 3f)
-        CareBed.PUDDLE -> SpeciesCarePose(scaleX = 1f + .07f * progress, scaleY = 1f - .07f * progress)
-        CareBed.WARM_LEAF -> SpeciesCarePose(scaleX = 1f - .025f * progress, scaleY = 1f + .015f * wave)
+        CareBed.PUDDLE -> SpeciesCarePose(scaleX = 1f + .07f * SpeciesRestRecovery.getSleepAmount(progress), scaleY = 1f - .07f * SpeciesRestRecovery.getSleepAmount(progress))
+        CareBed.WARM_LEAF -> SpeciesCarePose(scaleX = 1f - .025f * SpeciesRestRecovery.getSleepAmount(progress), scaleY = 1f + .015f * wave)
         else -> SpeciesCarePose(scaleY = 1f + .008f * wave)
     }
 }

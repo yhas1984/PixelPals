@@ -26,6 +26,7 @@ class CosmeticsTabFragment : Fragment() {
     private val analytics: AnalyticsTracker by lazy { AppServices.analytics(requireContext()) }
     private lateinit var storeFragment: StoreFragment
     private lateinit var adapter: CosmeticCatalogAdapter
+    private var previewDialog: AlertDialog? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -44,13 +45,15 @@ class CosmeticsTabFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         storeFragment = requireParentFragment() as StoreFragment
-        adapter = CosmeticCatalogAdapter(::handleCosmeticAction)
+        adapter = CosmeticCatalogAdapter(::handleCosmeticAction, ::previewCosmetic)
         binding.storeList.layoutManager = LinearLayoutManager(requireContext())
         binding.storeList.adapter = adapter
         collectUiState()
     }
 
     override fun onDestroyView() {
+        previewDialog?.dismiss()
+        previewDialog = null
         binding.storeList.adapter = null
         bindingReference = null
         super.onDestroyView()
@@ -91,6 +94,20 @@ class CosmeticsTabFragment : Fragment() {
         adapter.submitList(rows)
     }
 
+    private fun previewCosmetic(cosmetic: Cosmetic): Unit {
+        previewDialog?.dismiss()
+        val pet = storeFragment.getStoreViewModel().uiState.value.selectedPet
+        previewDialog = AlertDialog.Builder(requireContext())
+            .setTitle(cosmetic.displayName)
+            .setMessage(cosmetic.description)
+            .setView(com.pixelpals.app.feature.home.CompanionPreview.create(this, pet, cosmetic.effect))
+            .setPositiveButton(R.string.home_done, null)
+            .create().also { dialog ->
+                dialog.setOnDismissListener { if (previewDialog === dialog) previewDialog = null }
+                dialog.show()
+            }
+    }
+
     private fun handleCosmeticAction(cosmetic: Cosmetic) {
         val viewModel: StoreViewModel = storeFragment.getStoreViewModel()
         val state: StoreUiState = viewModel.uiState.value
@@ -99,8 +116,12 @@ class CosmeticsTabFragment : Fragment() {
             isEquipped = cosmetic.id == state.equippedCosmeticId,
         )
         when (action) {
-            CosmeticAction.EQUIPPED -> Unit
-            CosmeticAction.EQUIP -> viewModel.equipCosmetic(cosmetic)
+            CosmeticAction.EQUIPPED -> viewModel.unequipCosmetic()
+            CosmeticAction.EQUIP -> AlertDialog.Builder(requireContext())
+                .setTitle(cosmetic.displayName)
+                .setView(com.pixelpals.app.feature.home.CompanionPreview.create(this, state.selectedPet, cosmetic.effect))
+                .setNegativeButton(android.R.string.cancel, null)
+                .setPositiveButton(R.string.home_done) { _, _ -> viewModel.equipCosmetic(cosmetic) }.show()
             CosmeticAction.BUY -> requestCosmeticPurchase(cosmetic, state.balance)
         }
     }
@@ -113,6 +134,7 @@ class CosmeticsTabFragment : Fragment() {
         }
         AlertDialog.Builder(requireContext())
             .setTitle(R.string.store_confirm_purchase_title)
+            .setView(com.pixelpals.app.feature.home.CompanionPreview.create(this, storeFragment.getStoreViewModel().uiState.value.selectedPet, cosmetic.effect))
             .setMessage(
                 getString(
                     R.string.store_confirm_cosmetic_purchase,

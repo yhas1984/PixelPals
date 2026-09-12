@@ -31,8 +31,6 @@
             android:id="@+id/txtPetName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:ellipsize="end"
-            android:maxLines="1"
             android:textColor="@color/text_primary"
             android:textSize="18sp"
             android:textStyle="bold" />
@@ -65,30 +63,29 @@
                 android:textStyle="bold" />
             <TextView
                 android:id="@+id/txtPetState"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                android:ellipsize="end"
-                android:maxLines="1"
+                android:layout_weight="1"
                 android:textColor="@color/text_secondary"
                 android:textSize="11sp"
                 android:textStyle="bold" />
-            <TextView
-                android:id="@+id/txtPetPrice"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:maxLines="1"
-                android:textColor="@color/golden_accent"
-                android:textSize="12sp"
-                android:textStyle="bold"
-                android:visibility="gone" />
         </LinearLayout>
+
+        <TextView
+            android:id="@+id/txtPetPrice"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textColor="@color/golden_accent"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
 
         <Button
             android:id="@+id/btnPetAction"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
+            android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:backgroundTint="@color/golden_accent"
             android:insetBottom="0dp"

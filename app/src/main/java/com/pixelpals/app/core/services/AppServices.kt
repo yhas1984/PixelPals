@@ -18,6 +18,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 
 object AppServices {
+    @Volatile private var companionRepository: com.pixelpals.app.feature.home.CompanionRepository? = null
+    fun companions(context: Context): com.pixelpals.app.feature.home.CompanionRepository = companionRepository ?: synchronized(this) {
+        companionRepository ?: com.pixelpals.app.feature.home.CompanionRepository(context.applicationContext,
+            economy = repository(context)).also { companionRepository = it }
+    }
     val applicationScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     @Volatile private var careScenes: CareSceneCoordinator? = null
 
@@ -26,6 +31,7 @@ object AppServices {
         careScenes ?: CareSceneCoordinator(
             scope = applicationScope,
             readSnapshot = { pet -> repository(appContext).getStatusSnapshot(pet) },
+            isPetAvailable = { pet -> companions(appContext).dao.getExpedition()?.petId != pet.name.lowercase() },
             applyEffect = { request ->
                 val result: CareSceneResult = repository(appContext).completeCareScene(request.pet, request.action)
                 if (result is CareSceneResult.Completed) {

@@ -26,6 +26,7 @@ internal enum class LumiMode {
     SOCIAL,
     POUNCE,
     SLEEP,
+    WAKE,
     MAGIC,
 }
 
@@ -59,6 +60,9 @@ internal class LumiMotionController(
     private var maxY = 1f
     private var initialized = false
     private var nextInteractionIsMagic = false
+    private var pendingInteractionClipId: String? = null
+    private var wakeFrameCursor = 0
+    private var wakeFrameTime = 0f
 
     var mode: LumiMode = LumiMode.IDLE
         private set
@@ -69,6 +73,9 @@ internal class LumiMotionController(
         mode = LumiMode.IDLE
         stateTime = 0f
         decisionTime = 2.2f
+        pendingInteractionClipId = null
+        wakeFrameCursor = 0
+        wakeFrameTime = 0f
     }
 
     fun updateViewport(
@@ -112,6 +119,7 @@ internal class LumiMotionController(
             LumiMode.IDLE -> updateIdle(dt, shouldSleep)
             LumiMode.WALK -> updateWalk(dt)
             LumiMode.SLEEP -> updateSleep(dt, shouldSleep)
+            LumiMode.WAKE -> updateWake(dt)
             else -> updateOneShot(dt)
         }
         return getPose()
@@ -119,6 +127,14 @@ internal class LumiMotionController(
 
     /** Starts the agreed alternating tap interaction and returns its clip id. */
     fun startInteraction(): String {
+        if (mode == LumiMode.SLEEP || mode == LumiMode.WAKE) {
+            if (pendingInteractionClipId != null) return pendingInteractionClipId!!
+            val clipId = if (nextInteractionIsMagic) "magic" else "front_social"
+            nextInteractionIsMagic = !nextInteractionIsMagic
+            pendingInteractionClipId = clipId
+            if (mode == LumiMode.SLEEP) beginWake()
+            return clipId
+        }
         val clipId = if (nextInteractionIsMagic) "magic" else "front_social"
         nextInteractionIsMagic = !nextInteractionIsMagic
         beginClip(clipId, if (clipId == "magic") LumiMode.MAGIC else LumiMode.SOCIAL)
@@ -129,6 +145,9 @@ internal class LumiMotionController(
         mode = LumiMode.IDLE
         activeClipId = "idle"
         stateTime = 0f
+        pendingInteractionClipId = null
+        wakeFrameCursor = 0
+        wakeFrameTime = 0f
         decisionTime = 1.2f
         walkTime = 0f
         positionX = positionX.coerceIn(minX, maxX)
@@ -173,7 +192,40 @@ internal class LumiMotionController(
     private fun updateSleep(dt: Float, shouldSleep: Boolean) {
         stateTime += dt
         if (!shouldSleep) {
+            beginWake()
+        }
+    }
+
+    private fun beginWake() {
+        val clip = spec.clip("sleep") ?: run {
             beginClip("idle", LumiMode.IDLE)
+            return
+        }
+        val currentFrame = frameForActiveClip()
+        wakeFrameCursor = clip.frames.indexOf(currentFrame).coerceAtLeast(0)
+        wakeFrameTime = 0f
+        activeClipId = "sleep"
+        mode = LumiMode.WAKE
+        stateTime = 0f
+    }
+
+    private fun updateWake(dt: Float) {
+        if (spec.clip("sleep") == null) {
+            pendingInteractionClipId = null
+            beginClip("idle", LumiMode.IDLE)
+            return
+        }
+        wakeFrameTime += dt
+        if (wakeFrameTime < WAKE_FRAME_DURATION_SECONDS) return
+        wakeFrameTime -= WAKE_FRAME_DURATION_SECONDS
+        wakeFrameCursor -= 1
+        if (wakeFrameCursor >= 0) return
+        val interaction = pendingInteractionClipId
+        pendingInteractionClipId = null
+        if (interaction == null) {
+            beginClip("idle", LumiMode.IDLE)
+        } else {
+            beginClip(interaction, if (interaction == "magic") LumiMode.MAGIC else LumiMode.SOCIAL)
         }
     }
 
@@ -227,6 +279,7 @@ internal class LumiMotionController(
     private fun frameForActiveClip(): Int {
         val clip = spec.clip(activeClipId) ?: return 0
         if (clip.frames.isEmpty()) return 0
+        if (mode == LumiMode.WAKE) return clip.frames[wakeFrameCursor.coerceIn(0, clip.frames.lastIndex)]
         val frame = (stateTime / clip.frameDurationSeconds).toInt()
         return clip.frames[if (clip.loop) frame % clip.frames.size else frame.coerceAtMost(clip.frames.lastIndex)]
     }
@@ -237,5 +290,6 @@ internal class LumiMotionController(
 
     companion object {
         private const val MAX_STEP_SECONDS = 1f / 20f
+        private const val WAKE_FRAME_DURATION_SECONDS = 0.2f
     }
 }

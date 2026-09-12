@@ -2,6 +2,7 @@ package com.pixelpals.app.feature.care
 
 import android.animation.ValueAnimator
 import android.content.Context
+import android.graphics.ColorFilter
 import android.graphics.Canvas
 import android.util.Log
 import com.pixelpals.app.core.care.scene.*
@@ -21,7 +22,9 @@ class CorgiDesktopCare(
     private val coordinator: CareSceneCoordinator = AppServices.careScenes(context),
     private val onFinished: (CareSceneAction, CareSceneResult?) -> Unit,
 ) : DesktopCarePlayback {
+    private var selectedToy: String? = null
     private val renderer: CorgiDesktopCareRenderer = CorgiDesktopCareRenderer()
+    private val companionPreferences = com.pixelpals.app.feature.home.CompanionPreferences(context)
     private var action: CareSceneAction = CareSceneAction.FEED
     private var owner: String? = null
     private var requestId: String? = null
@@ -64,6 +67,12 @@ class CorgiDesktopCare(
                     return@launch
                 }
                 val loaded: CarePosePack = CarePoseLoader.load(context.assets, PetType.CORGI)
+                val decorationDao = AppServices.companions(context).dao
+                val placements = decorationDao.getPlacements(PetType.CORGI.name.lowercase())
+                val favorite = decorationDao.getHome(PetType.CORGI.name.lowercase())?.favoriteObject
+                selectedToy = com.pixelpals.app.feature.home.CareDecorationSelection.careToy(PetType.CORGI, placements, favorite)
+                renderer.bedDecorationId = com.pixelpals.app.feature.home.CareDecorationSelection.bed(
+                    AppServices.companions(context).dao.getPlacements(PetType.CORGI.name.lowercase()))
                 pack = loaded
                 scene = CareSceneController(action, CareSceneMode.AUTOMATIC,
                     when (action) {
@@ -102,13 +111,13 @@ class CorgiDesktopCare(
     }
 
     /** True means locomotion must not draw an additional sprite this frame. */
-    override fun draw(canvas: Canvas, spriteSize: Int): Boolean {
+    override fun draw(canvas: Canvas, spriteSize: Int, baselineOffsetY: Float, colorFilter: ColorFilter?): Boolean {
         val loaded: CarePosePack = pack ?: return false
         val playback: CareSceneController = scene ?: return false
         if (fetchPose?.regularFrame != null) return false
         renderer.draw(canvas, loaded, spriteSize, playback.animationMs, facingLeft,
-            reducedMotion = !ValueAnimator.areAnimatorsEnabled(), action = action,
-            fetchFrame = fetchPose?.careFrame ?: 2)
+            reducedMotion = !ValueAnimator.areAnimatorsEnabled() || companionPreferences.reducedMotion, action = action,
+            fetchFrame = fetchPose?.careFrame ?: 2, baselineOffsetY = baselineOffsetY, colorFilter = colorFilter)
         return true
     }
 
@@ -127,7 +136,7 @@ class CorgiDesktopCare(
         val pose: CorgiFetchPose = CorgiFetchMotion.getPose(plan, elapsed)
         fetchPose = pose
         val anchors: CarePoseAnchors = loaded.spec.anchors[pose.careFrame]
-        onFetchFrame(CorgiFetchFrame.fromPose(plan, pose, anchors))
+        onFetchFrame(CorgiFetchFrame.fromPose(plan, pose, anchors).copy(toyDecorationId = selectedToy))
     }
 
     private fun finish(outcome: CareSceneResult?): Unit {

@@ -3,6 +3,7 @@ package com.pixelpals.app
 import android.app.Activity
 import android.app.Application
 import android.os.Bundle
+import android.view.Window
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
@@ -36,7 +37,17 @@ class PixelPalsApplication : Application(), Application.ActivityLifecycleCallbac
     }
 
     override fun onActivityResumed(activity: Activity) {
+        installInteractionCallback(activity)
         appOpenAdController.onActivityResumed(activity)
+    }
+
+    private fun installInteractionCallback(activity: Activity): Unit {
+        if (!activity.javaClass.name.startsWith("com.pixelpals.app.")) return
+        val callback: Window.Callback = activity.window.callback ?: return
+        if (callback is InteractionWindowCallback) return
+        activity.window.callback = InteractionWindowCallback(callback) {
+            appOpenAdController.onUserInteraction()
+        }
     }
 
     override fun onActivityDestroyed(activity: Activity) {

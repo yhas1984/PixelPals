@@ -1,0 +1,116 @@
+[
+  {
+    "frame": 24,
+    "featureScale": 0.36,
+    "centers": [
+      [
+        97.5,
+        170
+      ],
+      [
+        167,
+        170
+      ],
+      [
+        132.5,
+        183
+      ]
+    ],
+    "alphaIdenticalTo": "medicine_0.png"
+  },
+  {
+    "frame": 25,
+    "featureScale": 0.36,
+    "centers": [
+      [
+        97.5,
+        170
+      ],
+      [
+        167,
+        170
+      ],
+      [
+        132.5,
+        183
+      ]
+    ],
+    "alphaIdenticalTo": "medicine_0.png"
+  },
+  {
+    "frame": 26,
+    "featureScale": 0.36,
+    "centers": [
+      [
+        97.5,
+        170
+      ],
+      [
+        167,
+        170
+      ],
+      [
+        132.5,
+        183
+      ]
+    ],
+    "alphaIdenticalTo": "medicine_0.png"
+  },
+  {
+    "frame": 27,
+    "featureScale": 0.36,
+    "centers": [
+      [
+        97.5,
+        170
+      ],
+      [
+        167,
+        170
+      ],
+      [
+        132.5,
+        183
+      ]
+    ],
+    "alphaIdenticalTo": "medicine_0.png"
+  },
+  {
+    "frame": 28,
+    "featureScale": 0.36,
+    "centers": [
+      [
+        97.5,
+        170
+      ],
+      [
+        167,
+        170
+      ],
+      [
+        132.5,
+        183
+      ]
+    ],
+    "alphaIdenticalTo": "medicine_0.png"
+  },
+  {
+    "frame": 29,
+    "featureScale": 0.36,
+    "centers": [
+      [
+        97.5,
+        170
+      ],
+      [
+        167,
+        170
+      ],
+      [
+        132.5,
+        183
+      ]
+    ],
+    "alphaIdenticalTo": "medicine_0.png"
+  }
+]

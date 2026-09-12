@@ -13,6 +13,7 @@ object YukiRuntimeDefinition {
     const val WALK_SPEED_PIXELS_PER_SECOND: Float = 70f
     const val MELT_ENTER_CELSIUS: Float = 40f
     const val MELT_EXIT_CELSIUS: Float = 38f
+    const val MELT_SECONDS: Float = .96f
     private const val WALK_CYCLE_SECONDS: Float = 2f * 0.22f
 
     val value: PetDefinition = PetDefinition(

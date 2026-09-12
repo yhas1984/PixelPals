@@ -102,6 +102,11 @@ class SpeciesPropPainter {
                 canvas.drawLine(-.2f, -.02f, -.38f, -.42f, stroke(cream, .05f))
                 canvas.drawLine(.18f, -.21f, .54f, .15f, stroke(cream, .05f))
             }
+            CareToy.SNOWBALL -> {
+                canvas.drawCircle(0f, 0f, .7f, fill(Color.WHITE))
+                canvas.drawCircle(0f, 0f, .7f, stroke(ice, .08f))
+                canvas.drawArc(-.5f, -.5f, .5f, .5f, 25f, 100f, false, stroke(ice, .09f))
+            }
             CareToy.CRYSTAL -> {
                 path.reset(); path.moveTo(0f, -.9f); path.lineTo(.66f, -.1f); path.lineTo(.3f, .8f)
                 path.lineTo(-.45f, .68f); path.lineTo(-.66f, -.1f); path.close()
@@ -233,6 +238,13 @@ class SpeciesPropPainter {
             }
             CareWashStyle.MIST, CareWashStyle.SPLASH -> repeat(3) { i -> drop(canvas, -.6f + i * .6f, if (i == 1) -.38f else .28f, .35f, ice) }
             CareWashStyle.SPARKLES -> { star(canvas, -.38f, -.25f, .45f, gold); star(canvas, .42f, .35f, .37f, cream) }
+            CareWashStyle.SHOWER -> {
+                canvas.drawArc(-.7f, -.7f, .4f, .7f, 90f, 180f, false, stroke(lilac, .13f))
+                canvas.drawRoundRect(-.45f, -.4f, .45f, .5f, .15f, .15f, fill(mint))
+                canvas.drawLine(.35f, -.1f, .8f, -.45f, stroke(mint, .2f))
+                canvas.drawOval(.65f, -.65f, .97f, -.27f, fill(gold))
+                repeat(3) { i -> drop(canvas, .5f + i * .18f, .35f + i * .13f, .10f, ice) }
+            }
             CareWashStyle.SNOW -> snowflake(canvas)
             CareWashStyle.SPONGE -> Unit
         }

@@ -14,7 +14,8 @@ import com.pixelpals.app.status.PetPersonality
 import com.pixelpals.app.status.PetStatusSnapshot
 
 /** Bridge de prueba compartido por los tests instrumentados de behaviors. */
-class TestPetBridge(context: Context, petType: PetType) : View(context), PetViewBridge {
+class TestPetBridge(context: Context, petType: PetType, override val petSpriteSize: Int = 80,
+    override val spriteScale: Float = 1f) : View(context), PetViewBridge {
     private val params = WindowManager.LayoutParams(
         112,
         112,
@@ -45,10 +46,8 @@ class TestPetBridge(context: Context, petType: PetType) : View(context), PetView
     override var state: PetState = PetState.IDLE
     override val screenWidth: Int = 1_080
     override val screenHeight: Int = 2_400
-    override val petSpriteSize: Int = 80
-    override val spriteScale: Float = 1f
-    override val spriteIdleContentFraction: Float = 1f
-    override val spriteFrameContentFractions: FloatArray = floatArrayOf(1f)
+    override var spriteIdleContentFraction: Float = 1f
+    override var spriteFrameContentFractions: FloatArray = floatArrayOf(1f)
     override val groundY: Int
         get() = bounds.floor
     override val topSystemInsetPx: Int = 100

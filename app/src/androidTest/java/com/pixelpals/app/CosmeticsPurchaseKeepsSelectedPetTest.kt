@@ -33,6 +33,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -65,9 +66,19 @@ class CosmeticsPurchaseKeepsSelectedPetTest {
     fun buyingAFloatCosmeticEquipsItOnTheSelectedPetNotCorgi() {
         val cosmetic: Cosmetic = CosmeticCatalog.all(context)
             .first { it.effect is CosmeticEffect.FloatEffect }
+        val price: Int = requireNotNull(cosmetic.coinPrice)
+        val startingBalance: Int = runBlocking { repository.getCoinBalance(null) }
         scenario = ActivityScenario.launch(
             MainActivity.createIntent(context, PixelPalsDestination.STORE, StoreSection.COSMETICS),
         )
+        val preview: Button = awaitCosmeticPreviewButton(cosmetic)
+        instrumentation.runOnMainSync { preview.performClick() }
+        onView(withId(android.R.id.button1))
+            .inRoot(isDialog())
+            .check(matches(isDisplayed()))
+            .perform(click())
+        assertEquals("Preview cancellation must not spend coins", startingBalance,
+            runBlocking { repository.getCoinBalance(null) })
         val button: Button = awaitCosmeticButton(cosmetic)
         instrumentation.runOnMainSync { button.performClick() }
         onView(withId(android.R.id.button1))
@@ -77,9 +88,36 @@ class CosmeticsPurchaseKeepsSelectedPetTest {
         awaitEquipped(petId = "tela", cosmeticId = cosmetic.id)
         assertEquals(cosmetic.id, repository.getEquippedCosmetic("tela"))
         assertNull(repository.getEquippedCosmetic("corgi"))
+        assertEquals(startingBalance - price, runBlocking { repository.getCoinBalance(null) })
+        assertTrue(runBlocking { repository.isCosmeticOwned(cosmetic.productId) })
+
+        scenario!!.recreate()
+        assertEquals(PetType.TELA, SelectedPetStore(context).load())
+        val equippedButton: Button = awaitCosmeticButton(cosmetic)
+        instrumentation.runOnMainSync { equippedButton.performClick() }
+        awaitUnequipped(petId = "tela")
+        assertNull(repository.getEquippedCosmetic("tela"))
+        assertEquals(startingBalance - price, runBlocking { repository.getCoinBalance(null) })
+
+        val equipButton: Button = awaitCosmeticButton(cosmetic)
+        instrumentation.runOnMainSync { equipButton.performClick() }
+        onView(withId(android.R.id.button1))
+            .inRoot(isDialog())
+            .check(matches(isDisplayed()))
+            .perform(click())
+        awaitEquipped(petId = "tela", cosmeticId = cosmetic.id)
+        assertEquals(startingBalance - price, runBlocking { repository.getCoinBalance(null) })
     }
 
     private fun awaitCosmeticButton(cosmetic: Cosmetic): Button {
+        return awaitCosmeticControl(cosmetic, R.id.btnCosmeticAction)
+    }
+
+    private fun awaitCosmeticPreviewButton(cosmetic: Cosmetic): Button {
+        return awaitCosmeticControl(cosmetic, R.id.btnCosmeticPreview)
+    }
+
+    private fun awaitCosmeticControl(cosmetic: Cosmetic, controlId: Int): Button {
         val deadline: Long = System.currentTimeMillis() + 20_000
         while (System.currentTimeMillis() < deadline) {
             instrumentation.waitForIdleSync()
@@ -96,7 +134,7 @@ class CosmeticsPurchaseKeepsSelectedPetTest {
                     row is CosmeticCatalogRow.Item && row.cosmetic.id == cosmetic.id
                 }
                 if (targetPosition >= 0) list.scrollToPosition(targetPosition)
-                found = findCosmeticButton(list, cosmetic)
+                found = findCosmeticButton(list, cosmetic, controlId)
             }
             found?.let { return it }
             Thread.sleep(150)
@@ -104,15 +142,15 @@ class CosmeticsPurchaseKeepsSelectedPetTest {
         throw AssertionError("Cosmetic action was not rendered for ${cosmetic.id}")
     }
 
-    private fun findCosmeticButton(root: View, cosmetic: Cosmetic): Button? {
-        if (root is Button && root.id == R.id.btnCosmeticAction) {
+    private fun findCosmeticButton(root: View, cosmetic: Cosmetic, controlId: Int): Button? {
+        if (root is Button && root.id == controlId) {
             val card: ViewGroup? = root.parent as? ViewGroup
             val title: TextView? = card?.findViewById(R.id.txtCosmeticTitle)
             if (title?.text.toString() == cosmetic.displayName) return root
         }
         if (root is ViewGroup) {
             for (index: Int in 0 until root.childCount) {
-                findCosmeticButton(root.getChildAt(index), cosmetic)?.let { return it }
+                findCosmeticButton(root.getChildAt(index), cosmetic, controlId)?.let { return it }
             }
         }
         return null
@@ -125,5 +163,14 @@ class CosmeticsPurchaseKeepsSelectedPetTest {
             Thread.sleep(150)
         }
         throw AssertionError("Cosmetic $cosmeticId was not equipped on $petId")
+    }
+
+    private fun awaitUnequipped(petId: String) {
+        val deadline: Long = System.currentTimeMillis() + 20_000
+        while (System.currentTimeMillis() < deadline) {
+            if (repository.getEquippedCosmetic(petId) == null) return
+            Thread.sleep(150)
+        }
+        throw AssertionError("Cosmetic remained equipped on $petId")
     }
 }

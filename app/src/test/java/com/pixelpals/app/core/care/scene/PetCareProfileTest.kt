@@ -24,13 +24,14 @@ class PetCareProfileTest {
         assertEquals(CareFood.BERRIES, lumi.food)
         assertEquals(CareToy.MAGIC_ORB, lumi.toy)
         assertEquals(CarePlayStyle.MAGIC_CHASE, lumi.play)
-        assertEquals(CareFood.CRICKET, PetCareProfile.forPet(PetType.TELA).food)
+        assertEquals(CareFood.FLY, PetCareProfile.forPet(PetType.TELA).food)
         assertEquals(CareFood.CHILI, PetCareProfile.forPet(PetType.DIABLILLO).food)
     }
-    @Test fun everySpeciesHasItsOwnFoodToyAndBed(): Unit {
+    @Test fun speciesKeepTheirOwnToolsWhileInsectEatersCanShareFood(): Unit {
         val profiles: List<PetCareProfile> = PetType.entries.map(PetCareProfile::forPet)
         assertEquals(15, profiles.size)
-        assertEquals(15, profiles.map { it.food }.toSet().size)
+        assertEquals(setOf(PetType.MOKI, PetType.TELA), PetType.entries.filter { PetCareProfile.forPet(it).food == CareFood.FLY }.toSet())
+        assertEquals(CareFeedingStyle.WEB, PetCareProfile.forPet(PetType.TELA).feeding)
         assertEquals(15, profiles.map { it.toy }.toSet().size)
         assertEquals(15, profiles.map { it.bed }.toSet().size)
         assertEquals(listOf(PetType.CORGI), PetType.entries.filter { PetCareProfile.forPet(it).play == CarePlayStyle.FETCH })
@@ -56,8 +57,17 @@ class PetCareProfileTest {
             val profile: PetCareProfile = PetCareProfile.forPet(pet)
             for (step: Int in -10..110) {
                 val pose: SpeciesCarePose = SpeciesCareMotion.sample(profile, action, step / 100f, false)
-                assertTrue("$pet $action $step", abs(pose.x) <= .12f && abs(pose.y) <= .1f)
-                assertTrue(pose.scaleX in .9f..1.1f && pose.scaleY in .9f..1.1f)
+                val springGame: Boolean = pet == PetType.JELLY && action == CareSceneAction.PLAY
+                if (springGame) {
+                    // Boarding a raised spring needs its full height plus the flight arc.
+                    assertTrue("$pet $action $step", pose.x in 0f.. .22f && pose.y in -.36f..0f)
+                    assertTrue(pose.scaleY in .78f..1.08f && pose.scaleX in (1f / 1.08f)..(1f / .78f))
+                    assertEquals(1f, pose.scaleX * pose.scaleY, .0001f)
+                } else assertTrue("$pet $action $step", abs(pose.x) <= .12f && abs(pose.y) <= .1f)
+                if (springGame) Unit
+                else if (pet == PetType.YUKI && action == CareSceneAction.CLEAN) {
+                    assertTrue(pose.scaleX in 1f..1.12f && pose.scaleY in .72f..1f)
+                } else assertTrue(pose.scaleX in .9f..1.1f && pose.scaleY in .9f..1.1f)
                 assertTrue(pose.rotation in -10f..10f && pose.alpha in .7f..1f)
                 assertEquals(SpeciesCarePose(), SpeciesCareMotion.sample(profile, action, step / 100f, true))
             }

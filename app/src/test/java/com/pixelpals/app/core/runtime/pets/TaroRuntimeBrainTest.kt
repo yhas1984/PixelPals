@@ -70,6 +70,85 @@ class TaroRuntimeBrainTest {
     }
 
     @Test
+    fun autonomousSleepWakesThroughPeekBeforeReturningToIdle() {
+        val runtime = runtime(SequenceRandom(0.99f, 0f))
+
+        assertEquals("sleep", runtime.dispatch(PetEvent.Tick(3.1f)).clipId)
+        assertEquals(TaroRuntimeMode.SLEEP, runtime.snapshot().brainState.mode)
+
+        assertEquals("peek", runtime.dispatch(PetEvent.Tick(5.1f)).clipId)
+        assertEquals(TaroRuntimeMode.WAKE, runtime.snapshot().brainState.mode)
+        assertEquals("idle_front", runtime.dispatch(PetEvent.Tick(1.13f)).clipId)
+        assertEquals(TaroRuntimeMode.IDLE, runtime.snapshot().brainState.mode)
+    }
+
+    @Test
+    fun touchingDuringSleepOrWakeKeepsTheWakeClipAndItsClock() {
+        val runtime = runtime(SequenceRandom(0.99f, 0f))
+        runtime.dispatch(PetEvent.Tick(3.1f))
+        val tap = runtime.dispatch(PetEvent.Tap)
+        assertEquals("peek", tap.clipId)
+        assertEquals(TaroRuntimeMode.WAKE, runtime.snapshot().brainState.mode)
+        assertEquals(200f, tap.position.x, 0.001f)
+        assertEquals(bounds.floor.toFloat(), tap.position.y, 0.001f)
+        assertEquals(1f, tap.transform.scaleX, 0.001f)
+        assertEquals(1f, tap.transform.scaleY, 0.001f)
+        runtime.dispatch(PetEvent.Tick(0.3f))
+        val elapsed = runtime.snapshot().brainState.elapsedSeconds
+        assertEquals(1, runtime.snapshot().frame)
+        val hold = runtime.dispatch(PetEvent.HoldStarted)
+        assertEquals("peek", hold.clipId)
+        assertEquals(elapsed, runtime.snapshot().brainState.elapsedSeconds, 0.001f)
+        assertEquals(1, runtime.snapshot().frame)
+        assertEquals(1f, hold.transform.scaleX, 0.001f)
+        assertEquals(1f, hold.transform.scaleY, 0.001f)
+        assertEquals("peek", runtime.dispatch(PetEvent.HoldReleased).clipId)
+        assertEquals(TaroRuntimeMode.WAKE, runtime.snapshot().brainState.mode)
+    }
+
+    @Test
+    fun longAutonomousSleepHoldsItsLastPoseUntilWakeStarts() {
+        val runtime = runtime(SequenceRandom(0.99f, 0.99f))
+
+        assertEquals("sleep", runtime.dispatch(PetEvent.Tick(3.1f)).clipId)
+        val sleeping = runtime.dispatch(PetEvent.Tick(7.0f))
+        assertEquals(TaroRuntimeMode.SLEEP, runtime.snapshot().brainState.mode)
+        assertEquals("sleep", sleeping.clipId)
+        assertEquals(3, runtime.snapshot().frame)
+
+        assertEquals("peek", runtime.dispatch(PetEvent.Tick(1.96f)).clipId)
+        assertEquals(TaroRuntimeMode.WAKE, runtime.snapshot().brainState.mode)
+    }
+
+    @Test
+    fun draggingTaroKeepsTheRigidAtlasScale() {
+        val runtime = runtime(SequenceRandom())
+
+        val output = runtime.dispatch(PetEvent.DragStarted(
+            pointer = PetVector(230f, bounds.floor + 30f),
+            grabOffset = PetVector(30f, 30f),
+        ))
+        assertEquals(1f, output.transform.scaleX, 0.001f)
+        assertEquals(1f, output.transform.scaleY, 0.001f)
+    }
+
+    @Test
+    fun wakeDurationIsStableAcrossDisplayTickRates() {
+        listOf(30, 60, 120).forEach { hz ->
+            val runtime = runtime(SequenceRandom(0.99f, 0f))
+            runtime.dispatch(PetEvent.Tick(3.1f))
+            runtime.dispatch(PetEvent.Tap)
+            var ticks = 0
+            while (runtime.snapshot().brainState.mode == TaroRuntimeMode.WAKE && ticks < hz * 2) {
+                runtime.dispatch(PetEvent.Tick(1f / hz))
+                ticks++
+            }
+            assertEquals(TaroRuntimeMode.IDLE, runtime.snapshot().brainState.mode)
+            assertTrue(ticks.toFloat() / hz in 1.1f..1.2f)
+        }
+    }
+
+    @Test
     fun negativeMoodLowEnergyAndCooldownBlockPlayfulGestures() {
         val negativeMood = runtime(
             SequenceRandom(),
@@ -338,7 +417,7 @@ class TaroRuntimeBrainTest {
         PetAnimationClip("playful_delight", listOf(24, 26, 26, 24), false, 0.3f),
         PetAnimationClip("playful_surprise", listOf(24, 27, 27, 24), false, 0.3f),
         clip("touch", 4, false, 0.22f),
-        clip("sleep", 4, true, 1.6f),
+        clip("sleep", 4, false, 1.6f),
         clip("curiosity", 4, false, 0.36f),
     )
 

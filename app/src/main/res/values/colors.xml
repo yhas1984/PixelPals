@@ -7,24 +7,26 @@
     <color name="launcher_background">#6D4AFF</color>
 
     <!-- Pastel Surfaces -->
-    <color name="surface_base">#FFF8F5</color>
+    <color name="surface_base">#FAF7EF</color>
     <color name="surface_elevated">#FFFFFF</color>
-    <color name="surface_tinted">#F1ECFF</color>
-    <color name="surface_subtle">#EDF8F5</color>
+    <color name="surface_tinted">#E1E9DC</color>
+    <color name="surface_subtle">#EEF2E8</color>
     <color name="surface_warm">#FFF0E6</color>
     <color name="surface_error">#FFF0F3</color>
 
     <!-- Strokes / Text -->
-    <color name="stroke_soft">#E6DDEB</color>
-    <color name="stroke_strong">#CDBDDD</color>
-    <color name="text_primary">#211A2E</color>
-    <color name="text_secondary">#685E75</color>
+    <color name="stroke_soft">#DCE1D3</color>
+    <color name="stroke_strong">#BBCBB8</color>
+    <color name="text_primary">#333C35</color>
+    <color name="text_secondary">#656A5E</color>
     <color name="text_on_accent">#FFFDFE</color>
 
+    <!-- Shared companion UI accent; historical names remain compatible. -->
+    <color name="brand_primary">#436653</color>
     <!-- Accent Colors -->
     <color name="coral_accent">#C84A64</color>
     <color name="golden_accent">#F2B843</color>
-    <color name="purple_soft">#6D4AFF</color>
+    <color name="purple_soft">@color/brand_primary</color>
     <color name="teal_accent">#168C7A</color>
 
     <!-- Status Tones -->
@@ -32,8 +34,8 @@
     <color name="status_success_fg">#137B3E</color>
     <color name="status_error_bg">#FFF0F3</color>
     <color name="status_error_fg">#B4233D</color>
-    <color name="status_info_bg">#F2ECFF</color>
-    <color name="status_info_fg">#5D3FD3</color>
+    <color name="status_info_bg">#EEF2E8</color>
+    <color name="status_info_fg">#436653</color>
     <color name="status_empty_bg">#FFF7EC</color>
     <color name="status_empty_fg">#A45A11</color>
 
@@ -50,5 +52,5 @@
     <color name="white">#FFFFFF</color>
     <color name="text_dark">#FFFFFF</color>
     <color name="text_muted">#A0A0A0</color>
-    <color name="nav_item_tint">#685E75</color>
+    <color name="nav_item_tint">#656A5E</color>
 </resources>

@@ -249,6 +249,7 @@ class PetRuntime<S : PetBrainState>(
         if (state.clipId != result.clipId) {
             require(player.setClip(result.clipId)) { "Brain selected missing clip ${result.clipId}" }
         }
+        result.playbackSeconds?.let(player::seek)
         val recentActions: List<PetIntent> = updateRecentActions(result.intent)
         state = state.copy(
             brainState = result.state,

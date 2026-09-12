@@ -27,6 +27,100 @@ import java.util.Locale
 class SpeciesCareRenderingTest {
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 
+    @Test fun mokiLeafDoesNotSwitchSidesWhenTheHeadTurns(): Unit = runBlocking {
+        val pack: CarePosePack = CarePoseLoader.load(context.assets, PetType.MOKI)
+        val bitmap: Bitmap = Bitmap.createBitmap(320, 320, Bitmap.Config.ARGB_8888)
+        val renderer: CareSceneRenderer = CareSceneRenderer()
+        val pixels: IntArray = IntArray(320 * 320)
+        val leafColor: Int = Color.rgb(124, 184, 143)
+        try {
+            for (reduced: Boolean in listOf(false, true)) {
+                val scene = CareSceneController(CareSceneAction.PLAY, CareSceneMode.AUTOMATIC,
+                    pack.spec.timings.getValue(CareSceneAction.PLAY))
+                repeat(41) { step ->
+                    if (step > 0) scene.advance(scene.timing.durationMs / 40)
+                    bitmap.eraseColor(Color.TRANSPARENT)
+                    renderer.draw(Canvas(bitmap), pack, scene, reduced, false)
+                    val mouth: CarePoint = renderer.getTarget(pack, scene, 320f, 320f,
+                        if (reduced && !scene.isComplete) 0L else scene.animationMs, reduced)
+                    bitmap.getPixels(pixels, 0, 320, 0, 0, 320, 320)
+                    val leaf: List<Int> = pixels.indices.filter { pixels[it] == leafColor }
+                    assertTrue("Leaf remains visible at $step", leaf.size > 20)
+                    val leafX: Double = leaf.map { it % 320 + .5 }.average()
+                    assertTrue("Leaf jumped across the mouth at $step, reduced=$reduced", leafX < mouth.x * 320f - 8f)
+                }
+            }
+        } finally { bitmap.recycle(); pack.bitmap.recycle() }
+    }
+
+    @Test fun selectedYarnAppearsInRoomAndGingerDesktopWithoutChangingFood(): Unit = runBlocking {
+        val bitmap = Bitmap.createBitmap(320, 320, Bitmap.Config.ARGB_8888)
+        try {
+            for (pet in listOf(PetType.CORGI, PetType.GINGER)) {
+                val pack = CarePoseLoader.load(context.assets, pet)
+                try {
+                    val room = CareSceneRenderer()
+                    val desktop = SpeciesCareRenderer()
+                    fun render(action: CareSceneAction, toy: String?, onDesktop: Boolean): IntArray {
+                        val scene = CareSceneController(action, CareSceneMode.AUTOMATIC, pack.spec.timings.getValue(action))
+                        scene.advance(1_600L)
+                        bitmap.eraseColor(Color.TRANSPARENT)
+                        if (onDesktop) {
+                            desktop.toyDecorationId = toy
+                            desktop.draw(Canvas(bitmap), pack, scene, false, false, desktopSize = 160)
+                        } else {
+                            room.toyDecorationId = toy
+                            room.draw(Canvas(bitmap), pack, scene, false, false)
+                        }
+                        return IntArray(320 * 320).also { bitmap.getPixels(it, 0, 320, 0, 0, 320, 320) }
+                    }
+                    for (onDesktop in if (pet == PetType.GINGER) listOf(false, true) else listOf(false)) {
+                        val basic = render(CareSceneAction.PLAY, null, onDesktop)
+                        val yarn = render(CareSceneAction.PLAY, "yarn", onDesktop)
+                        assertTrue("$pet selected toy must reach the renderer", basic.indices.count { basic[it] != yarn[it] } > 20)
+                        assertArrayEquals("Toy choice must not replace food", render(CareSceneAction.FEED, null, onDesktop), render(CareSceneAction.FEED, "yarn", onDesktop))
+                        assertArrayEquals("Removing the toy must clear it", basic, render(CareSceneAction.PLAY, null, onDesktop))
+                    }
+                } finally { pack.bitmap.recycle() }
+            }
+        } finally { bitmap.recycle() }
+    }
+
+    @Test fun equippedTintChangesEveryPetAndDoesNotLeakIntoLaterFrames(): Unit = runBlocking {
+        val shared: SpeciesCareRenderer = SpeciesCareRenderer()
+        val corgi: CorgiDesktopCareRenderer = CorgiDesktopCareRenderer()
+        val filter: android.graphics.ColorFilter = android.graphics.PorterDuffColorFilter(
+            Color.MAGENTA, android.graphics.PorterDuff.Mode.SRC_IN)
+        val bitmap: Bitmap = Bitmap.createBitmap(320, 320, Bitmap.Config.ARGB_8888)
+        try {
+            for (pet: PetType in PetType.entries) {
+                val pack: CarePosePack = CarePoseLoader.load(context.assets, pet)
+                try {
+                    val scene: CareSceneController = CareSceneController(CareSceneAction.FEED,
+                        CareSceneMode.AUTOMATIC, pack.spec.timings.getValue(CareSceneAction.FEED))
+                    fun render(tint: android.graphics.ColorFilter?): IntArray {
+                        bitmap.eraseColor(Color.TRANSPARENT)
+                        if (pet == PetType.CORGI) {
+                            corgi.draw(Canvas(bitmap), pack, 160, scene.animationMs, false, false,
+                                colorFilter = tint)
+                        } else {
+                            shared.draw(Canvas(bitmap), pack, scene, false, false,
+                                desktopSize = 160, colorFilter = tint)
+                        }
+                        return IntArray(320 * 320).also { bitmap.getPixels(it, 0, 320, 0, 0, 320, 320) }
+                    }
+                    val original: IntArray = render(null)
+                    val tinted: IntArray = render(filter)
+                    assertTrue("$pet tint is missing", original.indices.count { original[it] != tinted[it] } > 100)
+                    assertTrue("$pet props should keep their color", original.indices.count {
+                        Color.alpha(original[it]) > 128 && original[it] == tinted[it]
+                    } > 20)
+                    assertArrayEquals("$pet retained a removed tint", original, render(null))
+                } finally { pack.bitmap.recycle() }
+            }
+        } finally { bitmap.recycle() }
+    }
+
     @Test fun statsNameIsLocalizedAndDoesNotClipAtLargeFontSizes(): Unit {
         InstrumentationRegistry.getInstrumentation().runOnMainSync {
             for (language: String in listOf("es", "en")) for (scale: Float in listOf(1f, 1.6f)) {
@@ -56,18 +150,34 @@ class SpeciesCareRenderingTest {
         pack.bitmap.recycle()
     }
 
-    @Test fun everyTrayHasDistinctFoodToyAndBedIllustrations(): Unit {
+    @Test fun traysKeepSpeciesToolsAndExplicitlySharedFoodAndFurniture(): Unit {
         val bitmap: Bitmap = Bitmap.createBitmap(80, 80, Bitmap.Config.ARGB_8888)
         val painter: CarePropPainter = CarePropPainter()
         val pixels: IntArray = IntArray(6_400)
         for (action: CareSceneAction in listOf(CareSceneAction.FEED, CareSceneAction.PLAY, CareSceneAction.REST)) {
             val hashes: MutableSet<Int> = mutableSetOf()
+            bitmap.eraseColor(Color.TRANSPARENT)
+            painter.draw(Canvas(bitmap), action, 40f, 40f, 64f, pet = PetType.CORGI)
+            bitmap.getPixels(pixels, 0, 80, 0, 0, 80, 80)
+            val corgiHash: Int = pixels.contentHashCode()
+            bitmap.eraseColor(Color.TRANSPARENT)
+            painter.draw(Canvas(bitmap), CareSceneAction.FEED, 40f, 40f, 64f, pet = PetType.MOKI)
+            bitmap.getPixels(pixels, 0, 80, 0, 0, 80, 80)
+            val flyHash: Int = pixels.contentHashCode()
             for (pet: PetType in PetType.entries) {
                 bitmap.eraseColor(Color.TRANSPARENT)
                 painter.draw(Canvas(bitmap), action, 40f, 40f, 64f, pet = pet)
                 bitmap.getPixels(pixels, 0, 80, 0, 0, 80, 80)
                 assertTrue("$pet $action visible", pixels.count { Color.alpha(it) > 128 } > 70)
-                assertTrue("$pet $action unique", hashes.add(pixels.contentHashCode()))
+                if (pet == PetType.DIABLILLO && action == CareSceneAction.REST) {
+                    // Wings belong to the sleeping body; its furniture is the shared cushion.
+                    assertEquals("Imp cushion matches the shared furniture", corgiHash, pixels.contentHashCode())
+                } else if (pet == PetType.TELA && action == CareSceneAction.FEED) {
+                    // Both insect eaters use flies; their feeding choreography remains species-specific.
+                    assertEquals("Tela and Moki share the fly illustration", flyHash, pixels.contentHashCode())
+                } else {
+                    assertTrue("$pet $action unique", hashes.add(pixels.contentHashCode()))
+                }
             }
         }
         bitmap.recycle()
@@ -94,6 +204,9 @@ class SpeciesCareRenderingTest {
                         frame.eraseColor(Color.TRANSPARENT)
                         renderer.draw(Canvas(frame), pack, scene, reduced, false, desktopSize = 160)
                         frame.getPixels(pixels, 0, 320, 0, 0, 320, 320)
+                        if ((0 until 320).any { Color.alpha(pixels[it]) != 0 || Color.alpha(pixels[319 * 320 + it]) != 0 }) {
+                            File(context.cacheDir, "care-clipping.png").outputStream().use { frame.compress(Bitmap.CompressFormat.PNG, 100, it) }
+                        }
                         assertTrue("$pet $action $step visible", pixels.count { Color.alpha(it) > 128 } > 700)
                         assertTrue("$pet $action $step top/bottom", (0 until 320).all { Color.alpha(pixels[it]) == 0 && Color.alpha(pixels[319 * 320 + it]) == 0 })
                         assertTrue("$pet $action $step sides", (0 until 320).all { Color.alpha(pixels[it * 320]) == 0 && Color.alpha(pixels[it * 320 + 319]) == 0 })

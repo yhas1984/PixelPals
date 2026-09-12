@@ -17,6 +17,7 @@ class CareSceneCoordinator(
     private val readSnapshot: suspend (PetType) -> PetStatusSnapshot,
     private val applyEffect: suspend (CareSceneRequest) -> CareSceneResult,
     private val clock: () -> Long = System::currentTimeMillis,
+    private val isPetAvailable: suspend (PetType) -> Boolean = { true },
 ) {
     private val mutex: Mutex = Mutex()
     private val mutableSession: MutableStateFlow<CareSceneSession?> = MutableStateFlow(null)
@@ -27,6 +28,7 @@ class CareSceneCoordinator(
 
     suspend fun start(request: CareSceneRequest): Boolean = mutex.withLock {
         if (request.id in usedRequests || mutableSession.value != null) return@withLock false
+        if (!isPetAvailable(request.pet)) return@withLock false
         if (request.origin == CareSceneOrigin.OVERLAY && roomOwners.value.isNotEmpty()) return@withLock false
         val snapshot: PetStatusSnapshot = readSnapshot(request.pet)
         usedRequests.add(request.id)

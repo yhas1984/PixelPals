@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="store_equip_after_purchase_failed">This cosmetic is yours, but we couldn’t equip it. Try the Equip button again; you won’t be charged again.</string>
     <string name="app_name">PixelPals</string>
     <string name="nav_home">Home</string>
     <string name="nav_pets">Pals</string>
@@ -14,6 +15,9 @@
     <string name="permissions_required_label">Required to start</string>
     <string name="permissions_optional_label">Optional for desktop mode</string>
     <string name="launch_ready">Ready to launch</string>
+    <string name="launch_ready_without_notifications">Ready to launch. Reminders and notification controls are optional.</string>
+    <string name="permission_optional">Optional</string>
+    <string name="notification_open_settings">Open notification settings</string>
     <string name="launch_disabled_reason_both">Grant overlay and notifications to continue.</string>
     <string name="launch_disabled_reason_overlay">Overlay lets PixelPals float above other apps.</string>
     <string name="launch_disabled_reason_notification">Notifications keep pet controls reachable on Android 13+.</string>
@@ -24,7 +28,7 @@
     <string name="overlay_title">On-screen companion</string>
     <string name="overlay_desc">Let your pet explore over other apps</string>
     <string name="notification_title">Pet reminders</string>
-    <string name="notification_desc">Keep care and controls close at hand</string>
+    <string name="notification_desc">Optional reminders and quick controls. Your pet works without them.</string>
     <string name="permission_required">Required</string>
     <string name="permission_granted">✓ Granted</string>
     <string name="grant_permission">Grant Permission</string>
@@ -119,7 +123,7 @@
     <string name="bond_goal_accessory">receive your first cuddles</string>
     <string name="bond_goal_routine">save “Favorite routine”</string>
     <string name="bond_goal_strong">build a strong bond</string>
-    <string name="dashboard_care_reward">💛 +%1$d bond · 🪙 +%2$d</string>
+    <string name="dashboard_care_reward">💛 +%1$d bond · 💰 +%2$d</string>
     <string name="dashboard_care_received">%1$s appreciates your care</string>
     <string name="dashboard_memory_unlocked">New memory: %1$s</string>
     <string name="care_bubble_feed">So tasty! 🍓</string>
@@ -169,6 +173,8 @@
     <string name="care_notification_sick_message">%1$s is safe and resting. Your care will help recovery.</string>
     <string name="care_reminders_toggle">Care reminders</string>
     <string name="care_reminders_summary">Up to 2 gentle alerts a day, only when your active pet needs you.</string>
+    <string name="care_channel_blocked">Android has blocked care reminders. Open reminder settings to enable them.</string>
+    <string name="care_channel_settings">Open reminder settings</string>
     <string name="memory_first_recovery_title">Back to feeling good</string>
     <string name="memory_first_recovery_subtitle">You stayed close and helped your companion recover.</string>
     <string name="task_done">Done</string>
@@ -191,11 +197,11 @@
     <string name="store_title">The PixelPals shop</string>
     <string name="store_subtitle_format">New companions and accessories for %1$s</string>
     <string name="store_featured_message_format">Today’s spotlight for %1$s: %2$s</string>
-    <string name="store_wallet_format">%1$s has %2$d 🪙 · Bond %3$d</string>
-    <string name="store_coin_price">%1$d 🪙</string>
+    <string name="store_wallet_format">%1$s has %2$d 💰 · Bond %3$d</string>
+    <string name="store_coin_price">%1$d 💰</string>
     <string name="store_bond_price">Bond %1$d</string>
-    <string name="store_unlock_coins_button">Unlock · %1$d 🪙</string>
-    <string name="store_missing_coins_button">Need %1$d 🪙</string>
+    <string name="store_unlock_coins_button">Unlock · %1$d 💰</string>
+    <string name="store_missing_coins_button">Need %1$d 💰</string>
     <string name="store_bond_required_button">Needs bond %1$d</string>
     <string name="store_bond_locked_state">Strengthen your bond to unlock it with coins.</string>
     <string name="store_coin_offer_state">Earn it by caring for your pet. No purchase required.</string>
@@ -205,11 +211,13 @@
     <string name="store_equipped_bubble">I love it! %1$s</string>
     <string name="store_unequipped_bubble">Look saved ✨</string>
     <string name="store_loading">Loading the store…</string>
+    <string name="home_purchase_processing">Completing your purchase…</string>
     <string name="store_error">We could not load the store.</string>
     <string name="store_retry">Retry</string>
     <string name="store_empty">Nothing available right now.</string>
     <string name="store_restore_in_progress">Restoring purchases…</string>
     <string name="store_restore_failed">We could not restore purchases.</string>
+    <string name="store_restore_nothing">No purchases need restoring.</string>
     <string name="store_state_ready">Store ready</string>
     <string name="store_restore">Restore purchases</string>
     <plurals name="store_restored_count">
@@ -234,7 +242,7 @@
     <string name="treasure_album_subtitle">Little memories discovered while playing together.</string>
     <string name="treasure_album_loading">Loading treasures…</string>
     <string name="treasure_album_empty">No treasures yet. Keep playing with your pet to uncover more.</string>
-    <string name="treasure_album_error">We could not load the treasure album.</string>
+    <string name="treasure_album_error">The album could not be updated. Reload to check your treasures.</string>
     <string name="treasure_album_retry">Retry</string>
     <string name="treasure_album_ready">Album ready</string>
     <string name="treasure_placeholder_emoji">💎</string>
@@ -286,10 +294,10 @@
     <string name="store_equip_button">Equip</string>
     <string name="store_equipped_button">Equipped</string>
     <string name="cosmetic_unlocked_toast">%1$s unlocked!</string>
-    <string name="cosmetic_price_format">🪙 %1$d coins</string>
+    <string name="cosmetic_price_format">💰 %1$d coins</string>
 
     <!-- Premium pets with coins (V1.7) -->
-    <string name="store_buy_pet_with_coins">Unlock for 🪙 %1$d</string>
+    <string name="store_buy_pet_with_coins">Unlock for 💰 %1$d</string>
     <string name="store_insufficient_coins">Not enough coins!</string>
     <string name="store_insufficient_coins_detail">Earn coins in the daily care routine or get a coin pack.</string>
     <string name="store_product_unavailable">Unavailable</string>
@@ -497,4 +505,28 @@
     <string name="treasure_name_secret_slice">Secret slice</string>
     <string name="treasure_story_secret_slice">The emergency snack from a game whose rules only your companion knows.</string>
     <string name="treasure_hint_secret_slice">A warm triangle smells suspiciously delicious.</string>
+    <string name="rest_settings">Sleep routine</string>
+    <string name="rest_description">Your pet rests during Do Not Disturb or the hours you choose. Tap your desktop pet to wake it for a minute. Matching start and end times disable the time window.</string>
+    <string name="rest_follow_dnd">Follow Do Not Disturb</string>
+    <string name="rest_schedule_enabled">Use a sleep schedule</string>
+    <string name="rest_start">Bedtime: %1$s</string>
+    <string name="rest_end">Wake-up: %1$s</string>
+    <string name="decor_species_toy">%1$s’s toy</string>
+    <string name="decor_species_food">%1$s’s food</string>
+    <string name="decor_species_food_wood">%1$s’s woodland feeding spot</string>
+    <string name="decor_species_food_flower">%1$s’s floral feeding spot</string>
+    <string name="decor_species_food_moon">%1$s’s moonlit feeding spot</string>
+    <string name="decor_species_rest">%1$s’s resting spot</string>
+    <string name="home_explore_tree">Explore the tree</string>
+    <string name="store_unequip_button">Remove</string>
+    <string name="home_exhibit_treasure">Display a treasure</string>
+    <string name="home_exhibit_empty">Find treasures on adventures, then choose a keepsake for your display.</string>
+    <string name="home_exhibit_auto">Choose automatically</string>
+    <string name="home_exhibit_none">Leave the display empty</string>
+    <string name="home_tela_feed">Give Tela a fly</string>
+    <string name="home_tela_fed">Tela has eaten the fly.</string>
+    <string name="home_tela_feed_unavailable">Tela cannot eat right now. Finish the current activity or try again.</string>
+    <string name="store_preview_cosmetic">Try on my pal</string>
+    <string name="store_preview_cosmetic_named">Preview %1$s on my pal</string>
+    <string name="store_pet_preview_description">Preview of %1$s</string>
 </resources>

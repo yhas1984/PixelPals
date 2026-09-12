@@ -1,0 +1,82 @@
+{
+  "fantasma_1.png": {
+    "sourceSha256": "37900f56a2899872a2938a3aff4519d6f83b385d0946fbac642efb9b081f7e78",
+    "candidateSha256": "6d775cf3e9ea514f7508ba316bde448eecc16ed9c7c0114fdbda87ac924e934f",
+    "changedPixels": 22588,
+    "rgbUnchanged": true,
+    "size": [
+      768,
+      768
+    ]
+  },
+  "fantasma_2.png": {
+    "sourceSha256": "6d5e305cbe239413e1141969c1d69dadb50951c976d732ac3dcf09cf8c2d0b7d",
+    "candidateSha256": "67930f67a8642a9c159e560d14973bd13ffbb4729bede7399a4225ea02a36b6a",
+    "changedPixels": 19096,
+    "rgbUnchanged": true,
+    "size": [
+      768,
+      768
+    ]
+  },
+  "fantasma_3.png": {
+    "sourceSha256": "cf9c35f5a63233201ecbe4e68e7a9a37b0395c6d48f8f4aa3ea46274268ba2e7",
+    "candidateSha256": "cf9c35f5a63233201ecbe4e68e7a9a37b0395c6d48f8f4aa3ea46274268ba2e7",
+    "changedPixels": 0,
+    "rgbUnchanged": true,
+    "size": [
+      768,
+      768
+    ]
+  },
+  "fantasma_4.png": {
+    "sourceSha256": "0ffa4df5f71a53d2b25fb4688a6630400fe0a6f8c8dc9d64f6ad3eb2d8baaac3",
+    "candidateSha256": "0f2da0235141b67079d08c65c879853134c82b6a704a9eab189a3f9413ea3311",
+    "changedPixels": 32069,
+    "rgbUnchanged": true,
+    "size": [
+      768,
+      768
+    ]
+  },
+  "fantasma_5.png": {
+    "sourceSha256": "0591d03e5d8c3274adc0f2aa1b2062a4f0bba18272a6e2baa11abe6bc593eef7",
+    "candidateSha256": "ac0e697fbf53c028d2e5cb33d8756a87f47d485a537589d1469f7e2991576168",
+    "changedPixels": 22645,
+    "rgbUnchanged": true,
+    "size": [
+      768,
+      768
+    ]
+  },
+  "fantasma_7.png": {
+    "sourceSha256": "d605fe1497e2ae72b7633699b30ef4cbedfa58dff1d064dad7614bc9563f9265",
+    "candidateSha256": "7ae35e34327673e3058c0eac7ea756dba70eab033f6ad4f9c6adfccd62cbf742",
+    "changedPixels": 22617,
+    "rgbUnchanged": true,
+    "size": [
+      768,
+      768
+    ]
+  },
+  "fantasma_8.png": {
+    "sourceSha256": "2d9e0db42a7ddc77989260435ecd55dfed4dea16fabdf002b627d16de97d72c5",
+    "candidateSha256": "b3abbf9402b88ea538c209ec20a1959a1cc758d90b46f796176e38dadb15528a",
+    "changedPixels": 19119,
+    "rgbUnchanged": true,
+    "size": [
+      768,
+      768
+    ]
+  },
+  "pet_bloop.png": {
+    "sourceSha256": "ac397aef135c2ae1599ee97e6d56f029ed608d8101ad822235d8c204a1a2258c",
+    "candidateSha256": "6b3d925003b5472103d75a6759da9d4aa57df6aece43c10b1a4a8e2ee40a09a3",
+    "changedPixels": 13259,
+    "rgbUnchanged": true,
+    "size": [
+      512,
+      512
+    ]
+  }
+}

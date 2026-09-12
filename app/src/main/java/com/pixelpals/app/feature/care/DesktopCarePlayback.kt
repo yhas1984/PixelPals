@@ -1,5 +1,6 @@
 package com.pixelpals.app.feature.care
 
+import android.graphics.ColorFilter
 import android.graphics.Canvas
 import com.pixelpals.app.core.care.scene.CareSceneAction
 import com.pixelpals.app.core.care.scene.CorgiFetchPlan
@@ -12,7 +13,7 @@ interface DesktopCarePlayback {
 
     fun start(action: CareSceneAction, facingLeft: Boolean, fetchPlan: CorgiFetchPlan? = null): Unit
     fun advance(deltaSeconds: Float): Unit
-    fun draw(canvas: Canvas, spriteSize: Int): Boolean
+    fun draw(canvas: Canvas, spriteSize: Int, baselineOffsetY: Float = spriteSize * .46f, colorFilter: ColorFilter? = null): Boolean
     fun cancel(): Unit
 
     companion object {

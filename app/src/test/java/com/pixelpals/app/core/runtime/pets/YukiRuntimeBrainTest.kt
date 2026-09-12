@@ -17,6 +17,38 @@ import org.junit.Test
 
 class YukiRuntimeBrainTest {
     private val bounds = PetBounds.compute(1_080, 2_400, 160, 100, 200)
+    @Test fun affectionPreservesHotAndPartiallyReformingBodies(): Unit {
+        val runtime = runtime(YukiSequenceRandom(), temperatureCelsius = 24f)
+        runtime.dispatch(PetEvent.EnvironmentChanged(environment(42f)))
+        runtime.dispatch(PetEvent.Tick(.96f))
+        for (cooling: Boolean in listOf(false, true)) {
+            if (cooling) {
+                runtime.dispatch(PetEvent.EnvironmentChanged(environment(37f)))
+                runtime.dispatch(PetEvent.Tick(.32f))
+            }
+            val before = runtime.dispatch(PetEvent.Tick(0f))
+            val elapsed: Float = runtime.snapshot().brainState.elapsedSeconds
+            for (event: PetEvent in listOf(PetEvent.Tap, PetEvent.HoldStarted, PetEvent.HoldReleased)) {
+                val after = runtime.dispatch(event)
+                assertEquals("melt", after.clipId)
+                assertEquals(before.frame, after.frame)
+                assertEquals(before.transform, after.transform)
+                assertEquals(elapsed, runtime.snapshot().brainState.elapsedSeconds, .001f)
+            }
+        }
+        assertEquals("idle", runtime.dispatch(PetEvent.Tick(.96f)).clipId)
+        assertEquals("happy", runtime.dispatch(PetEvent.Tap).clipId)
+    }
+    @Test fun restoredSharedHeatKeepsIntermediateTemperatureMelted(): Unit {
+        val runtime = runtime(YukiSequenceRandom(), temperatureCelsius = 39f)
+        assertEquals("melt", runtime.dispatch(PetEvent.EnvironmentChanged(
+            environment(39f).copy(yukiHeatLatched = true))).clipId)
+        runtime.dispatch(PetEvent.Tick(.96f))
+        runtime.dispatch(PetEvent.EnvironmentChanged(environment(38f).copy(yukiHeatLatched = false)))
+        assertEquals("idle", runtime.dispatch(PetEvent.Tick(.96f)).clipId)
+        assertEquals("idle", runtime.dispatch(PetEvent.EnvironmentChanged(
+            environment(39f).copy(yukiHeatLatched = false))).clipId)
+    }
 
     @Test
     fun temperatureUsesHysteresisBeforeLeavingMelt() {
@@ -25,6 +57,33 @@ class YukiRuntimeBrainTest {
         assertEquals("melt", runtime.dispatch(PetEvent.EnvironmentChanged(environment(41f))).clipId)
         assertEquals("melt", runtime.dispatch(PetEvent.EnvironmentChanged(environment(39f))).clipId)
         assertEquals("idle", runtime.dispatch(PetEvent.EnvironmentChanged(environment(38f))).clipId)
+    }
+
+    @Test
+    fun thermalUpdatesDoNotRestartMeltingOrFlashAnUnmeltedBody() {
+        val runtime = runtime(YukiSequenceRandom(), temperatureCelsius = 24f)
+        val entry = runtime.dispatch(PetEvent.EnvironmentChanged(environment(41f)))
+        assertEquals(1f, entry.transform.scaleY, .001f)
+        val halfway = runtime.dispatch(PetEvent.Tick(.48f))
+        assertTrue(halfway.transform.scaleY in .84f.. .99f)
+        val refreshed = runtime.dispatch(PetEvent.EnvironmentChanged(environment(42f)))
+        assertEquals(halfway.transform.scaleY, refreshed.transform.scaleY, .001f)
+        assertEquals(.48f, runtime.snapshot().brainState.elapsedSeconds, .001f)
+        val melted = runtime.dispatch(PetEvent.Tick(.5f))
+        assertEquals(.84f, melted.transform.scaleY, .001f)
+        assertEquals(melted.transform.scaleY, runtime.dispatch(PetEvent.Paused).transform.scaleY, .001f)
+        assertEquals(melted.transform.scaleY, runtime.dispatch(PetEvent.Resumed).transform.scaleY, .001f)
+        val cooling = runtime.dispatch(PetEvent.EnvironmentChanged(environment(38f)))
+        assertEquals(melted.transform.scaleY, cooling.transform.scaleY, .001f)
+        val reforming = runtime.dispatch(PetEvent.Tick(.48f))
+        assertTrue(reforming.transform.scaleY > cooling.transform.scaleY)
+        assertTrue(reforming.frame < cooling.frame)
+        assertEquals(reforming.transform.scaleY, runtime.dispatch(PetEvent.Paused).transform.scaleY, .001f)
+        assertEquals(reforming.transform.scaleY, runtime.dispatch(PetEvent.Resumed).transform.scaleY, .001f)
+        val reheated = runtime.dispatch(PetEvent.EnvironmentChanged(environment(41f)))
+        assertEquals(reforming.transform.scaleY, reheated.transform.scaleY, .001f)
+        runtime.dispatch(PetEvent.EnvironmentChanged(environment(38f)))
+        assertEquals("idle", runtime.dispatch(PetEvent.Tick(.5f)).clipId)
     }
 
     @Test
@@ -54,6 +113,21 @@ class YukiRuntimeBrainTest {
             )
             previousX = output.position.x
         }
+    }
+
+    @Test
+    fun walkAcceleratesGentlyWithoutStretchingOrFloating() {
+        val runtime = runtime(YukiSequenceRandom(0.1f, 0.9f), initialX = 100f)
+        assertEquals("walk", runtime.dispatch(PetEvent.Tick(3.1f)).clipId)
+        val startX = runtime.snapshot().position.x
+        val first = runtime.dispatch(PetEvent.Tick(1f / 60f))
+        assertTrue("Walk starts at full speed", first.position.x - startX < .05f)
+        repeat(120) {
+            val output = runtime.dispatch(PetEvent.Tick(1f / 60f))
+            assertEquals(1f, output.transform.scaleY, .001f)
+            assertEquals(0f, output.transform.offsetY, .001f)
+        }
+        assertTrue("Walk did not accelerate", runtime.snapshot().position.x > startX + 1f)
     }
 
     @Test

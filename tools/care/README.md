@@ -1,3 +1,13 @@
+## Care pack source and candidate builds (2026-09-08)
+
+Care atlases now live in `app/src/carePreview/assets/pets`. Debug always includes
+this directory. Release includes it only with
+`-Ppixelpals.companion.releaseCandidate=true`, using the same property that enables
+`CARE_SCENES_ENABLED`. The rest of the debug laboratory is excluded.
+Generators and atlas tests use the new source directory. This packaging change
+is not visual acceptance or production promotion. Earlier evidence below records
+the paths and flags used at the time.
+
 # Visual care — debug candidate
 
 ## All-species desktop care rollout (2026-09-04)
@@ -402,6 +412,13 @@ counts. This is a **render/input soak**, not a physical overlay/service soak.
 adb -s emulator-5554 shell am start -n com.pixelpals.app.debug/com.pixelpals.app.debug.CareScenePreviewActivity --ez soak true
 python3 tools/care/monitor_soak.py --serial emulator-5554 --output tools/care/runtime/soak.json
 ```
+
+The monitor excludes completion records present when monitoring begins. It handles
+overlapping/rotated log snapshots, rejects regressions within the same PID, and
+never accepts success alongside a fatal exception. Parser regressions are covered
+by `python3 -m unittest tools.care.test_monitor_soak`. There is still no lab run ID:
+start a fresh lab process and begin monitoring before it finishes; these checks
+do not establish real input delivery or repository reward correctness.
 
 ## Care metadata contract
 

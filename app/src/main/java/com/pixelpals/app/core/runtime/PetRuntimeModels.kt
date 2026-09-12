@@ -123,6 +123,7 @@ data class PetEnvironment(
     val batteryTemperatureCelsius: Float? = null,
     val isKeyboardVisible: Boolean = false,
     val isAirplaneModeEnabled: Boolean = false,
+    val yukiHeatLatched: Boolean? = null,
 ) {
     init {
         require(batteryPercent in 0..100) { "Battery percent must be between zero and one hundred" }
@@ -222,9 +223,11 @@ data class PetBrainResult<S : PetBrainState>(
     val effects: List<PetEffectCommand> = emptyList(),
     val bubble: String? = null,
     val hapticDurationMs: Long? = null,
+    val playbackSeconds: Float? = null,
 ) {
     init {
         require(clipId.isNotBlank()) { "Pet brain result clip id cannot be blank" }
+        require(playbackSeconds == null || playbackSeconds.isFinite() && playbackSeconds >= 0f)
         require(hapticDurationMs == null || hapticDurationMs >= 0L) {
             "Haptic duration must be non-negative when present"
         }

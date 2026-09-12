@@ -20,6 +20,11 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 sys.path.insert(0, str(ROOT))
 from tools.pet_pipeline import _components
+from tools.bloop.cleanup import clean_care_cell
+from tools.ginger.cleanup_care import clean_care_cell as clean_ginger_care_cell
+from tools.jelly.cleanup_outline import remove_outline as clean_jelly_outline
+from tools.jelly.medicine_artwork import apply_medicine
+from tools.jelly.rest_artwork import REST_CLIP, REST_FRAMES, apply_rest
 CELL = 256
 PADDING = 18
 ACTIONS = ("feed", "play", "pet", "clean", "rest", "medicine")
@@ -36,6 +41,8 @@ def clip_frames(pet: str, row: int) -> list[int]:
     original board immutable, but exclude unsuitable poses from playback.
     """
     frames = [row * 4 + value for value in SEQUENCES[row]]
+    if pet == "jelly" and row == 4:
+        return list(REST_CLIP)
     if pet == "diablillo":
         frames = [3 if frame in (0, 4, 8) else frame for frame in frames]
         if row == 0:
@@ -62,12 +69,16 @@ def clip_frames(pet: str, row: int) -> list[int]:
 
 
 def clip_frame_ms(pet: str, row: int) -> int:
+    if pet == "jelly" and row == 4:
+        return 250
     if pet == "diablillo":
         return (300, 300, 700, 400, 500, 400)[row]
     return 500
 
 
 def completion_ms(pet: str, row: int) -> int:
+    if pet == "jelly" and row == 4:
+        return 4000
     if pet == "diablillo" and row == 1:
         return 3600
     return MARKERS[row] * clip_frame_ms(pet, row) // 500
@@ -133,7 +144,9 @@ def build(pet: str, calibration: dict) -> dict:
     clean = extract_background(original)
     cells, bounds = extract_cells(clean)
     scale = (CELL - 2 * PADDING) / max(max(cell.size) for cell in cells)
-    atlas = Image.new("RGBA", (CELL * 4, CELL * 6))
+    frame_count = 30 if pet == "jelly" else 24
+    atlas_rows = 8 if pet == "jelly" else 6
+    atlas = Image.new("RGBA", (CELL * 4, CELL * atlas_rows))
     anchors, transforms = [], []
     for index, (cell, bbox) in enumerate(zip(cells, bounds)):
         size = tuple(round(dimension * scale) for dimension in cell.size)
@@ -158,17 +171,53 @@ def build(pet: str, calibration: dict) -> dict:
             head = measured.get("head", {}).get(str(index), [mouth_x, max(offset[1] + 12, mouth_y - measured.get("foreheadOffset", 46))])
             frame_anchors["head"] = [value / CELL for value in head]
         anchors.append(frame_anchors)
-    directory = ROOT / "app/src/debug/assets/pets" / pet
+    if pet == "bloop":
+        # Erase the wire only after placement; recropping/resizing would enlarge
+        # the body and invalidate the calibrated care contact coordinates.
+        for index in range(24):
+            box = (index % 4 * CELL, index // 4 * CELL,
+                   (index % 4 + 1) * CELL, (index // 4 + 1) * CELL)
+            atlas.paste(clean_care_cell(atlas.crop(box), index), box[:2])
+    if pet == "ginger":
+        # Keep camera and calibrated contact points independent of the floor matte.
+        for index in range(24):
+            box = (index % 4 * CELL, index // 4 * CELL,
+                   (index % 4 + 1) * CELL, (index // 4 + 1) * CELL)
+            mouth = tuple(calibration[pet]["mouth"][index])
+            atlas.paste(clean_ginger_care_cell(atlas.crop(box), index, mouth), box[:2])
+    if pet == "jelly":
+        # Remove the sticker edge after placement to retain calibrated contacts
+        # and source cameras. The gel reflections and dream bubbles survive.
+        for index in range(24):
+            box = (index % 4 * CELL, index // 4 * CELL,
+                   (index % 4 + 1) * CELL, (index // 4 + 1) * CELL)
+            cleaned = clean_jelly_outline(atlas.crop(box), care_index=index)
+            atlas.paste(cleaned, box[:2])
+            alpha = np.asarray(cleaned.getchannel("A"))
+            visible_rows = np.where((alpha >= 32).any(axis=1))[0]
+            if len(visible_rows) == 0:
+                raise ValueError(f"Jelly care frame {index} has no visible pixels after cleanup")
+            anchors[index]["ground"][1] = (int(visible_rows[-1]) + 1) / CELL
+        apply_medicine(atlas, anchors)
+        for index in range(4):
+            medicine_source = ROOT / 'tools/jelly/clean' / f'medicine_{index}.png'
+            transforms[20 + index] = {
+                'source': str(medicine_source.relative_to(ROOT)),
+                'sourceSha256': hashlib.sha256(medicine_source.read_bytes()).hexdigest(),
+                'sourceBounds': [0, 0, CELL, CELL], 'offset': [0, 0], 'scale': 1.0,
+            }
+        transforms.extend(apply_rest(atlas, anchors))
+    directory = ROOT / "app/src/carePreview/assets/pets" / pet
     directory.mkdir(parents=True, exist_ok=True)
     atlas.save(directory / "care_v1.png", optimize=True)
     spec = {"version": 1, "petId": pet, "atlasPath": f"pets/{pet}/care_v1.png",
-            "frameWidth": CELL, "frameHeight": CELL, "columns": 4, "rows": 6, "frameCount": 24,
+            "frameWidth": CELL, "frameHeight": CELL, "columns": 4, "rows": atlas_rows, "frameCount": frame_count,
             "pivot": {"x": CELL // 2, "y": CELL - PADDING},
             "renderHints": {"innerTransparentPaddingPx": 16, "filterBitmap": pet != "nube_michi",
                             "useFrameOccupancyNormalization": False},
             "clips": [{"id": action, "frames": clip_frames(pet, row),
                        "loop": False, "frameDurationMs": clip_frame_ms(pet, row)} for row, action in enumerate(ACTIONS)],
-            "frames": [{"index": index, "name": f"{ACTIONS[index // 4]}_{index % 4}"} for index in range(24)],
+            "frames": [{"index": index, "name": (f"rest_expression_{index - 24}" if index in REST_FRAMES else f"{ACTIONS[index // 4]}_{index % 4}")} for index in range(frame_count)],
             "careActions": {action: {"completionMs": completion_ms(pet, row)} for row, action in enumerate(ACTIONS)},
             "anchors": anchors}
     (directory / "care_v1.json").write_text(json.dumps(spec, indent=2) + "\n")
@@ -178,7 +227,8 @@ def build(pet: str, calibration: dict) -> dict:
     for index, points in enumerate(anchors):
         x, y = index % 4 * CELL, index // 4 * CELL
         drawing.rectangle((x, y, x + CELL - 1, y + CELL - 1), outline="#998aaa")
-        drawing.text((x + 5, y + 5), f"{index}: {ACTIONS[index // 4]}", fill="#312640")
+        label = f"rest_expression_{index - 24}" if index in REST_FRAMES else f"{ACTIONS[index // 4]}_{index % 4}"
+        drawing.text((x + 5, y + 5), f"{index}: {label}", fill="#312640")
         for name, color in (("mouth", "red"), ("head", "cyan"), ("body", "blue"), ("ground", "green")):
             px, py = x + points[name][0] * CELL, y + points[name][1] * CELL
             drawing.ellipse((px - 3, py - 3, px + 3, py + 3), fill=color)

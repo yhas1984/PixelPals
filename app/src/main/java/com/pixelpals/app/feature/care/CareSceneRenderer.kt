@@ -17,6 +17,13 @@ class CareSceneRenderer {
     private val actor: RectF = RectF()
     private val props: CarePropPainter = CarePropPainter()
     private val species: SpeciesCareRenderer = SpeciesCareRenderer()
+    var bedDecorationId: String?
+        get() = props.bedDecorationId
+        set(value) { props.bedDecorationId = value; species.bedDecorationId = value }
+    var toyDecorationId: String?
+        get() = props.toyDecorationId
+        set(value) { props.toyDecorationId = value; species.toyDecorationId = value }
+
     private val foam: CareFoamPainter = CareFoamPainter()
 
     private fun getPlayDestination(pack: CarePosePack, scene: CareSceneController): Float =
@@ -34,10 +41,11 @@ class CareSceneRenderer {
         actor.offset(offset, 0f)
     }
 
-    fun getActorBounds(width: Float, height: Float): RectF {
-        val size: Float = minOf(height * .90f, width * .70f)
+    fun getActorBounds(width: Float, height: Float, action: CareSceneAction = CareSceneAction.PET): RectF {
+        val size: Float = minOf(height * .90f, width * .70f) *
+            com.pixelpals.app.core.motion.CorgiArtworkScale.careCell(action) / com.pixelpals.app.core.motion.CorgiArtworkScale.SEATED_CARE_CELL
         val baseline: Float = height * .90f
-        actor.set((width - size) / 2f, baseline - size, (width + size) / 2f, baseline)
+        actor.set((width - size) / 2f, baseline - size * .93f, (width + size) / 2f, baseline + size * .07f)
         return actor
     }
 
@@ -52,7 +60,7 @@ class CareSceneRenderer {
             CareSceneAction.CLEAN -> anchors.body
             CareSceneAction.REST -> anchors.ground
         }
-        val rect: RectF = getActorBounds(width, height)
+        val rect: RectF = getActorBounds(width, height, scene.action)
         if (!stationary) moveActor(pack, scene, width)
         val x: Float = if (!stationary && isPlayMirrored(pack, scene)) 1f - point.x else point.x
         return CarePoint((rect.left + x * rect.width()) / width, (rect.top + point.y * rect.height()) / height)
@@ -65,8 +73,8 @@ class CareSceneRenderer {
         }
         val width: Float = canvas.width.toFloat()
         val height: Float = canvas.height.toFloat()
-        val rect: RectF = getActorBounds(width, height)
         val action: CareSceneAction = scene?.action ?: CareSceneAction.PET
+        val rect: RectF = getActorBounds(width, height, action)
         val elapsed: Long = when {
             reducedMotion -> if (scene?.isComplete == true) scene.timing.durationMs else 0L
             scene != null -> scene.animationMs
@@ -83,10 +91,6 @@ class CareSceneRenderer {
         paint.alpha = 255
         paint.isFilterBitmap = spec.renderHints.filterBitmap
         canvas.save()
-        if (!reducedMotion && (scene == null || action == CareSceneAction.REST)) {
-            val breath: Float = sin(idleMs / 2_500f * PI).toFloat() * if (gentle) .004f else .008f
-            canvas.scale(1f, 1f + breath, rect.centerX(), rect.bottom)
-        }
         if (scene != null && !reducedMotion && isPlayMirrored(pack, scene)) canvas.scale(-1f, 1f, rect.centerX(), rect.centerY())
         canvas.drawBitmap(pack.bitmap, source, rect, paint)
         canvas.restore()
@@ -113,13 +117,21 @@ class CareSceneRenderer {
                 }
                 CareSceneAction.CLEAN, CareSceneAction.PET -> x += .05f * sin(progress * PI * 6).toFloat()
                 CareSceneAction.FEED -> y += .06f
-                CareSceneAction.MEDICINE -> { x += .035f; y += .05f }
+                CareSceneAction.MEDICINE -> Unit
                 CareSceneAction.REST -> Unit
             }
         }
         val size: Float = if (scene.action == CareSceneAction.REST) minOf(canvas.width * .48f, canvas.height * .76f)
             else minOf(canvas.width * .20f, canvas.height * .30f) * if (scene.action == CareSceneAction.PLAY) .6f else 1f
-        props.draw(canvas, scene.action, x * canvas.width, y * canvas.height, size,
-            if (scene.action == CareSceneAction.FEED) (1f - progress * 1.25f).coerceAtLeast(0f) else 1f)
+        val origin: CarePoint = if (scene.action == CareSceneAction.MEDICINE && scene.hasContact)
+            com.pixelpals.app.core.care.scene.CareSpoonGeometry.originAt(
+                CarePoint(target.x * canvas.width, target.y * canvas.height), size)
+            else CarePoint(x * canvas.width, y * canvas.height)
+        val amount: Float = when (scene.action) {
+            CareSceneAction.FEED -> (1f - progress * 1.25f).coerceAtLeast(0f)
+            CareSceneAction.MEDICINE -> (1f - progress).coerceIn(0f, 1f)
+            else -> 1f
+        }
+        props.draw(canvas, scene.action, origin.x, origin.y, size, amount)
     }
 }

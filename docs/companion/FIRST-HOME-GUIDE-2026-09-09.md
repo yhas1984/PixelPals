@@ -1,0 +1,9 @@
+# First-adoption home guidance
+
+The first-user introduction previously ended at the naming dialog. It now starts an optional, inline home guide attached to that pet: name, first affection, then a contextual desktop invitation. Existing users do not acquire a guide by default. The common home palette and vertically stacked buttons support the localized Spanish/English copy.
+
+The pending pet and completed-care step live in companion preferences. Cancelling naming leaves the name button available. Opening or interrupting care does not advance the guide: the real completed-care callback does. Completion for another pet is ignored. Expeditions and selection of another pet hide the guide without discarding it. Users can dismiss it explicitly, and the desktop step explains that permission is optional. The guide is cleared after the requested desktop launch, not when the permission explanation is opened.
+
+Regression coverage includes fresh versus legacy introduction, cancelled/interrupted care, a real completed affection scene followed by Activity recreation, persistence through newly created guide/preference instances, another pet, travel and explicit dismissal. This is not proof of actual process death or the full granted/denied/revoked permission matrix.
+
+Validation: final debug/instrumentation builds, lint and 234 JVM tests passed. Full Android suite on disposable emulator-5580 with overlay permission: 171 tests passed in 150.684 seconds, including all five introduction/guide tests. Inspected the captured name-step screen at `evidence/first-home-guide/home.png`: copy and vertically stacked actions fit without clipping. This is a single normal-font English screen, not comprehensive accessibility acceptance. Updated the phone debug APK without resetting existing progress or enabling first-adoption guidance for that existing user.

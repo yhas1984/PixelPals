@@ -19,16 +19,27 @@ data class CorgiFetchFrame(
     val regularFrame: Int?,
     val facingLeft: Boolean,
     val rotation: Float,
+    val toyDecorationId: String? = null,
+    val alpha: Float = 1f,
 ) {
     companion object {
         fun fromPose(plan: CorgiFetchPlan, pose: CorgiFetchPose, anchors: CarePoseAnchors): CorgiFetchFrame {
             val held: Boolean = pose.isCaught || plan.reducedMotion
-            val ball: CarePoint = if (held) CarePoint(
-                pose.petX + plan.spriteSize * .5f + plan.direction * (anchors.mouth.x - .5f) * plan.spriteSize * .94f,
-                pose.petY + plan.spriteSize * .96f + (anchors.mouth.y - anchors.ground.y) * plan.spriteSize * .94f,
-            ) else CarePoint(pose.ballX, pose.ballY)
+            val mouth: CarePoint = CarePoint(
+                pose.petX + plan.spriteSize * .5f + plan.direction * (anchors.mouth.x - .5f) * plan.spriteSize * com.pixelpals.app.core.motion.CorgiArtworkScale.CARE_CELL,
+                pose.petY + plan.spriteSize * .96f + (anchors.mouth.y - anchors.ground.y) * plan.spriteSize * com.pixelpals.app.core.motion.CorgiArtworkScale.CARE_CELL,
+            )
+            // Arrive at the actual scaled mouth before changing ownership to a held prop.
+            // A fixed rolling endpoint otherwise teleports when the care camera changes.
+            val pickup: Float = if (held) 1f else pose.pickupProgress
+            val ball: CarePoint = CarePoint(
+                pose.ballX + (mouth.x - pose.ballX) * pickup,
+                if (pose.releaseSeconds >= 0f) com.pixelpals.app.core.care.scene.CorgiBallRelease.height(
+                    mouth.y, pose.petY + plan.spriteSize * .86f, pose.releaseSeconds)
+                else pose.ballY + (mouth.y - pose.ballY) * pickup,
+            )
             return CorgiFetchFrame(CarePoint(pose.petX, pose.petY), ball, pose.regularFrame,
-                plan.direction < 0f, if (held) 0f else pose.ballRotation)
+                plan.direction < 0f, if (plan.reducedMotion) 0f else pose.ballRotation, alpha = pose.ballAlpha)
         }
     }
 }
@@ -53,7 +64,9 @@ class CorgiFetchBallOverlay(context: Context, private val windowManager: WindowM
         if (frame == null) { close(); return true }
         params.x = (frame.ball.x - size / 2f).roundToInt()
         params.y = (frame.ball.y - size / 2f).roundToInt()
+        params.alpha = .8f * frame.alpha.coerceIn(0f, 1f)
         view.ballRotation = frame.rotation
+        view.toyDecorationId = frame.toyDecorationId
         return try {
             if (!attached) {
                 windowManager.addView(view, params)
@@ -81,11 +94,13 @@ class CorgiFetchBallOverlay(context: Context, private val windowManager: WindowM
     private class BallView(context: Context) : View(context) {
         private val painter: CarePropPainter = CarePropPainter()
         var ballRotation: Float = 0f
+        var toyDecorationId: String? = null
         init { importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO }
         override fun onDraw(canvas: Canvas): Unit {
             super.onDraw(canvas)
             canvas.save()
             canvas.rotate(ballRotation, width / 2f, height / 2f)
+            painter.toyDecorationId = toyDecorationId
             painter.draw(canvas, CareSceneAction.PLAY, width / 2f, height / 2f, width * .86f)
             canvas.restore()
         }

@@ -32,19 +32,20 @@ class CareAtlasTests(unittest.TestCase):
         self.assertTrue(all(cell.size == (61, 66) for cell in cells))
 
     def test_all_fifteen_packs_are_complete_transparent_and_padded(self):
-        paths = sorted((ROOT / "app/src/debug/assets/pets").glob("*/care_v1.json"))
+        paths = sorted((ROOT / "app/src/carePreview/assets/pets").glob("*/care_v1.json"))
         self.assertEqual(len(paths), 15)
         for path in paths:
             with self.subTest(pet=path.parent.name):
                 spec = json.loads(path.read_text())
                 image = Image.open(path.with_suffix(".png"))
                 self.assertEqual(image.mode, "RGBA")
-                self.assertEqual(image.size, (1024, 1536))
+                expected_count = 30 if spec["petId"] == "jelly" else 24
+                self.assertEqual(image.size, (1024, 2048 if expected_count == 30 else 1536))
                 self.assertLessEqual(image.width * image.height * 4, 16 * 1024 * 1024)
-                self.assertEqual(spec["frameCount"], 24)
+                self.assertEqual(spec["frameCount"], expected_count)
                 self.assertEqual([clip["id"] for clip in spec["clips"]], list(ACTIONS))
                 digests = set()
-                for index in range(24):
+                for index in range(expected_count):
                     frame = image.crop((index % 4 * CELL, index // 4 * CELL,
                                         (index % 4 + 1) * CELL, (index // 4 + 1) * CELL))
                     alpha = np.asarray(frame)[:, :, 3]
@@ -56,7 +57,7 @@ class CareAtlasTests(unittest.TestCase):
                     digests.add(hashlib.sha256(frame.tobytes()).hexdigest())
                     for anchor in spec["anchors"][index].values():
                         self.assertTrue(all(0 <= value <= 1 for value in anchor))
-                self.assertEqual(len(digests), 24)
+                self.assertEqual(len(digests), expected_count)
                 for clip in spec["clips"]:
                     self.assertFalse(clip["loop"])
                     minimum_unique_frames = 1 if spec["petId"] == "diablillo" and clip["id"] == "play" else 3
@@ -69,12 +70,12 @@ class CareAtlasTests(unittest.TestCase):
                                          len(clip["frames"]) * clip["frameDurationMs"])
 
     def test_imp_has_two_eye_idle_and_no_dog_like_approach(self):
-        spec = json.loads((ROOT / "app/src/debug/assets/pets/diablillo/care_v1.json").read_text())
+        spec = json.loads((ROOT / "app/src/carePreview/assets/pets/diablillo/care_v1.json").read_text())
         self.assertEqual(spec["clips"][2]["frames"][0], 3)
         self.assertTrue(all(not {0, 4, 8}.intersection(clip["frames"]) for clip in spec["clips"]))
 
     def test_imp_is_livelier_without_rushing_its_nap(self):
-        spec = json.loads((ROOT / "app/src/debug/assets/pets/diablillo/care_v1.json").read_text())
+        spec = json.loads((ROOT / "app/src/carePreview/assets/pets/diablillo/care_v1.json").read_text())
         durations = {clip["id"]: len(clip["frames"]) * clip["frameDurationMs"] for clip in spec["clips"]}
         self.assertEqual(durations["feed"], 3300)
         self.assertEqual(durations["play"], 4200)
@@ -82,7 +83,7 @@ class CareAtlasTests(unittest.TestCase):
         self.assertEqual(durations["pet"], 4200)
 
     def test_imp_finishes_quick_bites_before_fire_and_sleeps_upright(self):
-        spec = json.loads((ROOT / "app/src/debug/assets/pets/diablillo/care_v1.json").read_text())
+        spec = json.loads((ROOT / "app/src/carePreview/assets/pets/diablillo/care_v1.json").read_text())
         clips = {clip["id"]: clip for clip in spec["clips"]}
         self.assertEqual(clips["feed"]["frames"][:7], [3, 3, 1, 1, 1, 2, 2])
         self.assertEqual(clips["feed"]["frames"][7:10], [6, 6, 6])

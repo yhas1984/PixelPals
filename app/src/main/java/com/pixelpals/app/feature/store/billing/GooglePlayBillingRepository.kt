@@ -278,41 +278,42 @@ class GooglePlayBillingRepository(
         }
         val hasConsumable: Boolean = eligibleProductIds.any(::isConsumable)
         val hasNonConsumable: Boolean = eligibleProductIds.anyNot(::isConsumable)
-        if (hasConsumable) {
-            val result = withTimeoutOrNull(BILLING_TIMEOUT_MS) { consumeSafely(purchase) }
-                ?: errorResult("Consume timed out")
-            val consumed = result.responseCode == BillingClient.BillingResponseCode.OK ||
-                result.responseCode == BillingClient.BillingResponseCode.ITEM_NOT_OWNED
-            analytics.track("store_consume", mapOf("code" to result.responseCode.toString()))
-            if (!consumed) {
-                return PurchaseProcessingResult(
-                    eligible = true,
-                    newlyGranted = 0,
-                    processingFailed = true,
-                )
-            }
-            repository.markPlayPurchaseConsumed(purchase.purchaseToken)
-        }
 
-        var newlyGranted = 0
-        eligibleProductIds.forEach { productId ->
-            if (
-                repository.grantPlayPurchaseOnce(
-                    purchaseToken = purchase.purchaseToken,
-                    productId = productId,
-                    quantity = purchase.quantity,
-                    purchaseTime = purchase.purchaseTime,
-                    source = source,
-                )
-            ) {
-                newlyGranted++
-                analytics.track(
-                    "store_purchase_granted",
-                    mapOf("product_id" to productId, "source" to source),
-                )
+        val fulfillment = fulfillBeforeSettlement(grant = {
+            var newlyGranted = 0
+            eligibleProductIds.forEach { productId ->
+                if (
+                    repository.grantPlayPurchaseOnce(
+                        purchaseToken = purchase.purchaseToken,
+                        productId = productId,
+                        quantity = purchase.quantity,
+                        purchaseTime = purchase.purchaseTime,
+                        source = source,
+                    )
+                ) {
+                    newlyGranted++
+                    analytics.track(
+                        "store_purchase_granted",
+                        mapOf("product_id" to productId, "source" to source),
+                    )
+                }
+                repository.markPlayPurchaseSeen(purchase.purchaseToken, productId)
             }
-            repository.markPlayPurchaseSeen(purchase.purchaseToken, productId)
-        }
+
+            newlyGranted
+        }, settle = {
+            if (hasConsumable) {
+                val result = withTimeoutOrNull(BILLING_TIMEOUT_MS) { consumeSafely(purchase) }
+                    ?: errorResult("Consume timed out")
+                val consumed = result.responseCode == BillingClient.BillingResponseCode.OK ||
+                    result.responseCode == BillingClient.BillingResponseCode.ITEM_NOT_OWNED
+                analytics.track("store_consume", mapOf("code" to result.responseCode.toString()))
+                if (consumed) repository.markPlayPurchaseConsumed(purchase.purchaseToken)
+                consumed
+            } else true
+        })
+        val newlyGranted = fulfillment.newlyGranted
+        if (!fulfillment.settled) return PurchaseProcessingResult(true, newlyGranted, processingFailed = true)
 
         if (hasNonConsumable) {
             eligibleProductIds.filterNot(::isConsumable).forEach { productId ->

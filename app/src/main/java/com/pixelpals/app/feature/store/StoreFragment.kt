@@ -34,7 +34,6 @@ import com.pixelpals.app.data.prefs.SelectedPetStore
 import com.pixelpals.app.databinding.ActivityStoreBinding
 import com.pixelpals.app.feature.store.billing.BillingRepository
 import com.pixelpals.app.feature.store.billing.PurchaseResult
-import com.pixelpals.app.feature.store.billing.RestoreResult
 import com.pixelpals.app.navigation.StoreSection
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
@@ -58,7 +57,6 @@ class StoreFragment : Fragment() {
     private var isPurchaseInProgress: Boolean = false
     private var bannerWidthDp: Int? = null
     private var pendingSection: StoreSection? = null
-    private var hasReconciledPurchases: Boolean = false
     private val pageChangeCallback: ViewPager2.OnPageChangeCallback =
         object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
@@ -95,6 +93,7 @@ class StoreFragment : Fragment() {
         selectedPetStore = SelectedPetStore(requireContext())
         selectedPet = selectedPetStore.load()
         configurePrivacyAction()
+        binding.btnRestorePurchases.setOnClickListener { storeViewModel.restorePurchases() }
         configurePager()
         binding.storePager.registerOnPageChangeCallback(pageChangeCallback)
         if (binding.storePager.currentItem == StoreSection.COINS.pageIndex) {
@@ -104,7 +103,7 @@ class StoreFragment : Fragment() {
         collectStoreState()
         configureConsentAndAds()
         binding.storeRoot.addOnLayoutChangeListener(bannerLayoutChangeListener)
-        reconcilePurchasesOnce()
+        storeViewModel.reconcilePurchasesOnce()
         analytics.track("store_opened_v16")
     }
 
@@ -199,6 +198,7 @@ class StoreFragment : Fragment() {
                 when (position) {
                     StoreSection.PREMIUM.pageIndex -> R.string.store_tab_premium
                     StoreSection.COSMETICS.pageIndex -> R.string.store_tab_cosmetics
+                    StoreSection.DECORATIONS.pageIndex -> R.string.home_decoration_shop
                     else -> R.string.store_tab_coins
                 },
             )
@@ -220,13 +220,15 @@ class StoreFragment : Fragment() {
 
     private fun renderStoreState(state: StoreUiState) {
         val notice: StoreNotice? = state.notice
-        binding.cardStoreState.visibility = if (state.isInitialLoading || notice != null) {
+        val restoring: Boolean = state.activeOperation is ActiveStoreOperation.RestorePurchases
+        binding.cardStoreState.visibility = if (state.isInitialLoading || restoring || notice != null) {
             View.VISIBLE
         } else {
             View.GONE
         }
-        binding.progressStoreLoading.visibility = if (state.isInitialLoading) View.VISIBLE else View.GONE
-        binding.txtStoreStatus.text = notice?.let(::getNoticeText).orEmpty()
+        binding.progressStoreLoading.visibility = if (state.isInitialLoading || restoring) View.VISIBLE else View.GONE
+        binding.txtStoreStatus.text = if (restoring) getString(R.string.store_restore_in_progress)
+            else notice?.let(::getNoticeText).orEmpty()
         binding.txtStoreStatus.setTextColor(
             ContextCompat.getColor(
                 requireContext(),
@@ -234,7 +236,8 @@ class StoreFragment : Fragment() {
             ),
         )
         val canOpenCoins: Boolean = notice?.type == StoreNoticeType.INSUFFICIENT_COINS
-        val canRetry: Boolean = notice?.type == StoreNoticeType.STORE_FAILURE
+        val canRetry: Boolean = notice?.type == StoreNoticeType.STORE_FAILURE ||
+            notice?.type == StoreNoticeType.RESTORE_FAILED
         binding.btnStoreRetry.visibility = if (canRetry || canOpenCoins) {
             View.VISIBLE
         } else {
@@ -247,10 +250,19 @@ class StoreFragment : Fragment() {
             if (canOpenCoins) {
                 storeViewModel.clearNotice()
                 openCoinsTab()
+            } else if (notice?.type == StoreNoticeType.RESTORE_FAILED) {
+                storeViewModel.restorePurchases()
             } else {
                 storeViewModel.refresh()
             }
         }
+        binding.btnRestorePurchases.isEnabled = !state.isInitialLoading && !state.isRefreshing &&
+            state.activeOperation == null
+        binding.btnRestorePurchases.setText(if (restoring) {
+            R.string.store_restore_in_progress
+        } else {
+            R.string.store_restore
+        })
     }
 
     private fun refreshHeader() {
@@ -261,19 +273,6 @@ class StoreFragment : Fragment() {
         )
     }
 
-    private fun reconcilePurchasesOnce() {
-        if (hasReconciledPurchases) return
-        hasReconciledPurchases = true
-        viewLifecycleOwner.lifecycleScope.launch {
-            when (val result: RestoreResult = billing.reconcilePurchases()) {
-                is RestoreResult.Failure -> storeViewModel.reportFailure(result.reason)
-                is RestoreResult.Restored -> storeViewModel.refresh()
-                RestoreResult.NothingToRestore,
-                RestoreResult.Unavailable -> Unit
-            }
-        }
-    }
-
     private fun getNoticeText(notice: StoreNotice): String = when (notice.type) {
         StoreNoticeType.INSUFFICIENT_COINS -> getString(R.string.store_insufficient_coins)
         StoreNoticeType.PURCHASE_CANCELLED -> getString(R.string.store_purchase_cancelled)
@@ -281,11 +280,19 @@ class StoreFragment : Fragment() {
         StoreNoticeType.BILLING_UNAVAILABLE -> getString(R.string.store_billing_unavailable)
         StoreNoticeType.PURCHASE_FAILED -> getString(R.string.store_purchase_failed)
         StoreNoticeType.STORE_FAILURE -> notice.detail ?: getString(R.string.store_error)
+        StoreNoticeType.EQUIP_AFTER_PURCHASE_FAILED -> getString(R.string.store_equip_after_purchase_failed)
+        StoreNoticeType.RESTORE_SUCCEEDED -> resources.getQuantityString(
+            R.plurals.store_restored_count, notice.count, notice.count,
+        )
+        StoreNoticeType.NOTHING_TO_RESTORE -> getString(R.string.store_restore_nothing)
+        StoreNoticeType.RESTORE_FAILED -> getString(R.string.store_restore_failed)
     }
 
     private fun isErrorNotice(notice: StoreNotice?): Boolean = when (notice?.type) {
         StoreNoticeType.PURCHASE_CANCELLED,
         StoreNoticeType.PURCHASE_PENDING,
+        StoreNoticeType.RESTORE_SUCCEEDED,
+        StoreNoticeType.NOTHING_TO_RESTORE,
         null -> false
         else -> true
     }
@@ -401,6 +408,7 @@ class StoreFragment : Fragment() {
         override fun createFragment(position: Int): Fragment = when (position) {
             StoreSection.PREMIUM.pageIndex -> PetsTabFragment()
             StoreSection.COSMETICS.pageIndex -> CosmeticsTabFragment()
+            StoreSection.DECORATIONS.pageIndex -> com.pixelpals.app.feature.home.DecorationsTabFragment()
             else -> CoinsTabFragment()
         }
     }

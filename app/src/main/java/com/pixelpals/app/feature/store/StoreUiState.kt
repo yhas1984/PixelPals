@@ -17,6 +17,8 @@ import com.pixelpals.app.data.repository.PixelPalsRepository
 import com.pixelpals.app.feature.store.billing.BillingRepository
 import com.pixelpals.app.feature.store.billing.ProductCatalogResult
 import com.pixelpals.app.feature.store.billing.PurchaseResult
+import com.pixelpals.app.feature.store.billing.RestoreResult
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -41,11 +43,16 @@ enum class StoreNoticeType {
     BILLING_UNAVAILABLE,
     PURCHASE_FAILED,
     STORE_FAILURE,
+    EQUIP_AFTER_PURCHASE_FAILED,
+    RESTORE_SUCCEEDED,
+    NOTHING_TO_RESTORE,
+    RESTORE_FAILED,
 }
 
 data class StoreNotice(
     val type: StoreNoticeType,
     val detail: String? = null,
+    val count: Int = 0,
 )
 
 sealed interface ActiveStoreOperation {
@@ -55,6 +62,7 @@ sealed interface ActiveStoreOperation {
     data class PurchaseCosmetic(override val id: String) : ActiveStoreOperation
     data class EquipCosmetic(override val id: String) : ActiveStoreOperation
     data class PurchaseCoins(override val id: String) : ActiveStoreOperation
+    data object RestorePurchases : ActiveStoreOperation { override val id: String = "restore" }
 }
 
 data class StoreUiState(
@@ -134,12 +142,14 @@ class StoreViewModel(
     private var coinCatalogJob: Job? = null
     private var refreshGeneration: Long = 0
     private var lastSnapshotAt: Long = 0L
+    private var hasReconciledPurchases: Boolean = false
 
     init {
         refresh()
     }
 
     fun refresh() {
+        if (mutableUiState.value.activeOperation == ActiveStoreOperation.RestorePurchases) return
         val selectedPet: PetType = selectedPetProvider()
         val isBlocking: Boolean = mutableUiState.value.lockedPremiumPets.isEmpty() &&
             mutableUiState.value.cosmetics.isEmpty()
@@ -194,21 +204,35 @@ class StoreViewModel(
             }.getOrElse { CoinSpendResult.Failure(it.message ?: "Purchase failed") }
             val isOwned: Boolean = result == CoinSpendResult.Purchased ||
                 result == CoinSpendResult.AlreadyOwned
+            var equipFailure: Throwable? = null
             if (isOwned) {
-                dataSource.setEquippedCosmetic(petId, cosmetic.id)
-                petRefreshRequester()
+                runCatching {
+                    dataSource.setEquippedCosmetic(petId, cosmetic.id)
+                    petRefreshRequester()
+                }.onFailure { equipFailure = it }
             }
             completeCoinSpend(result)
-            onCompleted(isOwned)
+            if (equipFailure != null) mutableUiState.update { state ->
+                state.copy(notice = StoreNotice(StoreNoticeType.EQUIP_AFTER_PURCHASE_FAILED))
+            }
+            onCompleted(isOwned && equipFailure == null)
         }
     }
 
     fun equipCosmetic(cosmetic: Cosmetic, onCompleted: () -> Unit = {}) {
-        if (!startOperation(ActiveStoreOperation.EquipCosmetic(cosmetic.id))) return
+        updateEquippedCosmetic(cosmetic.id, onCompleted)
+    }
+
+    fun unequipCosmetic() {
+        updateEquippedCosmetic(null)
+    }
+
+    private fun updateEquippedCosmetic(cosmeticId: String?, onCompleted: () -> Unit = {}) {
+        if (!startOperation(ActiveStoreOperation.EquipCosmetic(cosmeticId ?: "unequip"))) return
         viewModelScope.launch {
             val selectedPet: PetType = selectedPetProvider()
             runCatching {
-                dataSource.setEquippedCosmetic(selectedPet.name.lowercase(), cosmetic.id)
+                dataSource.setEquippedCosmetic(selectedPet.name.lowercase(), cosmeticId)
                 petRefreshRequester()
                 refreshAfterOperation(selectedPet)
             }.onFailure { error ->
@@ -251,6 +275,38 @@ class StoreViewModel(
 
     fun beginCoinPurchase(productId: String): Boolean =
         startOperation(ActiveStoreOperation.PurchaseCoins(productId))
+
+    fun reconcilePurchasesOnce() {
+        if (hasReconciledPurchases || mutableUiState.value.activeOperation != null) return
+        hasReconciledPurchases = true
+        restorePurchases(manual = false)
+    }
+
+    fun restorePurchases(manual: Boolean = true) {
+        if (!startOperation(ActiveStoreOperation.RestorePurchases)) return
+        // A catalog load started before reconciliation must not clear its operation lock.
+        beginRefresh()
+        mutableUiState.update { it.copy(isRefreshing = false) }
+        viewModelScope.launch {
+            val result: RestoreResult = try {
+                billing.reconcilePurchases()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                RestoreResult.Failure("")
+            }
+            refreshAfterOperation(selectedPetProvider())
+            // Preserve a catalog error if refreshing local ownership failed.
+            if (mutableUiState.value.notice != null) return@launch
+            val notice: StoreNotice? = when (result) {
+                is RestoreResult.Restored -> if (manual) StoreNotice(StoreNoticeType.RESTORE_SUCCEEDED, count = result.count) else null
+                RestoreResult.NothingToRestore -> if (manual) StoreNotice(StoreNoticeType.NOTHING_TO_RESTORE) else null
+                RestoreResult.Unavailable -> if (manual) StoreNotice(StoreNoticeType.RESTORE_FAILED) else null
+                is RestoreResult.Failure -> StoreNotice(StoreNoticeType.RESTORE_FAILED)
+            }
+            mutableUiState.update { it.copy(notice = notice) }
+        }
+    }
 
     fun handleCoinPurchase(result: PurchaseResult) {
         if (result == PurchaseResult.Success) {
