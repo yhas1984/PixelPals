@@ -21,6 +21,7 @@ ROOT = HERE.parents[1]
 sys.path.insert(0, str(ROOT))
 from tools.pet_pipeline import _components
 from tools.bloop.cleanup import clean_care_cell
+from tools.diablillo.import_care import CELL as DIABLILLO_CELL, import_care_atlas
 from tools.ginger.cleanup_care import clean_care_cell as clean_ginger_care_cell
 from tools.ginger.rest_care import apply_rest_care
 from tools.jelly.cleanup_outline import remove_outline as clean_jelly_outline
@@ -36,11 +37,39 @@ SEQUENCES = ([0, 0, 1, 1, 1, 2, 2, 3], [0, 1, 1, 1, 2, 2, 2, 2, 3, 3],
 MARKERS = (3500, 4000, 2500, 3500, 4000, 2500)
 
 
-def clip_frames(pet: str, row: int) -> list[int]:
-    """Reviewed pose selection; never restore the imp's malformed three-eye pose.
+def _build_diablillo() -> dict:
+    imported = import_care_atlas(HERE.parent / "diablillo" / "raw" / "care-redesign-palette.png")
+    if len(imported.contact_points) != 24:
+        raise ValueError("Diablillo contact_points.json must provide all 24 frames")
+    anchors = []
+    for transform in imported.transforms:
+        index = transform.index
+        anchors.append({name: list(point) for name, point in imported.contact_points[index].items()})
+    directory = ROOT / "app/src/carePreview/assets/pets/diablillo"
+    directory.mkdir(parents=True, exist_ok=True)
+    imported.image.save(directory / "care_v1.png", optimize=True)
+    spec = {"version": 1, "petId": "diablillo", "atlasPath": "pets/diablillo/care_v1.png",
+            "frameWidth": DIABLILLO_CELL, "frameHeight": DIABLILLO_CELL, "columns": 4, "rows": 6,
+            "frameCount": 24, "pivot": {"x": 128, "y": 240},
+            "renderHints": {"innerTransparentPaddingPx": 16, "filterBitmap": True,
+                            "useFrameOccupancyNormalization": False},
+            "clips": [{"id": action, "frames": clip_frames("diablillo", row), "loop": False,
+                       "frameDurationMs": clip_frame_ms("diablillo", row)} for row, action in enumerate(ACTIONS)],
+            "frames": [{"index": index, "name": f"{ACTIONS[index // 4]}_{index % 4}"} for index in range(24)],
+            "careActions": {action: {"completionMs": completion_ms("diablillo", row)} for row, action in enumerate(ACTIONS)},
+            "anchors": anchors}
+    (directory / "care_v1.json").write_text(json.dumps(spec, indent=2) + "\n")
+    return {"pet": "diablillo", "sourceSha256": hashlib.sha256((HERE.parent / "diablillo" / "raw" / "care-redesign-palette.png").read_bytes()).hexdigest(),
+            "atlasSha256": hashlib.sha256((directory / "care_v1.png").read_bytes()).hexdigest(),
+            "decodedBytes": DIABLILLO_CELL * 4 * DIABLILLO_CELL * 6 * 4,
+            "frames": [transform.__dict__ for transform in imported.transforms], "anchorsCalibrated": True}
 
-    The imp eats standing and plays with its hands, not on all fours. Keep the
-    original board immutable, but exclude unsuitable poses from playback.
+
+def clip_frames(pet: str, row: int) -> list[int]:
+    """Reviewed pose timing, retained when artwork is replaced.
+
+    The imp eats standing and plays with its hands. Its replacement board also
+    keeps the established indices used by reduced-motion and recovery code.
     """
     frames = [row * 4 + value for value in SEQUENCES[row]]
     if pet == "jelly" and row == 4:
@@ -141,6 +170,8 @@ def extract_cells(image: Image.Image) -> tuple[list[Image.Image], list[tuple[int
 
 
 def build(pet: str, calibration: dict) -> dict:
+    if pet == "diablillo":
+        return _build_diablillo()
     source = HERE / "source" / f"{pet}.png"
     original = Image.open(source).convert("RGB")
     clean = extract_background(original)
@@ -258,7 +289,15 @@ def main() -> None:
     calibration = json.loads(anchors_path.read_text()) if anchors_path.exists() else {}
     pets = args.pet or sorted(path.stem for path in (HERE / "source").glob("*.png"))
     report = [build(pet, calibration) for pet in pets]
-    (HERE / "build_report.json").write_text(json.dumps(report, indent=2) + "\n")
+    report_path = HERE / "build_report.json"
+    # A targeted rebuild must retain the other pets' source provenance.
+    if args.pet and report_path.exists():
+        by_pet = {item["pet"]: item for item in json.loads(report_path.read_text())}
+        by_pet.update({item["pet"]: item for item in report})
+        saved_report = list(by_pet.values())
+    else:
+        saved_report = report
+    report_path.write_text(json.dumps(saved_report, indent=2) + "\n")
     print(json.dumps([{key: value for key, value in item.items() if key != "frames"} for item in report], indent=2))
 
 

@@ -83,6 +83,7 @@ open class LivingHomeFragment : Fragment() {
             beginRequestedPlacement()
         }
         childFragmentManager.setFragmentResultListener(PetNameDialogFragment.RESULT, this) { _, _ -> model.refresh() }
+        childFragmentManager.setFragmentResultListener(UserNameDialogFragment.RESULT, this) { _, _ -> renderGreeting() }
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
@@ -115,7 +116,7 @@ open class LivingHomeFragment : Fragment() {
             HomeUi.button(context, getString(R.string.home_add_object)) { showDecorations() },
             HomeUi.button(context, getString(R.string.home_done), true) { scene?.isEditing = false }
         ).also { it.visibility = View.GONE; column.addView(it) }
-        firstHomeGuide = FirstHomeGuideView(context, ::showAdoption, { openCare(CareSceneAction.PET) }, ::requestDesktop)
+        firstHomeGuide = FirstHomeGuideView(context, { openCare(CareSceneAction.PET) }, ::requestDesktop)
             .also(column::addView)
         greeting = HomeUi.text(context, "", 15f).also(column::addView)
         favorite = HomeUi.text(context, "", 13f).also(column::addView)
@@ -211,13 +212,18 @@ open class LivingHomeFragment : Fragment() {
             }
     }
 
-    private fun acknowledgeIntroduction(home: com.pixelpals.app.database.CompanionHomeEntity, existing: Boolean, openNaming: Boolean): Unit {
+    private fun acknowledgeIntroduction(home: com.pixelpals.app.database.CompanionHomeEntity, existing: Boolean, introduceUser: Boolean): Unit {
         val preferences = CompanionPreferences(requireContext())
         preferences.hasSeenIntroduction = true
         if (existing) return
         preferences.beginFirstHome(home.petId)
+        val pet = PetType.entries.firstOrNull { it.name.equals(home.petId, ignoreCase = true) } ?: model.pet.value
+        val petName = getString(pet.displayNameResId)
+        model.perform { model.repository.adopt(pet, petName) }
         firstHomeGuide?.render(home, false)
-        if (openNaming) showAdoption()
+        if (introduceUser && childFragmentManager.findFragmentByTag(UserNameDialogFragment.TAG) == null) {
+            UserNameDialogFragment.create().show(childFragmentManager, UserNameDialogFragment.TAG)
+        }
     }
 
     private fun bindPet(pet: PetType): Unit {
@@ -303,10 +309,9 @@ open class LivingHomeFragment : Fragment() {
     private fun renderGreeting(): Unit {
         val name: String = lastWorld.home?.nickname?.ifBlank { null } ?: getString(model.pet.value.displayNameResId)
         val bond: Int = model.status.value?.bond ?: 0
-        val resource: Int = if (bond >= 50) R.string.home_greeting_close else if (bond >= 15) R.string.home_greeting_friend else R.string.home_greeting_new
         greeting?.text = if (scene?.isTravelling == true) getString(R.string.adventure_travel, name,
             getString(ExpeditionDestination.find(lastWorld.expedition?.destination.orEmpty())?.title ?: R.string.adventures_title))
-        else getString(resource, name)
+        else CompanionGreetings.home(requireContext(), name, CompanionPreferences(requireContext()).userName, bond)
     }
 
     private fun openCare(action: CareSceneAction? = null, objectId: String? = null): Unit {
@@ -465,7 +470,7 @@ open class LivingHomeFragment : Fragment() {
     }
 
     private fun notifyUser(resource: Int): Unit { if (isAdded) Toast.makeText(requireContext(), resource, Toast.LENGTH_LONG).show() }
-    override fun onResume(): Unit { super.onResume(); model.refresh(); careModel?.setRoomVisible(true); scene?.resume() }
+    override fun onResume(): Unit { super.onResume(); model.refresh(); renderGreeting(); careModel?.setRoomVisible(true); scene?.resume() }
     override fun onPause(): Unit { desktopPermissionJob?.cancel(); postcardJob?.cancel(); webFeeding?.cancel(); closeCare(); scene?.pause(); careModel?.setRoomVisible(false); super.onPause() }
     override fun onSaveInstanceState(outState: Bundle): Unit { outState.putString("store_placement", requestedPlacement); outState.putString("store_placement_pet", requestedPlacementPet); super.onSaveInstanceState(outState) }
     override fun onDestroyView(): Unit {

@@ -3,6 +3,8 @@ package com.pixelpals.app
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.*
+import android.text.TextPaint
+import android.text.TextUtils
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -238,7 +240,7 @@ class PetView(
     private var treasureReactionTimer = 0f
     private val treasureReactionDuration = 0.95f
     private val bubbleSymbolBounds = RectF()
-    private val bubblePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+    private val bubblePaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.WHITE
         textAlign = Paint.Align.CENTER
         textSize = petSpriteSize.toFloat() * 0.24f
@@ -853,9 +855,18 @@ class PetView(
             bubbleSymbolBounds.set(cx - size / 2f, cy - size, cx + size / 2f, cy)
             TreasureSymbol.draw(canvas, text, bubbleSymbolBounds, (255 * bubbleAlpha).toInt())
         } else {
-            canvas.drawText(text, cx, cy, bubbleStrokePaint)
-            canvas.drawText(text, cx, cy, bubblePaint)
+            val fittedText: String = fitBubbleText(text)
+            canvas.drawText(fittedText, cx, cy, bubbleStrokePaint)
+            canvas.drawText(fittedText, cx, cy, bubblePaint)
         }
+    }
+
+    private fun fitBubbleText(text: String): String {
+        if (text.codePointCount(0, text.length) <= 4) return text
+        val padding: Float = bubblePaint.textSize * 1.2f
+        val availableWidth: Float = (width.toFloat() - padding).coerceAtLeast(bubblePaint.textSize)
+        if (bubblePaint.measureText(text) <= availableWidth) return text
+        return TextUtils.ellipsize(text, bubblePaint, availableWidth, TextUtils.TruncateAt.END).toString()
     }
 
     private fun launchPhysics(velocityX: Float, velocityY: Float) {
@@ -928,6 +939,8 @@ class PetView(
     }
 
     private fun welcomeBubble(): String {
+        val userName: String = companionPreferences.userName.trim()
+        if (userName.isNotEmpty()) return context.getString(R.string.pet_welcome_named, userName)
         return when (petPersonality) {
             PetPersonality.ANGELIC -> "✨"
             PetPersonality.CHAOTIC -> "😈"

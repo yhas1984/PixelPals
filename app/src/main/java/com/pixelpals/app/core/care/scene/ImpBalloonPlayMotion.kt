@@ -27,7 +27,8 @@ object ImpBalloonPlayMotion {
     private val popProgress: List<Float> = listOf(.28f, .54f, .79f)
     private val positions: List<CarePoint> = listOf(
         CarePoint(.30f, -.27f),
-        CarePoint(.40f, -.43f),
+        // Leave room for the full burst beside the reviewed reaching-hand pose.
+        CarePoint(.32f, -.43f),
         CarePoint(.28f, -.56f),
     )
 

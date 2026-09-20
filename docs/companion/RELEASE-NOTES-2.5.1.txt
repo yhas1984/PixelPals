@@ -3,7 +3,7 @@
 • Mejoras de tamaño, color y continuidad entre el hogar y el escritorio.
 • Patito anticipa el despegue y las mascotas conservan su orientación después de los cuidados.
 • Mejoras en el descanso con movimiento reducido y en la gestión de cosméticos.
-• Correcciones de estabilidad y compatibilidad.
+• Nombre de usuario opcional, saludos personalizados y nuevo arte de cuidados de Diablillo con 24 poses y paleta basada en el original.
 </es-ES>
 
 <en-US>
@@ -11,5 +11,5 @@
 • Improved size, color, and continuity between the home and desktop.
 • Patito prepares for takeoff, and pets keep their direction after care.
 • Improved rest animations with reduced motion and cosmetic ownership checks.
-• Stability and compatibility fixes.
+• Optional player name, personalised greetings, and new Diablillo care art with 24 poses and a palette based on the original.
 </en-US>

@@ -1,0 +1,11 @@
+<resources>
+    <string name="identity_name_title">¿Cómo te llamamos?</string>
+    <string name="identity_name_prompt">Añade tu nombre o un apodo. Se guarda solo en este dispositivo.</string>
+    <string name="identity_name_hint">Tu nombre o apodo</string>
+    <string name="identity_save_name">Guardar</string>
+    <string name="identity_not_now">Ahora no</string>
+    <string name="identity_remove_name">Quitar nombre</string>
+    <string name="identity_name_error">Escribe un nombre o apodo.</string>
+    <string name="identity_name_button_format">Tu nombre: %1$s</string>
+    <string name="identity_name_button_empty">Añadir tu nombre</string>
+</resources>

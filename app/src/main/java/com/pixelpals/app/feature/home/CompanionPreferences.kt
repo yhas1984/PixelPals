@@ -4,6 +4,9 @@ import android.content.Context
 
 class CompanionPreferences(context: Context) {
     private val preferences = context.getSharedPreferences("pixelpals_companion", Context.MODE_PRIVATE)
+    var userName: String
+        get() = preferences.getString("user_name", "").orEmpty()
+        set(value) { preferences.edit().putString("user_name", value).apply() }
     val firstHomePet: String? get() = preferences.getString("first_home_pet", null)
     val hasCompletedFirstHomeCare: Boolean get() = preferences.getBoolean("first_home_care", false)
     fun beginFirstHome(petId: String) {

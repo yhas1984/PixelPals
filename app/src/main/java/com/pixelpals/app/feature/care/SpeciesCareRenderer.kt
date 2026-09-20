@@ -41,7 +41,8 @@ class SpeciesCareRenderer {
     private val impWings: ImpWingPainter = ImpWingPainter()
     private val impFire: ImpFirePainter = ImpFirePainter()
     private val impBalloonPlay: ImpBalloonPlayPainter = ImpBalloonPlayPainter()
-    private val impBalloonGripAnchor: CarePoint = CarePoint(.70f, .72f)
+    // Between the two reaching hands in the reviewed care frame 5.
+    private val impBalloonGripAnchor: CarePoint = CarePoint(.70f, .654f)
     private var frame: Int = 0
     private var stageCenterX: Float = 0f
     private var stageGround: Float = 0f
