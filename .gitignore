@@ -31,3 +31,6 @@ __pycache__/
 /artifacts/
 /evidence/
 /docs/companion/evidence/
+
+# Reproducible Play promo-video intermediates (sources and final exports stay versioned).
+/play-store/video/work/
