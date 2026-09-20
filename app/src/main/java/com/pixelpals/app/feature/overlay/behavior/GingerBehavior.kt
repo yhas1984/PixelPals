@@ -10,6 +10,7 @@ import kotlin.math.sin
 import com.pixelpals.app.core.motion.GingerArtworkScale
 import com.pixelpals.app.core.motion.GingerPostureMotion
 import com.pixelpals.app.core.motion.GingerRestMotion
+import com.pixelpals.app.core.motion.GingerTurnMotion
 
 /** Grounded feline movement for the redesigned Ginger atlas. */
 class GingerBehavior(
@@ -20,8 +21,9 @@ class GingerBehavior(
 
     override val resourceIds: List<Int> = emptyList()
 
-    private val hasPostureArtwork: Boolean get() = spriteFrameRects.size == POSTURE_FRAME_COUNT || spriteFrameRects.size == REST_FRAME_COUNT
-    private val hasRestArtwork: Boolean get() = spriteFrameRects.size == REST_FRAME_COUNT
+    private val hasPostureArtwork: Boolean get() = spriteFrameRects.size == POSTURE_FRAME_COUNT || spriteFrameRects.size == REST_FRAME_COUNT || spriteFrameRects.size == TURN_FRAME_COUNT
+    private val hasRestArtwork: Boolean get() = spriteFrameRects.size == REST_FRAME_COUNT || spriteFrameRects.size == TURN_FRAME_COUNT
+    private val hasTurnArtwork: Boolean get() = spriteFrameRects.size == TURN_FRAME_COUNT
     override fun getFrameCameraScale(index: Int): Float = if (hasPostureArtwork) GingerArtworkScale.frame(index) else 1f
     override val frameGround: Float get() = if (hasPostureArtwork) GingerArtworkScale.GROUND else .5f
 
@@ -41,6 +43,7 @@ class GingerBehavior(
         TOUCH,
         STAND_UP,
         SIT_DOWN,
+        TURN,
         STANDING,
     }
 
@@ -58,6 +61,10 @@ class GingerBehavior(
     private var postureTimer: Float = 0f
     private var postureInitialFacing: Float = -1f
     private var postureCompletion: (() -> Unit)? = null
+    private var turnTimer: Float = 0f
+    private var turnTargetFacing: Float = -1f
+    private var turnCompletion: (() -> Unit)? = null
+    private var reducedMotionEnabled: Boolean = false
     private var restStartsSeated: Boolean = false
     private var wakeFromFrame: Int = FRAME_SLEEP
     private var pendingTouchAfterWake: Boolean = false
@@ -69,10 +76,13 @@ class GingerBehavior(
         } catch (_: Exception) {
             false
         }
+        val turnAtlasAvailable: Boolean = try {
+            context?.assets?.open(TURN_ATLAS_SPEC_PATH)?.use { true } ?: false
+        } catch (_: Exception) { false }
         val motionAtlasAvailable: Boolean = try {
             context?.assets?.open(MOTION_ATLAS_SPEC_PATH)?.use { true } ?: false
         } catch (_: Exception) { false }
-        loadSpriteSheetAssetAsync(when { restAtlasAvailable -> REST_ATLAS_SPEC_PATH; motionAtlasAvailable -> MOTION_ATLAS_SPEC_PATH; else -> ATLAS_SPEC_PATH })
+        loadSpriteSheetAssetAsync(when { turnAtlasAvailable -> TURN_ATLAS_SPEC_PATH; restAtlasAvailable -> REST_ATLAS_SPEC_PATH; motionAtlasAvailable -> MOTION_ATLAS_SPEC_PATH; else -> ATLAS_SPEC_PATH })
     }
 
     override val isSeatedForScheduledRest: Boolean get() = hasPostureArtwork &&
@@ -107,9 +117,20 @@ class GingerBehavior(
     }
 
     override fun advanceScheduledRestTransition(delta: Float, reducedMotion: Boolean) {
+        reducedMotionEnabled = reducedMotion
         if (reducedMotion && (mode == Mode.STAND_UP || mode == Mode.SIT_DOWN)) {
             postureTimer = GingerPostureMotion.DURATION_SECONDS
             applyPostureFrame()
+        }
+        if (reducedMotion && mode == Mode.TURN) {
+            facingDirection = turnTargetFacing
+            turnCompletion = null
+            turnTimer = GingerTurnMotion.DURATION_SECONDS
+            mode = Mode.STANDING
+            modeTimer = 0f
+            modeDuration = .35f
+            clearTransforms()
+            bridge.currentFrame = FRAME_STAND
         }
         if (reducedMotion && mode == Mode.WAKE) startSit()
     }
@@ -133,6 +154,10 @@ class GingerBehavior(
             Mode.STAND_UP, Mode.SIT_DOWN -> {
                 postureTimer += dt
                 applyPostureFrame()
+            }
+            Mode.TURN -> {
+                turnTimer += dt
+                applyTurnFrame()
             }
             Mode.STANDING -> {
                 placeOnGround()
@@ -347,20 +372,16 @@ class GingerBehavior(
         val maxX: Float = maxWindowX().toFloat()
         moveStartX = params.x.toFloat().coerceIn(0f, maxX)
         val preferredDirection: Float = if (moveStartX < maxX * 0.5f) 1f else -1f
-        facingDirection = if (random.nextFloat() < 0.78f) preferredDirection else -preferredDirection
+        var targetFacing: Float = if (random.nextFloat() < 0.78f) preferredDirection else -preferredDirection
         val distance: Float = bridge.petSpriteSize * (1.1f + random.nextFloat() * 1.9f)
-        moveTargetX = (moveStartX + facingDirection * distance).coerceIn(0f, maxX)
+        moveTargetX = (moveStartX + targetFacing * distance).coerceIn(0f, maxX)
         if (abs(moveTargetX - moveStartX) < bridge.petSpriteSize * 0.45f) {
-            facingDirection *= -1f
-            moveTargetX = (moveStartX + facingDirection * distance).coerceIn(0f, maxX)
+            targetFacing *= -1f
+            moveTargetX = (moveStartX + targetFacing * distance).coerceIn(0f, maxX)
         }
         val duration: Float = (abs(moveTargetX - moveStartX) / (bridge.petSpriteSize * 0.56f))
             .coerceIn(1.4f, 4.8f) / moodSpeedMultiplier()
-        if (hasPostureArtwork && mode != Mode.STAND_UP && mode != Mode.STANDING) {
-            startStandUp(previousFacing) { activateWalk(duration) }
-        } else {
-            activateWalk(duration)
-        }
+        beginHeadingChange(previousFacing, targetFacing) { activateWalk(duration) }
     }
 
     private fun activateWalk(duration: Float): Unit = changeMode(Mode.WALK, duration)
@@ -370,17 +391,78 @@ class GingerBehavior(
         val previousFacing: Float = facingDirection
         val maxX: Float = maxWindowX().toFloat()
         moveStartX = params.x.toFloat().coerceIn(0f, maxX)
-        facingDirection = if (moveStartX < maxX * 0.5f) 1f else -1f
+        val targetFacing: Float = if (moveStartX < maxX * 0.5f) 1f else -1f
         val distance: Float = bridge.petSpriteSize * (0.8f + random.nextFloat() * 0.75f)
-        moveTargetX = (moveStartX + facingDirection * distance).coerceIn(0f, maxX)
+        moveTargetX = (moveStartX + targetFacing * distance).coerceIn(0f, maxX)
         val duration = com.pixelpals.app.core.motion.GroundGait.duration(
             moveTargetX - moveStartX, bridge.petSpriteSize * .45f, 1.4f,
         )
-        if (hasPostureArtwork && mode != Mode.STAND_UP && mode != Mode.STANDING) startStandUp(previousFacing) { activateStalk(duration) }
-        else activateStalk(duration)
+        beginHeadingChange(previousFacing, targetFacing) { activateStalk(duration) }
     }
 
     private fun activateStalk(duration: Float): Unit = changeMode(Mode.STALK, duration)
+
+    private fun beginHeadingChange(previousFacing: Float, targetFacing: Float, completion: () -> Unit) {
+        if (hasPostureArtwork && mode != Mode.STAND_UP && mode != Mode.STANDING) {
+            startStandUp(previousFacing) {
+                if (previousFacing == targetFacing) completion() else startTurn(targetFacing, completion)
+            }
+        } else if (previousFacing == targetFacing) {
+            facingDirection = targetFacing
+            completion()
+        } else if (hasPostureArtwork) {
+            startTurn(targetFacing, completion)
+        } else {
+            facingDirection = targetFacing
+            completion()
+        }
+    }
+
+    private fun startTurn(targetFacing: Float, completion: () -> Unit) {
+        if (reducedMotionEnabled) {
+            facingDirection = targetFacing
+            turnCompletion = null
+            turnTimer = GingerTurnMotion.DURATION_SECONDS
+            mode = Mode.STANDING
+            modeTimer = 0f
+            modeDuration = .35f
+            clearTransforms()
+            bridge.currentFrame = FRAME_STAND
+            completion()
+            return
+        }
+        turnTargetFacing = targetFacing
+        postureInitialFacing = facingDirection
+        turnTimer = 0f
+        turnCompletion = completion
+        mode = Mode.TURN
+        modeTimer = 0f
+        modeDuration = GingerTurnMotion.DURATION_SECONDS
+        placeOnGround()
+        applyTurnFrame()
+    }
+
+    private fun applyTurnFrame() {
+        val pose = GingerTurnMotion.poseAt(turnTimer)
+        val frame = if (hasTurnArtwork) pose.frame else FRAME_STAND
+        val effectiveFacing = if (pose.mirrored) -postureInitialFacing else postureInitialFacing
+        bridge.currentFrame = frame
+        bridge.animScaleX = facingScaleFor(effectiveFacing)
+        bridge.animScaleY = 1f
+        bridge.animOffsetX = 0f
+        bridge.animOffsetY = 0f
+        bridge.animRotation = 0f
+        if (!pose.finished) return
+        facingDirection = turnTargetFacing
+        val completion = turnCompletion
+        turnCompletion = null
+        turnTimer = 0f
+        mode = Mode.STANDING
+        modeTimer = 0f
+        modeDuration = .35f
+        clearTransforms()
+        completion?.invoke()
+    }
 
     private fun startAirborne(velocityX: Float, velocityY: Float) {
         pendingTouchAfterWake = false
@@ -451,6 +533,16 @@ class GingerBehavior(
     }
 
     private fun cancelPosture(): Unit {
+        if (mode == Mode.TURN) {
+            if (turnTimer >= GingerTurnMotion.COMMIT_SECONDS) facingDirection = turnTargetFacing
+            turnCompletion = null
+            turnTimer = 0f
+            mode = Mode.SIT
+            modeTimer = 0f
+            modeDuration = 1.6f
+            clearTransforms()
+            return
+        }
         if (mode != Mode.STAND_UP && mode != Mode.SIT_DOWN) return
         if (mode == Mode.STAND_UP && postureTimer < .10f) facingDirection = postureInitialFacing
         postureCompletion = null
@@ -583,8 +675,10 @@ class GingerBehavior(
     private companion object {
         const val ATLAS_SPEC_PATH: String = "pets/ginger/ginger_sheet_v2.json"
         const val MOTION_ATLAS_SPEC_PATH: String = "pets/ginger/ginger_motion_v2.json"
+        const val TURN_ATLAS_SPEC_PATH: String = "pets/ginger/ginger_turn_v2.json"
         const val POSTURE_FRAME_COUNT: Int = 19
         const val REST_FRAME_COUNT: Int = 22
+        const val TURN_FRAME_COUNT: Int = 24
         const val REST_ATLAS_SPEC_PATH: String = "pets/ginger/ginger_rest_v2.json"
         const val FRAME_SIT: Int = 0
         const val FRAME_GROOM: Int = 1
@@ -597,6 +691,7 @@ class GingerBehavior(
         const val FRAME_LAND_IMPACT: Int = 13
         const val FRAME_LAND_RECOVER: Int = 14
         const val FRAME_TOUCH: Int = 15
+        const val FRAME_STAND: Int = 18
         const val POUNCE_COIL_SECONDS: Float = 0.22f
         const val LAND_SECONDS: Float = 0.32f
         const val TOUCH_SECONDS: Float = 0.55f

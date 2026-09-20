@@ -29,10 +29,11 @@ class HomeIntroductionFlowTest {
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private val context = instrumentation.targetContext
     @Before fun prepare(): Unit = runBlocking {
-        assumeTrue(Build.FINGERPRINT.contains("generic") || Build.MODEL.contains("Emulator"))
+        assumeTrue(Build.FINGERPRINT.contains("generic") || Build.MODEL.contains("Emulator") || Build.HARDWARE == "ranchu")
         context.getSharedPreferences("pixelpals_selection", 0).edit().clear().commit()
         CompanionPreferences(context).hasSeenIntroduction = false
         CompanionPreferences(context).finishFirstHome()
+        CompanionPreferences(context).userName = ""
         AppServices.companions(context).dao.saveHome(CompanionHomeEntity("corgi"))
     }
 
@@ -67,7 +68,7 @@ class HomeIntroductionFlowTest {
             instrumentation.waitForIdleSync()
             assertTrue(CompanionPreferences(context).hasSeenIntroduction)
             assertEquals("corgi", CompanionPreferences(context).firstHomePet)
-            assertNotNull(UiDevice.getInstance(instrumentation).findObject(By.pkg(context.packageName).clazz("android.widget.EditText")))
+            assertNotNull(UiDevice.getInstance(instrumentation).findObject(By.res(context.packageName, "userNameDraft")))
             UiDevice.getInstance(instrumentation).pressBack()
         }
     }
@@ -86,7 +87,7 @@ class HomeIntroductionFlowTest {
                 assertNull(LivingHomeFragment::class.java.getDeclaredField("introductionDialog").apply { isAccessible = true }
                     .get(activity.supportFragmentManager.findFragmentByTag(PixelPalsDestination.HOME.fragmentTag)))
                 val action = activity.findViewById<android.widget.Button>(R.id.firstHomeAction)
-                assertEquals(context.getString(R.string.home_name), action.text)
+                assertEquals(context.getString(R.string.home_guide_pet), action.text)
                 assertEquals(android.view.View.VISIBLE, activity.findViewById<android.view.View>(R.id.firstHomeGuide).visibility)
             }
         }
@@ -111,19 +112,18 @@ class HomeIntroductionFlowTest {
         val preferences = CompanionPreferences(context)
         preferences.beginFirstHome("corgi")
         instrumentation.runOnMainSync {
-            var names: Int = 0
             var cares: Int = 0
             var desktop: Int = 0
-            fun createGuide(): FirstHomeGuideView = FirstHomeGuideView(context, { names++ }, { cares++ }, { desktop++ })
+            fun createGuide(): FirstHomeGuideView = FirstHomeGuideView(context, { cares++ }, { desktop++ })
             val blank = CompanionHomeEntity("corgi")
             val named = blank.copy(nickname = "Copito", adoptedAt = 1L)
             val guide: FirstHomeGuideView = createGuide()
             guide.render(blank, false)
             guide.findViewById<android.widget.Button>(R.id.firstHomeAction).performClick()
-            assertEquals(1, names)
+            assertEquals(1, cares)
             guide.render(named, false)
             guide.findViewById<android.widget.Button>(R.id.firstHomeAction).performClick()
-            assertEquals(1, cares)
+            assertEquals(2, cares)
             assertFalse("Opening care does not complete the guide", preferences.hasCompletedFirstHomeCare)
             preferences.completeFirstHomeCare("ginger")
             assertFalse(preferences.hasCompletedFirstHomeCare)

@@ -1,0 +1,11 @@
+<resources>
+    <string name="identity_name_title">What should we call you?</string>
+    <string name="identity_name_prompt">Add your name or a nickname. This stays on this device.</string>
+    <string name="identity_name_hint">Your name or nickname</string>
+    <string name="identity_save_name">Save</string>
+    <string name="identity_not_now">Not now</string>
+    <string name="identity_remove_name">Remove name</string>
+    <string name="identity_name_error">Enter a name or nickname.</string>
+    <string name="identity_name_button_format">Your name: %1$s</string>
+    <string name="identity_name_button_empty">Add your name</string>
+</resources>

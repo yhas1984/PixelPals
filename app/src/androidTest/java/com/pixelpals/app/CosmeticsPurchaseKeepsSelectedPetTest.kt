@@ -134,7 +134,7 @@ class CosmeticsPurchaseKeepsSelectedPetTest {
                     row is CosmeticCatalogRow.Item && row.cosmetic.id == cosmetic.id
                 }
                 if (targetPosition >= 0) list.scrollToPosition(targetPosition)
-                found = findCosmeticButton(list, cosmetic, controlId)
+                found = findCosmeticButton(list, cosmetic, controlId)?.takeIf { it.isEnabled }
             }
             found?.let { return it }
             Thread.sleep(150)

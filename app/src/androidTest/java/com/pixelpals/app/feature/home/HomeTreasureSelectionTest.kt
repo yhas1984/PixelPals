@@ -27,7 +27,7 @@ import org.hamcrest.Matchers.allOf
 /** Fixture mutation is restricted to the disposable emulator. */
 class HomeTreasureSelectionTest {
     @Test fun selectedKeepsakeSurvivesRecreationAndCanBeHidden() = runBlocking {
-        assumeTrue(Build.FINGERPRINT.contains("generic") || Build.MODEL.contains("Emulator"))
+        assumeTrue(Build.FINGERPRINT.contains("generic") || Build.MODEL.contains("Emulator") || Build.HARDWARE == "ranchu")
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val db = AppDatabase.getDatabase(context)
         db.clearAllTables()

@@ -28,7 +28,7 @@ class HomeScenePauseLifecycleTest {
         CompanionPreferences(InstrumentationRegistry.getInstrumentation().targetContext).reducedMotion = originalReducedMotion
     }
     @Test fun pausedSceneDoesNotAdvanceUntilExplicitResume(): Unit {
-        assumeTrue(Build.FINGERPRINT.contains("generic") || Build.MODEL.contains("Emulator"))
+        assumeTrue(Build.FINGERPRINT.contains("generic") || Build.MODEL.contains("Emulator") || Build.HARDWARE == "ranchu")
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         lateinit var scenario: ActivityScenario<HomeMotionPreviewActivity>
         lateinit var scene: HomeSceneView

@@ -9,6 +9,18 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class DecorationTouchPlacementTest {
+    @Test fun decorationPreviewExposesAnAccessibleLabelAlongsideTouchPlacement(): Unit {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        instrumentation.runOnMainSync {
+            val context = instrumentation.targetContext
+            val item = requireNotNull(DecorationCatalog.find("ball"))
+            val preview = DecorationPreview(context, item, com.pixelpals.app.core.domain.PetType.CORGI)
+            assertEquals(DecorationPresentation.title(context, item, com.pixelpals.app.core.domain.PetType.CORGI), preview.contentDescription)
+            assertTrue("Decoration preview must remain reachable at large text", preview.minimumHeight >= HomeUi.dp(context, 150))
+            assertTrue("Decoration preview must be exposed to accessibility", preview.importantForAccessibility != android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO)
+        }
+    }
+
     @Test fun changingPetCancelsTheOldGestureWithoutPlacingOrPettingTheNewPet(): Unit {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         instrumentation.runOnMainSync {

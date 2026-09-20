@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="adventure_unknown">This saved trip cannot be recognised. You can cancel it to continue playing; no rewards will be granted.</string>
-    <string name="home_guide_name">Every friendship starts with a name. Choose one for your new companion.</string>
     <string name="home_guide_care">Say hello to %1$s with a gentle stroke. You can also touch your pet in the home.</string>
     <string name="home_guide_desktop">Your first moment together! %1$s can also keep you company on your screen. This is optional: your home works without that permission.</string>
     <string name="home_guide_pet">Give some affection</string>
@@ -84,7 +83,7 @@
     <string name="home_postcard">A little world with %1$s · PixelPals</string>
     <string name="home_scene_description">Home of %1$s. Use the care and decoration buttons to interact.</string>
     <string name="home_wander">Exploring a favourite corner</string>
-    <string name="home_introduction">Meet your companion, choose a name, and share your first game.</string>
+    <string name="home_introduction">Meet Corgi, your first pal. Tell your pets what to call you, then share your first moment together.</string>
     <string name="home_choose_pet">Meet the other companions</string>
     <string name="home_first_touch">Say hello</string>
     <string name="decor_linen_bed">Linen cushion</string>

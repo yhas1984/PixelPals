@@ -23,6 +23,7 @@ class HomeLocomotion private constructor(
     private val usesCorgiTurns: Boolean = false,
     private val usesGingerPostures: Boolean = false,
     private val usesGingerRest: Boolean = false,
+    private val usesGingerTurnPack: Boolean = false,
     private val usesTelaGait: Boolean = false,
     private val usesDuckGait: Boolean = false,
     private val usesJellyElastic: Boolean = false,
@@ -32,8 +33,16 @@ class HomeLocomotion private constructor(
 ) {
     private val sprites: HomeSpriteFrames = HomeSpriteFrames(frames, anchor, cellScale, frameScales, frameMirrors, referenceBounds)
     internal val desktopSizeAdjustment: Float get() = desktopCellScale?.let(sprites::targetSizeAdjustment) ?: 1f
-    internal val turnDurationSeconds: Float get() = if (usesCorgiTurns) com.pixelpals.app.core.motion.CorgiTurnMotion.DURATION_SECONDS else CompanionMotion.TURN_SECONDS
-    internal val turnCommitSeconds: Float get() = if (usesCorgiTurns) com.pixelpals.app.core.motion.CorgiTurnMotion.DURATION_SECONDS else turnDurationSeconds / 2f
+    internal val turnDurationSeconds: Float get() = when {
+        usesCorgiTurns -> com.pixelpals.app.core.motion.CorgiTurnMotion.DURATION_SECONDS
+        usesGingerTurnPack -> com.pixelpals.app.core.motion.GingerTurnMotion.DURATION_SECONDS
+        else -> CompanionMotion.TURN_SECONDS
+    }
+    internal val turnCommitSeconds: Float get() = when {
+        usesCorgiTurns -> com.pixelpals.app.core.motion.CorgiTurnMotion.DURATION_SECONDS
+        usesGingerTurnPack -> com.pixelpals.app.core.motion.GingerTurnMotion.COMMIT_SECONDS
+        else -> turnDurationSeconds / 2f
+    }
     internal val gingerPosturePack: Boolean get() = usesGingerPostures
     internal val gingerRestPack: Boolean get() = usesGingerRest
     fun draw(canvas: Canvas, paint: Paint, target: RectF, motion: CompanionMotion, reduced: Boolean, poseClip: String? = null, poseSeconds: Float = 0f, restStartsSeated: Boolean = false): Unit {
@@ -132,6 +141,12 @@ class HomeLocomotion private constructor(
     private fun drawGingerState(canvas: Canvas, paint: Paint, target: RectF,
         motion: CompanionMotion, reduced: Boolean, restStartsSeated: Boolean): Boolean {
         val timeline = com.pixelpals.app.core.motion.GingerPostureMotion
+        if (usesGingerTurnPack && !reduced && motion.activity != CompanionActivity.REST &&
+            motion.activity != CompanionActivity.WAKE && motion.isTurning && motion.speed <= .1f) {
+            val pose = com.pixelpals.app.core.motion.GingerTurnMotion.poseAt(motion.turnElapsed)
+            drawGingerFrame(canvas, paint, target, pose.frame, pose.mirrored)
+            return true
+        }
         if (usesGingerRest) restFrameForHandoff(motion, reduced, restStartsSeated)?.let { frame ->
             drawGingerFrame(canvas, paint, target, frame)
             return true
@@ -171,9 +186,10 @@ class HomeLocomotion private constructor(
         return true
     }
 
-    private fun drawGingerFrame(canvas: Canvas, paint: Paint, target: RectF, frame: Int) {
+    private fun drawGingerFrame(canvas: Canvas, paint: Paint, target: RectF, frame: Int, relativeMirror: Boolean = false) {
         canvas.save()
         if (nativeFacesLeft) canvas.scale(-1f, 1f, target.centerX(), target.bottom)
+        if (relativeMirror) canvas.scale(-1f, 1f, target.centerX(), target.bottom)
         sprites.draw(canvas, paint, target, frame)
         canvas.restore()
     }
@@ -219,7 +235,9 @@ class HomeLocomotion private constructor(
             if (pet == PetType.CORGI && "corgi_motion_v2.json" !in context.assets.list(folder).orEmpty())
                 return@withContext loadLegacy(context, pet)
             val available = context.assets.list(folder).orEmpty()
-            val filename: String? = if (pet == PetType.GINGER && "ginger_rest_v2.json" in available) {
+            val filename: String? = if (pet == PetType.GINGER && "ginger_turn_v2.json" in available) {
+                "ginger_turn_v2.json"
+            } else if (pet == PetType.GINGER && "ginger_rest_v2.json" in available) {
                 "ginger_rest_v2.json"
             } else if (pet == PetType.GINGER && "ginger_motion_v2.json" in available) {
                 "ginger_motion_v2.json"
@@ -266,12 +284,13 @@ class HomeLocomotion private constructor(
                     frameScales = List(spec.frameCount) { com.pixelpals.app.core.motion.CorgiArtworkScale.originalFrame(it) },
                     usesCorgiGait = true, usesCorgiPostures = true, usesCorgiTurns = spec.frameCount == 23)
             }
-            if (pet == PetType.GINGER && spec.frameCount in setOf(19, 22)) {
+            if (pet == PetType.GINGER && spec.frameCount in setOf(19, 22, 24)) {
                 return@withContext HomeLocomotion((0 until spec.frameCount).map { bitmap to Rect(it % spec.columns * width, it / spec.columns * height,
                     (it % spec.columns + 1) * width, (it / spec.columns + 1) * height) }, withWake, true,
                     anchor = PointF(width / 2f, height * 368f / 384f), cellScale = .875f,
                     frameScales = List(spec.frameCount) { com.pixelpals.app.core.motion.GingerArtworkScale.frame(it) },
-                    usesGingerPostures = true, usesGingerRest = spec.frameCount == 22)
+                    usesGingerPostures = true, usesGingerRest = spec.frameCount in setOf(22, 24),
+                    usesGingerTurnPack = spec.frameCount == 24)
             }
             if (pet == PetType.PATITO && spec.frameCount == 16) {
                 // The walking board and legacy flight poses use the same fixed cell

@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="adventure_unknown">No se reconoce este viaje guardado. Puedes cancelarlo para seguir jugando; no se concederán recompensas.</string>
-    <string name="home_guide_name">Toda amistad empieza con un nombre. Elige uno para tu nuevo compañero.</string>
     <string name="home_guide_care">Saluda a %1$s con una caricia. También puedes tocar a tu mascota en el hogar.</string>
     <string name="home_guide_desktop">¡Vuestro primer momento juntos! %1$s también puede acompañarte en la pantalla. Es opcional: el hogar funciona sin ese permiso.</string>
     <string name="home_guide_pet">Dar una caricia</string>
@@ -84,7 +83,7 @@
     <string name="home_postcard">Un pequeño mundo con %1$s · PixelPals</string>
     <string name="home_scene_description">Hogar de %1$s. Utiliza los botones de cuidados y decoración para interactuar.</string>
     <string name="home_wander">Explorando un rincón favorito</string>
-    <string name="home_introduction">Conoce a tu compañero, elige su nombre y comparte vuestro primer juego.</string>
+    <string name="home_introduction">Conoce a Corgi, tu primer compañero. Cuéntale cómo te llamas y compartid vuestro primer momento juntos.</string>
     <string name="home_choose_pet">Conocer a los demás compañeros</string>
     <string name="home_first_touch">Saludar</string>
     <string name="decor_linen_bed">Cojín de lino</string>

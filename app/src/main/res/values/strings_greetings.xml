@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_greeting_named_new">%1$s, %2$s is getting to know you. Try a gentle touch.</string>
+    <string name="home_greeting_named_friend">%1$s, %2$s recognises you and comes a little closer.</string>
+    <string name="home_greeting_named_close">%1$s, %2$s feels at home with you.</string>
+    <string name="pet_welcome_named">Hi, %1$s!</string>
+</resources>

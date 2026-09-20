@@ -8,6 +8,7 @@ import com.pixelpals.app.core.care.TimeProvider
 import com.pixelpals.app.core.care.scene.CareSceneAction
 import com.pixelpals.app.core.care.scene.CareSceneResult
 import com.pixelpals.app.core.domain.PetType
+import com.pixelpals.app.data.catalog.CosmeticCatalog
 import com.pixelpals.app.data.repository.CoinSpendResult
 import com.pixelpals.app.data.repository.PixelPalsRepository
 import com.pixelpals.app.database.AppDatabase
@@ -94,6 +95,26 @@ class CompanionRepositoryTest {
         repository.store(PetType.CORGI, "ball")
         assertTrue(repository.dao.getPlacements("corgi").none { it.decorationId == "ball" })
         assertNotNull(repository.dao.getOwned("ball"))
+    }
+    @Test fun cosmeticEquippingRequiresOwnershipAndNullUnequips(): Unit = runBlocking {
+        val cosmetic = CosmeticCatalog.all(context).first()
+        economy.grantCoins(null, requireNotNull(cosmetic.coinPrice))
+        assertEquals(CoinSpendResult.Purchased,
+            economy.purchaseCosmeticWithCoins("corgi", cosmetic.id))
+        economy.setEquippedCosmetic("corgi", cosmetic.id)
+        assertEquals(cosmetic.id, economy.getEquippedCosmetic("corgi"))
+        val unowned = CosmeticCatalog.all(context).first { it.id != cosmetic.id }
+        var rejected = false
+        try {
+            economy.setEquippedCosmetic("corgi", unowned.id)
+        } catch (_: IllegalStateException) {
+            rejected = true
+        }
+        assertTrue("An unowned cosmetic must be rejected", rejected)
+        assertEquals("Rejecting an unowned cosmetic must preserve the current one",
+            cosmetic.id, economy.getEquippedCosmetic("corgi"))
+        economy.setEquippedCosmetic("corgi", null)
+        assertNull(economy.getEquippedCosmetic("corgi"))
     }
     @Test fun travelFreezesCareAndCanOnlyBeClaimedOnceAfterRecreation(): Unit = runBlocking {
         repository.ensureHome(PetType.CORGI)

@@ -23,7 +23,7 @@ import java.io.File
 @RunWith(AndroidJUnit4::class)
 class CareSceneOverlayUiTest {
     @Test fun boundedTrayAcceptsCareThenClosesOnOutsideTouch(): Unit {
-        assumeTrue(Build.FINGERPRINT.contains("generic") || Build.MODEL.contains("Emulator"))
+        assumeTrue(Build.FINGERPRINT.contains("generic") || Build.MODEL.contains("Emulator") || Build.HARDWARE == "ranchu")
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val context: Context = instrumentation.targetContext
         assumeTrue("Grant overlay permission on disposable emulator before this test", Settings.canDrawOverlays(context))

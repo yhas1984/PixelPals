@@ -60,6 +60,21 @@ class DuckBehavior(
     private var landingStartY = 0f
     private var landingDuration = .42f
     private var wingFlapCycles = 4
+    private var groundedTakeoff = false
+
+    private companion object {
+        const val TAKEOFF_ANTICIPATION_SECONDS = .10f
+        const val TAKEOFF_FLIGHT_SECONDS = .28f
+    }
+
+    private fun applyTakeoffEntryPose() {
+        bridge.currentFrame = if (groundedTakeoff) 8 else 4
+        bridge.animScaleX = facingScale(facingDir)
+        bridge.animScaleY = 1f
+        bridge.animOffsetX = 0f
+        bridge.animOffsetY = 0f
+        bridge.animRotation = 0f
+    }
 
     override fun getBaseSpeed(): Float = 0f
 
@@ -140,14 +155,19 @@ class DuckBehavior(
 
             DuckMode.TAKEOFF -> {
                 val params = bridge.getWindowParams() ?: return
-                val t = (modeTimer / 0.38f).coerceIn(0f, 1f)
+                val anticipating = groundedTakeoff && modeTimer < TAKEOFF_ANTICIPATION_SECONDS
+                val t = if (groundedTakeoff)
+                    ((modeTimer - TAKEOFF_ANTICIPATION_SECONDS) / TAKEOFF_FLIGHT_SECONDS).coerceIn(0f, 1f)
+                else (modeTimer / 0.38f).coerceIn(0f, 1f)
                 val headroom = (flyStartY - bridge.bounds.top).coerceAtLeast(0f)
                 val lift = minOf(bridge.petSpriteSize * .35f, headroom)
                 params.y = (flyStartY - lift * t).roundToInt()
                     .coerceIn(bridge.bounds.top, bridge.bounds.floor)
                 bridge.updateWindowLayout(params)
 
-                bridge.currentFrame = if (t < 0.55f) {
+                bridge.currentFrame = if (anticipating) {
+                    8
+                } else if (t < 0.55f) {
                     4
                 } else {
                     if ((((modeTimer - 0.20f) / 0.10f).toInt() % 2) == 0) 4 else 9
@@ -155,9 +175,9 @@ class DuckBehavior(
                 bridge.animScaleX = facingScale(facingDir)
                 bridge.animScaleY = 1f
                 bridge.animOffsetX = 0f
-                bridge.animOffsetY = (-sin((t * PI).toFloat()) * 5f)
+                bridge.animOffsetY = if (anticipating) 0f else (-sin((t * PI).toFloat()) * 5f)
                     .coerceAtLeast((bridge.bounds.top - params.y).toFloat())
-                bridge.animRotation = facingDir * (6f * t)
+                bridge.animRotation = if (anticipating) 0f else facingDir * (6f * t)
 
                 if (t >= 1f) {
                     // Continue from the actual end of takeoff, not the ground origin.
@@ -263,6 +283,7 @@ class DuckBehavior(
 
         flyStartX = params.x.toFloat()
         flyStartY = params.y.toFloat()
+        groundedTakeoff = flyStartY >= groundY() - 1f
 
         val flyDistanceX = bridge.petSpriteSize * (1.4f + random.nextFloat() * 1.4f)
         // Con jetpack/alas, el patito vuela más alto en cada batida.
@@ -277,6 +298,7 @@ class DuckBehavior(
 
         mode = DuckMode.TAKEOFF
         modeTimer = 0f
+        applyTakeoffEntryPose()
         bridge.showBubble(localizedString(R.string.bubble_duck_quack_excited, "quack!"))
     }
 
@@ -287,6 +309,8 @@ class DuckBehavior(
         modeTimer = 0f
         flyStartX = bridge.windowX.toFloat()
         flyStartY = bridge.windowY.toFloat()
+        groundedTakeoff = flyStartY >= groundY() - 1f
+        applyTakeoffEntryPose()
         flyTargetX = (flyStartX + velocityX * 0.08f).coerceIn(0f, (bridge.screenWidth - bridge.petSpriteSize).coerceAtLeast(0).toFloat())
         flyTargetY = (flyStartY - abs(velocityY) * 0.02f).coerceIn((groundY() - bridge.petSpriteSize * 0.5f).coerceAtLeast(bridge.bounds.top.toFloat()), groundY())
         landingTargetY = groundY()

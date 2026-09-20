@@ -43,7 +43,7 @@ class CareRestResultContinuityTest {
     private val coordinator = AppServices.careScenes(context)
 
     @Before fun requireDisposableEmulator(): Unit = assumeTrue(
-        "Care panel test requires an emulator", Build.FINGERPRINT.contains("generic") || Build.MODEL.contains("Emulator"))
+        "Care panel test requires an emulator", Build.FINGERPRINT.contains("generic") || Build.MODEL.contains("Emulator") || Build.HARDWARE == "ranchu")
 
     @Test fun completedRestKeepsFinalStageUntilNextActionAndCancelStopsIt(): Unit = runCompletedActionContinuity(CareSceneAction.REST)
 
@@ -90,7 +90,12 @@ class CareRestResultContinuityTest {
                 }
                 tool(action).check(matches(isEnabled())).perform(click())
                 await { coordinator.session.value?.request?.action == action }
-                await(15_000L) { coordinator.session.value == null && resultCount.get() == 1 }
+                // API 35 can deliver the final frame on a delayed choreographer tick
+                // when the full suite has disabled/paused animations.  Observe the
+                // result first, then allow the panel's asynchronous cancel/refresh
+                // to publish the detached session state.
+                await(30_000L) { resultCount.get() == 1 }
+                await(5_000L) { coordinator.session.value == null }
                 // Let the session-null emission and normal idle frames render.
                 Thread.sleep(300L)
                 var actionController: CareSceneController? = null

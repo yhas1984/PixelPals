@@ -2,6 +2,10 @@
 
 Actualizado: 9 de septiembre de 2026. Objetivo vigente: perfeccionar e implementar la transformación integral de PixelPals en un compañero vivo para las 15 mascotas. Este documento ordena el trabajo restante; no sustituye el alcance original por lo que ya compila.
 
+**Seguimiento actual:** [candidata 2.5.1](INTERNAL-2.5.1.md) y
+[revisión del 20 de septiembre](VISUAL-CLOSURE-2026-09-20.md). Los requisitos
+siguientes se conservan; los avances fechados al final son un registro histórico.
+
 ## Condiciones de entrega
 
 - Kotlin, Views/Fragments, Room y motor existente; experiencia local sin cuentas ni backend.

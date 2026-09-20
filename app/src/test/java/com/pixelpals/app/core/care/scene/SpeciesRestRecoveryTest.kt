@@ -5,6 +5,12 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class SpeciesRestRecoveryTest {
+    @Test fun reducedGingerRestHoldsSleepingCurlUntilWake() {
+        for (progress in listOf(0f, .2f, .8f, .99f)) {
+            assertEquals(19, SpeciesRestRecovery.getFrame(CareBed.BASKET, progress, true))
+        }
+        assertEquals(12, SpeciesRestRecovery.getFrame(CareBed.BASKET, 1f, true))
+    }
     @Test fun wakingFinishesWithNeutralProportionsAndOpacity() {
         for (pet: PetType in listOf(PetType.JELLY, PetType.MENTA, PetType.BLOOP)) {
             val profile: PetCareProfile = PetCareProfile.forPet(pet)

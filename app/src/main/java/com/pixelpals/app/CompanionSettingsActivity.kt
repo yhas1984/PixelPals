@@ -7,6 +7,7 @@ import androidx.appcompat.widget.SwitchCompat
 import androidx.fragment.app.FragmentContainerView
 import com.pixelpals.app.feature.home.CompanionPreferences
 import com.pixelpals.app.feature.home.HomeUi
+import com.pixelpals.app.feature.home.UserNameDialogFragment
 import com.pixelpals.app.navigation.*
 
 class CompanionSettingsActivity : AppCompatActivity(), RootNavigator {
@@ -15,6 +16,15 @@ class CompanionSettingsActivity : AppCompatActivity(), RootNavigator {
         val preferences: CompanionPreferences = CompanionPreferences(this)
         val root: LinearLayout = HomeUi.column(this)
         root.addView(HomeUi.button(this, getString(R.string.home_close)) { finish() })
+        val userNameButton = HomeUi.button(this, "") { showUserNameDialog() }
+        root.addView(userNameButton)
+        fun refreshUserNameButton(): Unit {
+            userNameButton.text = preferences.userName.takeIf { it.isNotEmpty() }?.let {
+                getString(R.string.identity_name_button_format, it)
+            } ?: getString(R.string.identity_name_button_empty)
+        }
+        refreshUserNameButton()
+        supportFragmentManager.setFragmentResultListener(UserNameDialogFragment.RESULT, this) { _, _ -> refreshUserNameButton() }
         fun toggle(title: Int, value: Boolean, changed: (Boolean) -> Unit): Unit {
             root.addView(SwitchCompat(this).apply {
                 setText(title); isChecked = value; minHeight = HomeUi.dp(context, 48)
@@ -34,6 +44,10 @@ class CompanionSettingsActivity : AppCompatActivity(), RootNavigator {
             androidx.core.view.WindowInsetsCompat.Builder(insets).setInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars(), androidx.core.graphics.Insets.NONE).build()
         }
         if (savedInstanceState == null) supportFragmentManager.beginTransaction().replace(R.id.companionSettings, SettingsFragment()).commit()
+    }
+    private fun showUserNameDialog(): Unit {
+        if (supportFragmentManager.isStateSaved || supportFragmentManager.findFragmentByTag(UserNameDialogFragment.TAG) != null) return
+        UserNameDialogFragment.create().show(supportFragmentManager, UserNameDialogFragment.TAG)
     }
     private fun showRestSettings(preferences: CompanionPreferences) {
         val content = HomeUi.column(this)

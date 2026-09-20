@@ -2,6 +2,8 @@ package com.pixelpals.app.data.repository
 
 import android.content.Context
 import android.content.res.Configuration
+import android.app.LocaleManager
+import android.os.Build
 import android.os.LocaleList
 import com.pixelpals.app.BuildConfig
 import com.pixelpals.app.R
@@ -72,7 +74,12 @@ class PixelPalsRepository(
 
     private val presentationContext: Context
         get() {
-            val localeTags: String = AppCompatDelegate.getApplicationLocales().toLanguageTags()
+            // On API 33+ AppCompat delegates storage to the framework. Once
+            // the last Activity is gone, AppCompat's in-memory delegate can
+            // briefly be empty even though LocaleManager still has the
+            // application selection. Read the framework source first so
+            // repository work remains localized without an Activity host.
+            val localeTags: String = applicationLocaleTags()
             if (localeTags.isBlank()) return appContext
             presentationCache?.takeIf { it.localeTags == localeTags }?.let { return it.context }
             val configuration = Configuration(appContext.resources.configuration).apply {
@@ -80,6 +87,15 @@ class PixelPalsRepository(
             }
             return appContext.createConfigurationContext(configuration).also { presentationCache = PresentationContextCache(localeTags, it) }
         }
+
+    private fun applicationLocaleTags(): String {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val frameworkTags = appContext.getSystemService(LocaleManager::class.java)
+                ?.applicationLocales?.toLanguageTags().orEmpty()
+            if (frameworkTags.isNotBlank()) return frameworkTags
+        }
+        return AppCompatDelegate.getApplicationLocales().toLanguageTags()
+    }
 
     /** Monedero GLOBAL: las monedas son del jugador, no del pet (v1.6+). */
     private val walletId = "wallet"
@@ -112,10 +128,18 @@ class PixelPalsRepository(
         cosmeticPrefs.getString(petId, null)?.takeIf { it.isNotBlank() }
 
     /** Equipa (cosmeticId) o quita (null) el cosmético de un pet. */
-    fun setEquippedCosmetic(petId: String, cosmeticId: String?) {
-        cosmeticPrefs.edit().apply {
-            if (cosmeticId == null) remove(petId) else putString(petId, cosmeticId)
-        }.apply()
+    suspend fun setEquippedCosmetic(petId: String, cosmeticId: String?) {
+        if (cosmeticId == null) {
+            cosmeticPrefs.edit().remove(petId).apply()
+            return
+        }
+        val cosmetic = com.pixelpals.app.data.catalog.CosmeticCatalog.findById(appContext, cosmeticId)
+            ?: throw IllegalArgumentException("Unknown cosmetic: $cosmeticId")
+        val owned: Boolean = db.withTransaction {
+            db.ownedProductDao().getByProductId(cosmetic.productId)?.let(::isEligibleEntitlement) == true
+        }
+        if (!owned) throw IllegalStateException("Cosmetic is not owned: $cosmeticId")
+        cosmeticPrefs.edit().putString(petId, cosmetic.id).apply()
     }
 
     /** true si el cosmético (por productId) ya fue comprado. */

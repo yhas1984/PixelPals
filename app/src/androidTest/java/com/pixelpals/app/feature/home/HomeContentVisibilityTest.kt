@@ -63,6 +63,17 @@ class HomeContentVisibilityTest {
                     if (!ready) SystemClock.sleep(40)
                 }
                 assertTrue("Home data and layout must be ready before the interaction", ready)
+                // Keep the room genuinely below the fold on tall API 35
+                // displays. Without this tail, scrolling to the measured
+                // child height can clamp while the scene is still visible.
+                scenario.onActivity { activity ->
+                    val scroll = fragment.requireView() as ScrollView
+                    val content = scroll.getChildAt(0) as ViewGroup
+                    content.addView(View(activity), ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        (scroll.height * 2).coerceAtLeast(1_200),
+                    ))
+                }
                 instrumentation.waitForIdleSync()
                 block(scenario, fragment)
             }

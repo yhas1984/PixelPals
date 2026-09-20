@@ -47,7 +47,9 @@ class SpeciesRestRecoveryRenderingTest {
                         tile.eraseColor(Color.TRANSPARENT)
                         renderer.draw(Canvas(tile), pack, scene, reduced, false, desktopSize = 160)
                         val expectedFrame: Int = if (reduced && time < 5000L) {
-                            when (pet) { PetType.DIABLILLO -> 9; PetType.JELLY -> 29; else -> 16 }
+                            // Ginger's reduced mode holds the native closed-eye curl;
+                            // frame 16 is now the awake entry to the normal transition.
+                            when (pet) { PetType.DIABLILLO -> 9; PetType.JELLY -> 29; PetType.GINGER -> 19; else -> 16 }
                         } else expected[index]
                         assertEquals("$pet at $time reduced=$reduced", expectedFrame, frameField.getInt(renderer))
                         if (!reduced) {

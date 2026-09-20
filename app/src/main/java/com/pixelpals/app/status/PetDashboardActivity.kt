@@ -24,6 +24,7 @@ import com.pixelpals.app.core.care.scene.CareSceneResult
 import com.pixelpals.app.feature.care.CareScenePanel
 import com.pixelpals.app.feature.care.CareSceneViewModel
 import com.pixelpals.app.feature.care.CarePoseLoader
+import com.pixelpals.app.feature.home.HomeEnvironment
 import com.pixelpals.app.core.services.AppServices
 import com.pixelpals.app.core.care.PetCondition
 import com.pixelpals.app.core.domain.PetType
@@ -290,6 +291,8 @@ class PetDashboardActivity : AppCompatActivity() {
 
     private suspend fun renderDashboard() {
         val snapshot = repository.getStatusSnapshot(selectedPet)
+        val home = AppServices.companions(this).dao.getHome(selectedPet.name.lowercase())
+        carePanel?.setHomeEnvironment(dashboardHomeEnvironment(home?.environment))
         val collection = repository.getTreasureCollection(selectedPet)
         val coinBalance = repository.getCoinBalance(selectedPet)
         val tasks = repository.getDailyTasks(selectedPet)
@@ -603,3 +606,6 @@ class PetDashboardActivity : AppCompatActivity() {
         )
     }
 }
+
+internal fun dashboardHomeEnvironment(raw: String?): HomeEnvironment =
+    HomeEnvironment.entries.firstOrNull { it.name == raw } ?: HomeEnvironment.COZY

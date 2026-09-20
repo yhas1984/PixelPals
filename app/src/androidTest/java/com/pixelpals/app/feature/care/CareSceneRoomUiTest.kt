@@ -35,7 +35,7 @@ class CareSceneRoomUiTest {
     private val coordinator = AppServices.careScenes(context)
 
     @Before fun requireDisposableEmulator(): Unit {
-        assumeTrue("Never exercise installed personal care state", Build.FINGERPRINT.contains("generic") || Build.MODEL.contains("Emulator"))
+        assumeTrue("Never exercise installed personal care state", Build.FINGERPRINT.contains("generic") || Build.MODEL.contains("Emulator") || Build.HARDWARE == "ranchu")
     }
 
     @Test fun tapRunsAutomaticSceneAndLeavingRoomReleasesOwnership(): Unit {

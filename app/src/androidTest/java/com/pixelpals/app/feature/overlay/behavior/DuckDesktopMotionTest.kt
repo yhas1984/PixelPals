@@ -18,7 +18,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class DuckDesktopMotionTest {
     @Test fun interactionFliesLandsAndReturnsToIdleWithinBounds(): Unit {
-        assumeTrue(Build.FINGERPRINT.contains("generic") || Build.MODEL.contains("Emulator"))
+        assumeTrue(Build.FINGERPRINT.contains("generic") || Build.MODEL.contains("Emulator") || Build.HARDWARE == "ranchu")
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         lateinit var bridge: TestPetBridge
         lateinit var behavior: DuckBehavior
@@ -65,7 +65,7 @@ class DuckDesktopMotionTest {
     }
 
     @Test fun flingFromTopBoundaryCompletesAtLeftCenterAndRight(): Unit {
-        assumeTrue(Build.FINGERPRINT.contains("generic") || Build.MODEL.contains("Emulator"))
+        assumeTrue(Build.FINGERPRINT.contains("generic") || Build.MODEL.contains("Emulator") || Build.HARDWARE == "ranchu")
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val positions = listOf(
             Triple(0, 1_800f, "left"),
@@ -112,7 +112,7 @@ class DuckDesktopMotionTest {
     }
 
     @Test fun releaseFromMidairUsesProgressiveLandingAt30And120Fps(): Unit {
-        assumeTrue(Build.FINGERPRINT.contains("generic") || Build.MODEL.contains("Emulator"))
+        assumeTrue(Build.FINGERPRINT.contains("generic") || Build.MODEL.contains("Emulator") || Build.HARDWARE == "ranchu")
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         for (fps in listOf(30, 120)) {
             lateinit var bridge: TestPetBridge
@@ -147,7 +147,7 @@ class DuckDesktopMotionTest {
     }
 
     @Test fun flutterUsesWingFramesAndQuackUsesPlantedFeet() {
-        assumeTrue(Build.FINGERPRINT.contains("generic") || Build.MODEL.contains("Emulator"))
+        assumeTrue(Build.FINGERPRINT.contains("generic") || Build.MODEL.contains("Emulator") || Build.HARDWARE == "ranchu")
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         lateinit var bridge: TestPetBridge
         lateinit var behavior: DuckBehavior
@@ -176,7 +176,7 @@ class DuckDesktopMotionTest {
     }
 
     @Test fun draggingFromWaddleKeepsWingFrameAndLeftHeading() {
-        assumeTrue(Build.FINGERPRINT.contains("generic") || Build.MODEL.contains("Emulator"))
+        assumeTrue(Build.FINGERPRINT.contains("generic") || Build.MODEL.contains("Emulator") || Build.HARDWARE == "ranchu")
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         lateinit var bridge: TestPetBridge
         lateinit var behavior: DuckBehavior
@@ -203,7 +203,7 @@ class DuckDesktopMotionTest {
     }
 
     @Test fun walkingUsesOrderedSixPoseAtlasGaitAt30And120Fps() {
-        assumeTrue(Build.FINGERPRINT.contains("generic") || Build.MODEL.contains("Emulator"))
+        assumeTrue(Build.FINGERPRINT.contains("generic") || Build.MODEL.contains("Emulator") || Build.HARDWARE == "ranchu")
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         for (fps in listOf(30, 120)) {
             lateinit var bridge: TestPetBridge

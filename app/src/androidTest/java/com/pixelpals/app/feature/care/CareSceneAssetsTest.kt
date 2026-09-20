@@ -29,7 +29,8 @@ class CareSceneAssetsTest {
             assertTrue(CarePoseLoader.isAvailable(assets, pet))
             val pack: CarePosePack = CarePoseLoader.load(assets, pet)
             assertTrue(pack.bitmap.hasAlpha())
-            assertEquals(6 * 1024 * 1024, pack.bitmap.allocationByteCount)
+            // Jelly has six additional authored rest expressions (eight atlas rows).
+            assertEquals((if (pet == PetType.JELLY) 8 else 6) * 1024 * 1024, pack.bitmap.allocationByteCount)
             val review: Bitmap = Bitmap.createBitmap(960, 440, Bitmap.Config.ARGB_8888)
             review.eraseColor(Color.rgb(240, 234, 248))
             val reviewCanvas: Canvas = Canvas(review)

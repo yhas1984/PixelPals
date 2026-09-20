@@ -332,7 +332,7 @@ class StoreViewModelTest {
 
         override fun getEquippedCosmetic(petId: String): String? = null
 
-        override fun setEquippedCosmetic(petId: String, cosmeticId: String?) = Unit
+        override suspend fun setEquippedCosmetic(petId: String, cosmeticId: String?) = Unit
 
         override suspend fun purchasePet(petType: PetType): CoinSpendResult {
             petPurchaseCalls += 1
@@ -363,7 +363,7 @@ class StoreViewModelTest {
         override fun getCosmetics() = listOf(cosmetic)
         override suspend fun isCosmeticOwned(productId: String) = owned
         override fun getEquippedCosmetic(petId: String) = equipped
-        override fun setEquippedCosmetic(petId: String, cosmeticId: String?) {
+        override suspend fun setEquippedCosmetic(petId: String, cosmeticId: String?) {
             if (failEquip) { failEquip = false; error("equip failed") }
             equipped = cosmeticId
         }

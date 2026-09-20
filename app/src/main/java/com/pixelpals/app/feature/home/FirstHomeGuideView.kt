@@ -4,11 +4,12 @@ import android.content.Context
 import android.view.View
 import android.widget.LinearLayout
 import com.pixelpals.app.R
+import com.pixelpals.app.core.domain.PetType
 import com.pixelpals.app.database.CompanionHomeEntity
 
 /** Optional first-adoption guidance; legacy users have no pending guide. */
-internal class FirstHomeGuideView(context: Context, private val onName: () -> Unit,
-    private val onCare: () -> Unit, private val onDesktop: () -> Unit) : LinearLayout(context) {
+internal class FirstHomeGuideView(context: Context, private val onCare: () -> Unit,
+    private val onDesktop: () -> Unit) : LinearLayout(context) {
     private val preferences: CompanionPreferences = CompanionPreferences(context)
     private val message = HomeUi.text(context, "", 15f)
     private val action = HomeUi.button(context, "", true) {}
@@ -32,22 +33,12 @@ internal class FirstHomeGuideView(context: Context, private val onName: () -> Un
             return
         }
         visibility = View.VISIBLE
-        val needsName: Boolean = home.nickname.isBlank()
         val needsCare: Boolean = !preferences.hasCompletedFirstHomeCare
-        message.text = context.getString(when {
-            needsName -> R.string.home_guide_name
-            needsCare -> R.string.home_guide_care
-            else -> R.string.home_guide_desktop
-        }, home.nickname)
-        action.setText(when {
-            needsName -> R.string.home_name
-            needsCare -> R.string.home_guide_pet
-            else -> R.string.home_desktop
-        })
-        action.setOnClickListener { when {
-            needsName -> onName()
-            needsCare -> onCare()
-            else -> onDesktop()
-        } }
+        val petName: String = home.nickname.ifBlank {
+            context.getString((PetType.entries.firstOrNull { it.name.equals(home.petId, true) } ?: PetType.CORGI).displayNameResId)
+        }
+        message.text = context.getString(if (needsCare) R.string.home_guide_care else R.string.home_guide_desktop, petName)
+        action.setText(if (needsCare) R.string.home_guide_pet else R.string.home_desktop)
+        action.setOnClickListener { if (needsCare) onCare() else onDesktop() }
     }
 }

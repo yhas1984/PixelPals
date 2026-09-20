@@ -89,6 +89,15 @@ class GingerRestContinuityTest {
                 }
             }
             assertEquals(setOf(21, 20, 19, 18), seen)
+            // A wake ending toward the opposite destination now turns while
+            // standing. It must never replay the seated-to-standing poses.
+            repeat(40) {
+                if (mode(behavior) == "TURN") {
+                    behavior.updateIdle(1f / 60f)
+                    assertTrue(bridge.currentFrame in setOf(18, 22, 23))
+                    assertEquals(x, bridge.getWindowParams().x)
+                }
+            }
             assertEquals("WALK", mode(behavior))
         }
     }

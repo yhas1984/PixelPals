@@ -17,6 +17,9 @@ object SpeciesRestRecovery {
             else -> 12
         }
         if (progress >= 1f) return awake
+        // Ginger's native entry pose is awake. Reduced motion holds the
+        // authored sleeping curl instead of leaving her staring while dreaming.
+        if (reduced && bed == CareBed.BASKET) return 19
         if (reduced || progress < .8f) return null
         if (bed == CareBed.WING_WRAP) return if (progress < .85f) 9 else if (progress < .95f) 11 else awake
         return when {
