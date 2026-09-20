@@ -776,6 +776,17 @@
         "inverted": true
       }
     ],
-    "feature-graphic": []
+    "feature-graphic": [
+      {
+        "id": "pixelpals_feature_graphic",
+        "layout": "feature-graphic",
+        "label": {},
+        "headline": {
+          "es": "Un compañero que vive contigo",
+          "en": "A companion that lives with you"
+        },
+        "screenshot": "/screenshots/feature-graphic/{locale}/01.png"
+      }
+    ]
   }
 }

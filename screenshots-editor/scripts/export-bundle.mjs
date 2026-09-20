@@ -21,6 +21,7 @@ try {
       android: "Android Phone",
       "android-7": 'Android 7" Tablet',
       "android-10": 'Android 10" Tablet',
+      "feature-graphic": "Feature Graphic",
     };
     const label = labels[requestedDevice];
     if (!label) throw new Error(`Unsupported SCREENSHOT_DEVICE: ${requestedDevice}`);

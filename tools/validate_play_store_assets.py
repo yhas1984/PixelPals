@@ -44,6 +44,22 @@ def dimensions(path: Path, expected: tuple[int, int], errors: list[str]) -> None
     with Image.open(path) as image:
         if image.size != expected:
             errors.append(f"{path.relative_to(ROOT)} is {image.size}, expected {expected}")
+        alpha = image.convert("RGBA").getchannel("A")
+        if alpha.getextrema() != (255, 255):
+            errors.append(f"{path.relative_to(ROOT)} contains transparent pixels")
+
+
+def sequential_pngs(directory: Path, expected_count: int, errors: list[str]) -> list[Path]:
+    shots = sorted(directory.glob("*.png")) if directory.is_dir() else []
+    expected_names = [f"{index:02d}.png" for index in range(1, expected_count + 1)]
+    actual_names = [path.name for path in shots]
+    if actual_names != expected_names:
+        errors.append(f"{directory.relative_to(ROOT)} must contain {expected_names}, found {actual_names}")
+    return shots
+
+
+def resolved_public_path(template: str, locale: str) -> Path:
+    return ROOT / "screenshots-editor" / "public" / template.replace("{locale}", locale).lstrip("/")
 
 
 def main() -> int:
@@ -75,7 +91,7 @@ def main() -> int:
         all_copy.extend((title, short, description, release_notes))
 
         screenshot_dir = STORE / metadata["assets"]["screenshots"][locale]
-        shots = sorted(screenshot_dir.glob("*.png")) if screenshot_dir.is_dir() else []
+        shots = sequential_pngs(screenshot_dir, 8, errors)
         if len(shots) != 8:
             errors.append(f"{locale} must contain 8 screenshots, found {len(shots)}")
         for shot in shots:
@@ -87,6 +103,7 @@ def main() -> int:
             errors.append(f"Obsolete or prohibited text found: {phrase}")
 
     dimensions(STORE / metadata["assets"]["icon"], (512, 512), errors)
+    dimensions(ROOT / "app" / "src" / "main" / "res" / "mipmap-mdpi" / "ic_launcher.png", (48, 48), errors)
     for locale, asset in metadata["assets"]["featureGraphics"].items():
         dimensions(STORE / asset, (1024, 500), errors)
 
@@ -94,7 +111,7 @@ def main() -> int:
     for tablet, expected_size in tablet_sizes.items():
         for locale in ("es", "en"):
             screenshot_dir = STORE / metadata["assets"]["tabletScreenshots"][tablet][locale]
-            shots = sorted(screenshot_dir.glob("*.png")) if screenshot_dir.is_dir() else []
+            shots = sequential_pngs(screenshot_dir, 8, errors)
             if len(shots) != 8:
                 errors.append(f"{tablet} {locale} must contain 8 screenshots, found {len(shots)}")
             for shot in shots:
@@ -102,13 +119,17 @@ def main() -> int:
 
     for locale in ("es", "en"):
         raw_tablet_dir = ROOT / "screenshots-editor" / "public" / "screenshots" / "android" / "tablet" / locale
-        raw_shots = sorted(raw_tablet_dir.glob("*.png")) if raw_tablet_dir.is_dir() else []
+        raw_shots = sequential_pngs(raw_tablet_dir, 8, errors)
         if len(raw_shots) != 8:
             errors.append(f"tablet source {locale} must contain 8 screenshots, found {len(raw_shots)}")
         for shot in raw_shots:
             dimensions(shot, (1600, 2560), errors)
 
     editor = json.loads((ROOT / "screenshots-editor" / "app-store-screenshots.json").read_text(encoding="utf-8"))
+    if editor.get("schemaVersion") != 2:
+        errors.append("screenshot editor must use schemaVersion 2")
+    if not isinstance(editor.get("connectedCanvas"), bool):
+        errors.append("screenshot editor connectedCanvas must be boolean")
     if editor.get("locales") != ["es", "en"]:
         errors.append("screenshot editor locales must be [es, en]")
     slides = editor.get("slidesByDevice", {}).get("android", [])
@@ -132,6 +153,34 @@ def main() -> int:
                 actual = slide.get("headline", {}).get(locale, "").replace("\n", " ")
                 if actual != expected:
                     errors.append(f"{device} slide {index + 1} {locale} headline is {actual!r}, expected {expected!r}")
+
+    for device in ("android", "android-7", "android-10"):
+        device_slides = editor.get("slidesByDevice", {}).get(device, [])
+        layouts = [slide.get("layout") for slide in device_slides]
+        if any(left == right for left, right in zip(layouts, layouts[1:])):
+            errors.append(f"{device} must not repeat the same layout on adjacent slides")
+        if device_slides and not any(slide.get("inverted") for slide in device_slides):
+            errors.append(f"{device} must include at least one inverted slide")
+        for index, slide in enumerate(device_slides, start=1):
+            for locale in ("es", "en"):
+                if not slide.get("label", {}).get(locale, "").strip():
+                    errors.append(f"{device} slide {index} is missing its {locale} label")
+                if not slide.get("headline", {}).get(locale, "").strip():
+                    errors.append(f"{device} slide {index} is missing its {locale} headline")
+                source = resolved_public_path(slide.get("screenshot", ""), locale)
+                if not source.is_file():
+                    errors.append(f"{device} slide {index} references missing source {source.relative_to(ROOT)}")
+
+    feature_slides = editor.get("slidesByDevice", {}).get("feature-graphic", [])
+    if len(feature_slides) != 1:
+        errors.append(f"screenshot editor must define one feature graphic, found {len(feature_slides)}")
+    else:
+        feature = feature_slides[0]
+        if feature.get("layout") != "feature-graphic":
+            errors.append("feature graphic deck must use the feature-graphic layout")
+        for locale in ("es", "en"):
+            source = resolved_public_path(feature.get("screenshot", ""), locale)
+            dimensions(source, (1024, 500), errors)
 
     if errors:
         print("Play Store validation failed:", file=sys.stderr)
