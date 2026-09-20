@@ -1,4 +1,4 @@
-PixelPals turns your phone into the home of a virtual companion with a personality of its own. Meet 15 pets, discover what makes each one unique, care for them at home and, if you choose, bring them with you over other apps.
+PixelPals turns your phone into the home of a virtual pet with a personality of its own. Meet 15 companions, discover what makes each one unique, care for them at home and, if you choose, bring them with you over other apps.
 
 A COMPANION THAT FEELS ALIVE
 

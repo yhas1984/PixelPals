@@ -4,17 +4,26 @@
   "category": "PERSONALIZATION",
   "tag": "Personalization",
   "locales": {
-    "es": {
+    "es-419": {
       "title": "PixelPals: Mascota virtual",
-      "shortDescription": "Cuida a un compañero único con hogar propio que también vive en tu pantalla.",
-      "fullDescriptionFile": "listing/es-ES.md",
-      "releaseNotesFile": "release-notes/es-ES.txt"
+      "shortDescription": "Adopta y cuida una mascota con hogar propio que también vive en tu pantalla.",
+      "fullDescriptionFile": "listing/es-419.md",
+      "releaseNotesFile": "release-notes/es-419.txt",
+      "assetLocale": "es"
     },
-    "en": {
+    "es-ES": {
+      "title": "PixelPals: Mascota virtual",
+      "shortDescription": "Adopta y cuida una mascota con hogar propio que también vive en tu pantalla.",
+      "fullDescriptionFile": "listing/es-ES.md",
+      "releaseNotesFile": "release-notes/es-ES.txt",
+      "assetLocale": "es"
+    },
+    "en-US": {
       "title": "PixelPals: Virtual Pet",
-      "shortDescription": "Care for a unique companion with a home of its own who lives on your screen.",
+      "shortDescription": "Adopt and care for a virtual pet with a home of its own, right on your screen.",
       "fullDescriptionFile": "listing/en-US.md",
-      "releaseNotesFile": "release-notes/en-US.txt"
+      "releaseNotesFile": "release-notes/en-US.txt",
+      "assetLocale": "en"
     }
   },
   "assets": {

@@ -1,6 +1,8 @@
 # PixelPals Google Play listing
 
-This directory is the versioned source of truth for the Spanish and English Google Play listing.
+This directory is the versioned source of truth for the `es-419`, `es-ES`, and
+`en-US` Google Play listings. The two Spanish listings currently share the
+same visual assets and use independently localized metadata.
 
 - `metadata.json` contains titles, short descriptions and asset paths.
 - `listing/` contains the full descriptions uploaded to Google Play.

@@ -1,10 +1,10 @@
-PixelPals convierte tu móvil en el hogar de un compañero virtual con personalidad propia. Conoce 15 mascotas, descubre qué hace única a cada una, cuídalas en su hogar y, si quieres, llévalas contigo sobre otras aplicaciones.
+PixelPals convierte tu móvil en el hogar de una mascota virtual con personalidad propia. Conoce 15 compañeros, descubre qué hace único a cada uno, cuídalos en su hogar y, si quieres, llévalos contigo sobre otras aplicaciones.
 
 UN COMPAÑERO QUE SE SIENTE VIVO
 
 Cada mascota tiene su propio temperamento, ritmo, juguete favorito y forma de reaccionar. El vínculo crece con los momentos que compartís y cambia sus saludos, su confianza y su iniciativa. Alimenta, juega, limpia, ayuda a descansar y da cariño con cuidados adaptados a cada especie.
 
-UN HOGAR PARA HACER VUESTRO
+UN HOGAR HECHO A VUESTRA MEDIDA
 
 Crea un espacio acogedor con camas, juguetes, recipientes, plantas y expositores. Coloca los objetos con el dedo, guarda distintas distribuciones y descubre ambientes pensados para la naturaleza de cada compañero. Tu mascota puede descansar, jugar y acercarse por sí sola a sus objetos favoritos.
 

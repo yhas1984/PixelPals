@@ -35,6 +35,8 @@ EXPECTED_SCREENSHOT_HEADLINES = {
         "Grow a bond that lasts",
     ),
 }
+EXPECTED_LISTING_LOCALES = {"es-419", "es-ES", "en-US"}
+EXPECTED_ASSET_LOCALES = {"es", "en"}
 
 
 def dimensions(path: Path, expected: tuple[int, int], errors: list[str]) -> None:
@@ -66,11 +68,11 @@ def main() -> int:
     errors: list[str] = []
     metadata = json.loads((STORE / "metadata.json").read_text(encoding="utf-8"))
     locales = metadata.get("locales", {})
-    if set(locales) != {"es", "en"}:
-        errors.append("metadata.json must provide exactly es and en")
+    if set(locales) != EXPECTED_LISTING_LOCALES:
+        errors.append(f"metadata.json must provide exactly {sorted(EXPECTED_LISTING_LOCALES)}")
 
     all_copy: list[str] = []
-    for locale in ("es", "en"):
+    for locale in sorted(EXPECTED_LISTING_LOCALES):
         listing = locales.get(locale, {})
         title = listing.get("title", "")
         short = listing.get("shortDescription", "")
@@ -88,9 +90,12 @@ def main() -> int:
             errors.append(f"{locale} full description must mention all 15 pets")
         if not 1 <= len(release_notes) <= 500:
             errors.append(f"{locale} release notes have {len(release_notes)} characters; limit is 500")
+        asset_locale = listing.get("assetLocale", "")
+        if asset_locale not in EXPECTED_ASSET_LOCALES:
+            errors.append(f"{locale} must reference an es or en assetLocale")
         all_copy.extend((title, short, description, release_notes))
 
-        screenshot_dir = STORE / metadata["assets"]["screenshots"][locale]
+        screenshot_dir = STORE / metadata["assets"]["screenshots"].get(asset_locale, "missing")
         shots = sequential_pngs(screenshot_dir, 8, errors)
         if len(shots) != 8:
             errors.append(f"{locale} must contain 8 screenshots, found {len(shots)}")
@@ -187,7 +192,7 @@ def main() -> int:
         for error in errors:
             print(f"- {error}", file=sys.stderr)
         return 1
-    print("Play Store listing and assets are valid for es/en.")
+    print("Play Store listing and assets are valid for es-419, es-ES and en-US.")
     return 0
 
 
