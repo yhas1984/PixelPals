@@ -29,7 +29,7 @@ class HomeIntroductionFlowTest {
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private val context = instrumentation.targetContext
     @Before fun prepare(): Unit = runBlocking {
-        assumeTrue(Build.FINGERPRINT.contains("generic") || Build.MODEL.contains("Emulator"))
+        assumeTrue(Build.FINGERPRINT.contains("generic") || Build.MODEL.contains("Emulator") || Build.HARDWARE == "ranchu")
         context.getSharedPreferences("pixelpals_selection", 0).edit().clear().commit()
         CompanionPreferences(context).hasSeenIntroduction = false
         CompanionPreferences(context).finishFirstHome()

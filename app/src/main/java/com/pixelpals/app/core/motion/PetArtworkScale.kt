@@ -7,7 +7,13 @@ object PetArtworkScale {
     /** Species proportions are independent of atlas camera calibration. */
     fun speciesSize(petType: PetType): Float = if (petType == PetType.TELA) .60f else 1f
     /** Care atlases have their own source camera; Jelly's bank otherwise shrinks at entry. */
-    fun desktopCare(petType: PetType): Float = (if (petType == PetType.JELLY) 1.40f else .94f) * speciesSize(petType)
+    fun desktopCare(petType: PetType): Float = when (petType) {
+        // Angel's care bank has a tighter face/halo camera than its native hover sheet.
+        // Keep one stable bank scale so wings and prayer poses retain their proportions.
+        PetType.ANGEL -> .70f
+        PetType.JELLY -> 1.40f * speciesSize(petType)
+        else -> .94f * speciesSize(petType)
+    }
 
     fun forPet(petType: PetType): Float = when (petType) {
         PetType.MOKI -> 1.000f          // referencia: idle perch 0.802

@@ -35,8 +35,8 @@ android {
         applicationId = "com.pixelpals.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 22
-        versionName = "2.5.0"
+        versionCode = 23
+        versionName = "2.5.1"
         // Visual approval is required before enabling new care assets in production.
         buildConfigField("boolean", "CARE_SCENES_ENABLED", "false")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

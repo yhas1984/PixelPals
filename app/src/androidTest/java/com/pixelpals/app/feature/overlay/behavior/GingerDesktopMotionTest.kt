@@ -15,7 +15,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class GingerDesktopMotionTest {
     @Test fun pounceAirborneLandingStaysInBoundsAndReturnsToGroundedMotion(): Unit {
-        assumeTrue(Build.FINGERPRINT.contains("generic") || Build.MODEL.contains("Emulator"))
+        assumeTrue(Build.FINGERPRINT.contains("generic") || Build.MODEL.contains("Emulator") || Build.HARDWARE == "ranchu")
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         lateinit var bridge: TestPetBridge
         lateinit var behavior: GingerBehavior
@@ -89,7 +89,7 @@ class GingerDesktopMotionTest {
     }
 
     @Test fun resetAtGroundRestoresGroundedCareResumePose(): Unit {
-        assumeTrue(Build.FINGERPRINT.contains("generic") || Build.MODEL.contains("Emulator"))
+        assumeTrue(Build.FINGERPRINT.contains("generic") || Build.MODEL.contains("Emulator") || Build.HARDWARE == "ranchu")
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         lateinit var bridge: TestPetBridge
         lateinit var behavior: GingerBehavior
@@ -128,7 +128,7 @@ class GingerDesktopMotionTest {
     }
 
     @Test fun groundedAnimationModesKeepStableBodyScale(): Unit {
-        assumeTrue(Build.FINGERPRINT.contains("generic") || Build.MODEL.contains("Emulator"))
+        assumeTrue(Build.FINGERPRINT.contains("generic") || Build.MODEL.contains("Emulator") || Build.HARDWARE == "ranchu")
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         lateinit var bridge: TestPetBridge
         lateinit var behavior: GingerBehavior

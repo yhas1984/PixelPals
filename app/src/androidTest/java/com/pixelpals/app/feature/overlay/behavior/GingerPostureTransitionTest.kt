@@ -150,7 +150,7 @@ class GingerPostureTransitionTest {
             repeat(120) { if (loading.getBoolean(behavior)) delay(50) }
             instrumentation.runOnMainSync {
                 val rects = BaseBehavior::class.java.getDeclaredField("spriteFrameRects").apply { isAccessible = true }.get(behavior) as List<*>
-                assertEquals("Use real debug posture assets", 22, rects.size)
+                assertEquals("Use real debug posture and turn assets", 24, rects.size)
                 test(bridge, behavior)
             }
         } finally { instrumentation.runOnMainSync { behavior.destroy() } }

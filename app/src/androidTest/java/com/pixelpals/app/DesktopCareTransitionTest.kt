@@ -76,7 +76,7 @@ class DesktopCareTransitionTest {
     }
 
     @Test fun loadingCareKeepsPoseAndPositionAndCompletionDoesNotForceFrameZero(): Unit {
-        assumeTrue(Build.FINGERPRINT.contains("generic") || Build.MODEL.contains("Emulator"))
+        assumeTrue(Build.FINGERPRINT.contains("generic") || Build.MODEL.contains("Emulator") || Build.HARDWARE == "ranchu")
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val context = instrumentation.targetContext
         assumeTrue("Overlay permission required on disposable emulator", Settings.canDrawOverlays(context))
@@ -92,14 +92,21 @@ class DesktopCareTransitionTest {
             val behavior = object : BaseBehavior(view, SeededPetRandom(2)) {
                 override val resourceIds: List<Int> = emptyList()
                 override val careBaselineOffsetY: Float = -17f
+                private val internalHeading: Float = -1f
                 override fun onViewportChanged() {
                     viewportChanges++
                     assertTrue(view.windowX in view.bounds.left..view.bounds.right)
                     assertTrue(view.windowY in view.bounds.top..view.bounds.floor)
                 }
+                override fun updateIdle(dt: Float) {
+                    // Model the production behaviors that reapply their persistent
+                    // heading on the first autonomous tick after a reset.
+                    view.animScaleX = internalHeading
+                }
                 override fun reset() {
                     resets++
                     view.currentFrame = 12
+                    view.animScaleX = 1f
                     view.windowY = 999
                 }
             }
@@ -136,6 +143,11 @@ class DesktopCareTransitionTest {
                     CareSceneResult::class.java).apply { isAccessible = true }.invoke(view, CareSceneAction.FEED, null)
                 assertEquals(1, resets)
                 assertEquals("Completion overwrote the controller's pose", 12, view.currentFrame)
+                assertEquals("Completion must preserve the native heading", -1f, view.animScaleX, .001f)
+                PetView::class.java.getDeclaredMethod("update", Float::class.javaPrimitiveType).apply {
+                    isAccessible = true
+                }.invoke(view, 1f / 60f)
+                assertEquals("The next autonomous tick must keep the restored heading", -1f, view.animScaleX, .001f)
                 val outside = requireNotNull(view.getWindowParams()).apply { x = 10_000; y = 10_000 }
                 view.updateWindowLayout(outside)
                 view.velocityX = 300f

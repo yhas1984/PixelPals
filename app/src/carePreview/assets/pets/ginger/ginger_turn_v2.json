@@ -1,0 +1,303 @@
+{
+  "version": 1,
+  "petId": "ginger",
+  "atlasPath": "pets/ginger/ginger_turn_v2.png",
+  "previewPath": "pets/ginger/ginger_turn_v2.png",
+  "frameWidth": 384,
+  "frameHeight": 384,
+  "columns": 4,
+  "rows": 6,
+  "frameCount": 24,
+  "pivot": {
+    "x": 192,
+    "y": 368
+  },
+  "renderHints": {
+    "innerTransparentPaddingPx": 16,
+    "recommendedBleedInsetPx": 0,
+    "filterBitmap": true,
+    "preserveFrameAnchors": true,
+    "drawScale": 1.0
+  },
+  "clips": [
+    {
+      "id": "sit",
+      "frames": [
+        0
+      ],
+      "loop": true,
+      "frameDurationMs": 1200
+    },
+    {
+      "id": "groom",
+      "frames": [
+        0,
+        1,
+        0
+      ],
+      "loop": false,
+      "frameDurationMs": 360
+    },
+    {
+      "id": "walk",
+      "frames": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "loop": true,
+      "frameDurationMs": 135
+    },
+    {
+      "id": "stalk",
+      "frames": [
+        8,
+        9,
+        10
+      ],
+      "loop": true,
+      "frameDurationMs": 190
+    },
+    {
+      "id": "pounce",
+      "frames": [
+        11,
+        12
+      ],
+      "loop": false,
+      "frameDurationMs": 120
+    },
+    {
+      "id": "land",
+      "frames": [
+        13,
+        14
+      ],
+      "loop": false,
+      "frameDurationMs": 150
+    },
+    {
+      "id": "touch_drag",
+      "frames": [
+        15
+      ],
+      "loop": false,
+      "frameDurationMs": 240
+    },
+    {
+      "id": "stand_up",
+      "frames": [
+        0,
+        16,
+        17,
+        18
+      ],
+      "loop": false,
+      "frameDurationMs": 165
+    },
+    {
+      "id": "sit_down",
+      "frames": [
+        18,
+        17,
+        16,
+        0
+      ],
+      "loop": false,
+      "frameDurationMs": 165
+    },
+    {
+      "id": "standing",
+      "frames": [
+        18
+      ],
+      "loop": true,
+      "frameDurationMs": 1000
+    },
+    {
+      "id": "sleep",
+      "frames": [
+        18,
+        19,
+        20,
+        21
+      ],
+      "loop": false,
+      "frameDurationMs": 180
+    },
+    {
+      "id": "wake",
+      "frames": [
+        21,
+        20,
+        19,
+        18
+      ],
+      "loop": false,
+      "frameDurationMs": 180
+    }
+  ],
+  "frames": [
+    {
+      "index": 0,
+      "name": "sit_neutral",
+      "sourceHint": "board_01_idle.png"
+    },
+    {
+      "index": 1,
+      "name": "groom_paw",
+      "sourceHint": "board_01_idle.png"
+    },
+    {
+      "index": 2,
+      "name": "sleep_curl",
+      "sourceHint": "board_01_idle.png"
+    },
+    {
+      "index": 3,
+      "name": "wake_stretch",
+      "sourceHint": "board_01_idle.png"
+    },
+    {
+      "index": 4,
+      "name": "walk_contact_a",
+      "sourceHint": "board_02_walk.png"
+    },
+    {
+      "index": 5,
+      "name": "walk_pass_a",
+      "sourceHint": "board_02_walk.png"
+    },
+    {
+      "index": 6,
+      "name": "walk_contact_b",
+      "sourceHint": "board_02_walk.png"
+    },
+    {
+      "index": 7,
+      "name": "walk_pass_b",
+      "sourceHint": "board_02_walk.png"
+    },
+    {
+      "index": 8,
+      "name": "stalk_crouch",
+      "sourceHint": "board_03_stalk.png"
+    },
+    {
+      "index": 9,
+      "name": "stalk_step",
+      "sourceHint": "board_03_stalk.png"
+    },
+    {
+      "index": 10,
+      "name": "stalk_freeze",
+      "sourceHint": "board_03_stalk.png"
+    },
+    {
+      "index": 11,
+      "name": "pounce_coil",
+      "sourceHint": "board_03_stalk.png"
+    },
+    {
+      "index": 12,
+      "name": "pounce_air",
+      "sourceHint": "board_04_action.png"
+    },
+    {
+      "index": 13,
+      "name": "land_impact",
+      "sourceHint": "board_04_action.png"
+    },
+    {
+      "index": 14,
+      "name": "land_recover",
+      "sourceHint": "board_04_action.png"
+    },
+    {
+      "index": 15,
+      "name": "touch_drag",
+      "sourceHint": "board_04_action.png"
+    },
+    {
+      "index": 16,
+      "name": "sit_quarter",
+      "sourceHint": "standing-transition-2026-09-12"
+    },
+    {
+      "index": 17,
+      "name": "rise_half",
+      "sourceHint": "standing-transition-2026-09-12"
+    },
+    {
+      "index": 18,
+      "name": "stand_planted",
+      "sourceHint": "standing-transition-2026-09-12"
+    },
+    {
+      "index": 19,
+      "name": "rest_crouch",
+      "sourceHint": "rest-transition-2026-09-13",
+      "sourceGroup": [
+        48,
+        802
+      ],
+      "uniformScale": 0.46
+    },
+    {
+      "index": 20,
+      "name": "rest_sternal",
+      "sourceHint": "rest-transition-2026-09-13",
+      "sourceGroup": [
+        854,
+        1483
+      ],
+      "uniformScale": 0.46
+    },
+    {
+      "index": 21,
+      "name": "rest_curl",
+      "sourceHint": "rest-transition-2026-09-13",
+      "sourceGroup": [
+        1557,
+        2135
+      ],
+      "uniformScale": 0.46
+    },
+    {
+      "index": 22,
+      "name": "turn_quarter"
+    },
+    {
+      "index": 23,
+      "name": "turn_front"
+    }
+  ],
+  "postureCamera": {
+    "frameScales": {
+      "0": 0.68,
+      "1": 0.68,
+      "2": 0.7
+    },
+    "ground": 368,
+    "sourceCell": 384,
+    "supplementalTransforms": [
+      {
+        "scale": 0.36,
+        "x": 47,
+        "y": 85
+      },
+      {
+        "scale": 0.36,
+        "x": 10,
+        "y": 85
+      },
+      {
+        "scale": 0.3,
+        "x": -42,
+        "y": 80
+      }
+    ],
+    "note": "Original frames 0..15 preserved. Camera corrects seated source framing; full-cell transforms, never per-pose bbox fit."
+  }
+}

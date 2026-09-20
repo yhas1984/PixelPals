@@ -581,12 +581,16 @@ class PetView(
 
     private fun finishDesktopCare(completedAction: CareSceneAction, result: CareSceneResult?): Unit {
         state = PetState.IDLE
+        val facingLeftAfterCare: Boolean = animScaleX < 0f
         val corgi: CorgiBehavior? = behavior as? CorgiBehavior
         if (corgi != null) {
-            corgi.resumeAfterCare(animScaleX < 0f,
+            corgi.resumeAfterCare(facingLeftAfterCare,
                 completedAction == CareSceneAction.REST && result is CareSceneResult.Completed)
         } else {
             behavior?.reset()
+            // Care mirrors its own canvas; restore the native heading after reset so
+            // the first post-care frame cannot flash in the default right-facing pose.
+            animScaleX = if (facingLeftAfterCare) -1f else 1f
         }
         if (result is CareSceneResult.Completed) {
             updatePetStatus(result.after)

@@ -417,5 +417,695 @@
       }
     ],
     "anchorsCalibrated": true
+  },
+  {
+    "pet": "ginger",
+    "sourceSha256": "7ff7b8e8550d08a996fd425dc089858b253ae8ffa2fbb5804a15a099cf03ae06",
+    "atlasSha256": "ca0f692dea8d3863c8b3755eac30ba3c0f4f0315f12dc6e9cd88b8da24ac19e8",
+    "decodedBytes": 6291456,
+    "frames": [
+      {
+        "sourceBounds": [
+          64,
+          113,
+          250,
+          293
+        ],
+        "offset": [
+          38,
+          64
+        ],
+        "scale": 0.9649122807017544
+      },
+      {
+        "sourceBounds": [
+          304,
+          100,
+          430,
+          306
+        ],
+        "offset": [
+          67,
+          39
+        ],
+        "scale": 0.9649122807017544
+      },
+      {
+        "sourceBounds": [
+          525,
+          104,
+          674,
+          304
+        ],
+        "offset": [
+          56,
+          45
+        ],
+        "scale": 0.9649122807017544
+      },
+      {
+        "sourceBounds": [
+          768,
+          96,
+          903,
+          304
+        ],
+        "offset": [
+          63,
+          37
+        ],
+        "scale": 0.9649122807017544
+      },
+      {
+        "sourceBounds": [
+          67,
+          353,
+          251,
+          545
+        ],
+        "offset": [
+          39,
+          53
+        ],
+        "scale": 0.9649122807017544
+      },
+      {
+        "sourceBounds": [
+          295,
+          340,
+          495,
+          548
+        ],
+        "offset": [
+          31,
+          37
+        ],
+        "scale": 0.9649122807017544
+      },
+      {
+        "sourceBounds": [
+          530,
+          328,
+          713,
+          550
+        ],
+        "offset": [
+          39,
+          24
+        ],
+        "scale": 0.9649122807017544
+      },
+      {
+        "sourceBounds": [
+          767,
+          344,
+          942,
+          556
+        ],
+        "offset": [
+          43,
+          33
+        ],
+        "scale": 0.9649122807017544
+      },
+      {
+        "sourceBounds": [
+          58,
+          561,
+          226,
+          780
+        ],
+        "offset": [
+          47,
+          27
+        ],
+        "scale": 0.9649122807017544
+      },
+      {
+        "sourceBounds": [
+          291,
+          573,
+          417,
+          786
+        ],
+        "offset": [
+          67,
+          32
+        ],
+        "scale": 0.9649122807017544
+      },
+      {
+        "sourceBounds": [
+          507,
+          568,
+          672,
+          786
+        ],
+        "offset": [
+          48,
+          28
+        ],
+        "scale": 0.9649122807017544
+      },
+      {
+        "sourceBounds": [
+          751,
+          568,
+          901,
+          786
+        ],
+        "offset": [
+          55,
+          28
+        ],
+        "scale": 0.9649122807017544
+      },
+      {
+        "sourceBounds": [
+          54,
+          807,
+          187,
+          1020
+        ],
+        "offset": [
+          64,
+          32
+        ],
+        "scale": 0.9649122807017544
+      },
+      {
+        "sourceBounds": [
+          307,
+          827,
+          465,
+          1017
+        ],
+        "offset": [
+          52,
+          55
+        ],
+        "scale": 0.9649122807017544
+      },
+      {
+        "sourceBounds": [
+          513,
+          825,
+          679,
+          1016
+        ],
+        "offset": [
+          48,
+          54
+        ],
+        "scale": 0.9649122807017544
+      },
+      {
+        "sourceBounds": [
+          760,
+          810,
+          894,
+          1024
+        ],
+        "offset": [
+          63,
+          32
+        ],
+        "scale": 0.9649122807017544
+      },
+      {
+        "source": "app/src/carePreview/assets/pets/ginger/ginger_turn_v2.png",
+        "sourceFrame": 0,
+        "sourceCell": 384,
+        "targetCell": 256,
+        "cameraScale": 0.68,
+        "cameraInset": 0.9375,
+        "mirroredForCare": true,
+        "ground": [
+          368,
+          238.0
+        ]
+      },
+      {
+        "source": "app/src/carePreview/assets/pets/ginger/ginger_turn_v2.png",
+        "sourceFrame": 19,
+        "sourceCell": 384,
+        "targetCell": 256,
+        "cameraScale": 1.0,
+        "cameraInset": 0.9375,
+        "mirroredForCare": true,
+        "ground": [
+          368,
+          238.0
+        ]
+      },
+      {
+        "source": "app/src/carePreview/assets/pets/ginger/ginger_turn_v2.png",
+        "sourceFrame": 20,
+        "sourceCell": 384,
+        "targetCell": 256,
+        "cameraScale": 1.0,
+        "cameraInset": 0.9375,
+        "mirroredForCare": true,
+        "ground": [
+          368,
+          238.0
+        ]
+      },
+      {
+        "source": "app/src/carePreview/assets/pets/ginger/ginger_turn_v2.png",
+        "sourceFrame": 21,
+        "sourceCell": 384,
+        "targetCell": 256,
+        "cameraScale": 1.0,
+        "cameraInset": 0.9375,
+        "mirroredForCare": true,
+        "ground": [
+          368,
+          238.0
+        ]
+      },
+      {
+        "sourceBounds": [
+          50,
+          1244,
+          185,
+          1464
+        ],
+        "offset": [
+          63,
+          26
+        ],
+        "scale": 0.9649122807017544
+      },
+      {
+        "sourceBounds": [
+          283,
+          1236,
+          424,
+          1464
+        ],
+        "offset": [
+          60,
+          18
+        ],
+        "scale": 0.9649122807017544
+      },
+      {
+        "sourceBounds": [
+          521,
+          1246,
+          667,
+          1465
+        ],
+        "offset": [
+          57,
+          27
+        ],
+        "scale": 0.9649122807017544
+      },
+      {
+        "sourceBounds": [
+          767,
+          1252,
+          909,
+          1469
+        ],
+        "offset": [
+          59,
+          29
+        ],
+        "scale": 0.9649122807017544
+      }
+    ],
+    "anchorsCalibrated": true
+  },
+  {
+    "pet": "menta",
+    "sourceSha256": "b8161dccacf07afa926b83bba619ea6c68544eba2308179b3bc113a1511c169e",
+    "atlasSha256": "741c91db6e8ac3ff700179e44ea2722571650e16fa480de74bd0fc59a4dc1f38",
+    "decodedBytes": 6291456,
+    "frames": [
+      {
+        "sourceBounds": [
+          28,
+          28,
+          289,
+          240
+        ],
+        "offset": [
+          24,
+          70
+        ],
+        "scale": 0.7913669064748201,
+        "paletteSource": "tools/menta/raw/palette-2026-09-20/generated.png",
+        "paletteSha256": "a1f2fd6878b78303c8a1f2c62e667dab6722018b8edcd77297c0c0fadf7aad71"
+      },
+      {
+        "sourceBounds": [
+          305,
+          15,
+          491,
+          247
+        ],
+        "offset": [
+          54,
+          54
+        ],
+        "scale": 0.7913669064748201,
+        "paletteSource": "tools/menta/raw/palette-2026-09-20/generated.png",
+        "paletteSha256": "a1f2fd6878b78303c8a1f2c62e667dab6722018b8edcd77297c0c0fadf7aad71"
+      },
+      {
+        "sourceBounds": [
+          543,
+          30,
+          744,
+          245
+        ],
+        "offset": [
+          48,
+          68
+        ],
+        "scale": 0.7913669064748201,
+        "paletteSource": "tools/menta/raw/palette-2026-09-20/generated.png",
+        "paletteSha256": "a1f2fd6878b78303c8a1f2c62e667dab6722018b8edcd77297c0c0fadf7aad71"
+      },
+      {
+        "sourceBounds": [
+          800,
+          13,
+          991,
+          248
+        ],
+        "offset": [
+          52,
+          52
+        ],
+        "scale": 0.7913669064748201,
+        "paletteSource": "tools/menta/raw/palette-2026-09-20/generated.png",
+        "paletteSha256": "a1f2fd6878b78303c8a1f2c62e667dab6722018b8edcd77297c0c0fadf7aad71"
+      },
+      {
+        "sourceBounds": [
+          27,
+          314,
+          280,
+          482
+        ],
+        "offset": [
+          28,
+          105
+        ],
+        "scale": 0.7913669064748201,
+        "paletteSource": "tools/menta/raw/palette-2026-09-20/generated.png",
+        "paletteSha256": "a1f2fd6878b78303c8a1f2c62e667dab6722018b8edcd77297c0c0fadf7aad71"
+      },
+      {
+        "sourceBounds": [
+          311,
+          264,
+          504,
+          490
+        ],
+        "offset": [
+          51,
+          59
+        ],
+        "scale": 0.7913669064748201,
+        "paletteSource": "tools/menta/raw/palette-2026-09-20/generated.png",
+        "paletteSha256": "a1f2fd6878b78303c8a1f2c62e667dab6722018b8edcd77297c0c0fadf7aad71"
+      },
+      {
+        "sourceBounds": [
+          548,
+          257,
+          743,
+          498
+        ],
+        "offset": [
+          51,
+          47
+        ],
+        "scale": 0.7913669064748201,
+        "paletteSource": "tools/menta/raw/palette-2026-09-20/generated.png",
+        "paletteSha256": "a1f2fd6878b78303c8a1f2c62e667dab6722018b8edcd77297c0c0fadf7aad71"
+      },
+      {
+        "sourceBounds": [
+          798,
+          258,
+          988,
+          495
+        ],
+        "offset": [
+          53,
+          50
+        ],
+        "scale": 0.7913669064748201,
+        "paletteSource": "tools/menta/raw/palette-2026-09-20/generated.png",
+        "paletteSha256": "a1f2fd6878b78303c8a1f2c62e667dab6722018b8edcd77297c0c0fadf7aad71"
+      },
+      {
+        "sourceBounds": [
+          29,
+          506,
+          241,
+          743
+        ],
+        "offset": [
+          44,
+          50
+        ],
+        "scale": 0.7913669064748201,
+        "paletteSource": "tools/menta/raw/palette-2026-09-20/generated.png",
+        "paletteSha256": "a1f2fd6878b78303c8a1f2c62e667dab6722018b8edcd77297c0c0fadf7aad71"
+      },
+      {
+        "sourceBounds": [
+          287,
+          522,
+          493,
+          746
+        ],
+        "offset": [
+          46,
+          61
+        ],
+        "scale": 0.7913669064748201,
+        "paletteSource": "tools/menta/raw/palette-2026-09-20/generated.png",
+        "paletteSha256": "a1f2fd6878b78303c8a1f2c62e667dab6722018b8edcd77297c0c0fadf7aad71"
+      },
+      {
+        "sourceBounds": [
+          537,
+          516,
+          755,
+          748
+        ],
+        "offset": [
+          41,
+          54
+        ],
+        "scale": 0.7913669064748201,
+        "paletteSource": "tools/menta/raw/palette-2026-09-20/generated.png",
+        "paletteSha256": "a1f2fd6878b78303c8a1f2c62e667dab6722018b8edcd77297c0c0fadf7aad71"
+      },
+      {
+        "sourceBounds": [
+          803,
+          516,
+          993,
+          753
+        ],
+        "offset": [
+          53,
+          50
+        ],
+        "scale": 0.7913669064748201,
+        "paletteSource": "tools/menta/raw/palette-2026-09-20/generated.png",
+        "paletteSha256": "a1f2fd6878b78303c8a1f2c62e667dab6722018b8edcd77297c0c0fadf7aad71"
+      },
+      {
+        "sourceBounds": [
+          26,
+          762,
+          230,
+          1002
+        ],
+        "offset": [
+          47,
+          48
+        ],
+        "scale": 0.7913669064748201,
+        "paletteSource": "tools/menta/raw/palette-2026-09-20/generated.png",
+        "paletteSha256": "a1f2fd6878b78303c8a1f2c62e667dab6722018b8edcd77297c0c0fadf7aad71"
+      },
+      {
+        "sourceBounds": [
+          275,
+          779,
+          492,
+          996
+        ],
+        "offset": [
+          42,
+          66
+        ],
+        "scale": 0.7913669064748201,
+        "paletteSource": "tools/menta/raw/palette-2026-09-20/generated.png",
+        "paletteSha256": "a1f2fd6878b78303c8a1f2c62e667dab6722018b8edcd77297c0c0fadf7aad71"
+      },
+      {
+        "sourceBounds": [
+          533,
+          777,
+          741,
+          1003
+        ],
+        "offset": [
+          45,
+          59
+        ],
+        "scale": 0.7913669064748201,
+        "paletteSource": "tools/menta/raw/palette-2026-09-20/generated.png",
+        "paletteSha256": "a1f2fd6878b78303c8a1f2c62e667dab6722018b8edcd77297c0c0fadf7aad71"
+      },
+      {
+        "sourceBounds": [
+          804,
+          767,
+          992,
+          1004
+        ],
+        "offset": [
+          53,
+          50
+        ],
+        "scale": 0.7913669064748201,
+        "paletteSource": "tools/menta/raw/palette-2026-09-20/generated.png",
+        "paletteSha256": "a1f2fd6878b78303c8a1f2c62e667dab6722018b8edcd77297c0c0fadf7aad71"
+      },
+      {
+        "sourceBounds": [
+          25,
+          1030,
+          237,
+          1229
+        ],
+        "offset": [
+          44,
+          81
+        ],
+        "scale": 0.7913669064748201,
+        "paletteSource": "tools/menta/raw/palette-2026-09-20/generated.png",
+        "paletteSha256": "a1f2fd6878b78303c8a1f2c62e667dab6722018b8edcd77297c0c0fadf7aad71"
+      },
+      {
+        "sourceBounds": [
+          279,
+          1055,
+          496,
+          1229
+        ],
+        "offset": [
+          42,
+          100
+        ],
+        "scale": 0.7913669064748201,
+        "paletteSource": "tools/menta/raw/palette-2026-09-20/generated.png",
+        "paletteSha256": "a1f2fd6878b78303c8a1f2c62e667dab6722018b8edcd77297c0c0fadf7aad71"
+      },
+      {
+        "sourceBounds": [
+          534,
+          1049,
+          763,
+          1229
+        ],
+        "offset": [
+          37,
+          96
+        ],
+        "scale": 0.7913669064748201,
+        "paletteSource": "tools/menta/raw/palette-2026-09-20/generated.png",
+        "paletteSha256": "a1f2fd6878b78303c8a1f2c62e667dab6722018b8edcd77297c0c0fadf7aad71"
+      },
+      {
+        "sourceBounds": [
+          790,
+          1060,
+          1003,
+          1225
+        ],
+        "offset": [
+          43,
+          107
+        ],
+        "scale": 0.7913669064748201,
+        "paletteSource": "tools/menta/raw/palette-2026-09-20/generated.png",
+        "paletteSha256": "a1f2fd6878b78303c8a1f2c62e667dab6722018b8edcd77297c0c0fadf7aad71"
+      },
+      {
+        "sourceBounds": [
+          35,
+          1245,
+          233,
+          1514
+        ],
+        "offset": [
+          49,
+          25
+        ],
+        "scale": 0.7913669064748201,
+        "paletteSource": "tools/menta/raw/palette-2026-09-20/generated.png",
+        "paletteSha256": "a1f2fd6878b78303c8a1f2c62e667dab6722018b8edcd77297c0c0fadf7aad71"
+      },
+      {
+        "sourceBounds": [
+          282,
+          1237,
+          499,
+          1515
+        ],
+        "offset": [
+          42,
+          18
+        ],
+        "scale": 0.7913669064748201,
+        "paletteSource": "tools/menta/raw/palette-2026-09-20/generated.png",
+        "paletteSha256": "a1f2fd6878b78303c8a1f2c62e667dab6722018b8edcd77297c0c0fadf7aad71"
+      },
+      {
+        "sourceBounds": [
+          542,
+          1243,
+          749,
+          1515
+        ],
+        "offset": [
+          46,
+          23
+        ],
+        "scale": 0.7913669064748201,
+        "paletteSource": "tools/menta/raw/palette-2026-09-20/generated.png",
+        "paletteSha256": "a1f2fd6878b78303c8a1f2c62e667dab6722018b8edcd77297c0c0fadf7aad71"
+      },
+      {
+        "sourceBounds": [
+          793,
+          1244,
+          987,
+          1512
+        ],
+        "offset": [
+          51,
+          26
+        ],
+        "scale": 0.7913669064748201,
+        "paletteSource": "tools/menta/raw/palette-2026-09-20/generated.png",
+        "paletteSha256": "a1f2fd6878b78303c8a1f2c62e667dab6722018b8edcd77297c0c0fadf7aad71"
+      }
+    ],
+    "anchorsCalibrated": true
   }
 ]

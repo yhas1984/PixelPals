@@ -33,7 +33,8 @@ class GingerGroundRenderingTest {
         try {
             waitForAssets(behavior)
             val frames: List<Int> = (0..11).toList() + (13..15).toList() +
-                if (hasOptionalPostureArtwork(behavior)) (16..18).toList() else emptyList()
+                (if (hasOptionalPostureArtwork(behavior)) (16..18).toList() else emptyList()) +
+                (if (frameCount(behavior) == 24) listOf(22, 23) else emptyList())
             val directions: List<Pair<String, Float>> = listOf("right" to -1f, "left" to 1f)
             val sheet: Bitmap = Bitmap.createBitmap(CELL_SIZE * DIRECTIONS_PER_ROW, CELL_SIZE * ((frames.size * directions.size + DIRECTIONS_PER_ROW - 1) / DIRECTIONS_PER_ROW), Bitmap.Config.ARGB_8888)
             val records: JSONArray = JSONArray()
@@ -117,11 +118,13 @@ class GingerGroundRenderingTest {
         return AlphaBounds(right >= 0, left, top, right, bottom)
     }
 
-    private fun hasOptionalPostureArtwork(behavior: GingerBehavior): Boolean {
+    private fun hasOptionalPostureArtwork(behavior: GingerBehavior): Boolean = frameCount(behavior) in setOf(19, 22, 24)
+
+    private fun frameCount(behavior: GingerBehavior): Int {
         val rects = BaseBehavior::class.java.getDeclaredField("spriteFrameRects")
             .apply { isAccessible = true }
             .get(behavior) as? List<*>
-        return rects?.size == 19 || rects?.size == 22
+        return rects?.size ?: 0
     }
 
     private fun sheetCanvas(sheet: Bitmap): Canvas = Canvas(sheet)

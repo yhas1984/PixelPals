@@ -22,9 +22,11 @@ sys.path.insert(0, str(ROOT))
 from tools.pet_pipeline import _components
 from tools.bloop.cleanup import clean_care_cell
 from tools.ginger.cleanup_care import clean_care_cell as clean_ginger_care_cell
+from tools.ginger.rest_care import apply_rest_care
 from tools.jelly.cleanup_outline import remove_outline as clean_jelly_outline
 from tools.jelly.medicine_artwork import apply_medicine
 from tools.jelly.rest_artwork import REST_CLIP, REST_FRAMES, apply_rest
+from tools.menta.palette import care_palette
 CELL = 256
 PADDING = 18
 ACTIONS = ("feed", "play", "pet", "clean", "rest", "medicine")
@@ -185,6 +187,7 @@ def build(pet: str, calibration: dict) -> dict:
                    (index % 4 + 1) * CELL, (index // 4 + 1) * CELL)
             mouth = tuple(calibration[pet]["mouth"][index])
             atlas.paste(clean_ginger_care_cell(atlas.crop(box), index, mouth), box[:2])
+        atlas = apply_rest_care(atlas, anchors, transforms)
     if pet == "jelly":
         # Remove the sticker edge after placement to retain calibrated contacts
         # and source cameras. The gel reflections and dream bubbles survive.
@@ -207,6 +210,12 @@ def build(pet: str, calibration: dict) -> dict:
                 'sourceBounds': [0, 0, CELL, CELL], 'offset': [0, 0], 'scale': 1.0,
             }
         transforms.extend(apply_rest(atlas, anchors))
+    if pet == "menta":
+        atlas = care_palette()
+        palette_source = ROOT / "tools/menta/raw/palette-2026-09-20/generated.png"
+        for transform in transforms:
+            transform["paletteSource"] = str(palette_source.relative_to(ROOT))
+            transform["paletteSha256"] = hashlib.sha256(palette_source.read_bytes()).hexdigest()
     directory = ROOT / "app/src/carePreview/assets/pets" / pet
     directory.mkdir(parents=True, exist_ok=True)
     atlas.save(directory / "care_v1.png", optimize=True)

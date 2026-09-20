@@ -84,8 +84,16 @@ class SpeciesCareRenderer {
         } else {
             pose = SpeciesCareMotion.sample(profile, action, progress, reduced, variation)
         }
-        val size: Float = desktopSize?.times(com.pixelpals.app.core.motion.PetArtworkScale.desktopCare(pet))
-            ?: (minOf(height * .76f, width * .66f) * com.pixelpals.app.core.motion.PetArtworkScale.speciesSize(pet))
+        val careCamera: Float = if (pet == PetType.GINGER) {
+            if (action == CareSceneAction.REST) com.pixelpals.app.core.motion.GingerArtworkScale.careRest(frame)
+            else com.pixelpals.app.core.motion.GingerArtworkScale.CARE_SEATED
+        } else com.pixelpals.app.core.motion.PetArtworkScale.desktopCare(pet)
+        // The room panel is a closer view; keep the relative source cameras
+        // consistent when switching from the care bank to native rest poses.
+        val roomCamera: Float = if (pet == PetType.GINGER)
+            careCamera / com.pixelpals.app.core.motion.PetArtworkScale.desktopCare(pet) else 1f
+        val size: Float = desktopSize?.times(careCamera)
+            ?: (minOf(height * .76f, width * .66f) * com.pixelpals.app.core.motion.PetArtworkScale.speciesSize(pet) * roomCamera)
         // Leave room above a tossed toy and below a hammock, even in a short room panel.
         val baseline: Float = desktopSize?.let { height / 2f + (desktopBaselineOffsetY ?: it * .46f) }
             ?: height * if (action == CareSceneAction.REST) .75f else .88f
@@ -151,7 +159,11 @@ class SpeciesCareRenderer {
         if (action == CareSceneAction.REST && scene != null && profile.bed != CareBed.WING_WRAP) {
             val bedAlpha: Float = SpeciesRestRecovery.getBedAlpha(profile.bed, scene.progress, reduced)
             if (bedAlpha < 1f) canvas.saveLayerAlpha(null, (255 * bedAlpha).toInt()) else canvas.save()
-            props.draw(canvas, action, ground.x, ground.y, actor.width() * 1.08f, pet = pet)
+            // A source-camera change on waking must not resize the furniture.
+            val bedSize: Float = if (pet == PetType.GINGER) actor.width() *
+                com.pixelpals.app.core.motion.GingerArtworkScale.careRest(16) /
+                com.pixelpals.app.core.motion.GingerArtworkScale.careRest(frame) else actor.width()
+            props.draw(canvas, action, ground.x, ground.y, bedSize * 1.08f, pet = pet)
             canvas.restore()
         }
         if (pet == PetType.NUBE_MICHI) cloud.draw(canvas, ground, actor.width(),

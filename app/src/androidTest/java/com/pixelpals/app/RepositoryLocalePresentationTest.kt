@@ -6,6 +6,7 @@ import android.os.LocaleList
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import androidx.room.Room
+import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.pixelpals.app.core.domain.PetType
@@ -64,8 +65,28 @@ class RepositoryLocalePresentationTest {
     }
 
     private fun setLocale(language: String) {
-        InstrumentationRegistry.getInstrumentation().runOnMainSync {
-            AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(language))
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        ActivityScenario.launch<MainActivity>(MainActivity.createIntent(context, com.pixelpals.app.navigation.PixelPalsDestination.HOME)).use { scenario ->
+            instrumentation.runOnMainSync {
+                AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(language))
+            }
+            val expected = language
+            val deadline = System.currentTimeMillis() + 5_000L
+            var applied = false
+            while (System.currentTimeMillis() < deadline && !applied) {
+                scenario.onActivity { activity ->
+                    applied = if (expected.isBlank()) {
+                        AppCompatDelegate.getApplicationLocales().isEmpty
+                    } else {
+                        activity.resources.configuration.locales[0].language == expected
+                    }
+                }
+                if (!applied) {
+                    instrumentation.waitForIdleSync()
+                    Thread.sleep(50L)
+                }
+            }
+            check(applied) { "Activity locale did not apply: expected=$language" }
         }
     }
 

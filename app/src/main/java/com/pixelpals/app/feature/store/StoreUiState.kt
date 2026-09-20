@@ -85,7 +85,7 @@ interface StoreDataSource {
     fun getCosmetics(): List<Cosmetic>
     suspend fun isCosmeticOwned(productId: String): Boolean
     fun getEquippedCosmetic(petId: String): String?
-    fun setEquippedCosmetic(petId: String, cosmeticId: String?)
+    suspend fun setEquippedCosmetic(petId: String, cosmeticId: String?)
     suspend fun purchasePet(petType: PetType): CoinSpendResult
     suspend fun purchaseCosmetic(petId: String, cosmeticId: String): CoinSpendResult
 }
@@ -107,7 +107,7 @@ class RepositoryStoreDataSource(context: Context) : StoreDataSource {
     override fun getEquippedCosmetic(petId: String): String? =
         repository.getEquippedCosmetic(petId)
 
-    override fun setEquippedCosmetic(petId: String, cosmeticId: String?) {
+    override suspend fun setEquippedCosmetic(petId: String, cosmeticId: String?) {
         repository.setEquippedCosmetic(petId, cosmeticId)
     }
 
