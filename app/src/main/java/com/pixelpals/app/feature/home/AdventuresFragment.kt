@@ -11,6 +11,7 @@ import com.pixelpals.app.R
 import com.pixelpals.app.core.services.AppServices
 import com.pixelpals.app.feature.treasure.TreasureAlbumActivity
 import com.pixelpals.app.database.CompanionJournalEntity
+import com.pixelpals.app.core.review.PlayReviewLauncher
 import kotlinx.coroutines.*
 import java.time.Instant
 import java.time.ZoneId
@@ -72,6 +73,7 @@ class AdventuresFragment : Fragment() {
                 launch { model.journal.collect { renderJournal(it) } }
                 launch { model.memories.collect { renderJournal(model.journal.value) } }
                 launch { model.error.collect { if (it) { revealDeparture = false; Toast.makeText(requireContext(), R.string.home_error, Toast.LENGTH_LONG).show(); model.error.value = false } } }
+                launch { model.reviewMoments.collect { PlayReviewLauncher(requireContext()).maybeLaunch(requireActivity(), it) } }
                 launch { while (isActive) { model.refresh(); delay(10_000) } }
             }
         }

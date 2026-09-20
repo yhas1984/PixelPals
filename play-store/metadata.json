@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "packageName": "com.pixelpals.app",
+  "category": "PERSONALIZATION",
+  "tag": "Personalization",
+  "locales": {
+    "es": {
+      "title": "PixelPals: Mascota virtual",
+      "shortDescription": "Cuida a un compañero único con hogar propio que también vive en tu pantalla.",
+      "fullDescriptionFile": "listing/es-ES.md",
+      "releaseNotesFile": "release-notes/es-ES.txt"
+    },
+    "en": {
+      "title": "PixelPals: Virtual Pet",
+      "shortDescription": "Care for a unique companion with a home of its own who lives on your screen.",
+      "fullDescriptionFile": "listing/en-US.md",
+      "releaseNotesFile": "release-notes/en-US.txt"
+    }
+  },
+  "assets": {
+    "icon": "assets/icon/pixelpals-icon-512.png",
+    "featureGraphics": {
+      "es": "assets/feature-graphic/es/pixelpals-feature-graphic.png",
+      "en": "assets/feature-graphic/en/pixelpals-feature-graphic.png"
+    },
+    "screenshots": {
+      "es": "assets/screenshots/es",
+      "en": "assets/screenshots/en"
+    },
+    "tabletScreenshots": {
+      "android7": {
+        "es": "assets/screenshots-tablet-7/es",
+        "en": "assets/screenshots-tablet-7/en"
+      },
+      "android10": {
+        "es": "assets/screenshots-tablet-10/es",
+        "en": "assets/screenshots-tablet-10/en"
+      }
+    }
+  }
+}

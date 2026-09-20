@@ -15,8 +15,14 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.pixelpals.app.core.ads.AppOpenAdController
+import com.pixelpals.app.core.domain.PetType
+import com.pixelpals.app.core.review.PendingReviewMomentStore
+import com.pixelpals.app.core.review.PlayReviewLauncher
+import com.pixelpals.app.core.review.ReviewPromptInput
+import com.pixelpals.app.core.services.AppServices
 import com.pixelpals.app.data.prefs.SelectedPetStore
 import com.pixelpals.app.databinding.ActivityRootBinding
 import com.pixelpals.app.feature.store.StoreFragment
@@ -25,6 +31,7 @@ import com.pixelpals.app.navigation.RootDestinationReducer
 import com.pixelpals.app.navigation.RootNavigationController
 import com.pixelpals.app.navigation.RootNavigator
 import com.pixelpals.app.navigation.StoreSection
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity(), RootNavigator {
     companion object {
@@ -85,6 +92,11 @@ class MainActivity : AppCompatActivity(), RootNavigator {
             intent.getStringExtra(EXTRA_DESTINATION),
         ) ?: PixelPalsDestination.HOME
         showDestination(destination, parseStoreSection(intent), currentDestination != destination)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        consumePendingReviewMoment()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -167,6 +179,25 @@ class MainActivity : AppCompatActivity(), RootNavigator {
         val lastExit = manager.getHistoricalProcessExitReasons(packageName, 0, 1).firstOrNull()
         if (lastExit?.reason == ApplicationExitInfo.REASON_USER_REQUESTED && lastExit.timestamp >= enabledAt) {
             store.setPetEnabled(false)
+        }
+    }
+
+    private fun consumePendingReviewMoment() {
+        val pending = PendingReviewMomentStore(this).consume() ?: return
+        val pet: PetType = PetType.entries.firstOrNull { it.name.lowercase() == pending.petId } ?: return
+        lifecycleScope.launch {
+            val home = AppServices.companions(this@MainActivity).dao.getHome(pending.petId) ?: return@launch
+            val status = AppServices.repository(this@MainActivity).getStatusSnapshot(pet)
+            PlayReviewLauncher(this@MainActivity).maybeLaunch(
+                this@MainActivity,
+                ReviewPromptInput(
+                    moment = pending.moment,
+                    adoptedAt = home.adoptedAt,
+                    bond = status.bond,
+                    careStreakDays = status.careStreakDays,
+                    eventAt = pending.eventAt,
+                ),
+            )
         }
     }
 

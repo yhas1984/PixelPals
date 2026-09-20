@@ -10,6 +10,8 @@ import com.pixelpals.app.data.prefs.SelectedPetStore
 import com.pixelpals.app.database.*
 import com.pixelpals.app.status.MemoryMoment
 import com.pixelpals.app.status.PetStatusSnapshot
+import com.pixelpals.app.core.review.ReviewMoment
+import com.pixelpals.app.core.review.ReviewPromptInput
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -33,6 +35,8 @@ class CompanionViewModel(application: Application) : AndroidViewModel(applicatio
     val memories: StateFlow<List<MemoryMoment>> = mutableMemories.asStateFlow()
     val error: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val busy: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    private val mutableReviewMoments = MutableSharedFlow<ReviewPromptInput>(extraBufferCapacity = 1)
+    val reviewMoments: SharedFlow<ReviewPromptInput> = mutableReviewMoments.asSharedFlow()
 
     private val observationRevision = MutableStateFlow(0L)
 
@@ -88,6 +92,20 @@ class CompanionViewModel(application: Application) : AndroidViewModel(applicatio
     }
     fun returnHome(expedition: CompanionExpeditionEntity, cancel: Boolean = false): Unit = perform {
         check(repository.finishExpedition(expedition.requestId, cancel))
+        if (!cancel) {
+            val returnedPet: PetType = PetType.entries.first { it.name.lowercase() == expedition.petId }
+            val home: CompanionHomeEntity = repository.dao.getHome(expedition.petId) ?: repository.ensureHome(returnedPet)
+            val snapshot: PetStatusSnapshot = economy.getStatusSnapshot(returnedPet)
+            mutableReviewMoments.emit(
+                ReviewPromptInput(
+                    moment = ReviewMoment.EXPEDITION_REWARD,
+                    adoptedAt = home.adoptedAt,
+                    bond = snapshot.bond,
+                    careStreakDays = snapshot.careStreakDays,
+                    eventAt = System.currentTimeMillis(),
+                ),
+            )
+        }
         if (expedition.resumeDesktop && selection.load().name.lowercase() == expedition.petId &&
             android.provider.Settings.canDrawOverlays(getApplication())) PetService.requestPetChange(getApplication(), selection.load())
     }

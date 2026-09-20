@@ -4,39 +4,42 @@
   "themeId": "warm-editorial",
   "connectedCanvas": true,
   "locales": [
-    "es"
+    "es",
+    "en"
   ],
   "locale": "es",
-  "device": "android",
+  "device": "android-10",
   "orientation": "portrait",
   "appIcon": "/app-icon.png",
   "slidesByDevice": {
     "iphone": [],
     "android": [
       {
-        "id": "s_pxlpals_es_01",
+        "id": "pixelpals_01_alive",
         "layout": "hero",
         "label": {
-          "es": "ELIGE A TU COMPAÑERO"
+          "es": "TU COMPAÑERO",
+          "en": "YOUR COMPANION"
         },
         "headline": {
-          "es": "Una mascota\nque vive contigo"
+          "es": "Un compañero que\nse siente vivo",
+          "en": "A companion that\nfeels alive"
         },
         "screenshot": "/screenshots/android/phone/{locale}/01.png",
         "transforms": {
           "caption": {
             "x": 86,
-            "y": 80,
+            "y": 76,
             "width": 907,
             "height": 430,
             "rotation": 0,
             "zIndex": 4
           },
           "device": {
-            "x": 240,
-            "y": 560,
-            "width": 600,
-            "height": 1300,
+            "x": 230,
+            "y": 545,
+            "width": 620,
+            "height": 1344,
             "rotation": 0,
             "zIndex": 3
           }
@@ -44,85 +47,91 @@
         "inverted": true
       },
       {
-        "id": "s_pxlpals_es_02",
+        "id": "pixelpals_02_overlay",
         "layout": "device-top",
         "label": {
-          "es": "CUIDADO DIARIO"
+          "es": "SIEMPRE CERCA",
+          "en": "ALWAYS CLOSE"
         },
         "headline": {
-          "es": "Cuídalo.\nConecta cada día."
+          "es": "Vive contigo,\ntambién en pantalla",
+          "en": "Always with you,\nright on screen"
         },
         "screenshot": "/screenshots/android/phone/{locale}/02.png",
         "transforms": {
           "caption": {
             "x": 86,
-            "y": 1420,
+            "y": 1410,
             "width": 907,
-            "height": 420,
+            "height": 430,
             "rotation": 0,
             "zIndex": 4
           },
           "device": {
-            "x": 270,
-            "y": 150,
-            "width": 540,
-            "height": 1170,
-            "rotation": 0,
+            "x": 255,
+            "y": 116,
+            "width": 570,
+            "height": 1235,
+            "rotation": -2,
             "zIndex": 3
           }
         }
       },
       {
-        "id": "s_pxlpals_es_03",
+        "id": "pixelpals_03_personalities",
         "layout": "device-bottom",
         "label": {
-          "es": "HAZLO TUYO"
+          "es": "ELIGE TU COMPAÑERO",
+          "en": "CHOOSE YOUR COMPANION"
         },
         "headline": {
-          "es": "Tu estilo.\nSu personalidad."
+          "es": "15 personalidades\núnicas",
+          "en": "15 unique\npersonalities"
         },
         "screenshot": "/screenshots/android/phone/{locale}/03.png",
         "transforms": {
           "caption": {
             "x": 86,
-            "y": 90,
+            "y": 86,
             "width": 907,
-            "height": 400,
+            "height": 390,
             "rotation": 0,
             "zIndex": 4
           },
           "device": {
-            "x": 240,
-            "y": 540,
-            "width": 600,
-            "height": 1300,
-            "rotation": 0,
+            "x": 235,
+            "y": 520,
+            "width": 610,
+            "height": 1322,
+            "rotation": 2,
             "zIndex": 3
           }
         }
       },
       {
-        "id": "s_pxlpals_es_04",
+        "id": "pixelpals_04_care",
         "layout": "device-top",
         "label": {
-          "es": "TU COLECCIÓN"
+          "es": "CADA ESPECIE ES DIFERENTE",
+          "en": "EVERY SPECIES IS DIFFERENT"
         },
         "headline": {
-          "es": "Cada tesoro\ncuenta algo."
+          "es": "Cuidados para\ncada mascota",
+          "en": "Care that fits\nevery pet"
         },
         "screenshot": "/screenshots/android/phone/{locale}/04.png",
         "transforms": {
           "caption": {
             "x": 86,
-            "y": 1420,
+            "y": 1415,
             "width": 907,
-            "height": 420,
+            "height": 410,
             "rotation": 0,
             "zIndex": 4
           },
           "device": {
             "x": 270,
-            "y": 150,
+            "y": 130,
             "width": 540,
             "height": 1170,
             "rotation": 0,
@@ -132,116 +141,125 @@
         "inverted": true
       },
       {
-        "id": "s_pxlpals_es_05",
+        "id": "pixelpals_05_home",
         "layout": "device-bottom",
         "label": {
-          "es": "OCHO PERSONALIDADES"
+          "es": "DECORA CON EL DEDO",
+          "en": "DECORATE WITH A TOUCH"
         },
         "headline": {
-          "es": "Encuentra al\ncompañero ideal."
+          "es": "Crea un hogar\núnico",
+          "en": "Create a home\nof your own"
         },
         "screenshot": "/screenshots/android/phone/{locale}/05.png",
         "transforms": {
           "caption": {
             "x": 86,
-            "y": 90,
+            "y": 82,
             "width": 907,
-            "height": 400,
+            "height": 390,
             "rotation": 0,
             "zIndex": 4
           },
           "device": {
-            "x": 240,
-            "y": 540,
-            "width": 600,
-            "height": 1300,
-            "rotation": 0,
+            "x": 225,
+            "y": 515,
+            "width": 630,
+            "height": 1365,
+            "rotation": -2,
             "zIndex": 3
           }
         }
       },
       {
-        "id": "s_pxlpals_es_06",
+        "id": "pixelpals_06_adventures",
         "layout": "device-top",
         "label": {
-          "es": "RECOMPENSAS QUE MOTIVAN"
+          "es": "PRADERA, BOSQUE Y CIELO",
+          "en": "MEADOW, FOREST AND SKY"
         },
         "headline": {
-          "es": "Juega, cuida,\ndescubre."
+          "es": "Salid juntos\nde aventura",
+          "en": "Go on adventures\ntogether"
         },
         "screenshot": "/screenshots/android/phone/{locale}/06.png",
         "transforms": {
           "caption": {
             "x": 86,
-            "y": 1420,
+            "y": 1415,
+            "width": 907,
+            "height": 410,
+            "rotation": 0,
+            "zIndex": 4
+          },
+          "device": {
+            "x": 260,
+            "y": 120,
+            "width": 560,
+            "height": 1213,
+            "rotation": 2,
+            "zIndex": 3
+          }
+        }
+      },
+      {
+        "id": "pixelpals_07_memories",
+        "layout": "device-bottom",
+        "label": {
+          "es": "DIARIO Y TESOROS",
+          "en": "JOURNAL AND TREASURES"
+        },
+        "headline": {
+          "es": "Guarda cada\nrecuerdo",
+          "en": "Keep every\nmemory"
+        },
+        "screenshot": "/screenshots/android/phone/{locale}/07.png",
+        "transforms": {
+          "caption": {
+            "x": 86,
+            "y": 86,
+            "width": 907,
+            "height": 390,
+            "rotation": 0,
+            "zIndex": 4
+          },
+          "device": {
+            "x": 240,
+            "y": 525,
+            "width": 600,
+            "height": 1300,
+            "rotation": 0,
+            "zIndex": 3
+          }
+        },
+        "inverted": true
+      },
+      {
+        "id": "pixelpals_08_bond",
+        "layout": "hero",
+        "label": {
+          "es": "UNA HISTORIA COMPARTIDA",
+          "en": "A STORY YOU SHARE"
+        },
+        "headline": {
+          "es": "Haz crecer vuestro\nvínculo",
+          "en": "Grow a bond\nthat lasts"
+        },
+        "screenshot": "/screenshots/android/phone/{locale}/08.png",
+        "transforms": {
+          "caption": {
+            "x": 86,
+            "y": 78,
             "width": 907,
             "height": 420,
             "rotation": 0,
             "zIndex": 4
           },
           "device": {
-            "x": 270,
-            "y": 150,
-            "width": 540,
-            "height": 1170,
-            "rotation": 0,
-            "zIndex": 3
-          }
-        }
-      },
-      {
-        "id": "s_pxlpals_es_07",
-        "layout": "device-bottom",
-        "label": {
-          "es": "DESCUBRE MÁS"
-        },
-        "headline": {
-          "es": "Pequeños hallazgos.\nGrandes recuerdos."
-        },
-        "screenshot": "/screenshots/android/phone/{locale}/07.png",
-        "transforms": {
-          "caption": {
-            "x": 86,
-            "y": 90,
-            "width": 907,
-            "height": 400,
-            "rotation": 0,
-            "zIndex": 4
-          },
-          "device": {
-            "x": 240,
+            "x": 230,
             "y": 540,
-            "width": 600,
-            "height": 1300,
-            "rotation": 0,
-            "zIndex": 3
-          }
-        }
-      },
-      {
-        "id": "s_pxlpals_es_08",
-        "layout": "hero",
-        "label": {
-          "es": "SIEMPRE CONTIGO"
-        },
-        "headline": {
-          "es": "Tu compañero,\nen cada pantalla."
-        },
-        "screenshot": "/screenshots/android/phone/{locale}/08.png",
-        "transforms": {
-          "caption": {
-            "x": 86,
-            "y": 80,
-            "width": 907,
-            "height": 430,
-            "rotation": 0,
-            "zIndex": 4
-          },
-          "device": {
-            "x": 240,
-            "y": 560,
-            "width": 600,
-            "height": 1300,
+            "width": 620,
+            "height": 1344,
             "rotation": 0,
             "zIndex": 3
           }
@@ -252,320 +270,512 @@
     "ipad": [],
     "android-7": [
       {
-        "id": "s_pxlpals_t7_1",
-        "layout": "device-bottom",
+        "id": "pixelpals_01_alive_android-7",
+        "layout": "hero",
         "label": {
-          "en": "MEET YOUR NEW FRIEND"
+          "es": "TU COMPAÑERO",
+          "en": "YOUR COMPANION"
         },
         "headline": {
-          "en": "A pet that\nlives on\nyour screen"
+          "es": "Un compañero que\nse siente vivo",
+          "en": "A companion that\nfeels alive"
         },
-        "screenshot": "/screenshots/android/phone/en/06.png",
+        "screenshot": "/screenshots/android/tablet/{locale}/01.png",
         "transforms": {
           "caption": {
             "x": 96,
-            "y": 80,
+            "y": 72,
             "width": 1008,
-            "height": 380,
+            "height": 390,
             "rotation": 0,
             "zIndex": 4
           },
           "device": {
-            "x": 260,
+            "x": 210,
             "y": 500,
-            "width": 680,
-            "height": 1088,
+            "width": 780,
+            "height": 1248,
             "rotation": 0,
             "zIndex": 3
           }
-        }
+        },
+        "inverted": true
       },
       {
-        "id": "s_pxlpals_t7_2",
+        "id": "pixelpals_02_overlay_android-7",
         "layout": "device-top",
         "label": {
-          "en": "EIGHT PALS, ONE IS YOURS"
+          "es": "SIEMPRE CERCA",
+          "en": "ALWAYS CLOSE"
         },
         "headline": {
-          "en": "Choose your\ncompanion"
+          "es": "Vive contigo,\ntambién en pantalla",
+          "en": "Always with you,\nright on screen"
         },
-        "screenshot": "/screenshots/android/phone/en/04.png",
+        "screenshot": "/screenshots/android/tablet/{locale}/02.png",
         "transforms": {
           "caption": {
             "x": 96,
-            "y": 1400,
+            "y": 1435,
             "width": 1008,
-            "height": 440,
+            "height": 390,
             "rotation": 0,
             "zIndex": 4
           },
           "device": {
-            "x": 290,
-            "y": 150,
-            "width": 620,
-            "height": 992,
+            "x": 240,
+            "y": 130,
+            "width": 720,
+            "height": 1152,
             "rotation": 0,
             "zIndex": 3
           }
         }
       },
       {
-        "id": "s_pxlpals_t7_3",
+        "id": "pixelpals_03_personalities_android-7",
         "layout": "device-bottom",
         "label": {
-          "en": "MAKE IT UNIQUE"
+          "es": "ELIGE TU COMPAÑERO",
+          "en": "CHOOSE YOUR COMPANION"
         },
         "headline": {
-          "en": "Make them\nall your own"
+          "es": "15 personalidades\núnicas",
+          "en": "15 unique\npersonalities"
         },
-        "screenshot": "/screenshots/android/phone/en/03.png",
+        "screenshot": "/screenshots/android/tablet/{locale}/03.png",
         "transforms": {
           "caption": {
             "x": 96,
-            "y": 80,
+            "y": 72,
             "width": 1008,
-            "height": 380,
+            "height": 390,
             "rotation": 0,
             "zIndex": 4
           },
           "device": {
-            "x": 260,
+            "x": 210,
             "y": 500,
-            "width": 680,
-            "height": 1088,
+            "width": 780,
+            "height": 1248,
             "rotation": 0,
             "zIndex": 3
           }
         }
       },
       {
-        "id": "s_pxlpals_t7_4",
+        "id": "pixelpals_04_care_android-7",
         "layout": "device-top",
         "label": {
-          "en": "CARE & GROW"
+          "es": "CADA ESPECIE ES DIFERENTE",
+          "en": "EVERY SPECIES IS DIFFERENT"
         },
         "headline": {
-          "en": "Every day\nyou grow closer"
+          "es": "Cuidados para\ncada mascota",
+          "en": "Care that fits\nevery pet"
         },
-        "screenshot": "/screenshots/android/phone/en/07.png",
+        "screenshot": "/screenshots/android/tablet/{locale}/04.png",
         "transforms": {
           "caption": {
             "x": 96,
-            "y": 1400,
+            "y": 1435,
             "width": 1008,
-            "height": 440,
+            "height": 390,
             "rotation": 0,
             "zIndex": 4
           },
           "device": {
-            "x": 290,
-            "y": 150,
-            "width": 620,
-            "height": 992,
+            "x": 240,
+            "y": 130,
+            "width": 720,
+            "height": 1152,
+            "rotation": 0,
+            "zIndex": 3
+          }
+        },
+        "inverted": true
+      },
+      {
+        "id": "pixelpals_05_home_android-7",
+        "layout": "device-bottom",
+        "label": {
+          "es": "DECORA CON EL DEDO",
+          "en": "DECORATE WITH A TOUCH"
+        },
+        "headline": {
+          "es": "Crea un hogar\núnico",
+          "en": "Create a home\nof your own"
+        },
+        "screenshot": "/screenshots/android/tablet/{locale}/05.png",
+        "transforms": {
+          "caption": {
+            "x": 96,
+            "y": 72,
+            "width": 1008,
+            "height": 390,
+            "rotation": 0,
+            "zIndex": 4
+          },
+          "device": {
+            "x": 210,
+            "y": 500,
+            "width": 780,
+            "height": 1248,
             "rotation": 0,
             "zIndex": 3
           }
         }
       },
       {
-        "id": "s_pxlpals_t7_5",
-        "layout": "device-bottom",
+        "id": "pixelpals_06_adventures_android-7",
+        "layout": "device-top",
         "label": {
-          "en": "ALWAYS WITH YOU"
+          "es": "PRADERA, BOSQUE Y CIELO",
+          "en": "MEADOW, FOREST AND SKY"
         },
         "headline": {
-          "en": "Walks on top\nof every app"
+          "es": "Salid juntos\nde aventura",
+          "en": "Go on adventures\ntogether"
         },
-        "screenshot": "/screenshots/android/phone/en/08.png",
+        "screenshot": "/screenshots/android/tablet/{locale}/06.png",
         "transforms": {
           "caption": {
             "x": 96,
-            "y": 80,
+            "y": 1435,
             "width": 1008,
-            "height": 380,
+            "height": 390,
             "rotation": 0,
             "zIndex": 4
           },
           "device": {
-            "x": 260,
-            "y": 500,
-            "width": 680,
-            "height": 1088,
+            "x": 240,
+            "y": 130,
+            "width": 720,
+            "height": 1152,
             "rotation": 0,
             "zIndex": 3
           }
         }
+      },
+      {
+        "id": "pixelpals_07_memories_android-7",
+        "layout": "device-bottom",
+        "label": {
+          "es": "DIARIO Y TESOROS",
+          "en": "JOURNAL AND TREASURES"
+        },
+        "headline": {
+          "es": "Guarda cada\nrecuerdo",
+          "en": "Keep every\nmemory"
+        },
+        "screenshot": "/screenshots/android/tablet/{locale}/07.png",
+        "transforms": {
+          "caption": {
+            "x": 96,
+            "y": 72,
+            "width": 1008,
+            "height": 390,
+            "rotation": 0,
+            "zIndex": 4
+          },
+          "device": {
+            "x": 210,
+            "y": 500,
+            "width": 780,
+            "height": 1248,
+            "rotation": 0,
+            "zIndex": 3
+          }
+        },
+        "inverted": true
+      },
+      {
+        "id": "pixelpals_08_bond_android-7",
+        "layout": "hero",
+        "label": {
+          "es": "UNA HISTORIA COMPARTIDA",
+          "en": "A STORY YOU SHARE"
+        },
+        "headline": {
+          "es": "Haz crecer vuestro\nvínculo",
+          "en": "Grow a bond\nthat lasts"
+        },
+        "screenshot": "/screenshots/android/tablet/{locale}/08.png",
+        "transforms": {
+          "caption": {
+            "x": 96,
+            "y": 72,
+            "width": 1008,
+            "height": 390,
+            "rotation": 0,
+            "zIndex": 4
+          },
+          "device": {
+            "x": 210,
+            "y": 500,
+            "width": 780,
+            "height": 1248,
+            "rotation": 0,
+            "zIndex": 3
+          }
+        },
+        "inverted": true
       }
     ],
     "android-10": [
       {
-        "id": "s_pxlpals_t10_1",
-        "layout": "device-bottom",
+        "id": "pixelpals_01_alive_android-10",
+        "layout": "hero",
         "label": {
-          "en": "MEET YOUR NEW FRIEND"
+          "es": "TU COMPAÑERO",
+          "en": "YOUR COMPANION"
         },
         "headline": {
-          "en": "A pet that\nlives on\nyour screen"
+          "es": "Un compañero que\nse siente vivo",
+          "en": "A companion that\nfeels alive"
         },
-        "screenshot": "/screenshots/android/phone/en/06.png",
+        "screenshot": "/screenshots/android/tablet/{locale}/01.png",
         "transforms": {
           "caption": {
             "x": 128,
-            "y": 100,
+            "y": 96,
             "width": 1344,
-            "height": 500,
+            "height": 510,
             "rotation": 0,
             "zIndex": 4
           },
           "device": {
-            "x": 360,
-            "y": 700,
-            "width": 880,
-            "height": 1408,
+            "x": 280,
+            "y": 680,
+            "width": 1040,
+            "height": 1664,
             "rotation": 0,
             "zIndex": 3
           }
-        }
+        },
+        "inverted": true
       },
       {
-        "id": "s_pxlpals_t10_2",
+        "id": "pixelpals_02_overlay_android-10",
         "layout": "device-top",
         "label": {
-          "en": "EIGHT PALS, ONE IS YOURS"
+          "es": "SIEMPRE CERCA",
+          "en": "ALWAYS CLOSE"
         },
         "headline": {
-          "en": "Choose your\ncompanion"
+          "es": "Vive contigo,\ntambién en pantalla",
+          "en": "Always with you,\nright on screen"
         },
-        "screenshot": "/screenshots/android/phone/en/04.png",
+        "screenshot": "/screenshots/android/tablet/{locale}/02.png",
         "transforms": {
           "caption": {
             "x": 128,
-            "y": 1860,
+            "y": 1930,
             "width": 1344,
-            "height": 560,
+            "height": 510,
             "rotation": 0,
             "zIndex": 4
           },
           "device": {
-            "x": 400,
-            "y": 200,
-            "width": 800,
-            "height": 1280,
+            "x": 320,
+            "y": 170,
+            "width": 960,
+            "height": 1536,
             "rotation": 0,
             "zIndex": 3
           }
         }
       },
       {
-        "id": "s_pxlpals_t10_3",
+        "id": "pixelpals_03_personalities_android-10",
         "layout": "device-bottom",
         "label": {
-          "en": "MAKE IT UNIQUE"
+          "es": "ELIGE TU COMPAÑERO",
+          "en": "CHOOSE YOUR COMPANION"
         },
         "headline": {
-          "en": "Make them\nall your own"
+          "es": "15 personalidades\núnicas",
+          "en": "15 unique\npersonalities"
         },
-        "screenshot": "/screenshots/android/phone/en/03.png",
+        "screenshot": "/screenshots/android/tablet/{locale}/03.png",
         "transforms": {
           "caption": {
             "x": 128,
-            "y": 100,
+            "y": 96,
             "width": 1344,
-            "height": 500,
+            "height": 510,
             "rotation": 0,
             "zIndex": 4
           },
           "device": {
-            "x": 360,
-            "y": 700,
-            "width": 880,
-            "height": 1408,
+            "x": 280,
+            "y": 680,
+            "width": 1040,
+            "height": 1664,
             "rotation": 0,
             "zIndex": 3
           }
         }
       },
       {
-        "id": "s_pxlpals_t10_4",
+        "id": "pixelpals_04_care_android-10",
         "layout": "device-top",
         "label": {
-          "en": "CARE & GROW"
+          "es": "CADA ESPECIE ES DIFERENTE",
+          "en": "EVERY SPECIES IS DIFFERENT"
         },
         "headline": {
-          "en": "Every day\nyou grow closer"
+          "es": "Cuidados para\ncada mascota",
+          "en": "Care that fits\nevery pet"
         },
-        "screenshot": "/screenshots/android/phone/en/07.png",
+        "screenshot": "/screenshots/android/tablet/{locale}/04.png",
         "transforms": {
           "caption": {
             "x": 128,
-            "y": 1860,
+            "y": 1930,
             "width": 1344,
-            "height": 560,
+            "height": 510,
             "rotation": 0,
             "zIndex": 4
           },
           "device": {
-            "x": 400,
-            "y": 200,
-            "width": 800,
-            "height": 1280,
+            "x": 320,
+            "y": 170,
+            "width": 960,
+            "height": 1536,
+            "rotation": 0,
+            "zIndex": 3
+          }
+        },
+        "inverted": true
+      },
+      {
+        "id": "pixelpals_05_home_android-10",
+        "layout": "device-bottom",
+        "label": {
+          "es": "DECORA CON EL DEDO",
+          "en": "DECORATE WITH A TOUCH"
+        },
+        "headline": {
+          "es": "Crea un hogar\núnico",
+          "en": "Create a home\nof your own"
+        },
+        "screenshot": "/screenshots/android/tablet/{locale}/05.png",
+        "transforms": {
+          "caption": {
+            "x": 128,
+            "y": 96,
+            "width": 1344,
+            "height": 510,
+            "rotation": 0,
+            "zIndex": 4
+          },
+          "device": {
+            "x": 280,
+            "y": 680,
+            "width": 1040,
+            "height": 1664,
             "rotation": 0,
             "zIndex": 3
           }
         }
       },
       {
-        "id": "s_pxlpals_t10_5",
-        "layout": "device-bottom",
+        "id": "pixelpals_06_adventures_android-10",
+        "layout": "device-top",
         "label": {
-          "en": "ALWAYS WITH YOU"
+          "es": "PRADERA, BOSQUE Y CIELO",
+          "en": "MEADOW, FOREST AND SKY"
         },
         "headline": {
-          "en": "Walks on top\nof every app"
+          "es": "Salid juntos\nde aventura",
+          "en": "Go on adventures\ntogether"
         },
-        "screenshot": "/screenshots/android/phone/en/08.png",
+        "screenshot": "/screenshots/android/tablet/{locale}/06.png",
         "transforms": {
           "caption": {
             "x": 128,
-            "y": 100,
+            "y": 1930,
             "width": 1344,
-            "height": 500,
+            "height": 510,
             "rotation": 0,
             "zIndex": 4
           },
           "device": {
-            "x": 360,
-            "y": 700,
-            "width": 880,
-            "height": 1408,
+            "x": 320,
+            "y": 170,
+            "width": 960,
+            "height": 1536,
             "rotation": 0,
             "zIndex": 3
           }
         }
+      },
+      {
+        "id": "pixelpals_07_memories_android-10",
+        "layout": "device-bottom",
+        "label": {
+          "es": "DIARIO Y TESOROS",
+          "en": "JOURNAL AND TREASURES"
+        },
+        "headline": {
+          "es": "Guarda cada\nrecuerdo",
+          "en": "Keep every\nmemory"
+        },
+        "screenshot": "/screenshots/android/tablet/{locale}/07.png",
+        "transforms": {
+          "caption": {
+            "x": 128,
+            "y": 96,
+            "width": 1344,
+            "height": 510,
+            "rotation": 0,
+            "zIndex": 4
+          },
+          "device": {
+            "x": 280,
+            "y": 680,
+            "width": 1040,
+            "height": 1664,
+            "rotation": 0,
+            "zIndex": 3
+          }
+        },
+        "inverted": true
+      },
+      {
+        "id": "pixelpals_08_bond_android-10",
+        "layout": "hero",
+        "label": {
+          "es": "UNA HISTORIA COMPARTIDA",
+          "en": "A STORY YOU SHARE"
+        },
+        "headline": {
+          "es": "Haz crecer vuestro\nvínculo",
+          "en": "Grow a bond\nthat lasts"
+        },
+        "screenshot": "/screenshots/android/tablet/{locale}/08.png",
+        "transforms": {
+          "caption": {
+            "x": 128,
+            "y": 96,
+            "width": 1344,
+            "height": 510,
+            "rotation": 0,
+            "zIndex": 4
+          },
+          "device": {
+            "x": 280,
+            "y": 680,
+            "width": 1040,
+            "height": 1664,
+            "rotation": 0,
+            "zIndex": 3
+          }
+        },
+        "inverted": true
       }
     ],
-    "feature-graphic": [
-      {
-        "id": "s_pxlpals_fg_1",
-        "layout": "feature-graphic",
-        "label": {
-          "en": "PIXELPALS"
-        },
-        "headline": {
-          "en": "A pet that\nlives on\nyour screen"
-        },
-        "screenshot": "/screenshots/android/phone/en/01.png",
-        "transforms": {
-          "device": {
-            "x": 660,
-            "y": 30,
-            "width": 200,
-            "height": 433,
-            "rotation": 0,
-            "zIndex": 3
-          }
-        }
-      }
-    ]
+    "feature-graphic": []
   }
 }
