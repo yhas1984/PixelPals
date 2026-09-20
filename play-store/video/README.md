@@ -14,8 +14,8 @@ Outputs:
 - `exports/pixelpals-play-store-preview-es.mp4`
 - `exports/pixelpals-play-store-preview-en.mp4`
 
-The videos use real PixelPals UI footage for the home, care, overlay, adventure
-and memory scenes. The ASO feature artwork appears only in the short opening
+The videos use locale-matched real PixelPals UI footage for the home, care,
+overlay, adventure and memory scenes. The ASO feature artwork appears only in the short opening
 and closing cards. A two-second celebratory illustration gathers the full cast near
 the end. The total duration is 28 seconds and the core experience starts after
 1.5 seconds.

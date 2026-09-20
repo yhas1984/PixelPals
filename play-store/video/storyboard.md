@@ -4,7 +4,7 @@
 | --- | --- | --- | --- | --- |
 | 0.0–1.5 s | Localized title over feature artwork | Un compañero que se siente vivo | A companion that feels alive | Warm opening bell and soft chord |
 | 1.5–6.0 s | Ginger sleeping and dreaming in her home | Ginger sueña en su propio hogar | Ginger dreams in a home of her own | Quiet purr and dream sparkle |
-| 6.0–12.0 s | Bloop care interaction | Cuidados únicos para cada especie | Care made for every species | Soft taps and Bloop shimmer |
+| 6.0–12.0 s | Species-specific care (Bloop ES / Ginger EN) | Cuidados únicos para cada especie | Care made for every species | Soft taps and a bright character shimmer |
 | 12.0–17.0 s | Bloop on top of another app | Contigo, también sobre otras apps | With you, even over other apps | Airy ghost bells |
 | 17.0–22.0 s | Adventure destination browsing | Aventuras, tesoros y recuerdos | Adventures, treasures and memories | Light breeze and distant chimes |
 | 22.0–24.5 s | Real memory/journal screen | Un vínculo que crece cada día | A bond that grows every day | Returning warm motif |

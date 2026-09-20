@@ -15,9 +15,12 @@ mkdir -p "$WORK_DIR" "$EXPORT_DIR"
 
 for required in \
   "$SOURCE_DIR/ginger-home.mp4" \
+  "$SOURCE_DIR/ginger-home-en.mp4" \
+  "$SOURCE_DIR/ginger-care-en.mp4" \
   "$SOURCE_DIR/bloop-care.mp4" \
   "$SOURCE_DIR/bloop-overlay.mp4" \
   "$SOURCE_DIR/adventures.mp4" \
+  "$SOURCE_DIR/adventures-en.mp4" \
   "$FEATURE_ART" \
   "$PARTY_ART" \
   "$FONT_REGULAR" \
@@ -164,15 +167,23 @@ render_locale() {
   local screenshots="$ROOT_DIR/screenshots-editor/public/screenshots/android/phone/$locale"
   local copy_dir="$WORK_DIR/copy-$locale"
   local locale_work="$WORK_DIR/$locale"
+  local home_source="$SOURCE_DIR/ginger-home.mp4"
+  local care_source="$SOURCE_DIR/bloop-care.mp4"
+  local adventures_source="$SOURCE_DIR/adventures.mp4"
+  if [[ "$locale" == "en" ]]; then
+    home_source="$SOURCE_DIR/ginger-home-en.mp4"
+    care_source="$SOURCE_DIR/ginger-care-en.mp4"
+    adventures_source="$SOURCE_DIR/adventures-en.mp4"
+  fi
   mkdir -p "$locale_work"
   rm -f "$locale_work"/0*.mp4 "$locale_work/concat.txt" "$locale_work/silent.mp4"
   write_copy "$locale"
 
   render_feature_segment "$feature" 1.5 "$copy_dir/intro.txt" "$copy_dir/intro-subtitle.txt" "$locale_work/01-intro.mp4"
-  render_live_segment "$SOURCE_DIR/ginger-home.mp4" 0.5 4.5 "$copy_dir/ginger.txt" "$locale_work/02-ginger.mp4"
-  render_live_segment "$SOURCE_DIR/bloop-care.mp4" 4.4 6.0 "$copy_dir/care.txt" "$locale_work/03-care.mp4"
+  render_live_segment "$home_source" 0.5 4.5 "$copy_dir/ginger.txt" "$locale_work/02-ginger.mp4"
+  render_live_segment "$care_source" 4.4 6.0 "$copy_dir/care.txt" "$locale_work/03-care.mp4"
   render_live_segment "$SOURCE_DIR/bloop-overlay.mp4" 1.0 5.0 "$copy_dir/overlay.txt" "$locale_work/04-overlay.mp4"
-  render_live_segment "$SOURCE_DIR/adventures.mp4" 3.6 5.0 "$copy_dir/adventures.txt" "$locale_work/05-adventures.mp4"
+  render_live_segment "$adventures_source" 3.6 5.0 "$copy_dir/adventures.txt" "$locale_work/05-adventures.mp4"
   render_memory_segment "$screenshots/07.png" 2.5 "$copy_dir/memory.txt" "$locale_work/06-memory.mp4"
   render_party_segment "$PARTY_ART" 2.0 "$copy_dir/party.txt" "$locale_work/07-party.mp4"
   render_feature_segment "$feature" 1.5 "$copy_dir/outro.txt" "$copy_dir/outro-subtitle.txt" "$locale_work/08-outro.mp4"
