@@ -35,8 +35,8 @@ android {
         applicationId = "com.pixelpals.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 23
-        versionName = "2.5.1"
+        versionCode = 24
+        versionName = "2.5.2"
         // Visual approval is required before enabling new care assets in production.
         buildConfigField("boolean", "CARE_SCENES_ENABLED", "false")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -259,6 +259,10 @@ dependencies {
 
     // Google Play Billing
     implementation("com.android.billingclient:billing-ktx:9.1.0")
+
+    // Official Google Play in-app review flow.
+    implementation("com.google.android.play:review:2.0.2")
+    implementation("com.google.android.play:review-ktx:2.0.2")
 
     // AdMob (banner adaptativo en la tienda)
     implementation("com.google.android.gms:play-services-ads:25.4.0")

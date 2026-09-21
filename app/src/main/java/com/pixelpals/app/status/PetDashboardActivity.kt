@@ -42,6 +42,9 @@ import com.pixelpals.app.notifications.PetCareNotificationScheduler
 import com.pixelpals.app.feature.treasure.TreasureAlbumActivity
 import com.pixelpals.app.feature.treasure.TreasureBadge
 import com.pixelpals.app.feature.treasure.TreasureCollectionSummary
+import com.pixelpals.app.core.review.PlayReviewLauncher
+import com.pixelpals.app.core.review.ReviewMoment
+import com.pixelpals.app.core.review.ReviewPromptInput
 import kotlinx.coroutines.launch
 
 class PetDashboardActivity : AppCompatActivity() {
@@ -132,7 +135,10 @@ class PetDashboardActivity : AppCompatActivity() {
             visibility = View.VISIBLE
             bind(model)
             onResult = { result ->
-                if (result is CareSceneResult.Completed) lifecycleScope.launch { refreshDashboard(applyCheckIn = false) }
+                if (result is CareSceneResult.Completed) lifecycleScope.launch {
+                    refreshDashboard(applyCheckIn = false)
+                    offerReviewAfterCare(result.after)
+                }
             }
         }
         (findViewById<Button>(R.id.btnFeed).parent as View).visibility = View.GONE
@@ -262,6 +268,7 @@ class PetDashboardActivity : AppCompatActivity() {
                     careBubble(action),
                     celebrate = bondGain > 0 || newMemory != null,
                 )
+                offerReviewAfterCare(after)
             }.onFailure {
                 showErrorState(getString(R.string.dashboard_error))
             }
@@ -287,6 +294,20 @@ class PetDashboardActivity : AppCompatActivity() {
         }.onFailure {
             showErrorState(getString(R.string.dashboard_error))
         }
+    }
+
+    private suspend fun offerReviewAfterCare(snapshot: PetStatusSnapshot) {
+        val home = AppServices.companions(this).dao.getHome(selectedPet.name.lowercase()) ?: return
+        PlayReviewLauncher(this).maybeLaunch(
+            this,
+            ReviewPromptInput(
+                moment = ReviewMoment.CARE_STREAK,
+                adoptedAt = home.adoptedAt,
+                bond = snapshot.bond,
+                careStreakDays = snapshot.careStreakDays,
+                eventAt = System.currentTimeMillis(),
+            ),
+        )
     }
 
     private suspend fun renderDashboard() {

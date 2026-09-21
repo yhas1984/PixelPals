@@ -29,6 +29,7 @@ import com.pixelpals.app.status.PetDashboardActivity
 import com.pixelpals.app.notifications.PetCareNotificationManager
 import com.pixelpals.app.notifications.PetCareNotificationScheduler
 import com.pixelpals.app.notifications.PetCareReminderPreferences
+import com.pixelpals.app.core.review.PlayReviewLauncher
 
 class SettingsFragment : Fragment() {
     companion object {
@@ -138,6 +139,9 @@ class SettingsFragment : Fragment() {
         binding.btnDashboard.setOnClickListener {
             analytics.track("dashboard_opened_from_main")
             startActivity(Intent(requireContext(), PetDashboardActivity::class.java))
+        }
+        binding.btnRateApp.setOnClickListener {
+            PlayReviewLauncher.openStoreListing(requireContext())
         }
     }
 
@@ -348,6 +352,7 @@ class SettingsFragment : Fragment() {
             binding.btnStopPet,
             binding.btnAlbum,
             binding.btnDashboard,
+            binding.btnRateApp,
         )
         views.forEachIndexed { index, item ->
             item.alpha = 0f

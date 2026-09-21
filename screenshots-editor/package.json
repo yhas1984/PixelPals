@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "export:bundle": "node scripts/export-bundle.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.1.0",

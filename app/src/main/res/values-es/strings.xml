@@ -528,4 +528,5 @@
     <string name="store_preview_cosmetic">Ver en mi mascota</string>
     <string name="store_preview_cosmetic_named">Ver %1$s en mi mascota</string>
     <string name="store_pet_preview_description">Vista previa de %1$s</string>
+    <string name="rate_pixelpals">Valorar PixelPals</string>
 </resources>

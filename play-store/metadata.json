@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "packageName": "com.pixelpals.app",
+  "category": "PERSONALIZATION",
+  "tag": "Personalization",
+  "locales": {
+    "es-419": {
+      "title": "PixelPals: Mascota virtual",
+      "shortDescription": "Adopta y cuida una mascota con hogar propio que también vive en tu pantalla.",
+      "fullDescriptionFile": "listing/es-419.md",
+      "releaseNotesFile": "release-notes/es-419.txt",
+      "assetLocale": "es"
+    },
+    "es-ES": {
+      "title": "PixelPals: Mascota virtual",
+      "shortDescription": "Adopta y cuida una mascota con hogar propio que también vive en tu pantalla.",
+      "fullDescriptionFile": "listing/es-ES.md",
+      "releaseNotesFile": "release-notes/es-ES.txt",
+      "assetLocale": "es"
+    },
+    "en-US": {
+      "title": "PixelPals: Virtual Pet",
+      "shortDescription": "Adopt and care for a virtual pet with a home of its own, right on your screen.",
+      "fullDescriptionFile": "listing/en-US.md",
+      "releaseNotesFile": "release-notes/en-US.txt",
+      "assetLocale": "en"
+    }
+  },
+  "assets": {
+    "icon": "assets/icon/pixelpals-icon-512.png",
+    "featureGraphics": {
+      "es": "assets/feature-graphic/es/pixelpals-feature-graphic.png",
+      "en": "assets/feature-graphic/en/pixelpals-feature-graphic.png"
+    },
+    "screenshots": {
+      "es": "assets/screenshots/es",
+      "en": "assets/screenshots/en"
+    },
+    "tabletScreenshots": {
+      "android7": {
+        "es": "assets/screenshots-tablet-7/es",
+        "en": "assets/screenshots-tablet-7/en"
+      },
+      "android10": {
+        "es": "assets/screenshots-tablet-10/es",
+        "en": "assets/screenshots-tablet-10/en"
+      }
+    }
+  }
+}

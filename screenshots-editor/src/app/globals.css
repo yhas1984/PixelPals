@@ -54,6 +54,7 @@
     @apply border-border;
   }
   body {
+    font-family: Inter, ui-rounded, "SF Pro Rounded", "Nunito Sans", system-ui, sans-serif;
     @apply bg-background text-foreground;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;

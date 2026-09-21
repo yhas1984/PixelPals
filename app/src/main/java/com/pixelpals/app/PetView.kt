@@ -38,6 +38,8 @@ import com.pixelpals.app.core.motion.PhysicsBody
 import com.pixelpals.app.core.motion.PhysicsEvent
 import com.pixelpals.app.core.motion.PhysicsProfile
 import com.pixelpals.app.core.services.AppServices
+import com.pixelpals.app.core.review.PendingReviewMomentStore
+import com.pixelpals.app.core.review.ReviewMoment
 import com.pixelpals.app.data.repository.PetProgress
 import com.pixelpals.app.data.repository.PixelPalsRepository
 import com.pixelpals.app.feature.overlay.behavior.*
@@ -525,6 +527,12 @@ class PetView(
                     "milestone" to milestone.milestone.toString(),
                     "badge" to milestone.name.lowercase(),
                 ),
+            )
+        }
+        if (result.isNewDiscovery) {
+            PendingReviewMomentStore(context).record(
+                ReviewMoment.TREASURE_DISCOVERY,
+                petType.name.lowercase(),
             )
         }
     }

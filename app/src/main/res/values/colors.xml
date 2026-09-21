@@ -53,4 +53,5 @@
     <color name="text_dark">#FFFFFF</color>
     <color name="text_muted">#A0A0A0</color>
     <color name="nav_item_tint">#656A5E</color>
+    <color name="launcher_warm">#EF6658</color>
 </resources>

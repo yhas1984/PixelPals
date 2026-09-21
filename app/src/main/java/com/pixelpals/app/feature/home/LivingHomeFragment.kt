@@ -15,6 +15,9 @@ import com.pixelpals.app.*
 import com.pixelpals.app.core.care.scene.*
 import com.pixelpals.app.core.domain.PetType
 import com.pixelpals.app.core.services.AppServices
+import com.pixelpals.app.core.review.PlayReviewLauncher
+import com.pixelpals.app.core.review.ReviewMoment
+import com.pixelpals.app.core.review.ReviewPromptInput
 import com.pixelpals.app.data.prefs.SelectedPetStore
 import com.pixelpals.app.feature.care.*
 import com.pixelpals.app.navigation.*
@@ -146,6 +149,18 @@ open class LivingHomeFragment : Fragment() {
                 if (result is CareSceneResult.Completed) {
                     CompanionPreferences(requireContext()).completeFirstHomeCare((careModel?.pet ?: model.pet.value).name.lowercase())
                     firstHomeGuide?.render(lastWorld.home, scene?.isTravelling == true)
+                    lastWorld.home?.let { home ->
+                        PlayReviewLauncher(requireContext()).maybeLaunch(
+                            requireActivity(),
+                            ReviewPromptInput(
+                                moment = ReviewMoment.CARE_STREAK,
+                                adoptedAt = home.adoptedAt,
+                                bond = result.after.bond,
+                                careStreakDays = result.after.careStreakDays,
+                                eventAt = System.currentTimeMillis(),
+                            ),
+                        )
+                    }
                 }
                 val objectId = pendingCareObject
                 pendingCareObject = null

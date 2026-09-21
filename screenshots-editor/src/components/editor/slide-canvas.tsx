@@ -804,6 +804,28 @@ function FeatureGraphicCanvas({
   editable?: boolean;
   edit?: EditHandlers;
 }) {
+  const suppliedArtwork = img(resolveScreenshot(slide.screenshot, locale));
+  if (suppliedArtwork) {
+    return (
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          position: "relative",
+          overflow: "hidden",
+          background: theme.bgAlt,
+        }}
+      >
+        <img
+          src={suppliedArtwork}
+          alt={`${appName || "App"} feature graphic`}
+          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+          draggable={false}
+        />
+      </div>
+    );
+  }
+
   return (
     <div
       style={{

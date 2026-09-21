@@ -400,6 +400,19 @@
                 android:textColor="@color/text_primary"
                 android:textStyle="bold" />
 
+            <Button
+                android:id="@+id/btnRateApp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="52dp"
+                android:layout_marginTop="8dp"
+                android:backgroundTint="@color/surface_warm"
+                android:insetBottom="0dp"
+                android:text="@string/rate_pixelpals"
+                android:textAllCaps="false"
+                android:textColor="@color/text_primary"
+                android:textStyle="bold" />
+
         </LinearLayout>
     </ScrollView>
 

@@ -529,4 +529,5 @@
     <string name="store_preview_cosmetic">Try on my pal</string>
     <string name="store_preview_cosmetic_named">Preview %1$s on my pal</string>
     <string name="store_pet_preview_description">Preview of %1$s</string>
+    <string name="rate_pixelpals">Rate PixelPals</string>
 </resources>
